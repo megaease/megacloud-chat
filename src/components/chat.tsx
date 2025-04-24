@@ -6,11 +6,31 @@ import { Loader2, Send } from "lucide-react";
 import { ChatMessage } from "./chat-message";
 import { ScrollArea } from "./ui/scroll-area";
 import { Textarea } from "./ui/textarea";
+import { nanoid } from "nanoid";
+import { useEffect, useState } from "react";
 
 export function Chat() {
-	const { messages, input, handleInputChange, handleSubmit, status } =
-		useChat();
+	const [chatId, setChatId] = useState<string | null>(null);
 
+	useEffect(() => {
+		if (!chatId) {
+			const newChatId = nanoid(16);
+			setChatId(newChatId);
+		}
+	}, [chatId]);
+
+	const { messages, input, handleInputChange, handleSubmit, status } = useChat({
+		id: chatId || nanoid(), // Unique ID for the chat session
+		maxSteps: 10,
+		body: {
+			chatId: chatId,
+			userId: "user-id", // Replace with actual user ID
+		},
+		onFinish: (message) => {
+			console.log("Message finished:", message);
+		},
+	});
+	console.log("messages", messages, status);
 	const isLoading = status === "streaming" || status === "submitted";
 	return (
 		<div className="mx-auto flex h-full w-full max-w-3xl flex-col px-4 sm:px-6 md:py-4">

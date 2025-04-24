@@ -59,12 +59,18 @@ importers:
       drizzle-orm:
         specifier: ^0.41.0
         version: 0.41.0(@opentelemetry/api@1.9.0)(gel@2.0.2)(postgres@3.4.5)
+      drizzle-zod:
+        specifier: ^0.7.1
+        version: 0.7.1(drizzle-orm@0.41.0(@opentelemetry/api@1.9.0)(gel@2.0.2)(postgres@3.4.5))(zod@3.24.3)
       framer-motion:
         specifier: ^11.18.2
         version: 11.18.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       lucide-react:
         specifier: ^0.503.0
         version: 0.503.0(react@19.1.0)
+      nanoid:
+        specifier: ^5.1.5
+        version: 5.1.5
       next:
         specifier: ^15.2.3
         version: 15.3.1(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -101,6 +107,9 @@ importers:
       tw-animate-css:
         specifier: ^1.2.8
         version: 1.2.8
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
       zod:
         specifier: ^3.24.2
         version: 3.24.3
@@ -1467,6 +1476,12 @@ packages:
       sqlite3:
         optional: true
 
+  drizzle-zod@0.7.1:
+    resolution: {integrity: sha512-nZzALOdz44/AL2U005UlmMqaQ1qe5JfanvLujiTHiiT8+vZJTBFhj3pY4Vk+L6UWyKFfNmLhk602Hn4kCTynKQ==}
+    peerDependencies:
+      drizzle-orm: '>=0.36.0'
+      zod: '>=3.0.0'
+
   emoji-regex-xs@1.0.0:
     resolution: {integrity: sha512-LRlerrMYoIDrT6jgpeZ2YYl/L8EulRTt5hQcYjy5AInh7HWXKimpqx68aknBFpGL2+/IcogTcaydJEgaTmOpDg==}
 
@@ -1803,6 +1818,11 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanoid@5.1.5:
+    resolution: {integrity: sha512-Ir/+ZpE9fDsNH0hQ3C68uyThDXzYcim2EqcZ8zn8Chtt1iylPT9xXJB0kPCnqzgcEGikO9RxSrh63MsmVCU7Fw==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+
   next-themes@0.4.6:
     resolution: {integrity: sha512-pZvgD5L0IEvX5/9GWyHMf3m8BKiVQwsCMHfoFosXtXBMnaS0ZnIJ9ST4b4NqLVKDEm8QBxoNNGNaBv2JNF6XNA==}
     peerDependencies:
@@ -2082,6 +2102,10 @@ packages:
     resolution: {integrity: sha512-Rb46I4cGGVBmjamjphe8L/UnvJD+uPPtTkNvX5mZgqdbavhI4EbgIWJiIHXJ8bc/i9EQGPRh4DwEURJ552Do0A==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
 
   vfile-message@4.0.2:
     resolution: {integrity: sha512-jRDZ1IMLttGj41KcZvlrYAaI3CfqpLpfpf+Mfig13viT6NKvRzWZ+lXz0Y5D60w6uJIBAOGq9mSHf0gktF0duw==}
@@ -3097,6 +3121,11 @@ snapshots:
       gel: 2.0.2
       postgres: 3.4.5
 
+  drizzle-zod@0.7.1(drizzle-orm@0.41.0(@opentelemetry/api@1.9.0)(gel@2.0.2)(postgres@3.4.5))(zod@3.24.3):
+    dependencies:
+      drizzle-orm: 0.41.0(@opentelemetry/api@1.9.0)(gel@2.0.2)(postgres@3.4.5)
+      zod: 3.24.3
+
   emoji-regex-xs@1.0.0: {}
 
   enhanced-resolve@5.18.1:
@@ -3677,6 +3706,8 @@ snapshots:
 
   nanoid@3.3.11: {}
 
+  nanoid@5.1.5: {}
+
   next-themes@0.4.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       react: 19.1.0
@@ -4012,6 +4043,8 @@ snapshots:
   use-sync-external-store@1.5.0(react@19.1.0):
     dependencies:
       react: 19.1.0
+
+  uuid@11.1.0: {}
 
   vfile-message@4.0.2:
     dependencies:
