@@ -1,7 +1,9 @@
 import { db } from "@/server/db";
+import { saveToChatsTable } from "@/server/db/chats";
+import { saveToMessagesTable } from "@/server/db/messages";
 import { chatMessages, chats } from "@/server/db/schema";
 import { deepseek } from "@ai-sdk/deepseek";
-import { streamText } from "ai";
+import { appendResponseMessages, streamText } from "ai";
 import { eq } from "drizzle-orm";
 
 export const maxDuration = 30;
@@ -17,50 +19,23 @@ export async function POST(req: Request) {
 	if (!userId) {
 		return Response.json({ error: "User ID is required" }, { status: 400 });
 	}
-	// 创建 AI 流式响应
+
 	const result = streamText({
 		model: deepseek("deepseek-chat"),
 		messages,
 		onError: (error) => {
 			console.error("AI Stream error:", error);
 		},
+		onFinish: async (result) => {
+			const allMessages = appendResponseMessages({
+				messages,
+				responseMessages: result.response.messages,
+			});
+			await saveToChatsTable(userId, chatId, allMessages);
+			await saveToMessagesTable(chatId, allMessages);
+		},
 	});
-
-	let currentChatId = chatId;
 	console.log("currentChatId", chatId);
-	if (currentChatId) {
-		const existingChat = await db.query.chats.findFirst({
-			where: eq(chats.id, currentChatId),
-		});
-
-		if (existingChat) {
-			console.log("existingChat", existingChat);
-			await db
-				.update(chats)
-				.set({ updatedAt: new Date() })
-				.where(eq(chats.id, currentChatId));
-		} else {
-			currentChatId = null;
-		}
-	}
-
-	if (!currentChatId) {
-		console.log("Creating new chat", chatId);
-		const [newChat] = await db
-			.insert(chats)
-			.values({
-				id: chatId,
-				userId: userId,
-				title: messages[0]?.content?.substring(0, 50) || "新对话",
-			})
-			.returning({ id: chats.id });
-
-		if (newChat) {
-			currentChatId = newChat.id;
-		} else {
-			throw new Error("Failed to create a new chat");
-		}
-	}
 
 	return result.toDataStreamResponse({});
 }
