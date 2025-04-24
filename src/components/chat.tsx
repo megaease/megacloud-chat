@@ -8,10 +8,11 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Textarea } from "./ui/textarea";
 import { nanoid } from "nanoid";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function Chat() {
 	const [chatId, setChatId] = useState<string | null>(null);
-
+	const queryClient = useQueryClient();
 	useEffect(() => {
 		if (!chatId) {
 			const newChatId = nanoid(16);
@@ -28,6 +29,9 @@ export function Chat() {
 		},
 		onFinish: (message) => {
 			console.log("Message finished:", message);
+			queryClient.invalidateQueries({
+				queryKey: ["chats", "user-id"], // Replace with actual user ID
+			});
 		},
 	});
 	console.log("messages", messages, status);

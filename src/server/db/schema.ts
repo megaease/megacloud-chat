@@ -14,6 +14,7 @@ import {
 	uuid,
 } from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -49,3 +50,6 @@ export const chatMessages = createTable("chat_messages", {
 
 export const chatsSchema = createSelectSchema(chats);
 export const chatMessagesSchema = createSelectSchema(chatMessages);
+export const ChatRoleEnum = z.enum(["user", "assistant", "system"]);
+export type ChatRole = z.infer<typeof ChatRoleEnum>;
+export type Chat = z.infer<typeof chatsSchema>;

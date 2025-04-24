@@ -1,10 +1,7 @@
-import { db } from "@/server/db";
 import { saveToChatsTable } from "@/server/db/chats";
 import { saveToMessagesTable } from "@/server/db/messages";
-import { chatMessages, chats } from "@/server/db/schema";
 import { deepseek } from "@ai-sdk/deepseek";
 import { appendResponseMessages, streamText } from "ai";
-import { eq } from "drizzle-orm";
 
 export const maxDuration = 30;
 
