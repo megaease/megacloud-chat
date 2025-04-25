@@ -86,21 +86,19 @@ export function Chat() {
 
 	return (
 		<div className="mx-auto flex h-full w-full max-w-3xl flex-col px-4 sm:px-6 py-4">
-			<div className="h-full">
+			<ScrollArea className="h-full flex-1 overflow-y-auto px-4 sm:px-6">
 				{messages.length === 0 ? (
 					<div className="flex h-full items-center justify-center">
 						<p className="text-muted-foreground">Start a conversation</p>
 					</div>
 				) : (
-					<ScrollArea className="h-full flex-1 overflow-y-auto">
-						<div className="mb-4 h-full space-y-4">
-							{messages.map((message) => (
-								<ChatMessage key={message.id} message={message} />
-							))}
-						</div>
-					</ScrollArea>
+					<div className="mb-4 h-full space-y-4">
+						{messages.map((message) => (
+							<ChatMessage key={message.id} message={message} />
+						))}
+					</div>
 				)}
-			</div>
+			</ScrollArea>
 
 			<div className="mx-auto flex w-full flex-col px-4 sm:px-6 md:py-4 ">
 				{/* Chat input */}

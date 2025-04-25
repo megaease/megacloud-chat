@@ -14,13 +14,13 @@ export default function Page({ children }: React.PropsWithChildren) {
 		<QueryClientProvider client={queryClient}>
 			<SidebarProvider>
 				<AppSidebar />
-				<SidebarInset>
-					<header className="relative flex h-16 shrink-0 items-center gap-2 border-b px-4">
+				<SidebarInset className="flex h-dvh flex-col">
+					<header className="relative flex shrink-0 items-center gap-2 border-b px-4">
 						<div className="absolute top-4 left-4 z-50">
 							<SidebarTrigger />
 						</div>
 					</header>
-					<div className="h-full">{children}</div>
+					<div className="flex-1 overflow-auto">{children}</div>
 				</SidebarInset>
 			</SidebarProvider>
 		</QueryClientProvider>
