@@ -85,7 +85,7 @@ export function Chat() {
 	const isLoading = status === "streaming" || status === "submitted";
 
 	return (
-		<div className="mx-auto flex h-full w-full max-w-3xl flex-col px-4 sm:px-6 md:py-4">
+		<div className="mx-auto flex h-full w-full max-w-3xl flex-col px-4 sm:px-6 py-4">
 			<div className="h-full">
 				{messages.length === 0 ? (
 					<div className="flex h-full items-center justify-center">
