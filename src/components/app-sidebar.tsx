@@ -13,12 +13,13 @@ import {
 } from "@/components/ui/sidebar";
 import type { Chat } from "@/server/db/schema";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CirclePlus, Trash2 } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Separator } from "./ui/separator";
+import { cn } from "@/lib/utils";
 
 const userId = "user-id"; // Replace with actual user ID
 
@@ -107,6 +108,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						title="New Chat"
 						className="w-full"
 					>
+						<Plus className="mr-2 h-4 w-4" />
 						New Chat
 					</Button>
 				</div>
@@ -135,11 +137,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 								chatData.map((item) => {
 									const isActive = pathname === `/chat/${item.id}`;
 									return (
-										<SidebarMenuItem key={item.id}>
+										<SidebarMenuItem
+											key={item.id}
+											className="group-item relative overflow-hidden"
+										>
+											{" "}
+											{/* Add overflow-hidden */}
 											<SidebarMenuButton
 												asChild
 												isActive={isActive}
-												className="flex-1 truncate"
+												className="flex-1 truncate group/item"
 											>
 												<Link
 													href={`/chat/${item.id}`}
@@ -149,11 +156,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 													<Button
 														variant="ghost"
 														size="icon"
-														className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+														className={cn(
+															"absolute right-1 top-1/2 h-6 w-6", // Base positioning
+															"opacity-0 group-hover/item:opacity-100", // Fade in/out on hover
+															"translate-x-full group-hover/item:translate-x-0", // Slide in from right on hover
+															"transform transition-all duration-200 ease-in-out -translate-y-1/2", // Smooth transition for opacity and transform
+														)}
 														onClick={(e) => handleDeleteChat(item.id, e)}
 														title="Delete chat"
 													>
-														<Trash2 className="h-4 w-4" />
+														<X className="h-4 w-4" />
 													</Button>
 												</Link>
 											</SidebarMenuButton>
