@@ -136,24 +136,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 									const isActive = pathname === `/chat/${item.id}`;
 									return (
 										<SidebarMenuItem key={item.id}>
-											<div className="flex w-full items-center justify-between group">
-												<SidebarMenuButton
-													asChild
-													isActive={isActive}
-													className="flex-1 truncate"
+											<SidebarMenuButton
+												asChild
+												isActive={isActive}
+												className="flex-1 truncate"
+											>
+												<Link
+													href={`/chat/${item.id}`}
+													className="flex items-center justify-between w-full"
 												>
-													<Link href={`/chat/${item.id}`}>{item.title}</Link>
-												</SidebarMenuButton>
-												<Button
-													variant="ghost"
-													size="icon"
-													className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-													onClick={(e) => handleDeleteChat(item.id, e)}
-													title="Delete chat"
-												>
-													<Trash2 className="h-4 w-4" />
-												</Button>
-											</div>
+													{item.title}
+													<Button
+														variant="ghost"
+														size="icon"
+														className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+														onClick={(e) => handleDeleteChat(item.id, e)}
+														title="Delete chat"
+													>
+														<Trash2 className="h-4 w-4" />
+													</Button>
+												</Link>
+											</SidebarMenuButton>
 										</SidebarMenuItem>
 									);
 								})

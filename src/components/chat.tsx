@@ -7,35 +7,83 @@ import { ChatMessage } from "./chat-message";
 import { ScrollArea } from "./ui/scroll-area";
 import { Textarea } from "./ui/textarea";
 import { nanoid } from "nanoid";
-import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { use, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams, useRouter } from "next/navigation";
+
+function useChatMessages(chatId: string | undefined) {
+	const query = useQuery({
+		queryKey: ["chats", "user-id", chatId], // Replace with actual user ID
+		queryFn: async () => {
+			const res = await fetch(`/api/chats/${chatId}`, {
+				headers: {
+					userId: "user-id", // Replace with actual user ID
+				},
+			});
+			const data = await res.json();
+			return data.chat.messages;
+		},
+		staleTime: 1000 * 60 * 2,
+		enabled: !!chatId,
+	});
+	return query;
+}
 
 export function Chat() {
-	const [chatId, setChatId] = useState<string | null>(null);
+	const { id } = useParams();
+	const chatId = id as string | undefined;
+	const router = useRouter();
 	const queryClient = useQueryClient();
+	const [randomChatId, setRandomChatId] = useState<string | undefined>(
+		undefined,
+	);
 	useEffect(() => {
 		if (!chatId) {
 			const newChatId = nanoid(16);
-			setChatId(newChatId);
+			setRandomChatId(newChatId);
 		}
 	}, [chatId]);
 
+	const chatMessagesQuery = useChatMessages(chatId);
+	const {
+		data: chatMessages = [],
+		isLoading: isLoadingMessage,
+		isError,
+	} = chatMessagesQuery;
+	console.log(" id chatMessages", chatId, randomChatId);
 	const { messages, input, handleInputChange, handleSubmit, status } = useChat({
-		id: chatId || nanoid(), // Unique ID for the chat session
+		id: chatId || randomChatId, // Unique ID for the chat session
 		maxSteps: 10,
 		body: {
-			chatId: chatId,
+			chatId: chatId || randomChatId,
 			userId: "user-id", // Replace with actual user ID
 		},
+		initialMessages: chatMessages,
 		onFinish: (message) => {
 			console.log("Message finished:", message);
 			queryClient.invalidateQueries({
 				queryKey: ["chats", "user-id"], // Replace with actual user ID
 			});
+			if (!chatId) {
+				router.push(`/chat/${randomChatId}`);
+			}
+		},
+		onError: (error) => {
+			console.error("Error in chat:", error);
 		},
 	});
+
 	console.log("messages", messages, status);
+
+	const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		if (!input.trim()) return;
+
+		await handleSubmit(e);
+	};
+
 	const isLoading = status === "streaming" || status === "submitted";
+
 	return (
 		<div className="mx-auto flex h-full w-full max-w-3xl flex-col px-4 sm:px-6 md:py-4">
 			<div className="h-full">
@@ -53,12 +101,11 @@ export function Chat() {
 					</ScrollArea>
 				)}
 			</div>
-			<div className="mx-auto flex w-full flex-col px-4 sm:px-6 md:py-4 ">
-				{/* Chat messages */}
 
+			<div className="mx-auto flex w-full flex-col px-4 sm:px-6 md:py-4 ">
 				{/* Chat input */}
 				<div className="border-t p-4 text-center">
-					<form onSubmit={handleSubmit} className="relative">
+					<form onSubmit={handleFormSubmit} className="relative">
 						<Textarea
 							value={input}
 							onChange={handleInputChange}
