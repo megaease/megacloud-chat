@@ -9,7 +9,6 @@ export async function GET(
 ) {
 	try {
 		const userId = request.headers.get("userId");
-		const { id } = params;
 
 		if (!userId) {
 			return NextResponse.json(
@@ -17,6 +16,8 @@ export async function GET(
 				{ status: 400 },
 			);
 		}
+
+		const { id } = await params;
 
 		if (!id) {
 			return NextResponse.json(
