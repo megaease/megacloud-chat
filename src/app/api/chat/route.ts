@@ -8,7 +8,6 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
 	console.log("POST /api/chat");
 	const { messages, userId, chatId } = await req.json();
-	console.log("messages", userId, chatId);
 
 	if (!messages) {
 		return new Response("Invalid request", { status: 400 });
