@@ -141,8 +141,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 											key={item.id}
 											className="group-item relative overflow-hidden"
 										>
-											{" "}
-											{/* Add overflow-hidden */}
 											<SidebarMenuButton
 												asChild
 												isActive={isActive}
@@ -150,9 +148,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 											>
 												<Link
 													href={`/chat/${item.id}`}
-													className="flex items-center justify-between w-full"
+													className="flex items-center justify-between w-full min-w-0 pr-6"
 												>
-													{item.title}
+													<span className="truncate">{item.title}</span>
 													<Button
 														variant="ghost"
 														size="icon"
