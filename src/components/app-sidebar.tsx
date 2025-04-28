@@ -2,6 +2,7 @@
 import {
 	Sidebar,
 	SidebarContent,
+	SidebarFooter,
 	SidebarGroup,
 	SidebarGroupContent,
 	SidebarGroupLabel,
@@ -13,13 +14,15 @@ import {
 } from "@/components/ui/sidebar";
 import type { Chat } from "@/server/db/schema";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, X } from "lucide-react";
+import { Plus, Server, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Separator } from "./ui/separator";
 import { cn } from "@/lib/utils";
+import { NavUser } from "./nav-user";
+import { MCPDrawer } from "./features/mcp/mcp-drawer";
 
 const userId = "user-id"; // Replace with actual user ID
 
@@ -175,6 +178,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
+			<SidebarFooter>
+				<MCPDrawer />
+				<NavUser
+					user={{ name: "John Doe", email: "cloud@megaease.com", avatar: "" }}
+				/>
+			</SidebarFooter>
 			<SidebarRail />
 		</Sidebar>
 	);
