@@ -40,6 +40,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 // Mock data for demonstration
 const mockServers = [
@@ -91,6 +92,13 @@ export function ServersList() {
 						}
 					: server,
 			),
+		);
+		toast.success(
+			`Server ${id} is now ${
+				servers.find((server) => server.id === id)?.status === "online"
+					? "offline"
+					: "online"
+			}`,
 		);
 	};
 

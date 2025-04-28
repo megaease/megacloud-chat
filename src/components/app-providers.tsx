@@ -7,6 +7,7 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/sonner";
 
 const queryClient = new QueryClient();
 export default function Page({ children }: React.PropsWithChildren) {
@@ -23,6 +24,7 @@ export default function Page({ children }: React.PropsWithChildren) {
 					<div className="flex-1 overflow-auto">{children}</div>
 				</SidebarInset>
 			</SidebarProvider>
+			<Toaster richColors position="top-right" />
 		</QueryClientProvider>
 	);
 }
