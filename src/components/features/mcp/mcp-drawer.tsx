@@ -28,16 +28,18 @@ export function MCPDrawer() {
 	return (
 		<Sheet>
 			<SheetTrigger asChild>
-				<Button
-					variant={"outline"}
-					className="relative"
-					aria-label="MCP Settings"
-					title="MCP Servers"
-				>
-					<Server className="mr-2 h-4 w-4" />
-					<span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-green-500" />
-					MCP Servers
-				</Button>
+				<div className="px-4 py-2">
+					<Button
+						variant={"outline"}
+						className="relative w-full"
+						aria-label="MCP Settings"
+						title="MCP Servers"
+					>
+						<Server className="mr-2 h-4 w-4" />
+						<span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-green-500" />
+						MCP Servers
+					</Button>
+				</div>
 			</SheetTrigger>
 			<SheetContent className="p-0 overflow-hidden max-h-dvh md:max-w-md lg:max-w-lg sm:max-w-sm">
 				<div className="flex flex-col h-full overflow-hidden">

@@ -224,7 +224,13 @@ export function ServersList() {
 								<p className="text-sm font-medium text-gray-500">
 									Connection URL/Command
 								</p>
-								<p className="mt-1 text-sm font-mono bg-slate-50 p-2 rounded border overflow-x-auto">
+								<p
+									className="mt-1 text-sm font-mono bg-slate-50 p-2 rounded border overflow-x-auto 
+									dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700
+									text-slate-900"
+									title={server.url}
+									aria-label={server.url}
+								>
 									{server.url}
 								</p>
 							</div>
