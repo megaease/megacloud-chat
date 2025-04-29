@@ -1,0 +1,22 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Chat bubble with rounded robot head -->
+  <path
+    d="M50 40 h100 a20 20 0 0 1 20 20 v60 a20 20 0 0 1 -20 20 h-30 l-20 20 -20 -20 h-30 a20 20 0 0 1 -20 -20 v-60 a20 20 0 0 1 20 -20 z"
+    fill="#00bcd4" stroke="#004d60" stroke-width="3" />
+
+  <!-- Robot eyes -->
+  <circle cx="80" cy="75" r="8" fill="white" />
+  <circle cx="120" cy="75" r="8" fill="white" />
+
+  <!-- Antenna -->
+  <line x1="100" y1="25" x2="100" y2="40" stroke="#004d60" stroke-width="3" />
+  <circle cx="100" cy="20" r="5" fill="#00bcd4" stroke="#004d60" stroke-width="2" />
+
+  <!-- AI text (larger) -->
+  <text x="100" y="120" font-family="Verdana" font-size="32" fill="#004d60" text-anchor="middle"
+    font-weight="bold">AI</text>
+
+  <!-- MCP Label (larger) -->
+  <!-- <text x="100" y="170" font-family="Verdana" font-size="32" fill="#002933" text-anchor="middle"
+    font-weight="bold">MCP</text> -->
+</svg>

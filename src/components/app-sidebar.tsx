@@ -23,7 +23,8 @@ import { Separator } from "./ui/separator";
 import { cn } from "@/lib/utils";
 import { NavUser } from "./nav-user";
 import { MCPDrawer } from "./features/mcp/mcp-drawer";
-
+import logo from "@/assets/logo.svg";
+import Image from "next/image";
 const userId = "user-id"; // Replace with actual user ID
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -101,7 +102,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	return (
 		<Sidebar {...props}>
 			<SidebarHeader>
-				<div className="flex items-center justify-between px-4 py-2">
+				<div className="flex items-center px-4 py-2 gap-1">
+					<Image src={logo} alt="alt" width={36} height={36} />
 					<h1 className="font-bold text-lg">Megacloud Chat</h1>
 				</div>
 				<Separator className="my-2" />

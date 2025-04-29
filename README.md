@@ -1,29 +1,65 @@
-# Create T3 App
+# Megacloud MCP Client
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+这是一个用于与 Megacloud 服务交互的前端应用程序，提供了聊天界面和 MCP 服务器管理功能。
 
-## What's next? How do I make an app with this?
+## ✨ 功能特性
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+* **智能聊天界面：** 与 AI 模型进行交互式对话。
+* **聊天历史：** 保存和浏览过去的对话。
+* **MCP 服务器管理：** (根据 `mcp-drawer.tsx` 推断，请补充具体功能) 添加、查看或管理 MCP 服务器。
+* **响应式设计：** 适应不同屏幕尺寸。
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## 🚀 技术栈
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+* **框架：** [Next.js](https://nextjs.org/) (App Router)
+* **语言：** [TypeScript](https://www.typescriptlang.org/)
+* **UI:** [React](https://reactjs.org/), [Tailwind CSS](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/)
+* **状态管理/数据获取：** [TanStack Query](https://tanstack.com/query/latest)
+* **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
+* **AI 集成：** [Vercel AI SDK](https://sdk.vercel.ai/), [DeepSeek](https://www.deepseek.com/) (或其他模型)
+* **数据库：** PostgreSQL
 
-## Learn More
+## 🛠️ 本地开发
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+1. **克隆仓库：**
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+    ```bash
+    git clone <your-repository-url>
+    cd megacloud-mcp-client
+    ```
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+2. **安装依赖：**
 
-## How do I deploy this?
+    ```bash
+    pnpm install
+    ```
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+3. **设置环境变量：**
+    复制 `.env.example` (如果存在) 为 `.env` 文件，并填入必要的环境变量，例如：
+    * 数据库连接 URL (`DATABASE_URL`)
+    * AI 服务 API 密钥 (例如 `DEEPSEEK_API_KEY`)
+    * (其他必要的环境变量)
+
+4. **数据库迁移 (使用 Drizzle):**
+
+    ```bash
+   pnpm db:push
+    ```
+
+5. **启动开发服务器：**
+
+    ```bash
+    pnpm dev
+    ```
+
+    在浏览器中打开 `http://localhost:3000`。
+
+## 部署
+
+有关如何部署此应用程序，请参阅 T3 Stack 的部署指南：
+
+* [Vercel](https://create.t3.gg/en/deployment/vercel)
+* [Netlify](https://create.t3.gg/en/deployment/netlify)
+* [Docker](https://create.t3.gg/en/deployment/docker)
+
+---

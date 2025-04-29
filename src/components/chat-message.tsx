@@ -1,7 +1,7 @@
 import type { Message } from "ai";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
+import logo from "@/assets/logo.svg";
 interface ChatMessageProps {
 	message: Message;
 }
@@ -15,9 +15,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
 				isUser ? "flex-row-reverse" : "",
 			)}
 		>
-			<Avatar className={cn("mt-0.5", isUser ? "bg-primary" : "bg-muted")}>
-				<AvatarFallback>{isUser ? "U" : "AI"}</AvatarFallback>
-				{/* {!isUser && <AvatarImage src="/ai-avatar.png" alt="AI" />} */}
+			<Avatar className={cn("mt-0.5")}>
+				{/* {!isUser && <AvatarImage src={logo.src} alt="AI" />} */}
+				<AvatarFallback
+					className={cn(
+						"mt-0.5",
+						isUser ? "bg-primary text-primary-foreground" : "bg-muted",
+					)}
+				>
+					{isUser ? "U" : "AI"}
+				</AvatarFallback>
 			</Avatar>
 			<div
 				className={cn(
