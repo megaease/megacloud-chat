@@ -1,5 +1,5 @@
 "use client";
-import { Chat } from "@/components/features/chat/chat";
+import { Chat } from "@/components/chat/chat";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
 	SidebarInset,

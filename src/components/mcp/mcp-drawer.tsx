@@ -11,8 +11,9 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ServersList } from "./ServersList";
+import { ServerList } from "./server-list";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AddServerDialog } from "./add-server-dialog";
 // import { ServersList } from "@/components/mcp/servers-list";
 // import { AddServerDialog } from "@/components/mcp/add-server-dialog";
 
@@ -66,17 +67,18 @@ export function MCPDrawer() {
 
 					<div className="flex-1 overflow-auto ">
 						<ScrollArea className="h-full overflow-auto p-4">
-							<ServersList />
+							<ServerList />
 						</ScrollArea>
 					</div>
 				</div>
 			</SheetContent>
-
-			{/* <AddServerDialog
-				open={isAddServerOpen}
-				onOpenChange={setIsAddServerOpen}
-				onSuccess={handleAddServerSuccess}
-			/> */}
+			<div className="max-h-[80%]">
+				<AddServerDialog
+					open={isAddServerOpen}
+					onOpenChange={setIsAddServerOpen}
+					onSuccess={handleAddServerSuccess}
+				/>
+			</div>
 		</Sheet>
 	);
 }

@@ -107,9 +107,9 @@ export const insertMcpServerSchema = createInsertSchema(mcpServers, {
 	name: z.string().min(2, "Server name must be at least 2 characters"),
 	type: z.nativeEnum(ServerTypeEnum),
 	connectionType: z.nativeEnum(ConnectionTypeEnum),
-	url: z.string().url("Please enter a valid URL").optional().nullable(),
-	command: z.string().optional().nullable(),
-	description: z.string().optional().nullable(),
+	url: z.string().url("Please enter a valid URL").optional(),
+	command: z.string().optional(),
+	description: z.string().optional(),
 }).refine(
 	(data) => {
 		if (data.connectionType === ConnectionTypeEnum.SSE) {

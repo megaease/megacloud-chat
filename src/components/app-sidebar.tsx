@@ -22,7 +22,7 @@ import Link from "next/link";
 import { Separator } from "./ui/separator";
 import { cn } from "@/lib/utils";
 import { NavUser } from "./nav-user";
-import { MCPDrawer } from "./features/mcp/mcp-drawer";
+import { MCPDrawer } from "./mcp/mcp-drawer";
 import logo from "@/assets/logo.svg";
 import Image from "next/image";
 const userId = "user-id"; // Replace with actual user ID

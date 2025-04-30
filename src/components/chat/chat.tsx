@@ -3,9 +3,9 @@
 import { useChat } from "@ai-sdk/react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Send } from "lucide-react";
-import { ChatMessage } from "../../chat-message";
-import { ScrollArea } from "../../ui/scroll-area";
-import { Textarea } from "../../ui/textarea";
+import { ChatMessage } from "../chat-message";
+import { ScrollArea } from "../ui/scroll-area";
+import { Textarea } from "../ui/textarea";
 import { nanoid } from "nanoid";
 import { use, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
