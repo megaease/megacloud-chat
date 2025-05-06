@@ -14,16 +14,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ServerList } from "./server-list";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AddServerDialog } from "./add-server-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 // import { ServersList } from "@/components/mcp/servers-list";
 // import { AddServerDialog } from "@/components/mcp/add-server-dialog";
 
 export function MCPDrawer() {
-	const [activeTab, setActiveTab] = useState("servers");
 	const [isAddServerOpen, setIsAddServerOpen] = useState(false);
-
+	const queryClient = useQueryClient();
 	const handleAddServerSuccess = () => {
 		setIsAddServerOpen(false);
-		setActiveTab("servers");
+		queryClient.invalidateQueries({
+			queryKey: ["getMcpServers"],
+		});
 	};
 
 	return (
@@ -67,7 +69,7 @@ export function MCPDrawer() {
 
 					<div className="flex-1 overflow-auto ">
 						<ScrollArea className="h-full overflow-auto p-4">
-							<ServerList />
+							<ServerList onAddServer={() => setIsAddServerOpen(true)} />
 						</ScrollArea>
 					</div>
 				</div>

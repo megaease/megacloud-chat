@@ -56,7 +56,6 @@ export function AddServerDialog({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showConnectionTest, setShowConnectionTest] = useState(false);
 
-	// 创建表单，适配 schema
 	const form = useForm<NewMcpServer>({
 		resolver: zodResolver(insertMcpServerSchema),
 		defaultValues: {

@@ -107,7 +107,22 @@ export function ServerList({ onAddServer }: ServersListProps) {
 	};
 
 	// Function to delete a server
-	const handleDeleteServer = async (id: number) => {};
+	const handleDeleteServer = async (id: number) => {
+		if (!id) return;
+		try {
+			const result = await deleteMcpServer(id);
+			if (result.success) {
+				toast.success("服务器删除成功");
+			} else {
+				toast.error("删除失败，请稍后重试");
+			}
+		} catch (error) {
+			toast.error("删除失败，请稍后重试");
+		} finally {
+			setServerToDelete(null);
+			refetch();
+		}
+	};
 
 	// Function to handle edit success
 	const handleEditSuccess = (id: number, updatedData: any) => {
@@ -220,7 +235,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 								</div>
 								<div className="mt-3 text-sm">
 									<span className="text-muted-foreground">连接详情：</span>
-									<code className="mt-1 block text-xs bg-slate-50 p-2 rounded border overflow-x-auto">
+									<code className="mt-1 block text-xs bg-slate-50 p-2 rounded border overflow-x-auto dark:bg-slate-800 dark:text-slate-200">
 										{server.type === TypeEnum.SSE ? server.url : server.command}
 									</code>
 								</div>
