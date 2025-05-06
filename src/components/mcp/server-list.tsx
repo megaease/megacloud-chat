@@ -62,7 +62,11 @@ export function ServerList({ onAddServer }: ServersListProps) {
 	);
 
 	// Fetch servers on mount
-	const { data: serversResult, isLoading } = useQuery({
+	const {
+		data: serversResult,
+		isLoading,
+		refetch,
+	} = useQuery({
 		queryKey: ["getMcpServers"],
 		queryFn: async () => {
 			const servers = await getMcpServers();
@@ -79,6 +83,27 @@ export function ServerList({ onAddServer }: ServersListProps) {
 	) => {
 		// Set loading state for this server
 		setLoadingStates((prev) => ({ ...prev, [id]: true }));
+		try {
+			const newStatus =
+				currentStatus === ServerStatusEnum.ONLINE
+					? ServerStatusEnum.OFFLINE
+					: ServerStatusEnum.ONLINE;
+
+			// Update server status
+			const result = await updateMcpServerStatus(id, newStatus);
+			if (result.success) {
+				toast.success(
+					`服务器 ${newStatus === ServerStatusEnum.ONLINE ? "启用" : "禁用"} 成功`,
+				);
+			} else {
+				toast.error("操作失败，请稍后重试");
+			}
+		} catch (error) {
+			toast.error("操作失败，请稍后重试");
+		} finally {
+			setLoadingStates((prev) => ({ ...prev, [id]: false }));
+			refetch();
+		}
 	};
 
 	// Function to delete a server
@@ -149,12 +174,12 @@ export function ServerList({ onAddServer }: ServersListProps) {
 											{server.status === ServerStatusEnum.ONLINE ? (
 												<>
 													<PowerOff className="mr-2 h-4 w-4" />
-													<span>断开连接</span>
+													<span>禁用</span>
 												</>
 											) : (
 												<>
 													<Power className="mr-2 h-4 w-4" />
-													<span>连接</span>
+													<span>启用</span>
 												</>
 											)}
 										</DropdownMenuItem>
@@ -183,9 +208,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 							<div className="space-y-2">
 								<div className="flex justify-between text-sm">
 									<span className="text-muted-foreground">连接方式：</span>
-									<ConnectionInfo
-										connectionType={server.connectionType as ConnectionType}
-									/>
+									<ConnectionInfo connectionType={server.type as Type} />
 								</div>
 								<div className="flex justify-between text-sm">
 									<span className="text-muted-foreground">最后连接：</span>
@@ -224,12 +247,12 @@ export function ServerList({ onAddServer }: ServersListProps) {
 										) : server.status === ServerStatusEnum.ONLINE ? (
 											<>
 												<PowerOff className="mr-2 h-3 w-3" />
-												断开连接
+												禁用
 											</>
 										) : (
 											<>
 												<Power className="mr-2 h-3 w-3" />
-												连接
+												启用
 											</>
 										)}
 									</Button>

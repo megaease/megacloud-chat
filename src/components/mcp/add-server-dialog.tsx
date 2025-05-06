@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { ScrollArea } from "../ui/scroll-area";
 import { MCPConnectionTest } from "@/components/mcp/mcp-connection-test";
 import { KeyValuePairInput } from "./key-value-pair-input";
+import { createMcpServer } from "@/lib/mcp-server-action";
 
 interface AddServerDialogProps {
 	open: boolean;
@@ -104,14 +105,17 @@ export function AddServerDialog({
 	async function onSubmit(data: NewMcpServer) {
 		setIsSubmitting(true);
 		try {
-			// 表单已经通过 zodResolver 验证，值应该已经是正确的格式
 			console.log("Submitting data:", data);
-			// 实际提交逻辑：
-			// await createMcpServer(data);
-			// toast.success("服务器添加成功！");
-			// onSuccess?.();
-			// handleOpenChange(false);
-			toast.info("提交功能尚未实现。");
+
+			const result = await createMcpServer(data);
+			if (result.success) {
+				toast.success("服务器添加成功！");
+				if (onSuccess) {
+					onSuccess();
+				}
+			} else {
+				toast.error("添加服务器失败，请检查详细信息。");
+			}
 		} catch (error) {
 			console.error("添加服务器失败：", error);
 			toast.error("添加服务器失败，请检查详细信息。");
