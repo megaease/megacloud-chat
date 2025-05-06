@@ -100,16 +100,9 @@ export const insertMcpServerSchema = createInsertSchema(mcpServers, {
 	url: z.string().url("Please enter a valid URL").optional(),
 	command: z.string().optional(),
 	description: z.string().optional(),
-	headers: z
-		.object({
-			"Content-Type": z.string().optional(),
-			Authorization: z.string().optional(),
-			"User-Agent": z.string().optional(),
-		})
-		.optional()
-		.default({}),
-	args: z.object({}).optional().default({}),
-	env: z.object({}).optional(),
+	headers: z.record(z.string(), z.string()),
+	args: z.record(z.string(), z.string()),
+	env: z.record(z.string(), z.string()),
 }).refine(
 	(data) => {
 		if (data.type === TypeEnum.SSE) {

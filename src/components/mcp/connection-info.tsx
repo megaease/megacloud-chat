@@ -1,4 +1,7 @@
-import { type ConnectionType, ConnectionTypeEnum } from "@/server/db/schema";
+import {
+	type Type as ConnectionType,
+	TypeEnum as ConnectionTypeEnum,
+} from "@/server/db/schema";
 import { Badge } from "@/components/ui/badge";
 
 interface ConnectionInfoProps {

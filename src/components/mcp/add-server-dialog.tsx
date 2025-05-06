@@ -15,16 +15,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
 	Dialog,
 	DialogContent,
@@ -34,12 +26,12 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import {
-	ConnectionTypeEnum,
+	TypeEnum,
 	type NewMcpServer,
 	type McpServer,
 	insertMcpServerSchema,
 	ServerStatusEnum,
-	type ConnectionType,
+	type Type,
 } from "@/server/db/schema";
 // import {
 // 	createMcpServer,
@@ -47,6 +39,7 @@ import {
 import { toast } from "sonner";
 import { ScrollArea } from "../ui/scroll-area";
 import { MCPConnectionTest } from "@/components/mcp/mcp-connection-test";
+import { KeyValuePairInput } from "./key-value-pair-input";
 
 interface AddServerDialogProps {
 	open: boolean;
@@ -62,27 +55,34 @@ export function AddServerDialog({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showConnectionTest, setShowConnectionTest] = useState(false);
 
+	// 创建表单，适配 schema
 	const form = useForm<NewMcpServer>({
 		resolver: zodResolver(insertMcpServerSchema),
 		defaultValues: {
 			name: "",
-			connectionType: ConnectionTypeEnum.SSE,
+			type: TypeEnum.SSE,
 			url: "",
 			command: "",
 			description: "",
+			headers: {}, // 空对象而非字符串
+			args: {}, // 空对象而非字符串
+			env: {}, // 空对象而非字符串
 		},
 	});
 
-	const connectionType = form.watch("connectionType");
+	const type = form.watch("type");
 	const formValues = form.watch();
 
 	const resetForm = () => {
 		form.reset({
 			name: "",
-			connectionType: ConnectionTypeEnum.SSE,
+			type: TypeEnum.SSE,
 			url: "",
 			command: "",
 			description: "",
+			headers: {}, // 空对象而非字符串
+			args: {}, // 空对象而非字符串
+			env: {}, // 空对象而非字符串
 		});
 		setShowConnectionTest(false);
 	};
@@ -103,13 +103,28 @@ export function AddServerDialog({
 
 	async function onSubmit(data: NewMcpServer) {
 		setIsSubmitting(true);
+		try {
+			// 表单已经通过 zodResolver 验证，值应该已经是正确的格式
+			console.log("Submitting data:", data);
+			// 实际提交逻辑：
+			// await createMcpServer(data);
+			// toast.success("服务器添加成功！");
+			// onSuccess?.();
+			// handleOpenChange(false);
+			toast.info("提交功能尚未实现。");
+		} catch (error) {
+			console.error("添加服务器失败：", error);
+			toast.error("添加服务器失败，请检查详细信息。");
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
 
-	// Create a temporary server object for connection testing
+	// 创建用于测试连接的临时服务器对象
 	const tempServer: McpServer = {
-		id: -1, // Temporary ID
+		id: -1,
 		name: formValues.name,
-		connectionType: formValues.connectionType as ConnectionType,
+		type: formValues.type as Type,
 		url: formValues.url || null,
 		command: formValues.command || null,
 		status: ServerStatusEnum.OFFLINE,
@@ -117,6 +132,9 @@ export function AddServerDialog({
 		createdAt: new Date(),
 		updatedAt: new Date(),
 		lastConnected: null,
+		headers: formValues.headers || {},
+		args: formValues.args || {},
+		env: formValues.env || {},
 	};
 
 	return (
@@ -134,6 +152,7 @@ export function AddServerDialog({
 							onSubmit={form.handleSubmit(onSubmit)}
 							className="space-y-5 py-4"
 						>
+							{/* 服务器名称字段 */}
 							<FormField
 								control={form.control}
 								name="name"
@@ -151,28 +170,37 @@ export function AddServerDialog({
 								)}
 							/>
 
+							{/* 连接方式选择和条件字段 */}
 							<FormField
 								control={form.control}
-								name="connectionType"
+								name="type"
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>连接方式</FormLabel>
 										<Tabs
-											defaultValue={field.value}
+											value={field.value}
 											className="w-full"
-											onValueChange={field.onChange}
+											onValueChange={(value) => {
+												field.onChange(value);
+												// 切换类型时重置不相关的字段
+												if (value === TypeEnum.SSE) {
+													form.setValue("command", "");
+													form.setValue("args", {});
+												} else if (value === TypeEnum.STDIO) {
+													form.setValue("url", "");
+													form.setValue("headers", {});
+												}
+											}}
 										>
 											<TabsList className="grid w-full grid-cols-2">
-												<TabsTrigger value={ConnectionTypeEnum.SSE}>
-													SSE
-												</TabsTrigger>
-												<TabsTrigger value={ConnectionTypeEnum.STDIO}>
-													STDIO
-												</TabsTrigger>
+												<TabsTrigger value={TypeEnum.SSE}>SSE</TabsTrigger>
+												<TabsTrigger value={TypeEnum.STDIO}>STDIO</TabsTrigger>
 											</TabsList>
+
+											{/* SSE 表单内容 */}
 											<TabsContent
-												value={ConnectionTypeEnum.SSE}
-												className="mt-4"
+												value={TypeEnum.SSE}
+												className="mt-4 space-y-4"
 											>
 												<FormField
 													control={form.control}
@@ -194,10 +222,58 @@ export function AddServerDialog({
 														</FormItem>
 													)}
 												/>
+
+												{/* Headers 键值对输入 */}
+												<FormField
+													control={form.control}
+													name="headers"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Headers</FormLabel>
+															<FormControl>
+																<KeyValuePairInput
+																	pairs={field.value}
+																	onChange={field.onChange}
+																	keyPlaceholder="Header 名称"
+																	valuePlaceholder="Header 值"
+																/>
+															</FormControl>
+															<FormDescription>
+																要发送到 SSE 端点的 HTTP Headers
+															</FormDescription>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+
+												{/* 环境变量键值对输入 */}
+												<FormField
+													control={form.control}
+													name="env"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>环境变量</FormLabel>
+															<FormControl>
+																<KeyValuePairInput
+																	pairs={field.value}
+																	onChange={field.onChange}
+																	keyPlaceholder="变量名"
+																	valuePlaceholder="变量值"
+																/>
+															</FormControl>
+															<FormDescription>
+																与 SSE 连接相关的环境变量
+															</FormDescription>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
 											</TabsContent>
+
+											{/* STDIO 表单内容 */}
 											<TabsContent
-												value={ConnectionTypeEnum.STDIO}
-												className="mt-4"
+												value={TypeEnum.STDIO}
+												className="mt-4 space-y-4"
 											>
 												<FormField
 													control={form.control}
@@ -209,10 +285,57 @@ export function AddServerDialog({
 																<Input
 																	placeholder="npx -y @example/mcp-server"
 																	{...field}
+																	value={field.value || ""}
 																/>
 															</FormControl>
 															<FormDescription>
 																启动 MCP 服务器的命令 (Standard IO)
+															</FormDescription>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+
+												{/* 参数键值对输入 */}
+												<FormField
+													control={form.control}
+													name="args"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>参数</FormLabel>
+															<FormControl>
+																<KeyValuePairInput
+																	pairs={field.value}
+																	onChange={field.onChange}
+																	keyPlaceholder="参数名"
+																	valuePlaceholder="参数值"
+																/>
+															</FormControl>
+															<FormDescription>
+																传递给命令的参数
+															</FormDescription>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+
+												{/* 环境变量键值对输入 */}
+												<FormField
+													control={form.control}
+													name="env"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>环境变量</FormLabel>
+															<FormControl>
+																<KeyValuePairInput
+																	pairs={field.value}
+																	onChange={field.onChange}
+																	keyPlaceholder="变量名"
+																	valuePlaceholder="变量值"
+																/>
+															</FormControl>
+															<FormDescription>
+																为命令设置的环境变量
 															</FormDescription>
 															<FormMessage />
 														</FormItem>
@@ -225,6 +348,7 @@ export function AddServerDialog({
 								)}
 							/>
 
+							{/* 描述字段 */}
 							<FormField
 								control={form.control}
 								name="description"
@@ -236,6 +360,7 @@ export function AddServerDialog({
 												placeholder="关于此 MCP 服务器的简要描述"
 												className="resize-none"
 												{...field}
+												value={field.value || ""}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -243,12 +368,14 @@ export function AddServerDialog({
 								)}
 							/>
 
+							{/* 连接测试 */}
 							{showConnectionTest && (
 								<div className="mt-6">
 									<MCPConnectionTest server={tempServer} />
 								</div>
 							)}
 
+							{/* 底部按钮 */}
 							<DialogFooter className="pt-4">
 								<div className="flex gap-2 w-full justify-between sm:justify-end">
 									<Button
