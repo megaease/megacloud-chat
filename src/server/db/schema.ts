@@ -55,7 +55,10 @@ export const ChatRoleEnum = z.enum(["user", "assistant", "system"]);
 export type ChatRole = z.infer<typeof ChatRoleEnum>;
 export type Chat = z.infer<typeof chatsSchema>;
 
-// / Define the MCP server status enum
+// MCP 服务器相关的类型定义
+// =========================================
+
+// 服务器状态枚举
 export const ServerStatusEnum = {
 	ONLINE: "online",
 	OFFLINE: "offline",
@@ -66,15 +69,15 @@ export const ServerStatusEnum = {
 export type ServerStatus =
 	(typeof ServerStatusEnum)[keyof typeof ServerStatusEnum];
 
-// Define the MCP server connection type enum - Updated to SSE and STDIO
+// 服务器连接类型枚举
 export const TypeEnum = {
-	SSE: "sse",
-	STDIO: "stdio",
+	SSE: "sse", // Server-Sent Events 连接
+	STDIO: "stdio", // 标准输入/输出连接
 } as const;
 
 export type Type = (typeof TypeEnum)[keyof typeof TypeEnum];
 
-// Define the MCP servers table schema
+// 定义 MCP 服务器数据表结构
 export const mcpServers = createTable("mcp_servers", {
 	id: serial("id").primaryKey(),
 	name: varchar("name", { length: 255 }).notNull(),
@@ -89,39 +92,62 @@ export const mcpServers = createTable("mcp_servers", {
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 	headers: json("headers").$type<Record<string, string>>().default({}),
-	args: json("args").$type<Record<string, string>>().default({}),
+	args: json("args").$type<string[]>().default([]),
 	env: json("env").$type<Record<string, string>>().default({}),
 });
 
-// Define Zod schemas for validation
-export const insertMcpServerSchema = createInsertSchema(mcpServers, {
-	name: z.string().min(2, "Server name must be at least 2 characters"),
-	type: z.nativeEnum(TypeEnum),
-	url: z.string().url("Please enter a valid URL").optional(),
-	command: z.string().optional(),
+// Base 类型定义 - 所有服务器类型共享的属性
+const baseServerSchema = {
+	name: z.string().min(2, "服务器名称至少需要 2 个字符"),
 	description: z.string().optional(),
-	headers: z.record(z.string(), z.string()),
-	args: z.record(z.string(), z.string()),
-	env: z.record(z.string(), z.string()),
-}).refine(
-	(data) => {
-		if (data.type === TypeEnum.SSE) {
-			return !!data.url;
-		}
-		if (data.type === TypeEnum.STDIO) {
-			return !!data.command;
-		}
-		return false;
-	},
-	{
-		message: "URL or command is required based on type",
-		path: ["url"],
-	},
-);
+};
 
+// SSE 类型服务器的专属属性
+const sseSpecificSchema = {
+	url: z.string().url("请输入有效的 URL 地址").min(1, "URL 不能为空"),
+	headers: z.record(z.string(), z.string()).default({}),
+};
+
+// STDIO 类型服务器的专属属性
+const stdioSpecificSchema = {
+	command: z.string().min(1, "命令不能为空"),
+	args: z.array(z.string()).default([]),
+	env: z.record(z.string(), z.string()).default({}),
+};
+
+// 使用 discriminatedUnion 分别定义不同类型服务器的验证规则
+export const insertMcpServerSchema = z.discriminatedUnion("type", [
+	// SSE 类型服务器
+	z.object({
+		type: z.literal(TypeEnum.SSE),
+		...baseServerSchema,
+		...sseSpecificSchema,
+		// 这些字段对 SSE 类型是可选的
+		command: z.string().optional(),
+		args: z.array(z.string()).optional().default([]),
+		env: z.record(z.string(), z.string()).default({}),
+	}),
+
+	// STDIO 类型服务器
+	z.object({
+		type: z.literal(TypeEnum.STDIO),
+		...baseServerSchema,
+		...stdioSpecificSchema,
+		// 这些字段对 STDIO 类型是可选的
+		url: z.string().optional(),
+		headers: z.record(z.string(), z.string()).default({}),
+	}),
+]);
+
+// 数据库记录查询的 schema
 export const selectMcpServerSchema = createSelectSchema(mcpServers);
 
-// Define TypeScript types
+// 导出类型定义
 export type McpServer = z.infer<typeof selectMcpServerSchema>;
 export type NewMcpServer = z.infer<typeof insertMcpServerSchema>;
+export type McpServerSSE = Extract<NewMcpServer, { type: typeof TypeEnum.SSE }>;
+export type McpServerSTDIO = Extract<
+	NewMcpServer,
+	{ type: typeof TypeEnum.STDIO }
+>;
 export type McpServerUpdate = Partial<NewMcpServer>;

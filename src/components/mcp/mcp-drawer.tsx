@@ -24,7 +24,7 @@ export function MCPDrawer() {
 	const handleAddServerSuccess = () => {
 		setIsAddServerOpen(false);
 		queryClient.invalidateQueries({
-			queryKey: ["getMcpServers"],
+			queryKey: ["mcp-servers"],
 		});
 	};
 

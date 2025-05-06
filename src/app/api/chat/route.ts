@@ -1,5 +1,7 @@
+import { getAllTools, processChatWithMcp } from "@/lib/mcp-server-action";
 import { saveToChatsTable } from "@/server/db/chats";
 import { saveToMessagesTable } from "@/server/db/messages";
+import type { McpServer } from "@/server/db/schema";
 import { deepseek } from "@ai-sdk/deepseek";
 import { appendResponseMessages, streamText } from "ai";
 
@@ -15,7 +17,8 @@ export async function POST(req: Request) {
 	if (!userId) {
 		return Response.json({ error: "User ID is required" }, { status: 400 });
 	}
-
+	const allTools = getAllTools();
+	console.log("allTools", allTools);
 	const result = streamText({
 		model: deepseek("deepseek-chat"),
 		messages,

@@ -6,6 +6,7 @@ import {
 	type McpServerUpdate,
 	type ServerStatus,
 	ServerStatusEnum,
+	TypeEnum,
 } from "@/server/db/schema";
 import { db } from "@/server/db";
 import { eq } from "drizzle-orm";
@@ -178,5 +179,139 @@ export async function updateMcpServerStatus(id: number, status: ServerStatus) {
 	} catch (error) {
 		console.error("Failed to update MCP server status:", error);
 		return { success: false, error: "Failed to update MCP server status" };
+	}
+}
+
+export async function getActiveMcpServers() {
+	try {
+		const servers = await db
+			.select()
+			.from(mcpServers)
+			.where(eq(mcpServers.status, ServerStatusEnum.ONLINE));
+
+		return { success: true, data: servers };
+	} catch (error) {
+		console.error("Error fetching active MCP servers:", error);
+		return { success: false, error: "Failed to fetch active MCP servers" };
+	}
+}
+
+export async function getMcpTools(serverId: number) {
+	try {
+		const [server] = await db
+			.select()
+			.from(mcpServers)
+			.where(eq(mcpServers.id, serverId));
+
+		if (!server) {
+			return { success: false, error: "Server not found" };
+		}
+
+		const headers = server.headers || {};
+
+		// 根据连接类型创建 MCP 客户端
+		let client;
+		if (server.type === TypeEnum.SSE && server.url) {
+			client = await createMCPClient({
+				transport: {
+					type: "sse",
+					url: server.url,
+					headers,
+				},
+			});
+		} else if (server.type === TypeEnum.STDIO && server.command) {
+			const args = server.args || [];
+
+			const env = {
+				...process.env,
+				...(server.env || {}),
+			} as Record<string, string>;
+
+			client = await createMCPClient({
+				transport: new Experimental_StdioMCPTransport({
+					command: server.command,
+					args,
+					env,
+					stderr: "inherit",
+				}),
+			});
+		}
+
+		if (!client) {
+			return { success: false, error: "Failed to create MCP client" };
+		}
+
+		// 获取此服务器提供的工具
+		const tools = await client.tools();
+
+		// 为工具名称添加前缀，避免不同服务器之间的冲突
+		const prefixedTools = Object.entries(tools).reduce(
+			(acc: Record<string, unknown>, [toolName, tool]) => {
+				const prefixedName = `${server.name.toLowerCase().replace(/\s+/g, "_")}.${toolName}`;
+				acc[prefixedName] = tool;
+				return acc;
+			},
+			{} as Record<string, unknown>,
+		);
+
+		client.close();
+
+		return {
+			success: true,
+			data: {
+				tools: prefixedTools,
+				serverName: server.name,
+			},
+		};
+	} catch (error) {
+		console.error(`Error getting MCP tools for server ${serverId}:`, error);
+		return { success: false, error: `Failed to get MCP tools: ${error}` };
+	}
+}
+
+export async function processChatWithMcp(activeServerIds: number[]) {
+	try {
+		const toolsPromises = activeServerIds.map((id) => getMcpTools(id));
+		const toolsResults = await Promise.all(toolsPromises);
+
+		const toolToServerMap = new Map();
+
+		// 合并所有工具
+		const allTools = toolsResults.reduce(
+			(acc: Record<string, unknown>, result) => {
+				if (result.success && result.data?.tools) {
+					// 记录每个工具来自哪个服务器
+					for (const toolName of Object.keys(result.data.tools)) {
+						toolToServerMap.set(toolName, result.data.serverName);
+					}
+
+					for (const key in result.data.tools) {
+						acc[key] = result.data.tools[key];
+					}
+					return acc;
+				}
+				return acc;
+			},
+			{},
+		);
+		return allTools;
+	} catch (error) {
+		console.error("Error processing chat with MCP:", error);
+	}
+}
+
+export async function getAllTools() {
+	try {
+		const servers = await getActiveMcpServers();
+		if (!servers.success) {
+			throw new Error(servers.error);
+		}
+
+		const activeServerIds = servers.data
+			? servers.data.map((server) => server.id)
+			: [];
+		return processChatWithMcp(activeServerIds);
+	} catch (error) {
+		console.error("Error getting all tools:", error);
 	}
 }
