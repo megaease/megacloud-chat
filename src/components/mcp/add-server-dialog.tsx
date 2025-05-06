@@ -34,13 +34,11 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import {
-	ServerTypeEnum,
 	ConnectionTypeEnum,
 	type NewMcpServer,
 	type McpServer,
 	insertMcpServerSchema,
 	ServerStatusEnum,
-	type ServerType,
 	type ConnectionType,
 } from "@/server/db/schema";
 // import {
@@ -68,7 +66,6 @@ export function AddServerDialog({
 		resolver: zodResolver(insertMcpServerSchema),
 		defaultValues: {
 			name: "",
-			type: ServerTypeEnum.DATABASE,
 			connectionType: ConnectionTypeEnum.SSE,
 			url: "",
 			command: "",
@@ -82,7 +79,6 @@ export function AddServerDialog({
 	const resetForm = () => {
 		form.reset({
 			name: "",
-			type: ServerTypeEnum.DATABASE,
 			connectionType: ConnectionTypeEnum.SSE,
 			url: "",
 			command: "",
@@ -113,7 +109,6 @@ export function AddServerDialog({
 	const tempServer: McpServer = {
 		id: -1, // Temporary ID
 		name: formValues.name,
-		type: formValues.type as ServerType,
 		connectionType: formValues.connectionType as ConnectionType,
 		url: formValues.url || null,
 		command: formValues.command || null,
@@ -150,42 +145,6 @@ export function AddServerDialog({
 										</FormControl>
 										<FormDescription>
 											用于标识此服务器的友好名称
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="type"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>服务器类型</FormLabel>
-										<Select
-											onValueChange={field.onChange}
-											defaultValue={field.value}
-										>
-											<FormControl>
-												<SelectTrigger>
-													<SelectValue placeholder="选择服务器类型" />
-												</SelectTrigger>
-											</FormControl>
-											<SelectContent>
-												<SelectItem value={ServerTypeEnum.DATABASE}>
-													数据库
-												</SelectItem>
-												<SelectItem value={ServerTypeEnum.API}>API</SelectItem>
-												<SelectItem value={ServerTypeEnum.AI}>
-													AI 模型
-												</SelectItem>
-												<SelectItem value={ServerTypeEnum.CUSTOM}>
-													自定义
-												</SelectItem>
-											</SelectContent>
-										</Select>
-										<FormDescription>
-											此 MCP 服务器提供的服务类型
 										</FormDescription>
 										<FormMessage />
 									</FormItem>

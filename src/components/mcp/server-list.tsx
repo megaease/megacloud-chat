@@ -41,8 +41,8 @@ import {
 } from "@/lib/mcp-server-action";
 import {
 	type McpServer,
-	type ConnectionType,
-	ConnectionTypeEnum,
+	type Type,
+	TypeEnum,
 	ServerStatusEnum,
 	type ServerStatus,
 } from "@/server/db/schema";
@@ -182,10 +182,6 @@ export function ServerList({ onAddServer }: ServersListProps) {
 						<CardContent>
 							<div className="space-y-2">
 								<div className="flex justify-between text-sm">
-									<span className="text-muted-foreground">类型：</span>
-									<Badge variant="outline">{server.type}</Badge>
-								</div>
-								<div className="flex justify-between text-sm">
 									<span className="text-muted-foreground">连接方式：</span>
 									<ConnectionInfo
 										connectionType={server.connectionType as ConnectionType}
@@ -202,9 +198,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 								<div className="mt-3 text-sm">
 									<span className="text-muted-foreground">连接详情：</span>
 									<code className="mt-1 block text-xs bg-slate-50 p-2 rounded border overflow-x-auto">
-										{server.connectionType === ConnectionTypeEnum.SSE
-											? server.url
-											: server.command}
+										{server.type === TypeEnum.SSE ? server.url : server.command}
 									</code>
 								</div>
 								<div className="flex justify-end mt-3">

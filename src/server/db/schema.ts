@@ -66,31 +66,19 @@ export const ServerStatusEnum = {
 export type ServerStatus =
 	(typeof ServerStatusEnum)[keyof typeof ServerStatusEnum];
 
-// Define the MCP server type enum
-export const ServerTypeEnum = {
-	DATABASE: "database",
-	API: "api",
-	AI: "ai",
-	CUSTOM: "custom",
-} as const;
-
-export type ServerType = (typeof ServerTypeEnum)[keyof typeof ServerTypeEnum];
-
 // Define the MCP server connection type enum - Updated to SSE and STDIO
-export const ConnectionTypeEnum = {
+export const TypeEnum = {
 	SSE: "sse",
 	STDIO: "stdio",
 } as const;
 
-export type ConnectionType =
-	(typeof ConnectionTypeEnum)[keyof typeof ConnectionTypeEnum];
+export type Type = (typeof TypeEnum)[keyof typeof TypeEnum];
 
 // Define the MCP servers table schema
 export const mcpServers = createTable("mcp_servers", {
 	id: serial("id").primaryKey(),
 	name: varchar("name", { length: 255 }).notNull(),
 	type: varchar("type", { length: 50 }).notNull(),
-	connectionType: varchar("connection_type", { length: 50 }).notNull(),
 	url: text("url"),
 	command: text("command"),
 	status: varchar("status", { length: 50 })
@@ -100,28 +88,40 @@ export const mcpServers = createTable("mcp_servers", {
 	description: text("description"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	headers: json("headers").$type<Record<string, string>>().default({}),
+	args: json("args").$type<Record<string, string>>().default({}),
+	env: json("env").$type<Record<string, string>>().default({}),
 });
 
 // Define Zod schemas for validation
 export const insertMcpServerSchema = createInsertSchema(mcpServers, {
 	name: z.string().min(2, "Server name must be at least 2 characters"),
-	type: z.nativeEnum(ServerTypeEnum),
-	connectionType: z.nativeEnum(ConnectionTypeEnum),
+	type: z.nativeEnum(TypeEnum),
 	url: z.string().url("Please enter a valid URL").optional(),
 	command: z.string().optional(),
 	description: z.string().optional(),
+	headers: z
+		.object({
+			"Content-Type": z.string().optional(),
+			Authorization: z.string().optional(),
+			"User-Agent": z.string().optional(),
+		})
+		.optional()
+		.default({}),
+	args: z.object({}).optional().default({}),
+	env: z.object({}).optional(),
 }).refine(
 	(data) => {
-		if (data.connectionType === ConnectionTypeEnum.SSE) {
+		if (data.type === TypeEnum.SSE) {
 			return !!data.url;
 		}
-		if (data.connectionType === ConnectionTypeEnum.STDIO) {
+		if (data.type === TypeEnum.STDIO) {
 			return !!data.command;
 		}
 		return false;
 	},
 	{
-		message: "URL or command is required based on connection type",
+		message: "URL or command is required based on type",
 		path: ["url"],
 	},
 );
