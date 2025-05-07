@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Server, Settings, Plus } from "lucide-react";
+import { Server, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Sheet,
@@ -10,13 +10,10 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ServerList } from "./server-list";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AddServerDialog } from "./add-server-dialog";
 import { useQueryClient } from "@tanstack/react-query";
-// import { ServersList } from "@/components/mcp/servers-list";
-// import { AddServerDialog } from "@/components/mcp/add-server-dialog";
 
 export function MCPDrawer() {
 	const [isAddServerOpen, setIsAddServerOpen] = useState(false);
@@ -39,7 +36,6 @@ export function MCPDrawer() {
 						title="MCP Servers"
 					>
 						<Server className="mr-2 h-4 w-4" />
-						<span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-green-500" />
 						MCP Servers
 					</Button>
 				</div>
@@ -54,18 +50,6 @@ export function MCPDrawer() {
 							</SheetTitle>
 						</div>
 					</SheetHeader>
-
-					<div className="flex items-center gap-2 border-b justify-end px-4 py-2">
-						<Button
-							variant="outline"
-							size="sm"
-							className="h-8 px-2"
-							onClick={() => setIsAddServerOpen(true)}
-						>
-							<Plus className="h-4 w-4 mr-1" />
-							Add Server
-						</Button>
-					</div>
 
 					<div className="flex-1 overflow-auto ">
 						<ScrollArea className="h-full overflow-auto p-4">
