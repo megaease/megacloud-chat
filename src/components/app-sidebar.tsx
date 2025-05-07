@@ -25,12 +25,25 @@ import { NavUser } from "./nav-user";
 import { MCPDrawer } from "./mcp/mcp-drawer";
 import logo from "@/assets/logo.svg";
 import Image from "next/image";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 const userId = "user-id"; // Replace with actual user ID
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const queryClient = useQueryClient();
+	const [isAlertOpen, setIsAlertOpen] = useState(false);
+	const [chatToDelete, setChatToDelete] = useState<string | null>(null);
 
 	const {
 		data: chatData = [],
@@ -52,7 +65,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	});
 
 	// Delete chat mutation
-	const deleteChat = useMutation({
+	const deleteChatMutation = useMutation({
 		mutationFn: async (chatId: string) => {
 			const response = await fetch("/api/chats", {
 				method: "DELETE",
@@ -89,14 +102,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 		e.preventDefault();
 		e.stopPropagation();
 
-		// Add confirmation dialog
-		if (
-			confirm(
-				"Are you sure you want to delete this chat? This action cannot be undone.",
-			)
-		) {
-			deleteChat.mutate(chatId);
+		setChatToDelete(chatId);
+		setIsAlertOpen(true);
+	};
+
+	const confirmDelete = () => {
+		if (chatToDelete) {
+			deleteChatMutation.mutate(chatToDelete);
 		}
+		setIsAlertOpen(false);
 	};
 
 	return (
@@ -187,6 +201,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				/>
 			</SidebarFooter>
 			<SidebarRail />
+			<AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to delete this chat? This action cannot be
+							undone.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction onClick={confirmDelete}>
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</Sidebar>
 	);
 }
