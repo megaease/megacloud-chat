@@ -33,7 +33,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-// import { EditServerDialog } from "@/components/mcp/edit-server-dialog";
+import { EditServerDialog } from "@/components/mcp/edit-server-dialog";
 import {
 	getMcpServers,
 	updateMcpServerStatus,
@@ -302,7 +302,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* {serverToEdit && (
+			{serverToEdit && (
 				<EditServerDialog
 					serverId={serverToEdit}
 					open={!!serverToEdit}
@@ -311,7 +311,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 						handleEditSuccess(serverToEdit, updatedData)
 					}
 				/>
-			)} */}
+			)}
 		</div>
 	);
 }
