@@ -15,7 +15,6 @@ import {
 import { Experimental_StdioMCPTransport } from "ai/mcp-stdio";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp";
 
 export const maxDuration = 30;
 
@@ -29,6 +28,9 @@ export async function POST(req: Request) {
 	if (!userId) {
 		return Response.json({ error: "User ID is required" }, { status: 400 });
 	}
+
+	// 存储所有创建的 MCP 客户端，以便在请求完成后关闭它们
+	const mcpClients: { client: MCPClientManager; name: string }[] = [];
 
 	try {
 		// 从数据库中获取所有 active 的 MCP 服务器
@@ -79,6 +81,9 @@ export async function POST(req: Request) {
 					continue;
 				}
 
+				// 将客户端存储在数组中，以便后续关闭连接
+				mcpClients.push({ client, name: server.name });
+
 				// 获取该服务器提供的工具
 				const serverTools = await client.tools();
 
@@ -115,13 +120,28 @@ export async function POST(req: Request) {
 			...builtInTools,
 			...mcpTools,
 		};
-		console.log("mcptools", Object.keys(mcpTools));
+		console.log("mcpTools", Object.keys(mcpTools));
+
+		// 用于关闭所有 MCP 客户端连接的函数
+		const closeAllMcpClients = async () => {
+			for (const { client, name } of mcpClients) {
+				try {
+					await client.close();
+					console.log(`已关闭 MCP 服务器 ${name} 的连接`);
+				} catch (error) {
+					console.error(`关闭 MCP 服务器 ${name} 连接时出错:`, error);
+				}
+			}
+		};
+
 		const result = streamText({
 			model: deepseek("deepseek-chat"),
 			messages,
 			tools: allTools,
-			onError: (error) => {
+			onError: async (error) => {
 				console.error("AI Stream error:", error);
+				// 发生错误时关闭所有连接
+				await closeAllMcpClients();
 			},
 			onFinish: async (result) => {
 				const allMessages = appendResponseMessages({
@@ -130,6 +150,9 @@ export async function POST(req: Request) {
 				});
 				await saveToChatsTable(userId, chatId, allMessages);
 				await saveToMessagesTable(chatId, allMessages);
+
+				// 请求完成后关闭所有连接
+				await closeAllMcpClients();
 			},
 		});
 		console.log("currentChatId", chatId);
@@ -137,6 +160,17 @@ export async function POST(req: Request) {
 		return result.toDataStreamResponse({});
 	} catch (error) {
 		console.error("处理请求时出错：", error);
+
+		// 在发生错误时确保关闭所有客户端连接
+		for (const { client, name } of mcpClients) {
+			try {
+				await client.close();
+				console.log(`已关闭 MCP 服务器 ${name} 的连接`);
+			} catch (closeError) {
+				console.error(`关闭 MCP 服务器 ${name} 连接时出错:`, closeError);
+			}
+		}
+
 		return new Response("Internal Server Error", { status: 500 });
 	}
 }
