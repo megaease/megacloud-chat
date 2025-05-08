@@ -99,7 +99,7 @@ function ToolInvocationPart({ part }: { part: any }) {
 
 	return (
 		<div className="border border-primary/30 bg-accent/30 rounded-[var(--radius)] my-3 shadow-[var(--shadow-xs)]">
-			<Accordion type="single" collapsible defaultValue="item-0">
+			<Accordion type="single" collapsible>
 				<AccordionItem value="item-0" className="border-0">
 					<AccordionTrigger className="px-3 py-2 hover:no-underline">
 						<div className="flex items-center gap-2 w-full">
