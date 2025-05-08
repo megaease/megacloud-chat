@@ -2,14 +2,14 @@ import { db } from "@/server/db";
 import { chatMessages, chats } from "@/server/db/schema";
 import { and, eq } from "drizzle-orm";
 import { openai } from "@ai-sdk/openai";
-import { generateObject } from "ai";
+import { generateObject, type Message } from "ai";
 import { z } from "zod";
 import { deepseek } from "@ai-sdk/deepseek";
 
 export async function saveToChatsTable(
 	userId: string,
 	chatId: string,
-	messages: any[],
+	messages: Message[],
 ) {
 	let currentChatId = chatId;
 	if (currentChatId) {
@@ -34,7 +34,7 @@ export async function saveToChatsTable(
 		if (messages.length === 0) {
 			title = "New Chat";
 		} else if (messages.length === 1) {
-			title = messages[0].content.substring(0, 50);
+			title = messages[0]?.content?.substring(0, 50) || "Untitled Chat";
 		} else {
 			const { object } = await generateObject({
 				model: deepseek("deepseek-chat"),

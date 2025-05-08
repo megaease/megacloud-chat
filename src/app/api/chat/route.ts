@@ -1,4 +1,3 @@
-import { MCPClientManager } from "@/lib/mcp-client";
 import { saveToChatsTable } from "@/server/db/chats";
 import { saveToMessagesTable } from "@/server/db/messages";
 import { db } from "@/server/db";
@@ -18,6 +17,11 @@ import { z } from "zod";
 
 export const maxDuration = 30;
 
+type MCPClient = {
+	tools: () => Promise<ToolSet>;
+	close: () => Promise<void>;
+};
+
 export async function POST(req: Request) {
 	console.log("POST /api/chat");
 	const { messages, userId, chatId } = await req.json();
@@ -30,7 +34,7 @@ export async function POST(req: Request) {
 	}
 
 	// 存储所有创建的 MCP 客户端，以便在请求完成后关闭它们
-	const mcpClients: { client: MCPClientManager; name: string }[] = [];
+	const mcpClients: { client: MCPClient; name: string }[] = [];
 
 	try {
 		// 从数据库中获取所有 active 的 MCP 服务器
@@ -47,7 +51,7 @@ export async function POST(req: Request) {
 		// 为每个活跃的服务器创建 MCP 客户端并获取工具
 		for (const server of activeServers) {
 			try {
-				let client: MCPClientManager;
+				let client: MCPClient;
 
 				// 根据服务器类型创建不同的客户端
 				if (server.type === TypeEnum.STDIO) {
@@ -90,7 +94,7 @@ export async function POST(req: Request) {
 				// 将服务器工具合并到主工具集合中，添加服务器前缀避免冲突
 				for (const [toolName, toolImpl] of Object.entries(serverTools)) {
 					const prefixedToolName = `${server.name}_${toolName}`;
-					mcpTools[prefixedToolName] = toolImpl as Tool<any, any>;
+					mcpTools[prefixedToolName] = toolImpl as Tool;
 				}
 
 				console.log(`已从服务器 ${server.name} 加载工具`);
