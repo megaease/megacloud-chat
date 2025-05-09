@@ -17,6 +17,7 @@ import {
 	CheckCircle2,
 	AlertCircle,
 } from "lucide-react";
+import { Markdown } from "./markdown";
 
 interface ChatMessageProps {
 	message: Message;
@@ -27,9 +28,11 @@ function renderMessagePart(part: any, index: number | string) {
 	// If it's a string or no type specified
 	if (!part || typeof part === "string") {
 		return (
-			<p key={index} className="whitespace-pre-wrap">
-				{part}
-			</p>
+			<Markdown
+				key={index}
+				className="whitespace-pre-wrap"
+				content={part as string}
+			/>
 		);
 	}
 
@@ -37,9 +40,11 @@ function renderMessagePart(part: any, index: number | string) {
 	switch (part.type) {
 		case "text":
 			return (
-				<p key={index} className="whitespace-pre-wrap">
-					{part.text}
-				</p>
+				<Markdown
+					key={index}
+					className="whitespace-pre-wrap"
+					content={part.text}
+				/>
 			);
 
 		case "tool-invocation":
