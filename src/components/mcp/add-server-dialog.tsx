@@ -278,10 +278,7 @@ export function AddServerDialog({
 											<FormItem>
 												<FormLabel>命令</FormLabel>
 												<FormControl>
-													<Input
-														placeholder="python mcp_server.py"
-														{...field}
-													/>
+													<Input placeholder="npx" {...field} />
 												</FormControl>
 												<FormDescription>启动 MCP 服务器的命令</FormDescription>
 												<FormMessage />

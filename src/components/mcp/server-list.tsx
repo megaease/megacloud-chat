@@ -231,7 +231,9 @@ export function ServerList({ onAddServer }: ServersListProps) {
 								<div className="mt-3 text-sm">
 									<span className="text-muted-foreground">连接详情：</span>
 									<code className="mt-1 block text-xs bg-slate-50 p-2 rounded border overflow-x-auto dark:bg-slate-800 dark:text-slate-200">
-										{server.type === TypeEnum.SSE ? server.url : server.command}
+										{server.type === TypeEnum.SSE
+											? server.url
+											: `${server.command} ${server?.args?.join(" ") || ""}`}
 									</code>
 								</div>
 								<div className="flex justify-end mt-3">
