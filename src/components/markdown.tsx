@@ -13,7 +13,7 @@ const components: Partial<Components> = {
 	h1: ({ className, children, ...props }) => (
 		<h1
 			className={cn(
-				"text-xl font-bold text-foreground mt-4 mb-3 border-b pb-1",
+				"text-xl font-bold text-foreground mt-4 mb-1 border-b pb-1",
 				className,
 			)}
 			{...props}
@@ -23,7 +23,7 @@ const components: Partial<Components> = {
 	),
 	h2: ({ className, children, ...props }) => (
 		<h2
-			className={cn("text-lg font-bold text-foreground mt-4 mb-2", className)}
+			className={cn("text-lg font-bold text-foreground mt-4 mb-1", className)}
 			{...props}
 		>
 			{children}
@@ -32,7 +32,7 @@ const components: Partial<Components> = {
 	h3: ({ className, children, ...props }) => (
 		<h3
 			className={cn(
-				"text-base font-semibold text-foreground mt-3 mb-2",
+				"text-base font-semibold text-foreground mt-3 mb-1",
 				className,
 			)}
 			{...props}
@@ -67,13 +67,13 @@ const components: Partial<Components> = {
 		</a>
 	),
 	ul: ({ className, children, ...props }) => (
-		<ul className={cn("list-disc pl-5 my-1 space-y-0", className)} {...props}>
+		<ul className={cn("list-disc pl-5 mb-2", className)} {...props}>
 			{children}
 		</ul>
 	),
 	ol: ({ className, children, ...props }) => (
 		<ol
-			className={cn("list-decimal pl-5 my-1 space-y-0", className)}
+			className={cn("list-decimal pl-5 my-0 space-y-0", className)}
 			{...props}
 		>
 			{children}
@@ -166,8 +166,8 @@ const components: Partial<Components> = {
 						<CopyButton text={codeContent} />
 					</div>
 					<div className="overflow-x-auto">
-						<pre className="p-3 bg-card text-sm">
-							<code className="font-mono text-foreground whitespace-pre-wrap break-all">
+						<pre className="p-3 bg-none text-sm">
+							<code className="font-mono whitespace-pre-wrap break-all">
 								{codeContent}
 							</code>
 						</pre>
