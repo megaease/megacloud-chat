@@ -50,8 +50,13 @@ function renderMessagePart(part: any, index: number | string) {
 		case "tool-invocation":
 			return <ToolInvocationPart key={index} part={part} />;
 
-		// case "step-start":
-		// 	return <StepMarker key={index} />;
+		//todo
+		case "step-start":
+			return null;
+		case "reasoning":
+			return null;
+		case "source":
+			return null;
 
 		default:
 			return null;

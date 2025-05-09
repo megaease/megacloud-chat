@@ -6,18 +6,11 @@ import {
 	type McpServerUpdate,
 	type ServerStatus,
 	ServerStatusEnum,
-	TypeEnum,
 } from "@/server/db/schema";
 import { db } from "@/server/db";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { z } from "zod";
-import {
-	experimental_createMCPClient as createMCPClient,
-	streamText,
-} from "ai";
-import { Experimental_StdioMCPTransport } from "ai/mcp-stdio";
-
 // Create a new MCP server
 export async function createMcpServer(
 	data: z.infer<typeof insertMcpServerSchema>,
