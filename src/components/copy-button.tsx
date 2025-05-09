@@ -12,7 +12,10 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function CopyButton({ text }: { text: string }) {
+export function CopyButton({
+	text,
+	className,
+}: { text: string; className?: string }) {
 	const [copied, setCopied] = useState<boolean>(false);
 
 	const handleCopy = async () => {
@@ -29,8 +32,13 @@ export function CopyButton({ text }: { text: string }) {
 		<TooltipProvider delayDuration={0}>
 			<Tooltip>
 				<TooltipTrigger asChild>
-					<Button onClick={handleCopy} aria-label="复制到剪贴板">
-						{copied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+					<Button
+						onClick={handleCopy}
+						aria-label="复制到剪贴板"
+						className={cn(className)}
+						size={"icon"}
+					>
+						{copied ? <CheckIcon /> : <CopyIcon />}
 					</Button>
 				</TooltipTrigger>
 				<TooltipContent className="px-2 py-1 text-xs">

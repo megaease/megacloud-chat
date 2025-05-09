@@ -13,7 +13,7 @@ const components: Partial<Components> = {
 	h1: ({ className, children, ...props }) => (
 		<h1
 			className={cn(
-				"text-xl font-bold text-foreground mt-6 mb-4 border-b pb-1",
+				"text-xl font-bold text-foreground mt-4 mb-3 border-b pb-1",
 				className,
 			)}
 			{...props}
@@ -23,7 +23,7 @@ const components: Partial<Components> = {
 	),
 	h2: ({ className, children, ...props }) => (
 		<h2
-			className={cn("text-lg font-bold text-foreground mt-5 mb-3", className)}
+			className={cn("text-lg font-bold text-foreground mt-4 mb-2", className)}
 			{...props}
 		>
 			{children}
@@ -32,7 +32,7 @@ const components: Partial<Components> = {
 	h3: ({ className, children, ...props }) => (
 		<h3
 			className={cn(
-				"text-base font-semibold text-foreground mt-4 mb-2",
+				"text-base font-semibold text-foreground mt-3 mb-2",
 				className,
 			)}
 			{...props}
@@ -43,7 +43,7 @@ const components: Partial<Components> = {
 	h4: ({ className, children, ...props }) => (
 		<h4
 			className={cn(
-				"text-sm font-semibold text-foreground mt-3 mb-2",
+				"text-sm font-semibold text-foreground mt-2 mb-1",
 				className,
 			)}
 			{...props}
@@ -52,13 +52,13 @@ const components: Partial<Components> = {
 		</h4>
 	),
 	p: ({ className, children, ...props }) => (
-		<p className={cn("text-foreground my-2 leading-7", className)} {...props}>
+		<p className={cn("leading-6", className)} {...props}>
 			{children}
 		</p>
 	),
 	a: ({ className, children, ...props }) => (
 		<a
-			className={cn("text-primary hover:underline", className)}
+			className={cn("text-primary hover:underline inline-block", className)}
 			target="_blank"
 			rel="noopener noreferrer"
 			{...props}
@@ -67,33 +67,27 @@ const components: Partial<Components> = {
 		</a>
 	),
 	ul: ({ className, children, ...props }) => (
-		<ul
-			className={cn("list-disc pl-8 my-1 space-y-1 text-foreground", className)}
-			{...props}
-		>
+		<ul className={cn("list-disc pl-5 my-1 space-y-0", className)} {...props}>
 			{children}
 		</ul>
 	),
 	ol: ({ className, children, ...props }) => (
 		<ol
-			className={cn(
-				"list-decimal pl-8 my-1 space-y-1 text-foreground",
-				className,
-			)}
+			className={cn("list-decimal pl-5 my-1 space-y-0", className)}
 			{...props}
 		>
 			{children}
 		</ol>
 	),
 	li: ({ className, children, ...props }) => (
-		<li className={cn("my-0.5", className)} {...props}>
+		<li className={cn("my-0 py-0.5", className)} {...props}>
 			{children}
 		</li>
 	),
 	blockquote: ({ className, children, ...props }) => (
 		<blockquote
 			className={cn(
-				"border-l-4 border-primary/30 pl-4 py-1 my-1 text-muted-foreground italic",
+				"border-l-3 border-primary/30 pl-3 py-0.5 my-2 text-muted-foreground italic",
 				className,
 			)}
 			{...props}
@@ -105,7 +99,7 @@ const components: Partial<Components> = {
 		<hr className={cn("my-3 border-border", className)} {...props} />
 	),
 	table: ({ className, children, ...props }) => (
-		<div className="overflow-x-auto my-1 rounded-[var(--radius)] border border-border">
+		<div className="overflow-x-auto my-2 rounded-[var(--radius)] border border-border">
 			<table
 				className={cn("w-full border-collapse text-sm", className)}
 				{...props}
@@ -132,7 +126,7 @@ const components: Partial<Components> = {
 	th: ({ className, children, ...props }) => (
 		<th
 			className={cn(
-				"px-4 py-2 text-left font-medium text-foreground",
+				"px-3 py-1.5 text-left font-medium text-foreground",
 				className,
 			)}
 			{...props}
@@ -141,42 +135,11 @@ const components: Partial<Components> = {
 		</th>
 	),
 	td: ({ className, children, ...props }) => (
-		<td className={cn("px-4 py-2 text-foreground", className)} {...props}>
+		<td className={cn("px-3 py-1.5 text-foreground", className)} {...props}>
 			{children}
 		</td>
 	),
-	code: ({ className, children, ...props }) => {
-		const match = /language-(\w+)/.exec(className || "");
 
-		if (match) {
-			const codeContent = String(children).replace(/\n$/, "");
-			return (
-				<div className="relative my-1 rounded-[var(--radius)] border border-border overflow-hidden">
-					<div className="flex items-center justify-between bg-muted/50 px-4 py-1.5 border-b border-border">
-						<span className="text-xs font-medium">{match[1]}</span>
-						<div className="h-6 w-6">
-							<CopyButton text={codeContent} />
-						</div>
-					</div>
-					<pre className="overflow-x-auto p-4 bg-card text-sm">
-						<code className="font-mono text-foreground">{codeContent}</code>
-					</pre>
-				</div>
-			);
-		}
-
-		return (
-			<code
-				className={cn(
-					"relative rounded-[calc(var(--radius)/2)] bg-muted px-1.5 py-0.5 font-mono text-sm border border-border",
-					className,
-				)}
-				{...props}
-			>
-				{children}
-			</code>
-		);
-	},
 	strong: ({ className, children, ...props }) => (
 		<strong
 			className={cn("font-semibold text-foreground", className)}
@@ -190,11 +153,55 @@ const components: Partial<Components> = {
 			{children}
 		</em>
 	),
+	code: ({ className, children, ...props }) => {
+		const match = /language-(\w+)/.exec(className || "");
+
+		if (match) {
+			const codeContent = String(children).replace(/\n$/, "");
+			return (
+				<div className="relative my-2 rounded-[var(--radius)] border border-border overflow-hidden">
+					<div className="flex items-center justify-between bg-muted/50 px-3 py-1 border-b border-border">
+						<span className="text-xs font-medium">{match[1]}</span>
+
+						<CopyButton text={codeContent} />
+					</div>
+					<div className="overflow-x-auto">
+						<pre className="p-3 bg-card text-sm">
+							<code className="font-mono text-foreground whitespace-pre-wrap break-all">
+								{codeContent}
+							</code>
+						</pre>
+					</div>
+				</div>
+			);
+		}
+
+		return (
+			<code
+				className={cn(
+					"relative rounded-[calc(var(--radius)/2)] bg-muted px-1 py-0.5 font-mono text-xs border border-border",
+					className,
+				)}
+				{...props}
+			>
+				{children}
+			</code>
+		);
+	},
 };
 export function Markdown({ content, className }: MarkdownProps) {
+	// 处理空内容
+	if (!content || content.trim() === "") {
+		return null;
+	}
+
 	return (
-		<div className={cn("markdown", className)}>
-			<ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+		<div className={cn("markdown text-sm leading-normal", className)}>
+			<ReactMarkdown
+				remarkPlugins={[remarkGfm]}
+				components={components}
+				skipHtml // 跳过 HTML 标签处理
+			>
 				{content}
 			</ReactMarkdown>
 		</div>

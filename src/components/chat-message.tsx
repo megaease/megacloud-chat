@@ -30,7 +30,7 @@ function renderMessagePart(part: any, index: number | string) {
 		return (
 			<Markdown
 				key={index}
-				className="whitespace-pre-wrap"
+				className="whitespace-pre-wrap my-0"
 				content={part as string}
 			/>
 		);
@@ -42,7 +42,7 @@ function renderMessagePart(part: any, index: number | string) {
 			return (
 				<Markdown
 					key={index}
-					className="whitespace-pre-wrap"
+					className="whitespace-pre-wrap my-0"
 					content={part.text}
 				/>
 			);
@@ -191,14 +191,19 @@ export function ChatMessage({ message }: ChatMessageProps) {
 		}
 
 		// If only has regular content
-		return <p className="whitespace-pre-wrap">{message.content}</p>;
+		return (
+			<Markdown
+				content={message.content as string}
+				className="whitespace-pre-wrap my-0"
+			/>
+		);
 	};
 
 	return (
 		<div
 			className={cn(
 				"flex gap-4 text-sm py-4",
-				isUser ? "flex-row-reverse" : "",
+				isUser ? "flex-row-reverse pr-1" : "pl-1",
 			)}
 		>
 			<Avatar
@@ -220,9 +225,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
 			>
 				<div
 					className={cn(
-						"inline-block rounded-[var(--radius)] px-4 py-3 max-w-[90%]",
+						"inline-block rounded-[var(--radius)] px-4 py-3 overflow-hidden",
 						isUser
-							? "bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto"
+							? "bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto max-w-[85%]"
 							: "bg-card text-card-foreground border border-border shadow-[var(--shadow-xs)] w-full",
 					)}
 				>
