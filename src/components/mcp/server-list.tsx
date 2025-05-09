@@ -124,11 +124,6 @@ export function ServerList({ onAddServer }: ServersListProps) {
 		}
 	};
 
-	// Function to handle edit success
-	const handleEditSuccess = (id: number, updatedData: any) => {
-		setServerToEdit(null);
-	};
-
 	// Show loading state
 	if (isLoading) {
 		return (
@@ -307,9 +302,6 @@ export function ServerList({ onAddServer }: ServersListProps) {
 					serverId={serverToEdit}
 					open={!!serverToEdit}
 					onOpenChange={(open) => !open && setServerToEdit(null)}
-					onSuccess={(updatedData) =>
-						handleEditSuccess(serverToEdit, updatedData)
-					}
 				/>
 			)}
 		</div>

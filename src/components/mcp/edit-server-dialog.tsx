@@ -59,14 +59,17 @@ export function EditServerDialog({
 		staleTime: 0,
 	});
 
-	const server = serverResult?.success ? serverResult.data : null;
+	const server = serverResult?.success
+		? "data" in serverResult
+			? serverResult.data
+			: null
+		: null;
 	const serverType =
 		(server?.type as (typeof TypeEnum)[keyof typeof TypeEnum]) || TypeEnum.SSE;
 
-	// 准备表单的默认值
 	const defaultValues: ServerFormValues = server
 		? {
-				type: server.type as (typeof TypeEnum)[keyof typeof TypeEnum],
+				type: serverType,
 				name: server.name,
 				description: server.description || "",
 				url: server.url || "",
@@ -90,16 +93,13 @@ export function EditServerDialog({
 	const form = useForm<ServerFormValues>({
 		resolver: zodResolver(insertMcpServerSchema) as any,
 		defaultValues,
-		// 只有在有服务器数据时才初始化表单
 		values: server ? defaultValues : undefined,
 	});
 
-	// 当服务器类型变化时处理
 	const handleTypeChange = (type: (typeof TypeEnum)[keyof typeof TypeEnum]) => {
 		form.setValue("type", type);
 	};
 
-	// 处理表单提交
 	const onSubmit = async (data: ServerFormValues) => {
 		if (!serverId) {
 			toast.error("服务器 ID 不存在");
@@ -154,7 +154,6 @@ export function EditServerDialog({
 									onSubmit={form.handleSubmit(onSubmit)}
 									className="space-y-6"
 								>
-									{/* 服务器类型选择 */}
 									<div className="space-y-2">
 										<FormLabel>服务器类型</FormLabel>
 										<Tabs
@@ -184,7 +183,6 @@ export function EditServerDialog({
 										</FormDescription>
 									</div>
 
-									{/* 基本信息 */}
 									<div className="space-y-4">
 										<FormField
 											control={form.control}
