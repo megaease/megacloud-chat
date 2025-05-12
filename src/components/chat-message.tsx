@@ -68,7 +68,7 @@ function StepMarker() {
 	return (
 		<div className="flex items-center gap-2 text-muted-foreground my-2 text-xs">
 			<Clock size={14} />
-			<span>处理步骤</span>
+			<span>Processing Step</span>
 			<div className="h-px flex-1 bg-border" />
 		</div>
 	);
@@ -77,7 +77,7 @@ function StepMarker() {
 // Tool invocation component with Accordion
 function ToolInvocationPart({ part }: { part: any }) {
 	const toolInvocation = part?.toolInvocation || {};
-	const toolName = toolInvocation.toolName || "未知工具";
+	const toolName = toolInvocation.toolName || "Unknown Tool";
 	const isDatabase =
 		toolName.includes("sql") || toolName.includes("postgresql");
 	const args = JSON.stringify(toolInvocation.args, null, 2);
@@ -118,7 +118,9 @@ function ToolInvocationPart({ part }: { part: any }) {
 							<div className="ml-auto flex items-center gap-1 text-xs">
 								{getStatusIcon()}
 								<span className="text-muted-foreground">
-									{toolInvocation.state === "result" ? "完成" : "处理中"}
+									{toolInvocation.state === "result"
+										? "Completed"
+										: "Processing"}
 								</span>
 							</div>
 						</div>
@@ -129,7 +131,7 @@ function ToolInvocationPart({ part }: { part: any }) {
 								<div className="bg-card rounded-[var(--radius)] overflow-hidden mb-3 border border-border">
 									<div className="flex items-center justify-between px-3 py-1.5 bg-accent/50 border-b border-border">
 										<div className="font-medium text-xs text-card-foreground">
-											输入参数
+											Input Parameters
 										</div>
 									</div>
 									<div className="p-3">
@@ -142,7 +144,7 @@ function ToolInvocationPart({ part }: { part: any }) {
 								<div className="bg-card rounded-[var(--radius)] overflow-hidden border border-border">
 									<div className="flex items-center justify-between px-3 py-1.5 bg-accent/50 border-b border-border">
 										<div className="font-medium text-xs text-card-foreground">
-											结果
+											Result
 										</div>
 									</div>
 

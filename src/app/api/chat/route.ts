@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import { mcpServers, ServerStatusEnum, TypeEnum } from "@/server/db/schema";
 import { deepseek } from "@ai-sdk/deepseek";
 import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import {
 	appendResponseMessages,
 	experimental_createMCPClient as createMCPClient,
@@ -24,7 +25,8 @@ type MCPClient = {
 
 export async function POST(req: Request) {
 	console.log("POST /api/chat");
-	const { messages, userId, chatId } = await req.json();
+	const { messages, userId, chatId, apiKey, modelName, baseUrl } =
+		await req.json();
 
 	if (!messages) {
 		return new Response("Invalid request", { status: 400 });
@@ -33,30 +35,30 @@ export async function POST(req: Request) {
 		return Response.json({ error: "User ID is required" }, { status: 400 });
 	}
 
-	// 存储所有创建的 MCP 客户端，以便在请求完成后关闭它们
+	// Store all created MCP clients to close them after the request completes
 	const mcpClients: { client: MCPClient; name: string }[] = [];
 
 	try {
-		// 从数据库中获取所有 active 的 MCP 服务器
+		// Get all active MCP servers from the database
 		const activeServers = await db
 			.select()
 			.from(mcpServers)
 			.where(eq(mcpServers.status, ServerStatusEnum.ONLINE));
 
-		console.log(`找到 ${activeServers.length} 个活跃的 MCP 服务器`);
+		console.log(`Found ${activeServers.length} active MCP servers`);
 
-		// 初始化一个空的 tools 对象
+		// Initialize an empty tools object
 		const mcpTools: ToolSet = {};
 
-		// 为每个活跃的服务器创建 MCP 客户端并获取工具
+		// Create MCP clients and get tools for each active server
 		for (const server of activeServers) {
 			try {
 				let client: MCPClient;
 
-				// 根据服务器类型创建不同的客户端
+				// Create different clients based on server type
 				if (server.type === TypeEnum.STDIO) {
 					if (!server.command) {
-						console.warn(`STDIO 服务器 ${server.name} 缺少命令`);
+						console.warn(`STDIO server ${server.name} missing command`);
 						continue;
 					}
 
@@ -69,7 +71,7 @@ export async function POST(req: Request) {
 					client = await createMCPClient({ transport });
 				} else if (server.type === TypeEnum.SSE) {
 					if (!server.url) {
-						console.warn(`SSE 服务器 ${server.name} 缺少 URL`);
+						console.warn(`SSE server ${server.name} missing URL`);
 						continue;
 					}
 
@@ -81,29 +83,29 @@ export async function POST(req: Request) {
 						},
 					});
 				} else {
-					console.warn(`未知的服务器类型：${server.type}`);
+					console.warn(`Unknown server type: ${server.type}`);
 					continue;
 				}
 
-				// 将客户端存储在数组中，以便后续关闭连接
+				// Store client in array for later connection closing
 				mcpClients.push({ client, name: server.name });
 
-				// 获取该服务器提供的工具
+				// Get tools provided by this server
 				const serverTools = await client.tools();
 
-				// 将服务器工具合并到主工具集合中，添加服务器前缀避免冲突
+				// Merge server tools into main tool collection with server prefix to avoid conflicts
 				for (const [toolName, toolImpl] of Object.entries(serverTools)) {
 					const prefixedToolName = `${server.name}_${toolName}`;
 					mcpTools[prefixedToolName] = toolImpl as Tool;
 				}
 
-				console.log(`已从服务器 ${server.name} 加载工具`);
+				console.log(`Loaded tools from server ${server.name}`);
 			} catch (error) {
-				console.error(`连接到 MCP 服务器 ${server.name} 失败:`, error);
+				console.error(`Failed to connect to MCP server ${server.name}:`, error);
 			}
 		}
 
-		// 添加内置工具
+		// Add built-in tools
 		const builtInTools = {
 			sayHello: {
 				description: "Say hello to the user",
@@ -119,7 +121,7 @@ export async function POST(req: Request) {
 			},
 		};
 
-		// 合并所有工具
+		// Merge all tools
 		const allTools = {
 			...builtInTools,
 			...mcpTools,
@@ -131,15 +133,34 @@ export async function POST(req: Request) {
 			for (const { client, name } of mcpClients) {
 				try {
 					await client.close();
-					console.log(`已关闭 MCP 服务器 ${name} 的连接`);
+					console.log(`Connection to MCP server ${name} closed`);
 				} catch (error) {
-					console.error(`关闭 MCP 服务器 ${name} 连接时出错:`, error);
+					console.error(`Error closing MCP server ${name} connection:`, error);
 				}
 			}
 		};
 
+		// Set up the AI model based on user configuration
+		let modelConfig = openai("gpt-4-turbo", {});
+
+		// Check if user provided API key and model name
+		if (apiKey && modelName) {
+			console.log(
+				`Using custom model: ${modelName} with custom API configuration`,
+			);
+
+			// Create OpenAI compatible client with user settings
+			const compatibleAI = createOpenAI({
+				baseURL: baseUrl || "https://api.openai.com/v1",
+				apiKey: apiKey,
+			});
+
+			// Use the user-specified model
+			modelConfig = compatibleAI(modelName);
+		}
+
 		const result = streamText({
-			model: deepseek("deepseek-chat"),
+			model: modelConfig,
 			system: `You are a helpful AI assistant with access to various tools through the Model Control Protocol (MCP). 
 				TOOLS:
 				You can use mcp tools to perform specific tasks. Each tool has a name, description, and parameters. You can call these tools by their names and provide the required parameters.
@@ -160,7 +181,7 @@ export async function POST(req: Request) {
 			tools: allTools,
 			onError: async (error) => {
 				console.error("AI Stream error:", error);
-				// 发生错误时关闭所有连接
+				// Close all connections on error
 				await closeAllMcpClients();
 			},
 			onFinish: async (result) => {
@@ -171,7 +192,7 @@ export async function POST(req: Request) {
 				await saveToChatsTable(userId, chatId, allMessages);
 				await saveToMessagesTable(chatId, allMessages);
 
-				// 请求完成后关闭所有连接
+				// Close all connections after request completes
 				await closeAllMcpClients();
 			},
 		});
@@ -179,15 +200,18 @@ export async function POST(req: Request) {
 
 		return result.toDataStreamResponse({});
 	} catch (error) {
-		console.error("处理请求时出错：", error);
+		console.error("Error processing request:", error);
 
-		// 在发生错误时确保关闭所有客户端连接
+		// Ensure all client connections are closed in case of error
 		for (const { client, name } of mcpClients) {
 			try {
 				await client.close();
-				console.log(`已关闭 MCP 服务器 ${name} 的连接`);
+				console.log(`Connection to MCP server ${name} closed`);
 			} catch (closeError) {
-				console.error(`关闭 MCP 服务器 ${name} 连接时出错:`, closeError);
+				console.error(
+					`Error closing MCP server ${name} connection:`,
+					closeError,
+				);
 			}
 		}
 

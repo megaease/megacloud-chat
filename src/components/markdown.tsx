@@ -190,7 +190,7 @@ const components: Partial<Components> = {
 	},
 };
 export function Markdown({ content, className }: MarkdownProps) {
-	// 处理空内容
+	// Handle empty content
 	if (!content || content.trim() === "") {
 		return null;
 	}
@@ -200,7 +200,7 @@ export function Markdown({ content, className }: MarkdownProps) {
 			<ReactMarkdown
 				remarkPlugins={[remarkGfm]}
 				components={components}
-				skipHtml // 跳过 HTML 标签处理
+				skipHtml // Skip HTML tag processing
 			>
 				{content}
 			</ReactMarkdown>

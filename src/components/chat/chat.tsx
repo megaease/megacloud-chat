@@ -10,6 +10,7 @@ import { nanoid } from "nanoid";
 import { use, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import { useApiSettings } from "@/context/api-settings-context";
 
 function useChatMessages(chatId: string | undefined) {
 	const query = useQuery({
@@ -34,6 +35,7 @@ export function Chat() {
 	const chatId = id as string | undefined;
 	const router = useRouter();
 	const queryClient = useQueryClient();
+	const { apiKey, modelName, baseUrl } = useApiSettings();
 	const [randomChatId, setRandomChatId] = useState<string | undefined>(
 		undefined,
 	);
@@ -57,6 +59,9 @@ export function Chat() {
 		body: {
 			chatId: chatId || randomChatId,
 			userId: "user-id", // Replace with actual user ID
+			apiKey,
+			modelName,
+			baseUrl,
 		},
 		initialMessages: chatMessages,
 		onFinish: (message) => {
