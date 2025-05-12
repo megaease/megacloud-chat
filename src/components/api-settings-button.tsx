@@ -9,12 +9,13 @@ export function ApiSettingsButton() {
 
 	return (
 		<Button
-			variant="outline"
-			size="icon"
+			variant="secondary"
 			onClick={() => setIsOpen(true)}
 			title="API Settings"
+			size={"default"}
 		>
 			<Settings className="h-4 w-4" />
+			<span className="">API Settings</span>
 		</Button>
 	);
 }

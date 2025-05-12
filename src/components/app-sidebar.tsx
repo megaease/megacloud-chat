@@ -36,6 +36,7 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { ApiSettingsButton } from "./api-settings-button";
 const userId = "user-id"; // Replace with actual user ID
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -196,9 +197,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			</SidebarContent>
 			<SidebarFooter>
 				<MCPDrawer />
-				<NavUser
+
+				{/* <NavUser
 					user={{ name: "John Doe", email: "cloud@megaease.com", avatar: "" }}
-				/>
+				/> */}
 			</SidebarFooter>
 			<SidebarRail />
 			<AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>

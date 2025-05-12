@@ -50,7 +50,6 @@ export function ApiSettingsModal() {
 			baseUrl: baseUrl,
 		},
 	});
-
 	useEffect(() => {
 		if (isOpen) {
 			form.reset({
