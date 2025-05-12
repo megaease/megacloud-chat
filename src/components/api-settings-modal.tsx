@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -16,6 +16,8 @@ import { useApiSettings } from "@/context/api-settings-context";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const apiSettingsSchema = z.object({
 	apiKey: z.string().min(1, { message: "API key is required" }),
@@ -37,6 +39,8 @@ export function ApiSettingsModal() {
 		setBaseUrl,
 		saveSettings,
 	} = useApiSettings();
+
+	const [isTesting, setIsTesting] = useState(false);
 
 	const form = useForm<ApiSettingsFormValues>({
 		resolver: zodResolver(apiSettingsSchema),
@@ -63,6 +67,85 @@ export function ApiSettingsModal() {
 		setBaseUrl(data.baseUrl);
 		saveSettings();
 		setIsOpen(false);
+		toast.success("API settings saved successfully");
+	};
+
+	const testConnection = async () => {
+		const values = form.getValues();
+		if (!values.apiKey || !values.modelName || !values.baseUrl) {
+			toast.error("Please fill in all fields first");
+			return;
+		}
+
+		setIsTesting(true);
+		try {
+			// Using a simple test message to verify the API connection
+			const response = await fetch("/api/chat/test-connection", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					apiKey: values.apiKey,
+					modelName: values.modelName,
+					baseUrl: values.baseUrl,
+				}),
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || "Failed to connect to API");
+			}
+
+			// 如果有警告信息（比如模型未在列表中找到），显示警告提示
+			if (data.warning) {
+				toast.warning("Connection Warning", {
+					description: data.warning,
+					duration: 5000,
+					action:
+						data.availableModels?.length > 0
+							? {
+									label: "View Available Models",
+									onClick: () => {
+										toast.info("Available Models", {
+											description: data.availableModels.join(", "),
+											duration: 8000,
+										});
+									},
+								}
+							: undefined,
+				});
+			} else {
+				toast.success(data.message || "Connection successful", {
+					description:
+						data.availableModels?.length > 0
+							? `Available models: ${data.availableModels.slice(0, 3).join(", ")}${data.availableModels.length > 3 ? " and more..." : ""}`
+							: undefined,
+					action:
+						data.availableModels?.length > 0
+							? {
+									label: "View All",
+									onClick: () => {
+										toast.info("Available Models", {
+											description: data.availableModels.join(", "),
+											duration: 8000,
+										});
+									},
+								}
+							: undefined,
+				});
+			}
+		} catch (error) {
+			console.error("Connection test error:", error);
+			toast.error("Connection failed", {
+				description:
+					error instanceof Error ? error.message : "Failed to connect to API",
+				duration: 5000,
+			});
+		} finally {
+			setIsTesting(false);
+		}
 	};
 
 	return (
@@ -105,6 +188,10 @@ export function ApiSettingsModal() {
 									{form.formState.errors.modelName.message}
 								</p>
 							)}
+							<p className="text-xs text-muted-foreground">
+								Common models: gpt-4, gpt-3.5-turbo, claude-3-opus,
+								claude-3-sonnet
+							</p>
 						</div>
 
 						<div className="space-y-2">
@@ -119,10 +206,28 @@ export function ApiSettingsModal() {
 									{form.formState.errors.baseUrl.message}
 								</p>
 							)}
+							<p className="text-xs text-muted-foreground">
+								Use a custom API endpoint or leave as default for OpenAI
+							</p>
 						</div>
 					</div>
 
-					<DialogFooter>
+					<DialogFooter className="flex items-center gap-2">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={testConnection}
+							disabled={isTesting}
+						>
+							{isTesting ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Testing...
+								</>
+							) : (
+								"Test Connection"
+							)}
+						</Button>
 						<Button type="submit">Save Settings</Button>
 					</DialogFooter>
 				</form>

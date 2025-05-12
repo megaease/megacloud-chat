@@ -11,6 +11,7 @@ import { use, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useApiSettings } from "@/context/api-settings-context";
+import { toast } from "sonner";
 
 function useChatMessages(chatId: string | undefined) {
 	const query = useQuery({
@@ -50,8 +51,21 @@ export function Chat() {
 	const {
 		data: chatMessages = [],
 		isLoading: isLoadingMessage,
-		isError,
+		isError: isLoadingError,
+		error: loadingError,
 	} = chatMessagesQuery;
+
+	// Show error toast for loading errors
+	useEffect(() => {
+		if (isLoadingError && loadingError) {
+			toast.error("Failed to load chat messages", {
+				description:
+					loadingError instanceof Error
+						? loadingError.message
+						: "Unknown error",
+			});
+		}
+	}, [isLoadingError, loadingError]);
 	console.log(" id chatMessages", chatId, randomChatId);
 	const { messages, input, handleInputChange, handleSubmit, status } = useChat({
 		id: chatId || randomChatId, // Unique ID for the chat session
@@ -75,6 +89,61 @@ export function Chat() {
 		},
 		onError: (error) => {
 			console.error("Error in chat:", error);
+			const { setIsOpen } = useApiSettings();
+
+			// Detect API key issues
+			if (
+				error.message.includes("API key") ||
+				error.message.includes("auth") ||
+				error.message.includes("key") ||
+				error.message.includes("Authentication")
+			) {
+				toast.error("API Authentication Error", {
+					description: "Please check your API key in settings",
+					action: {
+						label: "Open Settings",
+						onClick: () => setIsOpen(true),
+					},
+				});
+			}
+			// Detect model issues
+			else if (
+				error.message.includes("model") ||
+				error.message.includes("not found") ||
+				error.message.includes("unavailable") ||
+				error.message.includes("does not exist")
+			) {
+				toast.error("Model Error", {
+					description: "The specified model is not available or doesn't exist",
+					action: {
+						label: "Open Settings",
+						onClick: () => setIsOpen(true),
+					},
+				});
+			}
+			// Detect API URL issues
+			else if (
+				error.message.includes("URL") ||
+				error.message.includes("connect") ||
+				error.message.includes("network") ||
+				error.message.includes("ENOTFOUND")
+			) {
+				toast.error("Connection Error", {
+					description:
+						"Could not connect to the API. Check the base URL in settings",
+					action: {
+						label: "Open Settings",
+						onClick: () => setIsOpen(true),
+					},
+				});
+			}
+			// General errors
+			else {
+				toast.error("Chat Error", {
+					description:
+						error.message.substring(0, 100) || "An unexpected error occurred",
+				});
+			}
 		},
 	});
 

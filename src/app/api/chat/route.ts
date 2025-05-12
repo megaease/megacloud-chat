@@ -145,18 +145,25 @@ export async function POST(req: Request) {
 
 		// Check if user provided API key and model name
 		if (apiKey && modelName) {
-			console.log(
-				`Using custom model: ${modelName} with custom API configuration`,
-			);
+			try {
+				console.log(
+					`Using custom model: ${modelName} with custom API configuration`,
+				);
 
-			// Create OpenAI compatible client with user settings
-			const compatibleAI = createOpenAI({
-				baseURL: baseUrl || "https://api.openai.com/v1",
-				apiKey: apiKey,
-			});
+				// Create OpenAI compatible client with user settings
+				const compatibleAI = createOpenAI({
+					baseURL: baseUrl || "https://api.openai.com/v1",
+					apiKey: apiKey,
+				});
 
-			// Use the user-specified model
-			modelConfig = compatibleAI(modelName);
+				// Use the user-specified model
+				modelConfig = compatibleAI(modelName);
+			} catch (error) {
+				console.error("Error configuring custom model:", error);
+				throw new Error(
+					`Failed to initialize model "${modelName}": ${error instanceof Error ? error.message : "Unknown error"}`,
+				);
+			}
 		}
 
 		const result = streamText({
@@ -215,6 +222,53 @@ export async function POST(req: Request) {
 			}
 		}
 
-		return new Response("Internal Server Error", { status: 500 });
+		// Identify the specific error type to provide a more helpful response
+		let errorMessage = "An unexpected error occurred";
+		let statusCode = 500;
+
+		if (error instanceof Error) {
+			// API key related errors
+			if (
+				error.message.includes("API key") ||
+				error.message.includes("auth") ||
+				error.message.includes("Authentication") ||
+				error.message.includes("401")
+			) {
+				errorMessage = "Invalid API key or authentication error";
+				statusCode = 401;
+			}
+			// Model related errors
+			else if (
+				error.message.includes("model") ||
+				error.message.includes("not found") ||
+				error.message.includes("does not exist")
+			) {
+				errorMessage = `Model not found or unavailable: ${modelName}`;
+				statusCode = 404;
+			}
+			// Rate limit errors
+			else if (
+				error.message.includes("rate limit") ||
+				error.message.includes("too many requests") ||
+				error.message.includes("429")
+			) {
+				errorMessage = "Rate limit exceeded. Please try again later";
+				statusCode = 429;
+			}
+			// Connection issues
+			else if (
+				error.message.includes("ENOTFOUND") ||
+				error.message.includes("ECONNREFUSED") ||
+				error.message.includes("timeout")
+			) {
+				errorMessage =
+					"Could not connect to API server. Please check the base URL";
+				statusCode = 503;
+			} else {
+				errorMessage = error.message;
+			}
+		}
+
+		return Response.json({ error: errorMessage }, { status: statusCode });
 	}
 }
