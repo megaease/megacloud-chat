@@ -45,9 +45,9 @@ export function ApiSettingsModal() {
 	const form = useForm<ApiSettingsFormValues>({
 		resolver: zodResolver(apiSettingsSchema),
 		defaultValues: {
-			apiKey: "",
-			modelName: "",
-			baseUrl: "https://api.openai.com/v1",
+			apiKey: apiKey,
+			modelName: modelName,
+			baseUrl: baseUrl,
 		},
 	});
 
