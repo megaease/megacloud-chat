@@ -14,10 +14,18 @@ import { ServerList } from "./server-list";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AddServerDialog } from "./add-server-dialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { useMCPDrawer } from "@/context/mcp-drawer-context";
 
-export function MCPDrawer({ trigger }: { trigger?: React.ReactNode }) {
+interface MCPDrawerProps {
+	children?: React.ReactNode;
+	trigger?: React.ReactNode;
+}
+
+export function MCPDrawer({ children, trigger }: MCPDrawerProps) {
 	const [isAddServerOpen, setIsAddServerOpen] = useState(false);
 	const queryClient = useQueryClient();
+	const { isOpen, openDrawer, closeDrawer } = useMCPDrawer();
+
 	const handleAddServerSuccess = () => {
 		setIsAddServerOpen(false);
 		queryClient.invalidateQueries({
@@ -26,24 +34,7 @@ export function MCPDrawer({ trigger }: { trigger?: React.ReactNode }) {
 	};
 
 	return (
-		<Sheet>
-			<SheetTrigger asChild>
-				<div className="px-4 py-2">
-					{trigger ? (
-						trigger
-					) : (
-						<Button
-							variant={"outline"}
-							className="relative w-full"
-							aria-label="MCP Settings"
-							title="MCP Servers"
-						>
-							<Server className="mr-2 h-4 w-4" />
-							MCP Servers
-						</Button>
-					)}
-				</div>
-			</SheetTrigger>
+		<Sheet open={isOpen} onOpenChange={closeDrawer}>
 			<SheetContent className="p-0 overflow-hidden max-h-dvh md:max-w-md lg:max-w-lg sm:max-w-sm">
 				<div className="flex flex-col h-full overflow-hidden">
 					<SheetHeader className="px-6 py-4 border-b">
@@ -55,7 +46,7 @@ export function MCPDrawer({ trigger }: { trigger?: React.ReactNode }) {
 						</div>
 					</SheetHeader>
 
-					<div className="flex-1 overflow-auto ">
+					<div className="flex-1 overflow-auto">
 						<ScrollArea className="h-full overflow-auto p-4">
 							<ServerList onAddServer={() => setIsAddServerOpen(true)} />
 						</ScrollArea>

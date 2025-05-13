@@ -35,8 +35,9 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { use, useState } from "react";
 import { ApiSettingsButton } from "./api-settings-button";
+import { useMCPDrawer } from "@/context/mcp-drawer-context";
 const userId = "user-id"; // Replace with actual user ID
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -45,6 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const queryClient = useQueryClient();
 	const [isAlertOpen, setIsAlertOpen] = useState(false);
 	const [chatToDelete, setChatToDelete] = useState<string | null>(null);
+	const { openDrawer } = useMCPDrawer();
 
 	const {
 		data: chatData = [],
@@ -196,6 +198,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				</SidebarGroup>
 			</SidebarContent>
 			<SidebarFooter>
+				<div className="px-4 py-2">
+					<Button
+						variant={"outline"}
+						className="relative w-full"
+						aria-label="MCP Settings"
+						title="MCP Servers"
+						onClick={() => {
+							openDrawer();
+						}}
+					>
+						<Server className="mr-2 h-4 w-4" />
+						MCP Servers
+					</Button>
+				</div>
 				<MCPDrawer />
 
 				<NavUser
