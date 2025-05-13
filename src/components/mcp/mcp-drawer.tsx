@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AddServerDialog } from "./add-server-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 
-export function MCPDrawer() {
+export function MCPDrawer({ trigger }: { trigger?: React.ReactNode }) {
 	const [isAddServerOpen, setIsAddServerOpen] = useState(false);
 	const queryClient = useQueryClient();
 	const handleAddServerSuccess = () => {
@@ -29,15 +29,19 @@ export function MCPDrawer() {
 		<Sheet>
 			<SheetTrigger asChild>
 				<div className="px-4 py-2">
-					<Button
-						variant={"outline"}
-						className="relative w-full"
-						aria-label="MCP Settings"
-						title="MCP Servers"
-					>
-						<Server className="mr-2 h-4 w-4" />
-						MCP Servers
-					</Button>
+					{trigger ? (
+						trigger
+					) : (
+						<Button
+							variant={"outline"}
+							className="relative w-full"
+							aria-label="MCP Settings"
+							title="MCP Servers"
+						>
+							<Server className="mr-2 h-4 w-4" />
+							MCP Servers
+						</Button>
+					)}
 				</div>
 			</SheetTrigger>
 			<SheetContent className="p-0 overflow-hidden max-h-dvh md:max-w-md lg:max-w-lg sm:max-w-sm">

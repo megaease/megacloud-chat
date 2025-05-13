@@ -7,6 +7,11 @@ import {
 	CreditCard,
 	LogOut,
 	Sparkles,
+	Settings,
+	Server,
+	Moon,
+	Sun,
+	Github,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,6 +31,11 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 
+import { ApiSettingsButton } from "@/components/api-settings-button";
+import { MCPDrawer } from "@/components/mcp/mcp-drawer";
+import { useTheme } from "next-themes";
+import { useApiSettings } from "@/context/api-settings-context";
+
 export function NavUser({
 	user,
 }: {
@@ -36,7 +46,8 @@ export function NavUser({
 	};
 }) {
 	const { isMobile } = useSidebar();
-
+	const { theme, setTheme } = useTheme();
+	const { setIsOpen } = useApiSettings();
 	return (
 		<SidebarMenu>
 			<SidebarMenuItem>
@@ -77,30 +88,45 @@ export function NavUser({
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
+							<DropdownMenuItem onClick={() => setIsOpen(true)}>
+								<Settings className="mr-2 size-4" />
+								<span>API Settings</span>
+							</DropdownMenuItem>
+
 							<DropdownMenuItem>
-								<Sparkles />
-								Upgrade to Pro
+								<Server className="mr-2 size-4" />
+								<span>MCP Servers</span>
+							</DropdownMenuItem>
+
+							<DropdownMenuItem
+								onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+							>
+								{theme === "light" ? (
+									<Moon className="mr-2 size-4" />
+								) : (
+									<Sun className="mr-2 size-4" />
+								)}
+								<span>{theme === "light" ? "Dark Theme" : "Light Theme"}</span>
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
-							<DropdownMenuItem>
-								<BadgeCheck />
-								Account
-							</DropdownMenuItem>
-							<DropdownMenuItem>
-								<CreditCard />
-								Billing
-							</DropdownMenuItem>
-							<DropdownMenuItem>
-								<Bell />
-								Notifications
+							<DropdownMenuItem asChild>
+								<a
+									href="https://github.com/megaease/megacloud-mcp-client"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="cursor-pointer"
+								>
+									<Github className="mr-2 size-4" />
+									<span>GitHub</span>
+								</a>
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem>
-							<LogOut />
-							Log out
+							<LogOut className="mr-2 size-4" />
+							<span>Log out</span>
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>

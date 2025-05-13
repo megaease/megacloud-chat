@@ -67,20 +67,35 @@ const components: Partial<Components> = {
 		</a>
 	),
 	ul: ({ className, children, ...props }) => (
-		<ul className={cn("list-disc pl-5 mb-2", className)} {...props}>
+		<ul
+			className={cn(
+				"list-disc marker:text-muted-foreground pl-6 my-0 space-y-0",
+				className,
+			)}
+			{...props}
+		>
 			{children}
 		</ul>
 	),
 	ol: ({ className, children, ...props }) => (
 		<ol
-			className={cn("list-decimal pl-5 my-0 space-y-0", className)}
+			className={cn(
+				"list-decimal marker:text-muted-foreground pl-6 my-0 space-y-0",
+				className,
+			)}
 			{...props}
 		>
 			{children}
 		</ol>
 	),
 	li: ({ className, children, ...props }) => (
-		<li className={cn("my-0 py-0.5", className)} {...props}>
+		<li
+			className={cn(
+				"my-0 py-0 pl-1 leading-normal marker:text-muted-foreground",
+				className,
+			)}
+			{...props}
+		>
 			{children}
 		</li>
 	),

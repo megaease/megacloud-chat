@@ -198,9 +198,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<SidebarFooter>
 				<MCPDrawer />
 
-				{/* <NavUser
-					user={{ name: "John Doe", email: "cloud@megaease.com", avatar: "" }}
-				/> */}
+				<NavUser
+					user={{ name: "Megaease", email: "cloud@megaease.com", avatar: "" }}
+				/>
 			</SidebarFooter>
 			<SidebarRail />
 			<AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
