@@ -187,10 +187,6 @@ export function ApiSettingsModal() {
 									{form.formState.errors.modelName.message}
 								</p>
 							)}
-							<p className="text-xs text-muted-foreground">
-								Common models: gpt-4, gpt-3.5-turbo, claude-3-opus,
-								claude-3-sonnet
-							</p>
 						</div>
 
 						<div className="space-y-2">
