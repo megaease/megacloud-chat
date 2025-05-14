@@ -2,16 +2,27 @@
 
 import { useChat } from "@ai-sdk/react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send } from "lucide-react";
+import {
+	Loader2,
+	Send,
+	Square,
+	AudioWaveform,
+	PanelRight,
+	X,
+	ArrowDown,
+} from "lucide-react";
 import { ChatMessage } from "../chat-message";
-import { ScrollArea } from "../ui/scroll-area";
 import { Textarea } from "../ui/textarea";
 import { nanoid } from "nanoid";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useApiSettings } from "@/context/api-settings-context";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import { cn } from "@/lib/utils";
+import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
+import { ChatItem } from "./chat-item";
 
 function useChatMessages(chatId: string | undefined) {
 	const query = useQuery({
@@ -40,6 +51,22 @@ export function Chat() {
 	const [randomChatId, setRandomChatId] = useState<string | undefined>(
 		undefined,
 	);
+	const inputRef = useRef<HTMLTextAreaElement>(null);
+
+	// 使用 useScrollToBottom hook 来管理滚动
+	const {
+		autoScroll,
+		hasScrolledUp,
+		scrollToBottom,
+		scrollAreaRef, // 从 hook 中获取 scrollAreaRef
+		messagesEndRef, // 从 hook 中获取 messagesEndRef
+	} = useScrollToBottom({
+		adaptRadixScrollArea: false,
+		scrollOnContentChange: true,
+		scrollOnMount: true,
+		behavior: "smooth",
+	});
+
 	useEffect(() => {
 		if (!chatId) {
 			const newChatId = nanoid(16);
@@ -66,8 +93,18 @@ export function Chat() {
 			});
 		}
 	}, [isLoadingError, loadingError]);
-	console.log(" id chatMessages", chatId, randomChatId);
-	const { messages, input, handleInputChange, handleSubmit, status } = useChat({
+
+	const {
+		messages,
+		setMessages,
+		input,
+		handleInputChange,
+		handleSubmit,
+		status,
+		stop,
+		error,
+		reload,
+	} = useChat({
 		id: chatId || randomChatId, // Unique ID for the chat session
 		maxSteps: 10,
 		body: {
@@ -89,115 +126,156 @@ export function Chat() {
 		},
 		onError: (error) => {
 			console.error("Error in chat:", error);
-			const { setIsOpen } = useApiSettings();
-
-			// Detect API key issues
-			if (
-				error.message.includes("API key") ||
-				error.message.includes("auth") ||
-				error.message.includes("key") ||
-				error.message.includes("Authentication")
-			) {
-				toast.error("API Authentication Error", {
-					description: "Please check your API key in settings",
-					action: {
-						label: "Open Settings",
-						onClick: () => setIsOpen(true),
-					},
-				});
-			}
-			// Detect model issues
-			else if (
-				error.message.includes("model") ||
-				error.message.includes("not found") ||
-				error.message.includes("unavailable") ||
-				error.message.includes("does not exist")
-			) {
-				toast.error("Model Error", {
-					description: "The specified model is not available or doesn't exist",
-					action: {
-						label: "Open Settings",
-						onClick: () => setIsOpen(true),
-					},
-				});
-			}
-			// Detect API URL issues
-			else if (
-				error.message.includes("URL") ||
-				error.message.includes("connect") ||
-				error.message.includes("network") ||
-				error.message.includes("ENOTFOUND")
-			) {
-				toast.error("Connection Error", {
-					description:
-						"Could not connect to the API. Check the base URL in settings",
-					action: {
-						label: "Open Settings",
-						onClick: () => setIsOpen(true),
-					},
-				});
-			}
-			// General errors
-			else {
-				toast.error("Chat Error", {
-					description:
-						error.message.substring(0, 100) || "An unexpected error occurred",
-				});
-			}
 		},
 	});
 
-	console.log("messages", messages, status);
+	useEffect(() => {
+		if (autoScroll && (status === "streaming" || messages.length > 0)) {
+			scrollToBottom();
+		}
+	}, [status, messages.length, autoScroll, scrollToBottom]);
 
 	const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		if (!input.trim()) return;
 
+		if (!input.trim()) return;
+		if (error != null) {
+			setMessages(messages.slice(0, -1)); // remove last message
+		}
 		await handleSubmit(e);
+
+		setTimeout(() => {
+			scrollToBottom();
+			inputRef.current?.focus();
+		}, 100);
 	};
 
 	const isLoading = status === "streaming" || status === "submitted";
+	// Handle stop generation
+	const handleStopGeneration = () => {
+		stop();
+		toast.info("Generation stopped", {
+			description: "You can continue the conversation or start a new one.",
+		});
+		setTimeout(() => {
+			inputRef.current?.focus();
+		}, 100);
+	};
 
 	return (
-		<div className="mx-auto flex h-full w-full max-w-3xl flex-col px-4 sm:px-6 py-4">
-			{messages.length === 0 ? (
-				<div className="flex h-full items-center justify-center">
-					<p className="text-primary">Start a conversation</p>
-				</div>
-			) : (
-				<ScrollArea className="h-full flex-1 overflow-y-auto px-4 sm:px-6">
-					<div className="mb-4 h-full space-y-4">
-						{messages.map((message) => (
-							<ChatMessage key={message.id} message={message} />
-						))}
-					</div>
-				</ScrollArea>
-			)}
-
-			<div className="mx-auto flex w-full flex-col px-4 sm:px-6 md:py-4 ">
-				{/* Chat input */}
-				<div className="border-t p-4 text-center">
-					<form onSubmit={handleFormSubmit} className="relative">
-						<Textarea
-							value={input}
-							onChange={handleInputChange}
-							placeholder="Type your message..."
-							className="w-full resize-none rounded-2xl border-2 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-							disabled={isLoading}
-						/>
-						<Button
-							type="submit"
-							size="icon"
-							disabled={isLoading || !input.trim()}
-							className="absolute right-2 bottom-2 h-8 w-8"
+		<div className="mx-auto flex h-full w-full max-w-4xl flex-col px-4 sm:px-6 py-4">
+			<div className="flex flex-1 gap-4 h-full">
+				<div
+					className={cn("flex flex-col flex-1 h-full transition-all relative")}
+				>
+					{messages.length === 0 ? (
+						<div className="flex h-full items-center justify-center">
+							<p className="text-primary">开始一个对话</p>
+						</div>
+					) : (
+						<div
+							ref={scrollAreaRef}
+							className="h-full flex-1 relative overflow-y-auto px-2 sm:px-4 space-y-4"
 						>
-							{isLoading ? (
-								<Loader2 className="h-4 w-4 animate-spin" />
-							) : (
-								<Send className="h-4 w-4" />
+							{messages.map((message) => (
+								<ChatMessage key={message.id} message={message} />
+							))}
+
+							{isLoading &&
+								messages &&
+								messages.length > 0 &&
+								messages?.[messages.length - 1]?.role !== "assistant" && (
+									<ChatItem>
+										<div className="flex items-center gap-2">
+											<AudioWaveform className="h-4 w-4 text-primary animate-pulse" />
+											<span className="text-muted-foreground">正在思考...</span>
+											<Loader2 className="h-4 w-4 animate-spin text-primary" />
+										</div>
+									</ChatItem>
+								)}
+
+							{error && (
+								<ChatItem>
+									<div className="flex items-center gap-2">
+										<div>An error occurred.</div>
+										<Button
+											type="button"
+											onClick={() => reload()}
+											size={"sm"}
+											variant="outline"
+										>
+											Retry
+										</Button>
+									</div>
+								</ChatItem>
 							)}
-						</Button>
-					</form>
+
+							<div ref={messagesEndRef} />
+
+							{hasScrolledUp && (
+								<div className="absolute bottom-28 right-8">
+									<Button
+										size="icon"
+										variant="secondary"
+										className="rounded-full shadow-md"
+										onClick={scrollToBottom}
+									>
+										<ArrowDown className="h-4 w-4" />
+									</Button>
+								</div>
+							)}
+						</div>
+					)}
+
+					<div className="pt-4">
+						{/* Chat input */}
+						<div className="border-t p-4 text-center">
+							<form onSubmit={handleFormSubmit} className="relative">
+								<Textarea
+									ref={inputRef}
+									value={input}
+									onChange={handleInputChange}
+									placeholder="输入您的消息..."
+									className="w-full resize-none rounded-2xl border-2 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+									disabled={isLoading}
+									rows={3}
+									onKeyDown={(e) => {
+										if (e.key === "Enter" && !e.shiftKey) {
+											e.preventDefault();
+											if (input.trim()) {
+												const event = new Event("submit", {
+													cancelable: true,
+													bubbles: true,
+												}) as unknown as React.FormEvent<HTMLFormElement>;
+												handleFormSubmit(event);
+											}
+										}
+									}}
+								/>
+								<div className="absolute right-2 bottom-2">
+									{isLoading ? (
+										<Button
+											size="icon"
+											onClick={handleStopGeneration}
+											className="h-8 w-8"
+											type="button"
+										>
+											<Square className="h-4 w-4" />
+										</Button>
+									) : (
+										<Button
+											type="submit"
+											size="icon"
+											disabled={isLoading || !input.trim()}
+											className="h-8 w-8"
+										>
+											<Send className="h-4 w-4" />
+										</Button>
+									)}
+								</div>
+							</form>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

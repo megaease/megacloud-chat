@@ -61,10 +61,7 @@ export function ApiSettingsModal() {
 	}, [isOpen, apiKey, modelName, baseUrl, form]);
 
 	const onSubmit = (data: ApiSettingsFormValues) => {
-		setApiKey(data.apiKey);
-		setModelName(data.modelName);
-		setBaseUrl(data.baseUrl);
-		saveSettings();
+		saveSettings(data);
 		setIsOpen(false);
 		toast.success("API settings saved successfully");
 	};

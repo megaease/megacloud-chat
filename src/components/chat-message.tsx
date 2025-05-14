@@ -16,23 +16,27 @@ import {
 	Clock,
 	CheckCircle2,
 	AlertCircle,
+	File,
 } from "lucide-react";
 import { Markdown } from "./markdown";
+import type {
+	MessagePart,
+	ToolInvocationPart as ToolInvocationPartType,
+	ResultContent,
+	FilePart,
+	UIMessage,
+} from "@/types/tool-invocation";
 
 interface ChatMessageProps {
-	message: Message;
+	message: Message | UIMessage;
 }
 
 // Render different types of message parts
-function renderMessagePart(part: any, index: number | string) {
+function renderMessagePart(part: MessagePart, key: string | number) {
 	// If it's a string or no type specified
 	if (!part || typeof part === "string") {
 		return (
-			<Markdown
-				key={index}
-				className="whitespace-pre-wrap my-0"
-				content={part as string}
-			/>
+			<Markdown key={key} className="whitespace-pre-wrap my-0" content={part} />
 		);
 	}
 
@@ -41,20 +45,33 @@ function renderMessagePart(part: any, index: number | string) {
 		case "text":
 			return (
 				<Markdown
-					key={index}
+					key={key}
 					className="whitespace-pre-wrap my-0"
 					content={part.text}
 				/>
 			);
 
 		case "tool-invocation":
-			return <ToolInvocationPart key={index} part={part} />;
+			return <ToolInvocationPart key={key} part={part} />;
 
-		//todo
+		case "file":
+			return (
+				<div
+					key={key}
+					className="border rounded-[var(--radius)] p-3 bg-accent/30"
+				>
+					<div className="flex items-center gap-2 mb-2">
+						<File size={14} className="text-primary" />
+						<span className="text-xs font-medium">文件内容</span>
+					</div>
+					<pre className="whitespace-pre-wrap break-words text-xs">
+						{part.content}
+					</pre>
+				</div>
+			);
+
 		case "step-start":
-			return null;
 		case "reasoning":
-			return null;
 		case "source":
 			return null;
 
@@ -63,29 +80,49 @@ function renderMessagePart(part: any, index: number | string) {
 	}
 }
 
-// Step marker component
-function StepMarker() {
-	return (
-		<div className="flex items-center gap-2 text-muted-foreground my-2 text-xs">
-			<Clock size={14} />
-			<span>Processing Step</span>
-			<div className="h-px flex-1 bg-border" />
-		</div>
-	);
+function renderResultContent(content: ResultContent | string, key: string) {
+	if (typeof content === "string") {
+		return (
+			<Markdown
+				key={key}
+				className="whitespace-pre-wrap my-0"
+				content={content}
+			/>
+		);
+	}
+
+	switch (content.type) {
+		case "text":
+		case "markdown":
+			return (
+				<Markdown
+					key={key}
+					className="whitespace-pre-wrap my-0"
+					content={content.text}
+				/>
+			);
+		case "code":
+			return (
+				<pre key={key} className="whitespace-pre-wrap break-words text-xs">
+					{content.text}
+				</pre>
+			);
+		default:
+			return null;
+	}
 }
 
-// Tool invocation component with Accordion
-function ToolInvocationPart({ part }: { part: any }) {
-	const toolInvocation = part?.toolInvocation || {};
-	const toolName = toolInvocation.toolName || "Unknown Tool";
+function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
+	const { toolInvocation } = part;
+	const toolName = toolInvocation.toolName;
 	const isDatabase =
 		toolName.includes("sql") || toolName.includes("postgresql");
 	const args = JSON.stringify(toolInvocation.args, null, 2);
-	const result =
-		toolInvocation.result?.content &&
-		Array.isArray(toolInvocation.result.content)
-			? toolInvocation.result.content
-			: JSON.stringify(toolInvocation.result, null, 2);
+
+	const hasError = toolInvocation.result?.isError;
+	const errorMessage = hasError
+		? toolInvocation.result?.error || "未知错误"
+		: null;
 
 	// Determine icon based on tool name
 	const getToolIcon = (name: string) => {
@@ -97,30 +134,135 @@ function ToolInvocationPart({ part }: { part: any }) {
 
 	// Determine status icon
 	const getStatusIcon = () => {
-		if (toolInvocation.state === "result") {
-			return toolInvocation.result?.isError ? (
+		const { state } = toolInvocation;
+
+		if (state === "result") {
+			return hasError ? (
 				<AlertCircle size={14} className="text-destructive" />
 			) : (
 				<CheckCircle2 size={14} className="text-green-500" />
 			);
 		}
+
+		// 处理加载中的状态
+		if (state === "processing" || state === "partial-call") {
+			return (
+				<div className="animate-spin">
+					<Clock size={14} className="text-primary" />
+				</div>
+			);
+		}
+
 		return <Clock size={14} className="text-muted-foreground" />;
 	};
 
+	// Render result content
+	const renderResult = () => {
+		const { result, state } = toolInvocation;
+
+		// 处理加载状态
+		if (state === "processing" || state === "partial-call") {
+			return (
+				<div className="flex items-center gap-2 text-muted-foreground">
+					<div className="animate-spin h-4 w-4 rounded-full border-2 border-primary border-r-transparent" />
+					<span className="text-xs">执行中...</span>
+				</div>
+			);
+		}
+
+		// 如果没有结果
+		if (!result) {
+			return (
+				<div className="text-muted-foreground text-xs">等待执行结果...</div>
+			);
+		}
+
+		// 如果没有 content，显示完整的结果对象
+		if (!result.content) {
+			return (
+				<pre className="whitespace-pre-wrap break-words text-xs bg-muted/50 p-2 rounded-[var(--radius)] max-h-[300px] overflow-auto">
+					{JSON.stringify(result, null, 2)}
+				</pre>
+			);
+		}
+
+		// 如果 content 是字符串
+		if (typeof result.content === "string") {
+			try {
+				// 尝试解析 JSON 字符串
+				const parsed = JSON.parse(result.content);
+				return (
+					<pre className="whitespace-pre-wrap break-words text-xs bg-muted/50 p-2 rounded-[var(--radius)] max-h-[300px] overflow-auto">
+						{JSON.stringify(parsed, null, 2)}
+					</pre>
+				);
+			} catch {
+				// 如果不是 JSON，直接显示文本
+				return (
+					<pre className="whitespace-pre-wrap break-words text-xs max-h-[300px] overflow-auto">
+						{result.content}
+					</pre>
+				);
+			}
+		}
+
+		// 如果 content 是数组
+		if (Array.isArray(result.content)) {
+			return (
+				<div className="space-y-2 max-h-[400px] overflow-auto">
+					{result.content.map((item, index) => {
+						const key = `${toolInvocation.toolName}-result-${index}-${typeof item === "string" ? "text" : item.type}`;
+						return (
+							<div key={key} className="border-l-2 border-primary/30 pl-3">
+								{renderResultContent(item, key)}
+							</div>
+						);
+					})}
+				</div>
+			);
+		}
+
+		return null;
+	};
+
 	return (
-		<div className="border border-primary/30 bg-accent/30 rounded-[var(--radius)] my-3 shadow-[var(--shadow-xs)]">
-			<Accordion type="single" collapsible>
+		<div
+			className={cn(
+				"border rounded-[var(--radius)] my-3 shadow-[var(--shadow-xs)]",
+				hasError
+					? "border-destructive/50 bg-destructive/10"
+					: "border-primary/30 bg-accent/30",
+			)}
+		>
+			<Accordion
+				type="single"
+				collapsible
+				defaultValue={hasError ? "item-0" : undefined}
+			>
 				<AccordionItem value="item-0" className="border-0">
 					<AccordionTrigger className="px-3 py-2 hover:no-underline">
 						<div className="flex items-center gap-2 w-full">
 							{getToolIcon(toolName)}
-							<span className="font-medium text-primary">{toolName}</span>
+							<span
+								className={cn(
+									"font-medium",
+									hasError ? "text-destructive" : "text-primary",
+								)}
+							>
+								{toolName}
+							</span>
 							<div className="ml-auto flex items-center gap-1 text-xs">
 								{getStatusIcon()}
-								<span className="text-muted-foreground">
+								<span
+									className={cn(
+										hasError ? "text-destructive" : "text-muted-foreground",
+									)}
+								>
 									{toolInvocation.state === "result"
-										? "Completed"
-										: "Processing"}
+										? hasError
+											? "执行失败"
+											: "已完成"
+										: "处理中"}
 								</span>
 							</div>
 						</div>
@@ -128,10 +270,22 @@ function ToolInvocationPart({ part }: { part: any }) {
 					<AccordionContent className="px-3 pb-3 pt-0">
 						{toolInvocation.state === "result" && (
 							<div className="text-sm">
+								{hasError && (
+									<div className="mb-3 p-3 rounded-[var(--radius)] bg-destructive/10 border border-destructive/30 text-destructive">
+										<div className="flex items-center gap-2 mb-1">
+											<AlertCircle size={14} />
+											<span className="font-medium">错误信息</span>
+										</div>
+										<p className="text-xs whitespace-pre-wrap break-words">
+											{errorMessage}
+										</p>
+									</div>
+								)}
+
 								<div className="bg-card rounded-[var(--radius)] overflow-hidden mb-3 border border-border">
 									<div className="flex items-center justify-between px-3 py-1.5 bg-accent/50 border-b border-border">
 										<div className="font-medium text-xs text-card-foreground">
-											Input Parameters
+											输入参数
 										</div>
 									</div>
 									<div className="p-3">
@@ -141,35 +295,30 @@ function ToolInvocationPart({ part }: { part: any }) {
 									</div>
 								</div>
 
-								<div className="bg-card rounded-[var(--radius)] overflow-hidden border border-border">
-									<div className="flex items-center justify-between px-3 py-1.5 bg-accent/50 border-b border-border">
-										<div className="font-medium text-xs text-card-foreground">
-											Result
+								<div
+									className={cn(
+										"bg-card rounded-[var(--radius)] overflow-hidden border",
+										hasError ? "border-destructive/50" : "border-border",
+									)}
+								>
+									<div
+										className={cn(
+											"flex items-center justify-between px-3 py-1.5 border-b",
+											hasError
+												? "bg-destructive/10 border-destructive/50"
+												: "bg-accent/50 border-border",
+										)}
+									>
+										<div
+											className={cn(
+												"font-medium text-xs",
+												hasError ? "text-destructive" : "text-card-foreground",
+											)}
+										>
+											执行结果
 										</div>
 									</div>
-
-									{toolInvocation.result?.content &&
-									Array.isArray(toolInvocation.result.content) ? (
-										<div className="p-3 border-l-2 border-primary/30">
-											{toolInvocation.result.content.map(
-												(
-													resultItem:
-														| {
-																type: string;
-																content: string;
-														  }
-														| string,
-													index: number,
-												) => renderMessagePart(resultItem, `result-${index}`),
-											)}
-										</div>
-									) : (
-										<div className="p-3">
-											<pre className="whitespace-pre-wrap break-words text-xs">
-												{result}
-											</pre>
-										</div>
-									)}
+									<div className="p-3">{renderResult()}</div>
 								</div>
 							</div>
 						)}
@@ -187,13 +336,20 @@ export function ChatMessage({ message }: ChatMessageProps) {
 	const renderContent = () => {
 		// If message has parts array
 		if (message.parts && Array.isArray(message.parts)) {
-			return message.parts.map((part, index) => renderMessagePart(part, index));
+			return message.parts.map((part, index) => {
+				// 在这里处理类型转换
+				const convertedPart = part as MessagePart;
+				return renderMessagePart(convertedPart, `message-part-${index}`);
+			});
 		}
 
 		// If message has content property that's an array
 		if (message.content && Array.isArray(message.content)) {
 			return message.content.map((part, index) =>
-				renderMessagePart(part, index),
+				renderMessagePart(
+					typeof part === "string" ? part : { type: "text", text: part },
+					`message-content-${index}`,
+				),
 			);
 		}
 
@@ -228,18 +384,27 @@ export function ChatMessage({ message }: ChatMessageProps) {
 				</AvatarFallback>
 			</Avatar>
 			<div
-				className={cn("flex-1 space-y-2", isUser ? "text-right" : "text-left")}
+				className={cn(
+					"flex-1 space-y-2",
+					isUser ? "text-right" : "text-left",
+					"max-w-[85%]", // 限制最大宽度
+				)}
 			>
 				<div
 					className={cn(
 						"inline-block rounded-[var(--radius)] px-4 py-3 overflow-hidden text-left",
 						isUser
-							? "bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto max-w-[85%]"
+							? "bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto"
 							: "bg-card text-card-foreground border border-border shadow-[var(--shadow-xs)] w-full",
 					)}
 				>
 					{renderContent()}
 				</div>
+				{message.createdAt && (
+					<div className="text-xs text-muted-foreground px-2">
+						{new Date(message.createdAt).toLocaleTimeString()}
+					</div>
+				)}
 			</div>
 		</div>
 	);

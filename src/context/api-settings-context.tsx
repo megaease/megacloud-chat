@@ -17,7 +17,11 @@ interface ApiSettingsContextType {
 	setModelName: (modelName: string) => void;
 	baseUrl: string;
 	setBaseUrl: (baseUrl: string) => void;
-	saveSettings: () => void;
+	saveSettings: (settings?: {
+		apiKey?: string;
+		modelName?: string;
+		baseUrl?: string;
+	}) => void;
 	isConfigured: boolean;
 }
 
@@ -51,11 +55,26 @@ export function ApiSettingsProvider({ children }: { children: ReactNode }) {
 		}
 	}, []);
 
-	const saveSettings = () => {
-		localStorage.setItem("aiChatBox_apiKey", apiKey);
-		localStorage.setItem("aiChatBox_modelName", modelName);
-		localStorage.setItem("aiChatBox_baseUrl", baseUrl);
-		setIsConfigured(!!(apiKey && modelName));
+	const saveSettings = (newSettings?: {
+		apiKey?: string;
+		modelName?: string;
+		baseUrl?: string;
+	}) => {
+		const finalApiKey = newSettings?.apiKey ?? apiKey;
+		const finalModelName = newSettings?.modelName ?? modelName;
+		const finalBaseUrl = newSettings?.baseUrl ?? baseUrl;
+
+		// 更新 state
+		if (newSettings?.apiKey) setApiKey(finalApiKey);
+		if (newSettings?.modelName) setModelName(finalModelName);
+		if (newSettings?.baseUrl) setBaseUrl(finalBaseUrl);
+
+		// 保存到 localStorage
+		localStorage.setItem("aiChatBox_apiKey", finalApiKey);
+		localStorage.setItem("aiChatBox_modelName", finalModelName);
+		localStorage.setItem("aiChatBox_baseUrl", finalBaseUrl);
+
+		setIsConfigured(!!(finalApiKey && finalModelName));
 	};
 
 	return (
