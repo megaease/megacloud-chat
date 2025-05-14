@@ -93,13 +93,13 @@ export function ServerList({ onAddServer }: ServersListProps) {
 			const result = await updateMcpServerStatus(id, newStatus);
 			if (result.success) {
 				toast.success(
-					`服务器 ${newStatus === ServerStatusEnum.ONLINE ? "启用" : "禁用"} 成功`,
+					`Server ${newStatus === ServerStatusEnum.ONLINE ? "enabled" : "disabled"} successfully`,
 				);
 			} else {
-				toast.error("操作失败，请稍后重试");
+				toast.error("Operation failed, please try again");
 			}
 		} catch (error) {
-			toast.error("操作失败，请稍后重试");
+			toast.error("Operation failed, please try again");
 		} finally {
 			setLoadingStates((prev) => ({ ...prev, [id]: false }));
 			refetch();
@@ -112,12 +112,12 @@ export function ServerList({ onAddServer }: ServersListProps) {
 		try {
 			const result = await deleteMcpServer(id);
 			if (result.success) {
-				toast.success("服务器删除成功");
+				toast.success("Server deleted successfully");
 			} else {
-				toast.error("删除失败，请稍后重试");
+				toast.error("Failed to delete server");
 			}
 		} catch (error) {
-			toast.error("删除失败，请稍后重试");
+			toast.error("Failed to delete server");
 		} finally {
 			setServerToDelete(null);
 			refetch();
@@ -129,7 +129,9 @@ export function ServerList({ onAddServer }: ServersListProps) {
 		return (
 			<div className="flex flex-col items-center justify-center py-12">
 				<Loader2 className="h-8 w-8 animate-spin text-primary" />
-				<p className="mt-4 text-sm text-muted-foreground">加载服务器列表...</p>
+				<p className="mt-4 text-sm text-muted-foreground">
+					Loading server list...
+				</p>
 			</div>
 		);
 	}
@@ -139,13 +141,13 @@ export function ServerList({ onAddServer }: ServersListProps) {
 		return (
 			<div className="text-center py-12">
 				<Server className="mx-auto h-12 w-12 text-gray-400" />
-				<h3 className="mt-4 text-lg font-medium">未找到服务器</h3>
+				<h3 className="mt-4 text-lg font-medium">No servers found</h3>
 				<p className="mt-2 text-sm text-gray-500">
-					添加一个新的 MCP 服务器开始使用。
+					Add a new MCP server to get started.
 				</p>
 				<Button onClick={onAddServer} className="mt-4">
 					<Plus className="mr-2 h-4 w-4" />
-					添加服务器
+					Add Server
 				</Button>
 			</div>
 		);
@@ -172,7 +174,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 									<DropdownMenuTrigger asChild>
 										<Button variant="ghost" size="icon">
 											<MoreVertical className="h-4 w-4" />
-											<span className="sr-only">打开菜单</span>
+											<span className="sr-only">Open menu</span>
 										</Button>
 									</DropdownMenuTrigger>
 									<DropdownMenuContent align="end">
@@ -184,12 +186,12 @@ export function ServerList({ onAddServer }: ServersListProps) {
 											{server.status === ServerStatusEnum.ONLINE ? (
 												<>
 													<PowerOff className="mr-2 h-4 w-4" />
-													<span>禁用</span>
+													<span>Disable</span>
 												</>
 											) : (
 												<>
 													<Power className="mr-2 h-4 w-4" />
-													<span>启用</span>
+													<span>Enable</span>
 												</>
 											)}
 										</DropdownMenuItem>
@@ -197,7 +199,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 											onClick={() => setServerToEdit(server.id)}
 										>
 											<Edit className="mr-2 h-4 w-4" />
-											<span>编辑</span>
+											<span>Edit</span>
 										</DropdownMenuItem>
 										<DropdownMenuSeparator />
 										<DropdownMenuItem
@@ -208,7 +210,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 											}}
 										>
 											<Trash className="mr-2 h-4 w-4" />
-											<span>删除</span>
+											<span>Delete</span>
 										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
@@ -217,19 +219,23 @@ export function ServerList({ onAddServer }: ServersListProps) {
 						<CardContent>
 							<div className="space-y-2">
 								<div className="flex justify-between text-sm">
-									<span className="text-muted-foreground">连接方式：</span>
+									<span className="text-muted-foreground">
+										Connection Type:
+									</span>
 									<ConnectionInfo connectionType={server.type as Type} />
 								</div>
 								<div className="flex justify-between text-sm">
-									<span className="text-muted-foreground">最后连接：</span>
+									<span className="text-muted-foreground">Last Connected:</span>
 									<span>
 										{server.lastConnected
 											? new Date(server.lastConnected).toLocaleString()
-											: "从未"}
+											: "Never"}
 									</span>
 								</div>
 								<div className="mt-3 text-sm">
-									<span className="text-muted-foreground">连接详情：</span>
+									<span className="text-muted-foreground">
+										Connection Details:
+									</span>
 									<code className="mt-1 block text-xs bg-slate-50 p-2 rounded border overflow-x-auto dark:bg-slate-800 dark:text-slate-200">
 										{server.type === TypeEnum.SSE
 											? server.url
@@ -253,18 +259,18 @@ export function ServerList({ onAddServer }: ServersListProps) {
 											<>
 												<Loader2 className="mr-2 h-3 w-3 animate-spin" />
 												{server.status === ServerStatusEnum.ONLINE
-													? "断开中..."
-													: "连接中..."}
+													? "Disconnecting..."
+													: "Connecting..."}
 											</>
 										) : server.status === ServerStatusEnum.ONLINE ? (
 											<>
 												<PowerOff className="mr-2 h-3 w-3" />
-												禁用
+												Disable
 											</>
 										) : (
 											<>
 												<Power className="mr-2 h-3 w-3" />
-												启用
+												Enable
 											</>
 										)}
 									</Button>
@@ -281,19 +287,21 @@ export function ServerList({ onAddServer }: ServersListProps) {
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>确定要删除吗？</AlertDialogTitle>
+						<AlertDialogTitle>
+							Are you sure you want to delete?
+						</AlertDialogTitle>
 						<AlertDialogDescription>
-							这将永久删除 MCP 服务器及其所有配置。
+							This will permanently delete the MCP server and all its settings.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel>取消</AlertDialogCancel>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
 						<AlertDialogAction
 							onClick={() =>
 								serverToDelete && handleDeleteServer(serverToDelete)
 							}
 						>
-							删除
+							Delete
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

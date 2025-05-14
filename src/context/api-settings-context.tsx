@@ -64,12 +64,12 @@ export function ApiSettingsProvider({ children }: { children: ReactNode }) {
 		const finalModelName = newSettings?.modelName ?? modelName;
 		const finalBaseUrl = newSettings?.baseUrl ?? baseUrl;
 
-		// 更新 state
+		// Update state
 		if (newSettings?.apiKey) setApiKey(finalApiKey);
 		if (newSettings?.modelName) setModelName(finalModelName);
 		if (newSettings?.baseUrl) setBaseUrl(finalBaseUrl);
 
-		// 保存到 localStorage
+		// Save to localStorage
 		localStorage.setItem("aiChatBox_apiKey", finalApiKey);
 		localStorage.setItem("aiChatBox_modelName", finalModelName);
 		localStorage.setItem("aiChatBox_baseUrl", finalBaseUrl);

@@ -52,7 +52,8 @@ export function EditServerDialog({
 	const { data: serverResult, isLoading } = useQuery({
 		queryKey: ["getMcpServer", serverId],
 		queryFn: async () => {
-			if (!serverId) return { success: false, error: "服务器 ID 不存在" };
+			if (!serverId)
+				return { success: false, error: "Server ID does not exist" };
 			return await getMcpServerById(serverId);
 		},
 		enabled: !!serverId && open,
@@ -89,7 +90,7 @@ export function EditServerDialog({
 				env: {},
 			};
 
-	// 初始化表单
+	// Initialize form
 	const form = useForm<ServerFormValues>({
 		resolver: zodResolver(insertMcpServerSchema) as any,
 		defaultValues,
@@ -102,7 +103,7 @@ export function EditServerDialog({
 
 	const onSubmit = async (data: ServerFormValues) => {
 		if (!serverId) {
-			toast.error("服务器 ID 不存在");
+			toast.error("Server ID does not exist");
 			return;
 		}
 
@@ -112,17 +113,17 @@ export function EditServerDialog({
 			const result = await updateMcpServer(serverId, data);
 
 			if (result.success) {
-				toast.success("服务器更新成功！");
+				toast.success("Server updated successfully!");
 				if (onSuccess) {
 					onSuccess();
 				}
 				onOpenChange(false);
 			} else {
-				toast.error(result.error || "更新服务器失败");
+				toast.error(result.error || "Failed to update server");
 			}
 		} catch (error) {
-			console.error("更新服务器失败：", error);
-			toast.error("更新服务器失败");
+			console.error("Failed to update server:", error);
+			toast.error("Failed to update server");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -132,9 +133,9 @@ export function EditServerDialog({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(880px,90vh)] sm:max-w-xl  [&>button:last-child]:top-3.5">
 				<DialogHeader className="px-6 py-4 ">
-					<DialogTitle>编辑 MCP 服务器</DialogTitle>
+					<DialogTitle>Edit MCP Server</DialogTitle>
 					<DialogDescription>
-						修改 MCP 服务器配置以更新 AI 助手的能力。
+						Modify MCP server configuration to update AI assistant capabilities.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="overflow-y-auto  px-6 py-4 ">
@@ -142,11 +143,11 @@ export function EditServerDialog({
 						{isLoading ? (
 							<div className="flex items-center justify-center py-8">
 								<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-								<span className="ml-2 text-muted-foreground">加载中...</span>
+								<span className="ml-2 text-muted-foreground">Loading...</span>
 							</div>
 						) : !server ? (
 							<div className="flex items-center justify-center py-8 text-muted-foreground">
-								未找到服务器数据
+								Server data not found
 							</div>
 						) : (
 							<Form {...form}>
@@ -155,7 +156,7 @@ export function EditServerDialog({
 									className="space-y-6"
 								>
 									<div className="space-y-2">
-										<FormLabel>服务器类型</FormLabel>
+										<FormLabel>Server Type</FormLabel>
 										<Tabs
 											value={form.watch("type")}
 											onValueChange={(value) =>
@@ -178,8 +179,8 @@ export function EditServerDialog({
 										</Tabs>
 										<FormDescription>
 											{form.watch("type") === TypeEnum.SSE
-												? "SSE (Server-Sent Events) 连接通过 HTTP 与 MCP 服务器通信。"
-												: "STDIO 连接通过标准输入/输出与本地 MCP 进程通信。"}
+												? "SSE (Server-Sent Events) connects to MCP server via HTTP."
+												: "STDIO connects to local MCP process via standard input/output."}
 										</FormDescription>
 									</div>
 
@@ -189,11 +190,13 @@ export function EditServerDialog({
 											name="name"
 											render={({ field }) => (
 												<FormItem>
-													<FormLabel>名称</FormLabel>
+													<FormLabel>Name</FormLabel>
 													<FormControl>
-														<Input placeholder="MCP 服务器名称" {...field} />
+														<Input placeholder="MCP Server Name" {...field} />
 													</FormControl>
-													<FormDescription>服务器的显示名称</FormDescription>
+													<FormDescription>
+														Display name for the server
+													</FormDescription>
 													<FormMessage />
 												</FormItem>
 											)}
@@ -204,17 +207,18 @@ export function EditServerDialog({
 											name="description"
 											render={({ field }) => (
 												<FormItem>
-													<FormLabel>描述</FormLabel>
+													<FormLabel>Description</FormLabel>
 													<FormControl>
 														<Textarea
-															placeholder="服务器描述（可选）"
+															placeholder="Server description (optional)"
 															className="resize-none"
 															{...field}
 															value={field.value || ""}
 														/>
 													</FormControl>
 													<FormDescription>
-														简要描述此 MCP 服务器的功能和用途
+														Brief description of this MCP server's functionality
+														and purpose
 													</FormDescription>
 													<FormMessage />
 												</FormItem>
@@ -222,7 +226,7 @@ export function EditServerDialog({
 										/>
 									</div>
 
-									{/* SSE 特定字段 */}
+									{/* SSE specific fields */}
 									{form.watch("type") === TypeEnum.SSE && (
 										<div className="space-y-4">
 											<FormField
@@ -238,7 +242,7 @@ export function EditServerDialog({
 															/>
 														</FormControl>
 														<FormDescription>
-															MCP 服务器的 SSE 端点 URL
+															SSE endpoint URL for the MCP server
 														</FormDescription>
 														<FormMessage />
 													</FormItem>
@@ -250,17 +254,17 @@ export function EditServerDialog({
 												name="headers"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>HTTP 头</FormLabel>
+														<FormLabel>HTTP Headers</FormLabel>
 														<FormControl>
 															<KeyValueEditor
-																keyPlaceholder="Header 名称"
-																valuePlaceholder="Header 值"
+																keyPlaceholder="Header name"
+																valuePlaceholder="Header value"
 																value={field.value || {}}
 																onChange={field.onChange}
 															/>
 														</FormControl>
 														<FormDescription>
-															发送到 MCP 服务器的自定义 HTTP 头
+															Custom HTTP headers sent to the MCP server
 														</FormDescription>
 														<FormMessage />
 													</FormItem>
@@ -269,7 +273,7 @@ export function EditServerDialog({
 										</div>
 									)}
 
-									{/* STDIO 特定字段 */}
+									{/* STDIO specific fields */}
 									{form.watch("type") === TypeEnum.STDIO && (
 										<div className="space-y-4">
 											<FormField
@@ -277,12 +281,12 @@ export function EditServerDialog({
 												name="command"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>命令</FormLabel>
+														<FormLabel>Command</FormLabel>
 														<FormControl>
 															<Input placeholder="npx" {...field} />
 														</FormControl>
 														<FormDescription>
-															启动 MCP 服务器的命令
+															Command to start the MCP server
 														</FormDescription>
 														<FormMessage />
 													</FormItem>
@@ -294,7 +298,7 @@ export function EditServerDialog({
 												name="args"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>命令行参数</FormLabel>
+														<FormLabel>Command Arguments</FormLabel>
 														<FormControl>
 															<div className="space-y-2">
 																{field.value?.map((arg, i) => (
@@ -311,7 +315,7 @@ export function EditServerDialog({
 																				newArgs[i] = e.target.value;
 																				field.onChange(newArgs);
 																			}}
-																			placeholder={`参数 ${i + 1}`}
+																			placeholder={`Argument ${i + 1}`}
 																		/>
 																		<Button
 																			type="button"
@@ -339,12 +343,12 @@ export function EditServerDialog({
 																		]);
 																	}}
 																>
-																	添加参数
+																	Add Argument
 																</Button>
 															</div>
 														</FormControl>
 														<FormDescription>
-															传递给命令的参数列表
+															List of arguments passed to the command
 														</FormDescription>
 														<FormMessage />
 													</FormItem>
@@ -356,17 +360,18 @@ export function EditServerDialog({
 												name="env"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>环境变量</FormLabel>
+														<FormLabel>Environment Variables</FormLabel>
 														<FormControl>
 															<KeyValueEditor
-																keyPlaceholder="变量名"
-																valuePlaceholder="变量值"
+																keyPlaceholder="Variable name"
+																valuePlaceholder="Variable value"
 																value={field.value || {}}
 																onChange={field.onChange}
 															/>
 														</FormControl>
 														<FormDescription>
-															传递给 MCP 服务器进程的环境变量
+															Environment variables passed to the MCP server
+															process
 														</FormDescription>
 														<FormMessage />
 													</FormItem>
@@ -381,16 +386,16 @@ export function EditServerDialog({
 											variant="outline"
 											onClick={() => onOpenChange(false)}
 										>
-											取消
+											Cancel
 										</Button>
 										<Button type="submit" disabled={isSubmitting}>
 											{isSubmitting ? (
 												<>
 													<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-													更新中...
+													Updating...
 												</>
 											) : (
-												"更新服务器"
+												"Update Server"
 											)}
 										</Button>
 									</DialogFooter>

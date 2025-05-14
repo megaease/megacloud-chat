@@ -43,7 +43,7 @@ interface AddServerDialogProps {
 	onSuccess?: () => void;
 }
 
-// SSE 服务器默认值
+// Default values for SSE server
 const defaultSseValues: McpServerSSE = {
 	type: TypeEnum.SSE,
 	name: "",
@@ -78,17 +78,17 @@ export function AddServerDialog({
 	>(TypeEnum.SSE);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// 使用类型断言解决复杂联合类型与表单库的兼容性问题
+	// Use type assertion to resolve compatibility between complex union types and form library
 	const form = useForm<ServerFormValues>({
 		resolver: zodResolver(insertMcpServerSchema) as any,
 		defaultValues:
 			serverType === TypeEnum.SSE ? defaultSseValues : defaultStdioValues,
 	});
 
-	// 当服务器类型变化时重置表单
+	// Reset form when server type changes
 	useEffect(() => {
 		if (form.formState.isDirty) {
-			// 只有当表单已经被编辑过时才提示用户
+			// Only reset when form has been modified
 			const shouldReset =
 				serverType === TypeEnum.SSE
 					? form.getValues("type") !== TypeEnum.SSE
@@ -102,7 +102,7 @@ export function AddServerDialog({
 		}
 	}, [serverType, form]);
 
-	// 处理表单提交
+	// Handle form submission
 	const onSubmit = async (data: ServerFormValues) => {
 		setIsSubmitting(true);
 
@@ -110,21 +110,21 @@ export function AddServerDialog({
 			const result = await createMcpServer(data);
 
 			if (result.success) {
-				toast.success("服务器添加成功！");
+				toast.success("Server added successfully!");
 				form.reset();
 				onOpenChange(false);
 			} else {
-				toast.error(result.error || "添加服务器失败");
+				toast.error(result.error || "Failed to add server");
 			}
 		} catch (error) {
-			console.error("添加服务器失败：", error);
-			toast.error("添加服务器失败");
+			console.error("Failed to add server:", error);
+			toast.error("Failed to add server");
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
 
-	// 切换服务器类型
+	// Switch server type
 	const handleTypeChange = (type: (typeof TypeEnum)[keyof typeof TypeEnum]) => {
 		setServerType(type);
 		form.setValue("type", type);
@@ -136,24 +136,24 @@ export function AddServerDialog({
 				<div className="w-full px-4 py-2">
 					<Button className="w-full">
 						<Plus className="mr-2 h-4 w-4" />
-						添加服务器
+						Add Server
 					</Button>
 				</div>
 			</DialogTrigger>
 			<DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(880px,90vh)] sm:max-w-xl  [&>button:last-child]:top-3.5">
 				<DialogHeader className="px-6 py-4">
-					<DialogTitle>添加 MCP 服务器</DialogTitle>
+					<DialogTitle>Add MCP Server</DialogTitle>
 					<DialogDescription>
-						添加一个新的 MCP 服务器以扩展 AI 助手的能力。
+						Add a new MCP server to enhance AI assistant capabilities.
 					</DialogDescription>
 				</DialogHeader>
 
 				<div className="overflow-y-auto  px-6 py-4">
 					<Form {...form}>
 						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-							{/* 服务器类型选择 */}
+							{/* Server type selection */}
 							<div className="space-y-2">
-								<FormLabel>服务器类型</FormLabel>
+								<FormLabel>Server Type</FormLabel>
 								<Tabs
 									value={serverType}
 									onValueChange={(value) =>
@@ -176,23 +176,25 @@ export function AddServerDialog({
 								</Tabs>
 								<FormDescription>
 									{serverType === TypeEnum.SSE
-										? "SSE (Server-Sent Events) 连接通过 HTTP 与 MCP 服务器通信。"
-										: "STDIO 连接通过标准输入/输出与本地 MCP 进程通信。"}
+										? "SSE (Server-Sent Events) connects to MCP server via HTTP."
+										: "STDIO connects to local MCP process via standard input/output."}
 								</FormDescription>
 							</div>
 
-							{/* 基本信息 */}
+							{/* Basic information */}
 							<div className="space-y-4">
 								<FormField
 									control={form.control}
 									name="name"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>名称</FormLabel>
+											<FormLabel>Name</FormLabel>
 											<FormControl>
-												<Input placeholder="MCP 服务器名称" {...field} />
+												<Input placeholder="MCP Server Name" {...field} />
 											</FormControl>
-											<FormDescription>服务器的显示名称</FormDescription>
+											<FormDescription>
+												Display name for the server
+											</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
@@ -203,17 +205,18 @@ export function AddServerDialog({
 									name="description"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>描述</FormLabel>
+											<FormLabel>Description</FormLabel>
 											<FormControl>
 												<Textarea
-													placeholder="服务器描述（可选）"
+													placeholder="Server description (optional)"
 													className="resize-none"
 													{...field}
 													value={field.value || ""}
 												/>
 											</FormControl>
 											<FormDescription>
-												简要描述此 MCP 服务器的功能和用途
+												Brief description of this MCP server's functionality and
+												purpose
 											</FormDescription>
 											<FormMessage />
 										</FormItem>
@@ -221,7 +224,7 @@ export function AddServerDialog({
 								/>
 							</div>
 
-							{/* SSE 特定字段 */}
+							{/* SSE specific fields */}
 							{serverType === TypeEnum.SSE && (
 								<div className="space-y-4">
 									<FormField
@@ -237,7 +240,7 @@ export function AddServerDialog({
 													/>
 												</FormControl>
 												<FormDescription>
-													MCP 服务器的 SSE 端点 URL
+													SSE endpoint URL for the MCP server
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -249,17 +252,17 @@ export function AddServerDialog({
 										name="headers"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>HTTP 头</FormLabel>
+												<FormLabel>HTTP Headers</FormLabel>
 												<FormControl>
 													<KeyValueEditor
-														keyPlaceholder="Header 名称"
-														valuePlaceholder="Header 值"
+														keyPlaceholder="Header name"
+														valuePlaceholder="Header value"
 														value={field.value || {}}
 														onChange={field.onChange}
 													/>
 												</FormControl>
 												<FormDescription>
-													发送到 MCP 服务器的自定义 HTTP 头
+													Custom HTTP headers sent to the MCP server
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -268,7 +271,7 @@ export function AddServerDialog({
 								</div>
 							)}
 
-							{/* STDIO 特定字段 */}
+							{/* STDIO specific fields */}
 							{serverType === TypeEnum.STDIO && (
 								<div className="space-y-4">
 									<FormField
@@ -276,11 +279,13 @@ export function AddServerDialog({
 										name="command"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>命令</FormLabel>
+												<FormLabel>Command</FormLabel>
 												<FormControl>
 													<Input placeholder="npx" {...field} />
 												</FormControl>
-												<FormDescription>启动 MCP 服务器的命令</FormDescription>
+												<FormDescription>
+													Command to start the MCP server
+												</FormDescription>
 												<FormMessage />
 											</FormItem>
 										)}
@@ -291,7 +296,7 @@ export function AddServerDialog({
 										name="args"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>命令行参数</FormLabel>
+												<FormLabel>Command Arguments</FormLabel>
 												<FormControl>
 													<div className="space-y-2">
 														{field.value?.map((arg, i) => (
@@ -306,7 +311,7 @@ export function AddServerDialog({
 																		newArgs[i] = e.target.value;
 																		field.onChange(newArgs);
 																	}}
-																	placeholder={`参数 ${i + 1}`}
+																	placeholder={`Argument ${i + 1}`}
 																/>
 																<Button
 																	type="button"
@@ -329,11 +334,13 @@ export function AddServerDialog({
 																field.onChange([...(field.value || []), ""]);
 															}}
 														>
-															添加参数
+															Add Argument
 														</Button>
 													</div>
 												</FormControl>
-												<FormDescription>传递给命令的参数列表</FormDescription>
+												<FormDescription>
+													List of arguments passed to the command
+												</FormDescription>
 												<FormMessage />
 											</FormItem>
 										)}
@@ -344,17 +351,17 @@ export function AddServerDialog({
 										name="env"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>环境变量</FormLabel>
+												<FormLabel>Environment Variables</FormLabel>
 												<FormControl>
 													<KeyValueEditor
-														keyPlaceholder="变量名"
-														valuePlaceholder="变量值"
+														keyPlaceholder="Variable name"
+														valuePlaceholder="Variable value"
 														value={field.value || {}}
 														onChange={field.onChange}
 													/>
 												</FormControl>
 												<FormDescription>
-													传递给 MCP 服务器进程的环境变量
+													Environment variables passed to the MCP server process
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -369,16 +376,16 @@ export function AddServerDialog({
 									variant="outline"
 									onClick={() => onOpenChange(false)}
 								>
-									取消
+									Cancel
 								</Button>
 								<Button type="submit" disabled={isSubmitting}>
 									{isSubmitting ? (
 										<>
 											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-											添加中...
+											Adding...
 										</>
 									) : (
-										"添加服务器"
+										"Add Server"
 									)}
 								</Button>
 							</DialogFooter>

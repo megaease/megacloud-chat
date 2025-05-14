@@ -15,8 +15,8 @@ interface KeyValueEditorProps {
 export function KeyValueEditor({
 	value,
 	onChange,
-	keyPlaceholder = "键",
-	valuePlaceholder = "值",
+	keyPlaceholder = "Key",
+	valuePlaceholder = "Value",
 }: KeyValueEditorProps) {
 	const [newKey, setNewKey] = useState("");
 	const [newValue, setNewValue] = useState("");

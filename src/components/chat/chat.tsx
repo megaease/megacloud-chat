@@ -53,13 +53,13 @@ export function Chat() {
 	);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 
-	// 使用 useScrollToBottom hook 来管理滚动
+	// Use useScrollToBottom hook to manage scrolling
 	const {
 		autoScroll,
 		hasScrolledUp,
 		scrollToBottom,
-		scrollAreaRef, // 从 hook 中获取 scrollAreaRef
-		messagesEndRef, // 从 hook 中获取 messagesEndRef
+		scrollAreaRef, // Get scrollAreaRef from hook
+		messagesEndRef, // Get messagesEndRef from hook
 	} = useScrollToBottom({
 		adaptRadixScrollArea: false,
 		scrollOnContentChange: true,
@@ -170,7 +170,7 @@ export function Chat() {
 				>
 					{messages.length === 0 ? (
 						<div className="flex h-full items-center justify-center">
-							<p className="text-primary">开始一个对话</p>
+							<p className="text-primary">Start a conversation</p>
 						</div>
 					) : (
 						<div
@@ -181,18 +181,18 @@ export function Chat() {
 								<ChatMessage key={message.id} message={message} />
 							))}
 
-							{isLoading &&
+							{/* {isLoading &&
 								messages &&
 								messages.length > 0 &&
 								messages?.[messages.length - 1]?.role !== "assistant" && (
 									<ChatItem>
 										<div className="flex items-center gap-2">
 											<AudioWaveform className="h-4 w-4 text-primary animate-pulse" />
-											<span className="text-muted-foreground">正在思考...</span>
+											<span className="text-muted-foreground">Thinking...</span>
 											<Loader2 className="h-4 w-4 animate-spin text-primary" />
 										</div>
 									</ChatItem>
-								)}
+								)} */}
 
 							{error && (
 								<ChatItem>
@@ -209,7 +209,13 @@ export function Chat() {
 									</div>
 								</ChatItem>
 							)}
-
+							{isLoading && (
+								<div className="flex items-center gap-2 pl-2">
+									<AudioWaveform className="h-4 w-4 text-primary animate-pulse" />
+									<span className="text-muted-foreground">Thinking...</span>
+									<Loader2 className="h-4 w-4 animate-spin text-primary" />
+								</div>
+							)}
 							<div ref={messagesEndRef} />
 
 							{hasScrolledUp && (
@@ -235,9 +241,8 @@ export function Chat() {
 									ref={inputRef}
 									value={input}
 									onChange={handleInputChange}
-									placeholder="输入您的消息..."
+									placeholder="Type your message..."
 									className="w-full resize-none rounded-2xl border-2 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-									disabled={isLoading}
 									rows={3}
 									onKeyDown={(e) => {
 										if (e.key === "Enter" && !e.shiftKey) {

@@ -17,6 +17,8 @@ import {
 	CheckCircle2,
 	AlertCircle,
 	File,
+	AudioWaveform,
+	Loader2,
 } from "lucide-react";
 import { Markdown } from "./markdown";
 import type {
@@ -392,7 +394,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
 			>
 				<div
 					className={cn(
-						"inline-block rounded-[var(--radius)] px-4 py-3 overflow-hidden text-left",
+						"inline-block rounded-[var(--radius)] px-4 py-3 overflow-hidden text-left min-h-[1em]",
 						isUser
 							? "bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto"
 							: "bg-card text-card-foreground border border-border shadow-[var(--shadow-xs)] w-full",
@@ -400,11 +402,11 @@ export function ChatMessage({ message }: ChatMessageProps) {
 				>
 					{renderContent()}
 				</div>
-				{message.createdAt && (
-					<div className="text-xs text-muted-foreground px-2">
+				{/* {message.createdAt && (
+					<div className="text-xs text-muted-foreground px-2 mt-2">
 						{new Date(message.createdAt).toLocaleTimeString()}
 					</div>
-				)}
+				)} */}
 			</div>
 		</div>
 	);

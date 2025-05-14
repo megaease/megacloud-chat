@@ -54,7 +54,6 @@ export type MessagePart =
 	| SourcePart
 	| FilePart;
 
-// 添加 UIMessage 类型定义，与 AI SDK 兼容
 export interface UIMessage {
 	id: string;
 	role: "user" | "assistant" | "system" | "function" | "data" | "tool";
@@ -62,4 +61,5 @@ export interface UIMessage {
 	createdAt?: Date;
 	name?: string;
 	parts?: any[];
+	isLatest?: boolean;
 }
