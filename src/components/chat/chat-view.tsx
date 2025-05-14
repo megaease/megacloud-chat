@@ -37,7 +37,7 @@ export function ChatView({
 		useScrollToBottom({
 			bottomThreshold: 100,
 			scrollOnMount: true,
-			forceScrollOnNewContent: true,
+			forceScrollOnNewContent: false,
 		});
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
