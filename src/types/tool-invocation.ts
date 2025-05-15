@@ -60,6 +60,6 @@ export interface UIMessage {
 	content: string | any[];
 	createdAt?: Date;
 	name?: string;
-	parts?: any[];
+	parts?: MessagePart[];
 	isLatest?: boolean;
 }

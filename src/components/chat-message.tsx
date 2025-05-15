@@ -21,6 +21,7 @@ import {
 	Loader2,
 } from "lucide-react";
 import { Markdown } from "./markdown";
+import { CopyButton } from "./copy-button";
 import type {
 	MessagePart,
 	ToolInvocationPart as ToolInvocationPartType,
@@ -83,7 +84,33 @@ function renderMessagePart(part: MessagePart, key: string | number) {
 }
 
 function renderResultContent(content: ResultContent | string, key: string) {
+	// 尝试解析 JSON 字符串并格式化显示的通用函数
+	const tryParseAndRenderJSON = (text: string, contentKey: string) => {
+		try {
+			// 尝试解析 JSON 字符串
+			const parsed = JSON.parse(text);
+			return (
+				<div
+					key={contentKey}
+					className="relative rounded-[var(--radius)] border border-border overflow-hidden"
+				>
+					<pre className="whitespace-pre-wrap break-words text-xs p-2 max-h-[300px] overflow-auto m-0">
+						{JSON.stringify(parsed, null, 2)}
+					</pre>
+				</div>
+			);
+		} catch {
+			// 如果不是 JSON，返回 null 以使用后备渲染方式
+			return null;
+		}
+	};
+
 	if (typeof content === "string") {
+		// 尝试解析为 JSON
+		const jsonResult = tryParseAndRenderJSON(content, key);
+		if (jsonResult) return jsonResult;
+
+		// 不是 JSON，用 Markdown 渲染
 		return (
 			<Markdown
 				key={key}
@@ -96,18 +123,41 @@ function renderResultContent(content: ResultContent | string, key: string) {
 	switch (content.type) {
 		case "text":
 		case "markdown":
-			return (
-				<Markdown
-					key={key}
-					className="whitespace-pre-wrap my-0"
-					content={content.text}
-				/>
-			);
+			try {
+				const parsed = JSON.parse(content.text);
+				return (
+					<div
+						key={key}
+						className="relative rounded-[var(--radius)] border border-border overflow-hidden"
+					>
+						<pre className="whitespace-pre-wrap break-words text-xs p-2 max-h-[300px] overflow-auto m-0">
+							{JSON.stringify(parsed, null, 2)}
+						</pre>
+					</div>
+				);
+			} catch {
+				return (
+					<Markdown
+						key={key}
+						className="whitespace-pre-wrap my-0"
+						content={content.text}
+					/>
+				);
+			}
 		case "code":
 			return (
-				<pre key={key} className="whitespace-pre-wrap break-words text-xs">
-					{content.text}
-				</pre>
+				<div
+					key={key}
+					className="relative rounded-[var(--radius)] border border-border overflow-hidden"
+				>
+					<div className="bg-muted/50 px-3 py-1 border-b border-border flex items-center justify-between">
+						<span className="text-xs font-medium">Code</span>
+						<CopyButton text={content.text} />
+					</div>
+					<pre className="whitespace-pre-wrap break-words text-xs p-2 m-0">
+						<code className="font-mono">{content.text}</code>
+					</pre>
+				</div>
 			);
 		default:
 			return null;
@@ -182,44 +232,60 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 		// 如果没有 content，显示完整的结果对象
 		if (!result.content) {
 			return (
-				<pre className="whitespace-pre-wrap break-words text-xs bg-muted/50 p-2 rounded-[var(--radius)] max-h-[300px] overflow-auto">
+				<pre className="whitespace-pre-wrap break-words text-xs p-2 max-h-[300px] overflow-auto m-0">
 					{JSON.stringify(result, null, 2)}
 				</pre>
 			);
 		}
 
-		// 如果 content 是字符串
 		if (typeof result.content === "string") {
 			try {
-				// 尝试解析 JSON 字符串
 				const parsed = JSON.parse(result.content);
+
 				return (
-					<pre className="whitespace-pre-wrap break-words text-xs bg-muted/50 p-2 rounded-[var(--radius)] max-h-[300px] overflow-auto">
-						{JSON.stringify(parsed, null, 2)}
-					</pre>
+					<div className="rounded-[var(--radius)] border border-border overflow-hidden">
+						<pre className="whitespace-pre-wrap break-words text-xs p-2 max-h-[300px] overflow-auto m-0">
+							{JSON.stringify(parsed, null, 2)}
+						</pre>
+					</div>
 				);
 			} catch {
-				// 如果不是 JSON，直接显示文本
 				return (
-					<pre className="whitespace-pre-wrap break-words text-xs max-h-[300px] overflow-auto">
-						{result.content}
-					</pre>
+					<Markdown
+						content={result.content}
+						className="text-xs max-h-[300px] overflow-auto my-0"
+					/>
 				);
 			}
 		}
 
 		// 如果 content 是数组
 		if (Array.isArray(result.content)) {
+			if (result.content.length === 1) {
+				const item = result.content[0];
+				if (item) {
+					const key = `${toolInvocation.toolName}-result-single-${typeof item === "string" ? "text" : item.type}`;
+					return renderResultContent(item, key);
+				}
+			}
+
 			return (
-				<div className="space-y-2 max-h-[400px] overflow-auto">
-					{result.content.map((item, index) => {
-						const key = `${toolInvocation.toolName}-result-${index}-${typeof item === "string" ? "text" : item.type}`;
-						return (
-							<div key={key} className="border-l-2 border-primary/30 pl-3">
-								{renderResultContent(item, key)}
-							</div>
-						);
-					})}
+				<div className="rounded-[var(--radius)] border border-border overflow-hidden">
+					<div className="bg-muted/50 px-3 py-1 border-b border-border">
+						<span className="text-xs font-medium">
+							结果列表 ({result.content.length})
+						</span>
+					</div>
+					<div className="divide-y divide-border">
+						{result.content.map((item, index) => {
+							const key = `${toolInvocation.toolName}-result-${index}-${typeof item === "string" ? "text" : item.type}`;
+							return (
+								<div key={key} className="p-2">
+									{renderResultContent(item, key)}
+								</div>
+							);
+						})}
+					</div>
 				</div>
 			);
 		}
@@ -339,20 +405,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
 		// If message has parts array
 		if (message.parts && Array.isArray(message.parts)) {
 			return message.parts.map((part, index) => {
-				// 在这里处理类型转换
 				const convertedPart = part as MessagePart;
 				return renderMessagePart(convertedPart, `message-part-${index}`);
 			});
-		}
-
-		// If message has content property that's an array
-		if (message.content && Array.isArray(message.content)) {
-			return message.content.map((part, index) =>
-				renderMessagePart(
-					typeof part === "string" ? part : { type: "text", text: part },
-					`message-content-${index}`,
-				),
-			);
 		}
 
 		// If only has regular content
