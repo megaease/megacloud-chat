@@ -9,6 +9,7 @@ import { ChatMessage } from "../chat-message";
 import { ChatItem } from "./chat-item";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom-mutation";
 import type { Message } from "@ai-sdk/react";
+import { Markdown } from "../markdown";
 
 interface ChatViewProps {
 	messages: Message[];

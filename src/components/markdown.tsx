@@ -69,7 +69,7 @@ const components: Partial<Components> = {
 	ul: ({ className, children, ...props }) => (
 		<ul
 			className={cn(
-				"list-disc marker:text-muted-foreground pl-6 my-0 space-y-0",
+				"list-disc marker:text-muted-foreground pl-6 my-2 space-y-1.5",
 				className,
 			)}
 			{...props}
@@ -80,7 +80,7 @@ const components: Partial<Components> = {
 	ol: ({ className, children, ...props }) => (
 		<ol
 			className={cn(
-				"list-decimal marker:text-muted-foreground pl-6 my-0 space-y-0",
+				"list-decimal marker:text-muted-foreground pl-6 my-2 space-y-1.5",
 				className,
 			)}
 			{...props}
@@ -90,10 +90,7 @@ const components: Partial<Components> = {
 	),
 	li: ({ className, children, ...props }) => (
 		<li
-			className={cn(
-				"my-0 py-0 pl-1 leading-normal marker:text-muted-foreground",
-				className,
-			)}
+			className={cn("pl-1 leading-normal text-foreground/90", className)}
 			{...props}
 		>
 			{children}

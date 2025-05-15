@@ -38,21 +38,13 @@ interface ChatMessageProps {
 function renderMessagePart(part: MessagePart, key: string | number) {
 	// If it's a string or no type specified
 	if (!part || typeof part === "string") {
-		return (
-			<Markdown key={key} className="whitespace-pre-wrap my-0" content={part} />
-		);
+		return <Markdown key={key} content={part} />;
 	}
 
 	// Handle different part types
 	switch (part.type) {
 		case "text":
-			return (
-				<Markdown
-					key={key}
-					className="whitespace-pre-wrap my-0"
-					content={part.text}
-				/>
-			);
+			return <Markdown key={key} content={part.text} />;
 
 		case "tool-invocation":
 			return <ToolInvocationPart key={key} part={part} />;
@@ -411,12 +403,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
 		}
 
 		// If only has regular content
-		return (
-			<Markdown
-				content={message.content as string}
-				className="whitespace-pre-wrap my-0"
-			/>
-		);
+		return <Markdown content={message.content as string} />;
 	};
 
 	return (
