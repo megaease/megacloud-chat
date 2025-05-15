@@ -73,11 +73,24 @@ export function EditServerDialog({
 				type: serverType,
 				name: server.name,
 				description: server.description || "",
-				url: server.url || "",
-				headers: server.headers || {},
-				command: server.command || "",
-				args: server.args || [],
-				env: server.env || {},
+
+				...(serverType === TypeEnum.SSE
+					? {
+							url: server.url || "",
+							headers: server.headers || {},
+
+							command: "",
+							args: [],
+							env: {},
+						}
+					: {
+							command: server.command || "",
+							args: server.args || [],
+							env: server.env || {},
+
+							url: "",
+							headers: {},
+						}),
 			}
 		: {
 				type: TypeEnum.SSE,
@@ -106,7 +119,7 @@ export function EditServerDialog({
 			toast.error("Server ID does not exist");
 			return;
 		}
-
+		console.log("Submitting form data:", data);
 		setIsSubmitting(true);
 
 		try {
