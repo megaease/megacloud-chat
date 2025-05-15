@@ -22,7 +22,7 @@ export async function createMcpServer(
 		// Insert the new server
 		const [newServer] = await db
 			.insert(mcpServers)
-			.values(validatedData)
+			.values({ ...validatedData, status: ServerStatusEnum.ONLINE })
 			.returning();
 
 		// Revalidate the path to update the UI
