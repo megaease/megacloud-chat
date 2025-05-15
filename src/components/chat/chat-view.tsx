@@ -127,7 +127,7 @@ export function ChatView({
 									onChange={handleInputChange}
 									onKeyDown={handleKeyDown}
 									placeholder="Type your message..."
-									className="w-full resize-none rounded-2xl border-2 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+									className="w-full resize-none rounded-2xl border-2 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 pb-12"
 									rows={3}
 								/>
 								<div className="absolute right-2 bottom-2">

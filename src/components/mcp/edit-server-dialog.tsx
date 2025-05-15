@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import {
@@ -92,7 +92,7 @@ export function EditServerDialog({
 
 	// Initialize form
 	const form = useForm<ServerFormValues>({
-		resolver: zodResolver(insertMcpServerSchema) as any,
+		resolver: zodResolver(insertMcpServerSchema) as Resolver<ServerFormValues>,
 		defaultValues,
 		values: server ? defaultValues : undefined,
 	});
@@ -110,7 +110,18 @@ export function EditServerDialog({
 		setIsSubmitting(true);
 
 		try {
-			const result = await updateMcpServer(serverId, data);
+			const cleanedData = { ...data };
+
+			if (data.type === TypeEnum.SSE) {
+				cleanedData.command = "";
+				cleanedData.args = [];
+				cleanedData.env = {};
+			} else if (data.type === TypeEnum.STDIO) {
+				cleanedData.url = "";
+				cleanedData.headers = {};
+			}
+
+			const result = await updateMcpServer(serverId, cleanedData);
 
 			if (result.success) {
 				toast.success("Server updated successfully!");
@@ -119,6 +130,7 @@ export function EditServerDialog({
 				}
 				onOpenChange(false);
 			} else {
+				console.error("Failed to update server:", result.error);
 				toast.error(result.error || "Failed to update server");
 			}
 		} catch (error) {
@@ -152,7 +164,16 @@ export function EditServerDialog({
 						) : (
 							<Form {...form}>
 								<form
-									onSubmit={form.handleSubmit(onSubmit)}
+									onSubmit={form.handleSubmit(
+										onSubmit,
+										// 添加错误处理回调以显示验证错误
+										(errors) => {
+											console.error("Form validation errors:", errors);
+											toast.error(
+												"Please correct the form errors before submitting",
+											);
+										},
+									)}
 									className="space-y-6"
 								>
 									<div className="space-y-2">

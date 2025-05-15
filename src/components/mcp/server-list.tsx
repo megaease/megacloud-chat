@@ -247,7 +247,10 @@ export function ServerList({ onAddServer }: ServersListProps) {
 										variant="outline"
 										size="sm"
 										onClick={() =>
-											handleToggleServer(server.id, server.status as any)
+											handleToggleServer(
+												server.id,
+												server.status as ServerStatus,
+											)
 										}
 										disabled={
 											loadingStates[server.id] ||
@@ -312,6 +315,10 @@ export function ServerList({ onAddServer }: ServersListProps) {
 					serverId={serverToEdit}
 					open={!!serverToEdit}
 					onOpenChange={(open) => !open && setServerToEdit(null)}
+					onSuccess={() => {
+						setServerToEdit(null);
+						refetch();
+					}}
 				/>
 			)}
 		</div>

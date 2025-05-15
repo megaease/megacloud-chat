@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import {
@@ -73,46 +73,37 @@ export function AddServerDialog({
 	open,
 	onOpenChange,
 }: AddServerDialogProps) {
-	const [serverType, setServerType] = useState<
-		(typeof TypeEnum)[keyof typeof TypeEnum]
-	>(TypeEnum.SSE);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	// Use type assertion to resolve compatibility between complex union types and form library
 	const form = useForm<ServerFormValues>({
-		resolver: zodResolver(insertMcpServerSchema) as any,
-		defaultValues:
-			serverType === TypeEnum.SSE ? defaultSseValues : defaultStdioValues,
+		resolver: zodResolver(insertMcpServerSchema) as Resolver<ServerFormValues>,
+		defaultValues: defaultSseValues,
 	});
-
-	// Reset form when server type changes
-	useEffect(() => {
-		if (form.formState.isDirty) {
-			// Only reset when form has been modified
-			const shouldReset =
-				serverType === TypeEnum.SSE
-					? form.getValues("type") !== TypeEnum.SSE
-					: form.getValues("type") !== TypeEnum.STDIO;
-
-			if (shouldReset) {
-				form.reset(
-					serverType === TypeEnum.SSE ? defaultSseValues : defaultStdioValues,
-				);
-			}
-		}
-	}, [serverType, form]);
 
 	// Handle form submission
 	const onSubmit = async (data: ServerFormValues) => {
 		setIsSubmitting(true);
 
 		try {
-			const result = await createMcpServer(data);
+			const cleanedData = { ...data };
+
+			if (data.type === TypeEnum.SSE) {
+				cleanedData.command = "";
+				cleanedData.args = [];
+				cleanedData.env = {};
+			} else if (data.type === TypeEnum.STDIO) {
+				cleanedData.url = "";
+				cleanedData.headers = {};
+			}
+
+			const result = await createMcpServer(cleanedData);
 
 			if (result.success) {
 				toast.success("Server added successfully!");
 				form.reset();
 				onOpenChange(false);
+				if (onSuccess) onSuccess();
 			} else {
 				toast.error(result.error || "Failed to add server");
 			}
@@ -126,7 +117,6 @@ export function AddServerDialog({
 
 	// Switch server type
 	const handleTypeChange = (type: (typeof TypeEnum)[keyof typeof TypeEnum]) => {
-		setServerType(type);
 		form.setValue("type", type);
 	};
 
@@ -150,12 +140,24 @@ export function AddServerDialog({
 
 				<div className="overflow-y-auto  px-6 py-4">
 					<Form {...form}>
-						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+						<form
+							onSubmit={form.handleSubmit(
+								onSubmit,
+								// 添加错误处理回调以显示验证错误
+								(errors) => {
+									console.error("Form validation errors:", errors);
+									toast.error(
+										"Please correct the form errors before submitting",
+									);
+								},
+							)}
+							className="space-y-6"
+						>
 							{/* Server type selection */}
 							<div className="space-y-2">
 								<FormLabel>Server Type</FormLabel>
 								<Tabs
-									value={serverType}
+									value={form.watch("type")}
 									onValueChange={(value) =>
 										handleTypeChange(
 											value as (typeof TypeEnum)[keyof typeof TypeEnum],
@@ -175,7 +177,7 @@ export function AddServerDialog({
 									</TabsList>
 								</Tabs>
 								<FormDescription>
-									{serverType === TypeEnum.SSE
+									{form.watch("type") === TypeEnum.SSE
 										? "SSE (Server-Sent Events) connects to MCP server via HTTP."
 										: "STDIO connects to local MCP process via standard input/output."}
 								</FormDescription>
@@ -225,7 +227,7 @@ export function AddServerDialog({
 							</div>
 
 							{/* SSE specific fields */}
-							{serverType === TypeEnum.SSE && (
+							{form.watch("type") === TypeEnum.SSE && (
 								<div className="space-y-4">
 									<FormField
 										control={form.control}
@@ -272,7 +274,7 @@ export function AddServerDialog({
 							)}
 
 							{/* STDIO specific fields */}
-							{serverType === TypeEnum.STDIO && (
+							{form.watch("type") === TypeEnum.STDIO && (
 								<div className="space-y-4">
 									<FormField
 										control={form.control}
