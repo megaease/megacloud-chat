@@ -303,7 +303,7 @@ export function AddServerDialog({
 													<div className="space-y-2">
 														{field.value?.map((arg, i) => (
 															<div
-																key={`arg-${i}-${arg}`}
+																key={`arg-${i}`}
 																className="flex items-center gap-2"
 															>
 																<Input
