@@ -7,7 +7,7 @@ export function ChatItem({
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="py-4 px-4">
+		<div className="py-4">
 			<div className="flex gap-4 text-sm pl-1">
 				<Avatar
 					className={cn(
