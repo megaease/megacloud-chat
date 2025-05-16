@@ -431,7 +431,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
 				className={cn(
 					"flex-1 space-y-2",
 					isUser ? "text-right" : "text-left",
-					"max-w-[85%]", // 限制最大宽度
+					"max-w-[89%]", // 限制最大宽度
 				)}
 			>
 				<div
