@@ -4,35 +4,35 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface UseScrollToBottomOptions {
 	/**
-	 * 滚动行为，默认为 "smooth"
+	 * Scroll behavior, defaults to "smooth"
 	 */
 	behavior?: ScrollBehavior;
 	/**
-	 * 距离底部多少像素时认为已滚动到底部，默认为 200
+	 * How many pixels from bottom to consider "scrolled to bottom", defaults to 200
 	 */
 	bottomThreshold?: number;
 	/**
-	 * 是否在组件挂载时自动滚动到底部，默认为 true
+	 * Whether to automatically scroll to bottom when component mounts, defaults to true
 	 */
 	scrollOnMount?: boolean;
 	/**
-	 * 是否在内容变化时自动滚动到底部，默认为 true
+	 * Whether to automatically scroll to bottom when content changes, defaults to true
 	 */
 	scrollOnContentChange?: boolean;
 	/**
-	 * 是否适配 Radix UI 的 ScrollArea 组件，默认为 false
+	 * Whether to adapt to Radix UI ScrollArea component, defaults to false
 	 */
 	adaptRadixScrollArea?: boolean;
 	/**
-	 * 滚动到底部时的延迟时间（毫秒），默认为 0
+	 * Delay time (ms) when scrolling to bottom, defaults to 0
 	 */
 	scrollDelay?: number;
 }
 
 /**
- * 自定义 Hook，用于管理滚动到底部的行为
- * @param options 选项配置
- * @returns 滚动状态和控制方法，以及 scrollAreaRef 和 messagesEndRef
+ * Custom Hook for managing scroll-to-bottom behavior
+ * @param options Configuration options
+ * @returns Scroll state and control methods, as well as scrollAreaRef and messagesEndRef
  */
 export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 	const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -53,12 +53,12 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 	const observerRef = useRef<MutationObserver | null>(null);
 	const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-	// 获取真正的滚动容器元素（处理 Radix UI ScrollArea 的情况）
+	// Get the actual scroll container element (handles Radix UI ScrollArea case)
 	const getScrollContainer = useCallback((): HTMLElement | null => {
 		if (!scrollAreaRef.current) return null; // Use scrollAreaRef.current directly
 
 		if (adaptRadixScrollArea) {
-			// 对于 Radix UI 的 ScrollArea 组件，需要获取其内部的 viewport
+			// For Radix UI's ScrollArea component, we need to get its inner viewport
 			const radixViewport = scrollAreaRef.current.querySelector?.(
 				"[data-radix-scroll-area-viewport]",
 			) as HTMLElement;
@@ -69,7 +69,7 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 		return scrollAreaRef.current; // Use scrollAreaRef.current directly
 	}, [adaptRadixScrollArea]); // scrollAreaRef itself is stable
 
-	// 检测滚动位置
+	// Detect scroll position
 	const checkScrollPosition = useCallback(() => {
 		const scrollContainer = getScrollContainer();
 		if (!scrollContainer) return;
@@ -82,9 +82,9 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 		setAutoScroll(isNearBottom);
 	}, [getScrollContainer, bottomThreshold]);
 
-	// 滚动到底部的函数
+	// Function to scroll to bottom
 	const scrollToBottom = useCallback(() => {
-		// 清除之前可能存在的延迟滚动
+		// Clear any previous delayed scrolling
 		if (scrollTimeoutRef.current) {
 			clearTimeout(scrollTimeoutRef.current);
 		}
@@ -107,15 +107,15 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 		}, scrollDelay);
 	}, [getScrollContainer, behavior, scrollDelay]);
 
-	// 初始化和清理滚动事件监听
+	// Initialize and clean up scroll event listeners
 	useEffect(() => {
 		const scrollContainer = getScrollContainer();
 		if (!scrollContainer) return;
 
-		// 监听滚动事件
+		// Listen for scroll events
 		scrollContainer.addEventListener("scroll", checkScrollPosition);
 
-		// 初始滚动到底部
+		// Initial scroll to bottom
 		if (scrollOnMount) {
 			scrollToBottom();
 		}
@@ -125,7 +125,7 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 			if (scrollContainer) {
 				scrollContainer.removeEventListener("scroll", checkScrollPosition);
 			}
-			// 清理可能存在的超时
+			// Clean up any existing timeouts
 			if (scrollTimeoutRef.current) {
 				clearTimeout(scrollTimeoutRef.current);
 			}
@@ -139,30 +139,30 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 		scrollOnMount,
 	]);
 
-	// 监听内容变化，自动滚动到底部
+	// Monitor content changes, auto-scroll to bottom
 	useEffect(() => {
 		if (!scrollOnContentChange) return;
 
 		const scrollContainer = getScrollContainer();
 		if (!scrollContainer) return;
 
-		// 清理之前的 observer
+		// Clean up previous observer
 		if (observerRef.current) {
 			observerRef.current.disconnect();
 		}
 
-		// 创建 MutationObserver 实例
+		// Create MutationObserver instance
 		observerRef.current = new MutationObserver(() => {
 			if (autoScroll) {
 				scrollToBottom();
 			}
 		});
 
-		// 开始观察
+		// Start observing
 		observerRef.current.observe(scrollContainer, {
-			childList: true, // 观察直接子节点变化
-			subtree: true, // 观察所有后代节点变化
-			characterData: true, // 观察文本内容变化
+			childList: true, // Observe direct child node changes
+			subtree: true, // Observe all descendant node changes
+			characterData: true, // Observe text content changes
 		});
 
 		return () => {

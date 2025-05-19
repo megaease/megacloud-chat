@@ -179,7 +179,7 @@ export function EditServerDialog({
 								<form
 									onSubmit={form.handleSubmit(
 										onSubmit,
-										// 添加错误处理回调以显示验证错误
+										// Add error handling callback to display validation errors
 										(errors) => {
 											console.error("Form validation errors:", errors);
 											toast.error(

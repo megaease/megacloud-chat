@@ -64,10 +64,10 @@ export function ApiSettingsModal() {
 			baseUrl: baseUrl || "https://api.openai.com/v1",
 		},
 	});
-	
+
 	useEffect(() => {
 		if (isOpen) {
-			// 重置表单和状态
+			// Reset form and state
 			form.reset({
 				apiKey: apiKey,
 				baseUrl: baseUrl || "https://api.openai.com/v1",
@@ -80,32 +80,32 @@ export function ApiSettingsModal() {
 	}, [isOpen, apiKey, baseUrl, form]);
 
 	const onSubmit = (data: InitialSettingsFormValues) => {
-		// 确保我们有一个有效的模型名称，在第二步中从选择器获取
+		// Ensure we have a valid model name, obtained from the selector in step two
 		if (step === "modelSelection" && !selectedModel) {
-			toast.error("请选择一个模型");
+			toast.error("Please select a model");
 			return;
 		}
-		
+
 		saveSettings({
 			apiKey: data.apiKey,
-			modelName: selectedModel, // 使用选择的模型
+			modelName: selectedModel, // Use the selected model
 			baseUrl: data.baseUrl,
 		});
 		setIsOpen(false);
-		toast.success("API 设置保存成功");
+		toast.success("API settings saved successfully");
 	};
 
 	const testConnection = async () => {
 		const values = form.getValues();
 		if (!values.apiKey || !values.baseUrl) {
-			toast.error("请填写 API Key 和 API URL");
+			toast.error("Please fill in API Key and API URL");
 			return;
 		}
 
 		setIsTesting(true);
 		try {
-			// 测试连接并获取可用模型列表
-			const response = await fetch("/api/chat/test-connection", {
+			// Test the connection
+			const testResponse = await fetch("/api/chat/test-connection", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -116,31 +116,48 @@ export function ApiSettingsModal() {
 				}),
 			});
 
-			const data = await response.json();
+			const testData = await testResponse.json();
 
-			if (!response.ok) {
-				throw new Error(data.error || "Failed to connect to API");
+			if (!testResponse.ok) {
+				throw new Error(testData.error || "Unable to connect to API");
 			}
 
-			// 保存获取的模型列表
-			if (data.availableModels && data.availableModels.length > 0) {
-				setAvailableModels(data.availableModels);
+			// After the connection test succeeds, get the complete model list
+			const modelsResponse = await fetch("/api/models/list", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					apiKey: values.apiKey,
+					baseUrl: values.baseUrl,
+				}),
+			});
+
+			const modelsData = await modelsResponse.json();
+
+			if (modelsResponse.ok && modelsData.models) {
+				// Use the complete model list
+				setAvailableModels(modelsData.models);
+			} else if (testData.sampleModels && testData.sampleModels.length > 0) {
+				// If getting the complete list fails, use sample models returned from the test connection
+				setAvailableModels(testData.sampleModels);
 			}
 
 			setConnectionTested(true);
 
-			// 如果有警告信息（比如模型未在列表中找到），显示警告提示
-			if (data.warning) {
-				toast.warning("连接警告", {
-					description: data.warning,
+			// If there are warning messages (e.g., model not found in list), display a warning prompt
+			if (testData.warning) {
+				toast.warning("Connection Warning", {
+					description: testData.warning,
 					duration: 5000,
 					action:
-						data.availableModels?.length > 0
+						availableModels.length > 0
 							? {
-									label: "查看可用模型",
+									label: "View Available Models",
 									onClick: () => {
-										toast.info("可用模型", {
-											description: data.availableModels.join(", "),
+										toast.info("Available Models", {
+											description: availableModels.join(", "),
 											duration: 8000,
 										});
 									},
@@ -148,18 +165,18 @@ export function ApiSettingsModal() {
 							: undefined,
 				});
 			} else {
-				toast.success(data.message || "连接成功", {
+				toast.success(testData.message || "Connection Successful", {
 					description:
-						data.availableModels?.length > 0
-							? `可用模型：${data.availableModels.slice(0, 3).join(", ")}${data.availableModels.length > 3 ? " 等..." : ""}`
+						availableModels.length > 0
+							? `Available Models: ${availableModels.slice(0, 3).join(", ")}${availableModels.length > 3 ? " etc..." : ""}`
 							: undefined,
 					action:
-						data.availableModels?.length > 0
+						availableModels.length > 0
 							? {
-									label: "查看全部",
+									label: "View All",
 									onClick: () => {
-										toast.info("可用模型", {
-											description: data.availableModels.join(", "),
+										toast.info("Available Models", {
+											description: availableModels.join(", "),
 											duration: 8000,
 										});
 									},
@@ -179,13 +196,13 @@ export function ApiSettingsModal() {
 		}
 	};
 
-	// 处理连接成功后的模型选择
+	// Handle model selection after successful connection
 	const handleModelSelection = () => {
 		setStep("modelSelection");
 		setConnectionTested(true);
 	};
-	
-	// 当模型列表更新后，如果之前已经保存过模型，选择该模型作为默认选项
+
+	// When the model list is updated, if a model has been previously saved, select it as the default option
 	useEffect(() => {
 		if (availableModels.length > 0 && modelName) {
 			if (availableModels.includes(modelName)) {
@@ -194,10 +211,10 @@ export function ApiSettingsModal() {
 		}
 	}, [availableModels, modelName]);
 
-	// 处理 API 测试成功后的状态更新和模型列表显示
+	// Handle state updates and model list display after successful API test
 	useEffect(() => {
 		if (connectionTested && availableModels.length > 0 && !selectedModel) {
-			// 默认选择第一个模型
+			// Select the first model by default
 			setSelectedModel(availableModels[0]);
 		}
 	}, [connectionTested, availableModels, selectedModel]);
@@ -206,11 +223,11 @@ export function ApiSettingsModal() {
 		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogContent className="sm:max-w-[425px]">
 				<DialogHeader>
-					<DialogTitle>API 设置</DialogTitle>
+					<DialogTitle>API Settings</DialogTitle>
 					<DialogDescription>
-						{step === "initial" 
-							? "输入您的 API 密钥和 URL 以连接到 AI 提供商" 
-							: "选择要使用的 AI 模型"}
+						{step === "initial"
+							? "Enter your API key and URL to connect to the AI provider"
+							: "Select the AI model to use"}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -218,11 +235,11 @@ export function ApiSettingsModal() {
 					{step === "initial" ? (
 						<div className="space-y-4">
 							<div className="space-y-2">
-								<Label htmlFor="apiKey">API 密钥</Label>
+								<Label htmlFor="apiKey">API Key</Label>
 								<Input
 									id="apiKey"
 									type="password"
-									placeholder="输入您的 API 密钥"
+									placeholder="Enter your API key"
 									{...form.register("apiKey")}
 								/>
 								{form.formState.errors.apiKey && (
@@ -233,7 +250,7 @@ export function ApiSettingsModal() {
 							</div>
 
 							<div className="space-y-2">
-								<Label htmlFor="baseUrl">API 地址</Label>
+								<Label htmlFor="baseUrl">API URL</Label>
 								<Input
 									id="baseUrl"
 									placeholder="https://api.openai.com/v1"
@@ -245,7 +262,7 @@ export function ApiSettingsModal() {
 									</p>
 								)}
 								<p className="text-xs text-muted-foreground">
-									使用自定义 API 端点或保留 OpenAI 的默认端点
+									Use a custom API endpoint or keep the default OpenAI endpoint
 								</p>
 							</div>
 
@@ -259,20 +276,20 @@ export function ApiSettingsModal() {
 									{isTesting ? (
 										<>
 											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-											测试连接中...
+											Testing connection...
 										</>
 									) : connectionTested ? (
 										<>
 											<Check className="mr-2 h-4 w-4" />
-											连接成功
+											Connection successful
 										</>
 									) : (
-										"测试连接"
+										"Test Connection"
 									)}
 								</Button>
 								{connectionTested && (
 									<Button type="button" onClick={handleModelSelection}>
-										下一步
+										Next
 									</Button>
 								)}
 							</DialogFooter>
@@ -280,14 +297,14 @@ export function ApiSettingsModal() {
 					) : (
 						<div className="space-y-4">
 							<div className="space-y-2">
-								<Label htmlFor="modelSelect">选择模型</Label>
+								<Label htmlFor="modelSelect">Select Model</Label>
 								{availableModels.length > 0 ? (
 									<Select
 										value={selectedModel}
 										onValueChange={setSelectedModel}
 									>
 										<SelectTrigger>
-											<SelectValue placeholder="选择一个模型" />
+											<SelectValue placeholder="Select a model" />
 										</SelectTrigger>
 										<SelectContent>
 											{availableModels.map((model) => (
@@ -299,28 +316,28 @@ export function ApiSettingsModal() {
 									</Select>
 								) : (
 									<Input
-										placeholder="例如，gpt-4o, claude-3-opus"
+										placeholder="e.g., gpt-4o, claude-3-opus"
 										value={selectedModel}
 										onChange={(e) => setSelectedModel(e.target.value)}
 									/>
 								)}
 								{!selectedModel && (
 									<p className="text-sm text-red-500">
-										请选择或输入一个模型名称
+										Please select or enter a model name
 									</p>
 								)}
 							</div>
 
 							<DialogFooter className="flex items-center gap-2 pt-2">
-								<Button 
-									type="button" 
-									variant="outline" 
+								<Button
+									type="button"
+									variant="outline"
 									onClick={() => setStep("initial")}
 								>
-									返回
+									Back
 								</Button>
 								<Button type="submit" disabled={!selectedModel}>
-									保存设置
+									Save Settings
 								</Button>
 							</DialogFooter>
 						</div>

@@ -34,7 +34,7 @@ export function CopyButton({
 				<TooltipTrigger asChild>
 					<Button
 						onClick={handleCopy}
-						aria-label="复制到剪贴板"
+						aria-label="Copy to clipboard"
 						className={cn(className)}
 						size={"icon"}
 					>

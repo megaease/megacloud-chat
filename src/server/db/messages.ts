@@ -41,7 +41,7 @@ export async function saveToMessagesTable(
 			if (existingChat) {
 				await tx.delete(chatMessages).where(eq(chatMessages.chatId, chatId));
 			}
-			// 准备新消息并插入
+			// Prepare new messages and insert
 			const dbMessages = convertToDBMessages(messages, chatId);
 			return await tx.insert(chatMessages).values(dbMessages);
 		} catch (error) {

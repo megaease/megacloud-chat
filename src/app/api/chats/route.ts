@@ -21,8 +21,11 @@ export async function GET(request: Request) {
 
 		return NextResponse.json({ chats: userChats });
 	} catch (error) {
-		console.error("获取聊天记录失败：", error);
-		return NextResponse.json({ error: "获取聊天记录时出错" }, { status: 500 });
+		console.error("Failed to get chat records:", error);
+		return NextResponse.json(
+			{ error: "Error retrieving chat records" },
+			{ status: 500 },
+		);
 	}
 }
 
@@ -46,7 +49,7 @@ export async function DELETE(request: Request) {
 			);
 		}
 
-		// 确保只能删除自己的聊天
+		// Ensure users can only delete their own chats
 		const result = await db
 			.delete(chats)
 			.where(and(eq(chats.id, chatId), eq(chats.userId, userId)))
@@ -54,14 +57,16 @@ export async function DELETE(request: Request) {
 
 		if (result.length === 0) {
 			return NextResponse.json(
-				{ error: "聊天不存在或无权删除" },
+				{
+					error: "Chat doesn't exist or you don't have permission to delete it",
+				},
 				{ status: 404 },
 			);
 		}
 
 		return NextResponse.json({ success: true });
 	} catch (error) {
-		console.error("删除聊天失败：", error);
-		return NextResponse.json({ error: "删除聊天时出错" }, { status: 500 });
+		console.error("Failed to delete chat:", error);
+		return NextResponse.json({ error: "Error deleting chat" }, { status: 500 });
 	}
 }

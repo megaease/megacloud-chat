@@ -39,10 +39,10 @@ export function AutoScroll({
 	scrollButtonLabel,
 	scrollButtonVariant = "secondary",
 }: AutoScrollProps) {
-	// 创建一个确定不是null的引用
+	// Create a reference that's definitely not null
 	const containerRef = useRef<HTMLDivElement>(null);
 
-	// 使用Hook管理滚动
+	// Use hook to manage scrolling
 	const { hasScrolledUp, scrollToBottom } = useScrollToBottom(containerRef, {
 		behavior: scrollBehavior,
 		scrollOnMount: enabled,

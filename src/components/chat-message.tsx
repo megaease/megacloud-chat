@@ -57,7 +57,7 @@ function renderMessagePart(part: MessagePart, key: string | number) {
 				>
 					<div className="flex items-center gap-2 mb-2">
 						<File size={14} className="text-primary" />
-						<span className="text-xs font-medium">文件内容</span>
+						<span className="text-xs font-medium">File Content</span>
 					</div>
 					<pre className="whitespace-pre-wrap break-words text-xs">
 						{part.content}
@@ -76,10 +76,10 @@ function renderMessagePart(part: MessagePart, key: string | number) {
 }
 
 function renderResultContent(content: ResultContent | string, key: string) {
-	// 尝试解析 JSON 字符串并格式化显示的通用函数
+	// Function to try parsing JSON strings and display them with formatting
 	const tryParseAndRenderJSON = (text: string, contentKey: string) => {
 		try {
-			// 尝试解析 JSON 字符串
+			// Try to parse the JSON string
 			const parsed = JSON.parse(text);
 			return (
 				<div
@@ -92,17 +92,17 @@ function renderResultContent(content: ResultContent | string, key: string) {
 				</div>
 			);
 		} catch {
-			// 如果不是 JSON，返回 null 以使用后备渲染方式
+			// If not JSON, return null to use fallback rendering method
 			return null;
 		}
 	};
 
 	if (typeof content === "string") {
-		// 尝试解析为 JSON
+		// Try to parse as JSON
 		const jsonResult = tryParseAndRenderJSON(content, key);
 		if (jsonResult) return jsonResult;
 
-		// 不是 JSON，用 Markdown 渲染
+		// Not JSON, render with Markdown
 		return (
 			<Markdown
 				key={key}
@@ -165,7 +165,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 
 	const hasError = toolInvocation.result?.isError;
 	const errorMessage = hasError
-		? toolInvocation.result?.error || "未知错误"
+		? toolInvocation.result?.error || "Unknown error"
 		: null;
 
 	// Determine icon based on tool name
@@ -188,7 +188,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 			);
 		}
 
-		// 处理加载中的状态
+		// Handle loading state
 		if (state === "processing" || state === "partial-call") {
 			return (
 				<div className="animate-spin">
@@ -204,24 +204,26 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 	const renderResult = () => {
 		const { result, state } = toolInvocation;
 
-		// 处理加载状态
+		// Handle loading state
 		if (state === "processing" || state === "partial-call") {
 			return (
 				<div className="flex items-center gap-2 text-muted-foreground">
 					<div className="animate-spin h-4 w-4 rounded-full border-2 border-primary border-r-transparent" />
-					<span className="text-xs">执行中...</span>
+					<span className="text-xs">Executing...</span>
 				</div>
 			);
 		}
 
-		// 如果没有结果
+		// If there's no result
 		if (!result) {
 			return (
-				<div className="text-muted-foreground text-xs">等待执行结果...</div>
+				<div className="text-muted-foreground text-xs">
+					Waiting for execution results...
+				</div>
 			);
 		}
 
-		// 如果没有 content，显示完整的结果对象
+		// If there's no content, display the complete result object
 		if (!result.content) {
 			return (
 				<pre className="whitespace-pre-wrap break-words text-xs p-2 max-h-[300px] overflow-auto m-0">
@@ -251,7 +253,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 			}
 		}
 
-		// 如果 content 是数组
+		// If content is an array
 		if (Array.isArray(result.content)) {
 			if (result.content.length === 1) {
 				const item = result.content[0];
@@ -265,7 +267,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 				<div className="rounded-[var(--radius)] border border-border overflow-hidden">
 					<div className="bg-muted/50 px-3 py-1 border-b border-border">
 						<span className="text-xs font-medium">
-							结果列表 ({result.content.length})
+							Result List ({result.content.length})
 						</span>
 					</div>
 					<div className="divide-y divide-border">
@@ -320,9 +322,9 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 								>
 									{toolInvocation.state === "result"
 										? hasError
-											? "执行失败"
-											: "已完成"
-										: "处理中"}
+											? "Execution Failed"
+											: "Completed"
+										: "Processing"}
 								</span>
 							</div>
 						</div>
@@ -334,7 +336,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 									<div className="mb-3 p-3 rounded-[var(--radius)] bg-destructive/10 border border-destructive/30 text-destructive">
 										<div className="flex items-center gap-2 mb-1">
 											<AlertCircle size={14} />
-											<span className="font-medium">错误信息</span>
+											<span className="font-medium">Error Message</span>
 										</div>
 										<p className="text-xs whitespace-pre-wrap break-words">
 											{errorMessage}
@@ -345,7 +347,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 								<div className="bg-card rounded-[var(--radius)] overflow-hidden mb-3 border border-border">
 									<div className="flex items-center justify-between px-3 py-1.5 bg-accent/50 border-b border-border">
 										<div className="font-medium text-xs text-card-foreground">
-											输入参数
+											Input Parameters
 										</div>
 									</div>
 									<div className="p-3">
@@ -375,7 +377,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 												hasError ? "text-destructive" : "text-card-foreground",
 											)}
 										>
-											执行结果
+											Execution Results
 										</div>
 									</div>
 									<div className="p-3">{renderResult()}</div>
@@ -431,7 +433,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
 				className={cn(
 					"flex-1 space-y-2",
 					isUser ? "text-right" : "text-left",
-					"max-w-[89%]", // 限制最大宽度
+					"max-w-[89%]", // Limit maximum width
 				)}
 			>
 				<div

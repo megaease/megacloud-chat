@@ -10,29 +10,29 @@ import {
 
 export interface UseScrollToBottomOptions {
 	/**
-	 * 滚动行为，默认为"smooth"
+	 * Scroll behavior, defaults to "smooth"
 	 */
 	behavior?: ScrollBehavior;
 
 	/**
-	 * 距离底部多少像素时认为已经"接近底部"，默认为 100
+	 * How many pixels from bottom to consider "near bottom", defaults to 100
 	 */
 	bottomThreshold?: number;
 
 	/**
-	 * 初次挂载时是否自动滚动到底部，默认为 true
+	 * Whether to automatically scroll to bottom on initial mount, defaults to true
 	 */
 	scrollOnMount?: boolean;
 
 	/**
-	 * 是否在内容变化后强制滚动到底部，默认为 false
+	 * Whether to force scroll to bottom after content changes, defaults to false
 	 */
 	forceScrollOnNewContent?: boolean;
 }
 
 /**
- * 智能滚动到底部的钩子函数
- * 使用 MutationObserver 监听内容变化
+ * Smart scroll-to-bottom hook
+ * Uses MutationObserver to monitor content changes
  */
 export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 	const {
@@ -42,18 +42,18 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 		forceScrollOnNewContent = false,
 	} = options;
 
-	// 容器和底部元素的引用
+	// References for container and bottom element
 	const scrollAreaRef = useRef<HTMLDivElement>(null);
 	const endRef = useRef<HTMLDivElement>(null);
 
-	// 用户滚动意图
+	// User scrolling intention
 	const isUserScrolling = useRef(false);
 	const lastContentHeight = useRef(0);
 
-	// 公开状态
+	// Public state
 	const [isAtBottom, setIsAtBottom] = useState(true);
 
-	// 检查是否接近底部
+	// Check if near bottom
 	const checkIfNearBottom = useCallback(() => {
 		const container = scrollAreaRef.current;
 		if (!container) return false;
@@ -65,7 +65,7 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 		return distanceFromBottom <= bottomThreshold;
 	}, [bottomThreshold]);
 
-	// 滚动到底部
+	// Scroll to bottom
 	const scrollToBottom = useCallback(
 		(withBehavior: ScrollBehavior = behavior) => {
 			const container = scrollAreaRef.current;
@@ -73,47 +73,47 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 
 			if (!container || !end) return;
 
-			// 使用 scrollIntoView，更可靠
+			// Use scrollIntoView, more reliable
 			end.scrollIntoView({
 				behavior: withBehavior,
 				block: "end",
 			});
 
-			// 更新状态
+			// Update state
 			setIsAtBottom(true);
 			isUserScrolling.current = false;
 		},
 		[behavior],
 	);
-	// 添加 DOM 变化监听
+	// Add DOM mutation listener
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
 		const container = scrollAreaRef.current;
 		if (!container) return;
 
-		// 设置初始高度
+		// Set initial height
 		lastContentHeight.current = container.scrollHeight;
 
-		// 滚动事件监听
+		// Scroll event listener
 		const handleScroll = () => {
 			const { scrollHeight } = container;
 
-			// 如果内容高度没变但滚动位置变了，说明是用户滚动
+			// If content height didn't change but scroll position did, it's user scrolling
 			if (scrollHeight === lastContentHeight.current) {
 				const nearBottom = checkIfNearBottom();
 				isUserScrolling.current = !nearBottom;
 				setIsAtBottom(nearBottom);
 			}
 
-			// 更新当前内容高度
+			// Update current content height
 			lastContentHeight.current = scrollHeight;
 		};
 
 		container.addEventListener("scroll", handleScroll, { passive: true });
 
-		// MutationObserver 监听 DOM 变化
+		// MutationObserver to monitor DOM changes
 		const observer = new MutationObserver((mutations) => {
-			// 检查是否有子节点变化
+			// Check if child nodes have changed
 			const hasChildrenChanged = mutations.some(
 				(mutation) =>
 					mutation.type === "childList" &&
@@ -121,11 +121,11 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 			);
 
 			if (hasChildrenChanged) {
-				console.log("DOM 变化检测到：消息列表更新");
+				console.log("DOM changes detected: message list updated");
 
-				// 如果用户没有手动滚动，或者强制滚动开启，滚动到底部
+				// If user hasn't manually scrolled, or force scroll is enabled, scroll to bottom
 				if (!isUserScrolling.current || forceScrollOnNewContent) {
-					// 延迟滚动，确保 DOM 更新完成
+					// Delay scrolling to ensure DOM updates are complete
 					setTimeout(() => {
 						scrollToBottom();
 					}, 100);
@@ -133,10 +133,10 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 			}
 		});
 
-		// 观察配置
+		// Observer configuration
 		const observerConfig = {
-			childList: true, // 观察子节点变化
-			subtree: true, // 观察所有后代节点
+			childList: true, // Observe changes to child nodes
+			subtree: true, // Observe all descendant nodes
 		};
 
 		observer.observe(container, observerConfig);

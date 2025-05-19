@@ -38,17 +38,36 @@ export async function POST(req: Request) {
 			);
 		}
 
-		// Check if the specified model exists in the API's available models
+		// Parse response to get basic connection info
 		const modelsData = await modelsResponse.json();
-		const availableModels =
-			modelsData.data?.map((m: { id: string }) => m.id) || [];
+
+		// Determine API provider type
+		let providerType = "unknown";
+		const isOpenAI = formattedBaseUrl.includes("openai.com");
+		const isAzure = formattedBaseUrl.includes("azure");
+		const isAnthropic =
+			formattedBaseUrl.includes("anthropic") ||
+			modelsData.data?.some((m: { id: string }) => m.id.includes("claude"));
+
+		if (isOpenAI) providerType = "openai";
+		else if (isAzure) providerType = "azure";
+		else if (isAnthropic) providerType = "anthropic";
+
+		// Get total number of available models
+		const totalModels = modelsData.data?.length || 0;
+
+		// Return only a few models as samples
+		const sampleModels =
+			modelsData.data?.slice(0, 5)?.map((m: { id: string }) => m.id) || [];
 
 		// If everything checks out, return success
 		return NextResponse.json(
 			{
 				success: true,
 				message: "Connection successful - API key is valid",
-				availableModels: availableModels.slice(0, 10), // Return up to 10 available models
+				provider: providerType,
+				totalModels: totalModels,
+				sampleModels: sampleModels, // Only return a few sample models
 			},
 			{ status: 200 },
 		);
@@ -57,40 +76,10 @@ export async function POST(req: Request) {
 
 		// Handle different types of errors
 		let message = "Unknown error occurred";
-		let statusCode = 500;
 
 		if (error instanceof Error) {
 			message = error.message;
-
-			// Determine error type based on message content
-			if (
-				message.includes("API key") ||
-				message.includes("auth") ||
-				message.includes("401")
-			) {
-				message = "Invalid API key or authentication error";
-				statusCode = 401;
-			} else if (
-				message.includes("ENOTFOUND") ||
-				message.includes("ECONNREFUSED")
-			) {
-				message = "Could not connect to API server. Please check the URL";
-				statusCode = 503;
-			} else if (message.includes("model") || message.includes("not found")) {
-				message = "Model not found or unavailable";
-				statusCode = 404;
-			} else if (
-				message.includes("insufficient_quota") ||
-				message.includes("billing")
-			) {
-				message = "Account has insufficient quota or billing issues";
-				statusCode = 402;
-			} else if (message.includes("rate limit") || message.includes("429")) {
-				message = "Rate limit exceeded. Please try again later";
-				statusCode = 429;
-			}
 		}
-
-		return NextResponse.json({ error: message }, { status: statusCode });
+		return NextResponse.json({ error: message }, { status: 500 });
 	}
 }
