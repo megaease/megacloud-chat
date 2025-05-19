@@ -5,7 +5,7 @@ export async function POST(req: Request) {
 	try {
 		const { apiKey, modelName, baseUrl } = await req.json();
 
-		if (!apiKey || !modelName) {
+		if (!apiKey || !baseUrl) {
 			return NextResponse.json(
 				{ error: "API key and model name are required" },
 				{ status: 400 },
@@ -42,18 +42,12 @@ export async function POST(req: Request) {
 		const modelsData = await modelsResponse.json();
 		const availableModels =
 			modelsData.data?.map((m: { id: string }) => m.id) || [];
-		const modelExists = availableModels.some((id: string) => id === modelName);
 
 		// If everything checks out, return success
 		return NextResponse.json(
 			{
 				success: true,
-				message: modelExists
-					? "Connection successful - API key and model are valid"
-					: "Connection successful - API key is valid, but model may not be available",
-				warning: !modelExists
-					? `Note: Model "${modelName}" was not found in the available models list. It may still work, but consider using one of the available models instead.`
-					: undefined,
+				message: "Connection successful - API key is valid",
 				availableModels: availableModels.slice(0, 10), // Return up to 10 available models
 			},
 			{ status: 200 },

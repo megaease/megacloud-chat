@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Loader2,
@@ -33,6 +33,17 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// Define the Model interface
+interface Model {
+	id: string;
+	name: string;
+	color: string;
+}
+
+// Placeholder for API URL and Key - replace with your actual values
+const MODELS_API_URL = "/api/models"; // TODO: Replace with your actual API endpoint
+const API_KEY = "YOUR_API_KEY"; // TODO: Replace with your actual API key or use context/env
+
 interface ChatViewProps {
 	messages: Message[];
 	input: string;
@@ -55,7 +66,42 @@ export function ChatView({
 	reload,
 }: ChatViewProps) {
 	const inputRef = useRef<HTMLTextAreaElement>(null);
-	const [activeModel, setActiveModel] = useState("GPT-4o");
+	const [activeModel, setActiveModel] = useState<Model | null>(null);
+	const [availableModels, setAvailableModels] = useState<Model[]>([]);
+
+	// Fetch models from API
+	useEffect(() => {
+		const fetchModels = async () => {
+			try {
+				const response = await fetch(MODELS_API_URL, {
+					headers: {
+						Authorization: `Bearer ${API_KEY}`,
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error(`Failed to fetch models: ${response.statusText}`);
+				}
+
+				const fetchedModels: Model[] = await response.json();
+
+				if (fetchedModels && fetchedModels.length > 0) {
+					setAvailableModels(fetchedModels);
+					setActiveModel(fetchedModels[0]);
+				} else {
+					setAvailableModels([]);
+					setActiveModel(null);
+					console.warn("No models fetched or model list is empty.");
+				}
+			} catch (err) {
+				console.error("Error fetching models:", err);
+				setAvailableModels([]);
+				setActiveModel(null);
+			}
+		};
+
+		fetchModels();
+	}, []);
 
 	const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
 		useScrollToBottom({
@@ -158,11 +204,26 @@ export function ChatView({
 													variant="ghost"
 													size="sm"
 													className="h-7 gap-1 px-2 text-xs font-normal text-muted-foreground hover:bg-primary/10 hover:text-foreground transition-colors"
+													disabled={
+														!activeModel && availableModels.length === 0
+													}
 												>
-													<span className="flex items-center gap-1.5">
-														<span className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse opacity-80" />
-														{activeModel}
-													</span>
+													{activeModel ? (
+														<span className="flex items-center gap-1.5">
+															<span
+																className={cn(
+																	"h-2.5 w-2.5 rounded-full",
+																	`bg-${activeModel.color}`,
+																)}
+															/>
+															{activeModel.name}
+														</span>
+													) : (
+														<span className="flex items-center gap-1.5">
+															<Loader2 className="h-3 w-3 animate-spin" />
+															Loading...
+														</span>
+													)}
 													<ChevronDown className="h-3 w-3 opacity-50" />
 												</Button>
 											</DropdownMenuTrigger>
@@ -173,27 +234,30 @@ export function ChatView({
 									</Tooltip>
 								</TooltipProvider>
 								<DropdownMenuContent align="start" className="w-48">
-									<DropdownMenuItem
-										onClick={() => setActiveModel("GPT-4o")}
-										className="flex items-center gap-2 focus:bg-primary/10"
-									>
-										<span className="h-2.5 w-2.5 rounded-full bg-green-500" />
-										GPT-4o
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={() => setActiveModel("GPT-3.5 Turbo")}
-										className="flex items-center gap-2 focus:bg-primary/10"
-									>
-										<span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-										GPT-3.5 Turbo
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={() => setActiveModel("Claude 3 Opus")}
-										className="flex items-center gap-2 focus:bg-primary/10"
-									>
-										<span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-										Claude 3 Opus
-									</DropdownMenuItem>
+									{availableModels.length > 0 ? (
+										availableModels.map((model) => (
+											<DropdownMenuItem
+												key={model.id}
+												onClick={() => setActiveModel(model)}
+												className="flex items-center gap-2 focus:bg-primary/10"
+											>
+												<span
+													className={cn(
+														"h-2.5 w-2.5 rounded-full",
+														`bg-${model.color}`,
+													)}
+												/>
+												{model.name}
+											</DropdownMenuItem>
+										))
+									) : (
+										<DropdownMenuItem
+											disabled
+											className="text-muted-foreground"
+										>
+											No models available
+										</DropdownMenuItem>
+									)}
 								</DropdownMenuContent>
 							</DropdownMenu>
 						</div>
