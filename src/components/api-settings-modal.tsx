@@ -25,6 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Loader2, Check } from "lucide-react";
+import type { cn } from "@/lib/utils";
 
 const initialSettingsSchema = z.object({
 	apiKey: z.string().min(1, { message: "API key is required" }),
@@ -215,7 +216,7 @@ export function ApiSettingsModal() {
 	useEffect(() => {
 		if (connectionTested && availableModels.length > 0 && !selectedModel) {
 			// Select the first model by default
-			setSelectedModel(availableModels[0]);
+			setSelectedModel(availableModels[0] ?? "");
 		}
 	}, [connectionTested, availableModels, selectedModel]);
 
@@ -280,7 +281,7 @@ export function ApiSettingsModal() {
 										</>
 									) : connectionTested ? (
 										<>
-											<Check className="mr-2 h-4 w-4" />
+											<Check className="h-4 w-" />
 											Connection successful
 										</>
 									) : (

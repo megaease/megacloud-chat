@@ -12,10 +12,9 @@ export function ApiSettingsButton() {
 			variant="secondary"
 			onClick={() => setIsOpen(true)}
 			title="API Settings"
-			size={"default"}
 		>
 			<Settings className="h-4 w-4" />
-			<span className="">API Settings</span>
+			<span>API Settings</span>
 		</Button>
 	);
 }
