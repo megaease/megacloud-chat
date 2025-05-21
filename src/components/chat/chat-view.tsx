@@ -9,8 +9,11 @@ import {
 	AudioWaveform,
 	ArrowDown,
 	Paperclip,
+	Power,
+	PowerOff,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "../chat-message";
 import { ChatItem } from "./chat-item";
@@ -39,6 +42,8 @@ interface ChatViewProps {
 	isLoading: boolean;
 	error: Error | null;
 	reload: () => void;
+	mcpEnabled: boolean;
+	toggleMcpEnabled: () => boolean;
 }
 
 export function ChatView({
@@ -50,6 +55,8 @@ export function ChatView({
 	isLoading,
 	error,
 	reload,
+	mcpEnabled,
+	toggleMcpEnabled,
 }: ChatViewProps) {
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -100,7 +107,7 @@ export function ChatView({
 						))}
 
 						{error && (
-							<ChatItem>
+							<ChatItem isUser={false}>
 								<div className="flex flex-col gap-2">
 									<div className="flex items-center gap-2">
 										<div>
@@ -155,19 +162,32 @@ export function ChatView({
 							onChange={handleInputChange}
 							onKeyDown={handleKeyDown}
 							placeholder="Type your message..."
-							className="min-h-24 w-full resize-none border-0 bg-transparent px-4 py-3 pr-14 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 selection:bg-primary/20"
+							className="min-h-24 w-full resize-none border-0 bg-transparent px-4 py-3 pr-14 focus-visible:ring-0 
+							focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 selection:bg-primary/20 pb-12"
 							rows={2}
-							style={{
-								height: input.split("\n").length > 3 ? "120px" : "auto",
-								minHeight: "96px",
-								transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-								transform: isLoading
-									? "translateY(-2px) scale(0.99)"
-									: "translateY(0) scale(1)",
-							}}
 							autoFocus
 						/>
-
+						{/* MCP Toggle switch */}
+						<div className="absolute bottom-2 left-2 flex items-center gap-2">
+							<TooltipProvider>
+								<Tooltip delayDuration={300}>
+									<TooltipTrigger asChild>
+										<div className="flex items-center rounded px-4 py-2 border border-border/50 transition-all duration-300 hover:border-primary/50 hover:bg-primary/10 group">
+											<span className="text-xs font-medium mr-2 text-muted-foreground group-hover:text-foreground/80">
+												MCP
+											</span>
+											<Switch
+												checked={mcpEnabled}
+												onCheckedChange={() => toggleMcpEnabled()}
+											/>
+										</div>
+									</TooltipTrigger>
+									<TooltipContent side="top" className="text-xs font-medium">
+										<p>{mcpEnabled ? "MCP Enabled" : "MCP Disabled"}</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+						</div>
 						<div className="absolute bottom-2 right-2 flex items-center gap-2">
 							{/* Upload button */}
 							<TooltipProvider>

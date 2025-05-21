@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useApiSettings } from "@/context/api-settings-context";
+import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { ChatView } from "./chat-view";
 
 // Fetch chat messages hook
@@ -35,6 +36,7 @@ export function ChatContainer() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { apiKey, modelName, baseUrl } = useApiSettings();
+	const { mcpEnabled, toggleMcpEnabled } = useMcpEnabled();
 	const [randomChatId, setRandomChatId] = useState<string | undefined>(
 		undefined,
 	);
@@ -89,6 +91,7 @@ export function ChatContainer() {
 			apiKey,
 			modelName,
 			baseUrl,
+			mcpEnabled,
 		},
 		initialMessages: chatMessages,
 		onFinish: (message) => {
@@ -112,14 +115,10 @@ export function ChatContainer() {
 	const isLoading = status === "streaming" || status === "submitted";
 
 	// Form submit handler
-	const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+	const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-
 		if (!input.trim()) return;
-		if (error !== null && error !== undefined) {
-			setMessages(messages.slice(0, -1)); // remove last message
-		}
-		await handleSubmit(e);
+		handleSubmit(e);
 	};
 
 	// Stop generation handler
@@ -149,6 +148,8 @@ export function ChatContainer() {
 			isLoading={isLoading}
 			error={error || null}
 			reload={reload}
+			mcpEnabled={mcpEnabled}
+			toggleMcpEnabled={toggleMcpEnabled}
 		/>
 	);
 }

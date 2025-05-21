@@ -14,7 +14,6 @@ import {
 } from "ai";
 import { Experimental_StdioMCPTransport } from "ai/mcp-stdio";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 
 export const maxDuration = 30;
 
@@ -25,7 +24,7 @@ type MCPClient = {
 
 export async function POST(req: Request) {
 	console.log("POST /api/chat");
-	const { messages, userId, chatId, apiKey, modelName, baseUrl } =
+	const { messages, userId, chatId, apiKey, modelName, baseUrl, mcpEnabled } =
 		await req.json();
 
 	if (!messages) {
@@ -39,96 +38,89 @@ export async function POST(req: Request) {
 	const mcpClients: { client: MCPClient; name: string }[] = [];
 
 	try {
-		// Get all active MCP servers from the database
-		const activeServers = await db
-			.select()
-			.from(mcpServers)
-			.where(eq(mcpServers.status, ServerStatusEnum.ONLINE));
-
-		console.log(`Found ${activeServers.length} active MCP servers`);
-
 		// Initialize an empty tools object
 		const mcpTools: ToolSet = {};
 
-		// Create MCP clients and get tools for each active server
-		for (const server of activeServers) {
-			try {
-				let client: MCPClient;
+		// Only load MCP servers if MCP is enabled
+		if (mcpEnabled !== false) {
+			// Get all active MCP servers from the database
+			const activeServers = await db
+				.select()
+				.from(mcpServers)
+				.where(eq(mcpServers.status, ServerStatusEnum.ONLINE));
 
-				// Create different clients based on server type
-				if (server.type === TypeEnum.STDIO) {
-					if (!server.command) {
-						console.warn(`STDIO server ${server.name} missing command`);
+			console.log(`Found ${activeServers.length} active MCP servers`);
+
+			// Create MCP clients and get tools for each active server
+			for (const server of activeServers) {
+				try {
+					let client: MCPClient;
+
+					// Create different clients based on server type
+					if (server.type === TypeEnum.STDIO) {
+						if (!server.command) {
+							console.warn(`STDIO server ${server.name} missing command`);
+							continue;
+						}
+
+						const transport = new Experimental_StdioMCPTransport({
+							command: server.command,
+							args: server.args as string[],
+							env: server.env as Record<string, string>,
+						});
+
+						client = await createMCPClient({ transport });
+					} else if (server.type === TypeEnum.SSE) {
+						if (!server.url) {
+							console.warn(`SSE server ${server.name} missing URL`);
+							continue;
+						}
+
+						client = await createMCPClient({
+							transport: {
+								type: "sse",
+								url: server.url,
+								headers: server.headers as Record<string, string>,
+							},
+						});
+					} else {
+						console.warn(`Unknown server type: ${server.type}`);
 						continue;
 					}
 
-					const transport = new Experimental_StdioMCPTransport({
-						command: server.command,
-						args: server.args as string[],
-						env: server.env as Record<string, string>,
-					});
+					// Store client in array for later connection closing
+					mcpClients.push({ client, name: server.name });
 
-					client = await createMCPClient({ transport });
-				} else if (server.type === TypeEnum.SSE) {
-					if (!server.url) {
-						console.warn(`SSE server ${server.name} missing URL`);
-						continue;
+					// Get tools provided by this server
+					const serverTools = await client.tools();
+
+					// Merge server tools into main tool collection with server prefix to avoid conflicts
+					for (const [toolName, toolImpl] of Object.entries(serverTools)) {
+						const prefixedToolName = `${server.name}_${toolName}`;
+						mcpTools[prefixedToolName] = toolImpl as Tool;
 					}
 
-					client = await createMCPClient({
-						transport: {
-							type: "sse",
-							url: server.url,
-							headers: server.headers as Record<string, string>,
-						},
-					});
-				} else {
-					console.warn(`Unknown server type: ${server.type}`);
-					continue;
+					console.log(`Loaded tools from server ${server.name}`);
+				} catch (error) {
+					console.error(
+						`Failed to connect to MCP server ${server.name}:`,
+						error,
+					);
 				}
-
-				// Store client in array for later connection closing
-				mcpClients.push({ client, name: server.name });
-
-				// Get tools provided by this server
-				const serverTools = await client.tools();
-
-				// Merge server tools into main tool collection with server prefix to avoid conflicts
-				for (const [toolName, toolImpl] of Object.entries(serverTools)) {
-					const prefixedToolName = `${server.name}_${toolName}`;
-					mcpTools[prefixedToolName] = toolImpl as Tool;
-				}
-
-				console.log(`Loaded tools from server ${server.name}`);
-			} catch (error) {
-				console.error(`Failed to connect to MCP server ${server.name}:`, error);
-			}
+			} // End of for loop for active servers
+		} else {
+			console.log("MCP is disabled, skipping MCP servers and tools");
 		}
 
-		// Add built-in tools
-		const builtInTools = {
-			// sayHello: {
-			// 	description: "Say hello to the user",
-			// 	parameters: z.object({
-			// 		name: z.string().describe("The name of the user"),
-			// 	}),
-			// 	execute: async (args: { name: string }) => {
-			// 		console.log("sayHello", args);
-			// 		return {
-			// 			message: `Hello, ${args.name}! mcp`,
-			// 		};
-			// 	},
-			// },
-		};
-
 		// Merge all tools
-		const allTools = {
-			...builtInTools,
-			...mcpTools,
-		};
+		const allTools = mcpEnabled
+			? {
+					...mcpTools,
+				}
+			: undefined;
 		console.log("mcpTools", Object.keys(mcpTools));
 
-		// 用于关闭所有 MCP 客户端连接的函数
+		// close all MCP clients after processing
 		const closeAllMcpClients = async () => {
 			for (const { client, name } of mcpClients) {
 				try {
@@ -170,6 +162,7 @@ export async function POST(req: Request) {
 		// const deepseek = createDeepSeek({
 		// 	apiKey: apiKey,
 		// });
+		console.log(mcpEnabled, allTools, "allTools");
 		const result = streamText({
 			model: modelConfig,
 			system: `You are a helpful AI assistant with access to various tools through the Model Control Protocol (MCP). 

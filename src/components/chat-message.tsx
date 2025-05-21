@@ -29,6 +29,7 @@ import type {
 	FilePart,
 	UIMessage,
 } from "@/types/tool-invocation";
+import { ChatItem } from "./chat/chat-item";
 
 interface ChatMessageProps {
 	message: Message | UIMessage;
@@ -406,65 +407,28 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 
 export function ChatMessage({ message }: ChatMessageProps) {
 	const isUser = message.role === "user";
-
 	// Handle message content display
 	const renderContent = () => {
 		// If message has parts array
 		if (message.parts && Array.isArray(message.parts)) {
-			return message.parts.map((part, index) => {
-				const convertedPart = part as MessagePart;
-				return renderMessagePart(convertedPart, `message-part-${index}`);
-			});
+			// Filter out parts that would render as null (like step-start)
+			const validParts = message.parts
+				.map((part, index) => {
+					const convertedPart = part as MessagePart;
+					return renderMessagePart(convertedPart, `message-part-${index}`);
+				})
+				.filter((part) => part && part.type !== "step-start");
+
+			return validParts.length > 0 ? validParts : null;
 		}
 
 		// If only has regular content
 		return <Markdown content={message.content as string} />;
 	};
 
-	return (
-		<div
-			className={cn(
-				"flex gap-4 text-sm py-4",
-				isUser ? "flex-row-reverse pr-1" : "pl-1",
-			)}
-		>
-			<Avatar
-				className={cn("mt-0.5 h-8 w-8 flex-shrink-0 shadow-[var(--shadow-xs)]")}
-			>
-				<AvatarFallback
-					className={cn(
-						"rounded-[var(--radius)]",
-						isUser
-							? "bg-primary text-primary-foreground"
-							: "bg-secondary text-secondary-foreground",
-					)}
-				>
-					{isUser ? "U" : "AI"}
-				</AvatarFallback>
-			</Avatar>
-			<div
-				className={cn(
-					"flex-1 space-y-2",
-					isUser ? "text-right" : "text-left",
-					"max-w-[89%]", // Limit maximum width
-				)}
-			>
-				<div
-					className={cn(
-						"inline-block rounded-[var(--radius)] px-4 py-3 overflow-hidden text-left min-h-[1em]",
-						isUser
-							? "bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto"
-							: "bg-card text-card-foreground border border-border shadow-[var(--shadow-xs)] w-full",
-					)}
-				>
-					{renderContent()}
-				</div>
-				{/* {message.createdAt && (
-					<div className="text-xs text-muted-foreground px-2 mt-2">
-						{new Date(message.createdAt).toLocaleTimeString()}
-					</div>
-				)} */}
-			</div>
-		</div>
-	);
+	// Check if there's any actual content to render
+	const content = renderContent();
+	const hasContent = content !== null && content !== undefined;
+
+	return hasContent ? <ChatItem isUser={isUser}>{content}</ChatItem> : null;
 }
