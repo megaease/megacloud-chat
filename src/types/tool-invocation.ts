@@ -33,6 +33,8 @@ export interface StepStartPart {
 
 export interface ReasoningPart {
 	type: "reasoning";
+	reasoning: string;
+	details?: TextPart[];
 }
 
 export interface SourcePart {
@@ -52,7 +54,8 @@ export type MessagePart =
 	| StepStartPart
 	| ReasoningPart
 	| SourcePart
-	| FilePart;
+	| FilePart
+	| ReasoningPart;
 
 export interface UIMessage {
 	id: string;

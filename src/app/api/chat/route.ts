@@ -2,7 +2,7 @@ import { saveToChatsTable } from "@/server/db/chats";
 import { saveToMessagesTable } from "@/server/db/messages";
 import { db } from "@/server/db";
 import { mcpServers, ServerStatusEnum, TypeEnum } from "@/server/db/schema";
-import { deepseek } from "@ai-sdk/deepseek";
+import { createDeepSeek, deepseek } from "@ai-sdk/deepseek";
 import { openai } from "@ai-sdk/openai";
 import { createOpenAI } from "@ai-sdk/openai";
 import {
@@ -107,18 +107,18 @@ export async function POST(req: Request) {
 
 		// Add built-in tools
 		const builtInTools = {
-			sayHello: {
-				description: "Say hello to the user",
-				parameters: z.object({
-					name: z.string().describe("The name of the user"),
-				}),
-				execute: async (args: { name: string }) => {
-					console.log("sayHello", args);
-					return {
-						message: `Hello, ${args.name}! mcp`,
-					};
-				},
-			},
+			// sayHello: {
+			// 	description: "Say hello to the user",
+			// 	parameters: z.object({
+			// 		name: z.string().describe("The name of the user"),
+			// 	}),
+			// 	execute: async (args: { name: string }) => {
+			// 		console.log("sayHello", args);
+			// 		return {
+			// 			message: `Hello, ${args.name}! mcp`,
+			// 		};
+			// 	},
+			// },
 		};
 
 		// Merge all tools
@@ -141,7 +141,9 @@ export async function POST(req: Request) {
 		};
 
 		// Set up the AI model based on user configuration
-		let modelConfig = openai("gpt-4-turbo", {});
+		let modelConfig = openai("gpt-4-turbo", {
+			structuredOutputs: true,
+		});
 
 		// Check if user provided API key and model name
 		if (apiKey && modelName) {
@@ -165,7 +167,9 @@ export async function POST(req: Request) {
 				);
 			}
 		}
-
+		// const deepseek = createDeepSeek({
+		// 	apiKey: apiKey,
+		// });
 		const result = streamText({
 			model: modelConfig,
 			system: `You are a helpful AI assistant with access to various tools through the Model Control Protocol (MCP). 
@@ -186,10 +190,11 @@ export async function POST(req: Request) {
 
 			messages,
 			tools: allTools,
-			onError: async (error) => {
-				console.error("AI Stream error:", error);
-				// Close all connections on error
-				await closeAllMcpClients();
+			providerOptions: {
+				openai: {
+					reasoningEffort: "low",
+					reasoningSummary: "detailed",
+				},
 			},
 			onFinish: async (result) => {
 				const allMessages = appendResponseMessages({
@@ -202,12 +207,22 @@ export async function POST(req: Request) {
 				// Close all connections after request completes
 				await closeAllMcpClients();
 			},
+			onError: async (error) => {
+				// Close all connections on error
+				console.error("AI Stream error:", JSON.stringify(error));
+				await closeAllMcpClients();
+			},
 		});
-		console.log("currentChatId", chatId);
 
-		return result.toDataStreamResponse({});
+		return result.toDataStreamResponse({
+			sendReasoning: true,
+			getErrorMessage: (error) => {
+				console.error("Error in stream:", JSON.stringify(error));
+				return error instanceof Error ? error.message : "An error occurred";
+			},
+		});
 	} catch (error) {
-		console.error("Error processing request:", error);
+		console.error("Error processing request:", JSON.stringify(error));
 
 		// Ensure all client connections are closed in case of error
 		for (const { client, name } of mcpClients) {
@@ -221,54 +236,5 @@ export async function POST(req: Request) {
 				);
 			}
 		}
-
-		// Identify the specific error type to provide a more helpful response
-		let errorMessage = "An unexpected error occurred";
-		let statusCode = 500;
-
-		if (error instanceof Error) {
-			// API key related errors
-			if (
-				error.message.includes("API key") ||
-				error.message.includes("auth") ||
-				error.message.includes("Authentication") ||
-				error.message.includes("401")
-			) {
-				errorMessage = "Invalid API key or authentication error";
-				statusCode = 401;
-			}
-			// Model related errors
-			else if (
-				error.message.includes("model") ||
-				error.message.includes("not found") ||
-				error.message.includes("does not exist")
-			) {
-				errorMessage = `Model not found or unavailable: ${modelName}`;
-				statusCode = 404;
-			}
-			// Rate limit errors
-			else if (
-				error.message.includes("rate limit") ||
-				error.message.includes("too many requests") ||
-				error.message.includes("429")
-			) {
-				errorMessage = "Rate limit exceeded. Please try again later";
-				statusCode = 429;
-			}
-			// Connection issues
-			else if (
-				error.message.includes("ENOTFOUND") ||
-				error.message.includes("ECONNREFUSED") ||
-				error.message.includes("timeout")
-			) {
-				errorMessage =
-					"Could not connect to API server. Please check the base URL";
-				statusCode = 503;
-			} else {
-				errorMessage = error.message;
-			}
-		}
-
-		return Response.json({ error: errorMessage }, { status: statusCode });
 	}
 }

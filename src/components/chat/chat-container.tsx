@@ -101,7 +101,10 @@ export function ChatContainer() {
 			}
 		},
 		onError: (error) => {
-			console.error("Error in chat:", error);
+			console.error("Error in chat:", JSON.stringify(error, null, 2));
+			toast.error("Error in chat", {
+				description: error instanceof Error ? error.message : "Unknown error",
+			});
 		},
 	});
 
@@ -113,7 +116,7 @@ export function ChatContainer() {
 		e.preventDefault();
 
 		if (!input.trim()) return;
-		if (error != null) {
+		if (error !== null && error !== undefined) {
 			setMessages(messages.slice(0, -1)); // remove last message
 		}
 		await handleSubmit(e);

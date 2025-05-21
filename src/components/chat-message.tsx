@@ -48,7 +48,21 @@ function renderMessagePart(part: MessagePart, key: string | number) {
 
 		case "tool-invocation":
 			return <ToolInvocationPart key={key} part={part} />;
-
+		case "reasoning":
+			return (
+				<div
+					key={key}
+					className="border rounded-[var(--radius)] p-3 bg-accent/30"
+				>
+					<div className="flex items-center gap-2 mb-2">
+						<Loader2 size={14} className="text-primary animate-spin" />
+						<span className="text-xs font-medium">Reasoning</span>
+					</div>
+					<pre className="whitespace-pre-wrap break-words text-xs">
+						{part.reasoning}
+					</pre>
+				</div>
+			);
 		case "file":
 			return (
 				<div
@@ -66,7 +80,6 @@ function renderMessagePart(part: MessagePart, key: string | number) {
 			);
 
 		case "step-start":
-		case "reasoning":
 		case "source":
 			return null;
 
