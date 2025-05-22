@@ -26,6 +26,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Thinking } from "./thinking";
 
 // Define the Model interface
 interface Model {
@@ -128,14 +129,6 @@ export function ChatView({
 							</ChatItem>
 						)}
 
-						{isLoading && (
-							<div className="flex items-center gap-2 pl-2">
-								<AudioWaveform className="h-4 w-4 text-primary animate-pulse" />
-								<span className="text-muted-foreground">Thinking...</span>
-								<Loader2 className="h-4 w-4 animate-spin text-primary" />
-							</div>
-						)}
-
 						<div ref={endRef} />
 					</div>
 				</div>
@@ -152,6 +145,7 @@ export function ChatView({
 				</Button>
 			)}
 
+			{isLoading && <Thinking />}
 			{/* Chat input */}
 			<div className="p-4 relative max-w-4xl text-center w-full mx-auto">
 				<form onSubmit={handleSubmit} className="relative">

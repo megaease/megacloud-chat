@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useApiSettings } from "@/context/api-settings-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { ChatView } from "./chat-view";
+import { Loader2 } from "lucide-react";
 
 // Fetch chat messages hook
 function useChatMessages(chatId: string | undefined) {

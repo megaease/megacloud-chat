@@ -156,7 +156,7 @@ function renderResultContent(content: ResultContent | string, key: string) {
 					key={key}
 					className="relative rounded-[var(--radius)] border border-border overflow-hidden"
 				>
-					<div className="bg-muted/50 px-3 py-1 border-b border-border flex items-center justify-between">
+					<div className="bg-muted/50 px-3 py-1.5 border-b border-border flex items-center justify-between">
 						<span className="text-xs font-medium">Code</span>
 						<CopyButton text={content.text} />
 					</div>
@@ -173,6 +173,7 @@ function renderResultContent(content: ResultContent | string, key: string) {
 function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 	const { toolInvocation } = part;
 	const toolName = toolInvocation.toolName;
+	const step = toolInvocation.step;
 	const isDatabase =
 		toolName.includes("sql") || toolName.includes("postgresql");
 	const args = JSON.stringify(toolInvocation.args, null, 2);
@@ -185,9 +186,9 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 	// Determine icon based on tool name
 	const getToolIcon = (name: string) => {
 		if (isDatabase) {
-			return <Database size={16} className="text-primary" />;
+			return <Database size={18} className="text-primary" />;
 		}
-		return <Terminal size={16} className="text-primary" />;
+		return <Terminal size={18} className="text-primary" />;
 	};
 
 	// Determine status icon
@@ -196,9 +197,9 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 
 		if (state === "result") {
 			return hasError ? (
-				<AlertCircle size={14} className="text-destructive" />
+				<AlertCircle size={16} className="text-destructive" />
 			) : (
-				<CheckCircle2 size={14} className="text-green-500" />
+				<CheckCircle2 size={16} className="text-green-500" />
 			);
 		}
 
@@ -206,12 +207,12 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 		if (state === "processing" || state === "partial-call") {
 			return (
 				<div className="animate-spin">
-					<Clock size={14} className="text-primary" />
+					<Clock size={16} className="text-primary" />
 				</div>
 			);
 		}
 
-		return <Clock size={14} className="text-muted-foreground" />;
+		return <Clock size={16} className="text-muted-foreground" />;
 	};
 
 	// Render result content
@@ -223,7 +224,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 			return (
 				<div className="flex items-center gap-2 text-muted-foreground">
 					<div className="animate-spin h-4 w-4 rounded-full border-2 border-primary border-r-transparent" />
-					<span className="text-xs">Executing...</span>
+					<span className="text-xs font-medium">Executing...</span>
 				</div>
 			);
 		}
@@ -231,7 +232,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 		// If there's no result
 		if (!result) {
 			return (
-				<div className="text-muted-foreground text-xs">
+				<div className="text-muted-foreground text-xs font-medium">
 					Waiting for execution results...
 				</div>
 			);
@@ -279,7 +280,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 
 			return (
 				<div className="rounded-[var(--radius)] border border-border overflow-hidden">
-					<div className="bg-muted/50 px-3 py-1 border-b border-border">
+					<div className="bg-muted/50 px-3 py-1.5 border-b border-border">
 						<span className="text-xs font-medium">
 							Result List ({result.content.length})
 						</span>
@@ -310,6 +311,16 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 					: "border-primary/30 bg-accent/30",
 			)}
 		>
+			<div>
+				{step !== undefined && (
+					<div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-accent/50 rounded-t-[var(--radius)]">
+						<div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary">
+							<span className="text-xs font-semibold">{step + 1}</span>
+						</div>
+						<span className="text-xs font-medium">Step</span>
+					</div>
+				)}
+			</div>
 			<Accordion
 				type="single"
 				collapsible
@@ -327,11 +338,12 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 							>
 								{toolName}
 							</span>
-							<div className="ml-auto flex items-center gap-1 text-xs">
+							<div className="ml-auto flex items-center gap-1.5 text-xs">
 								{getStatusIcon()}
 								<span
 									className={cn(
 										hasError ? "text-destructive" : "text-muted-foreground",
+										"font-medium",
 									)}
 								>
 									{toolInvocation.state === "result"
@@ -348,8 +360,8 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 							<div className="text-sm">
 								{hasError && (
 									<div className="mb-3 p-3 rounded-[var(--radius)] bg-destructive/10 border border-destructive/30 text-destructive">
-										<div className="flex items-center gap-2 mb-1">
-											<AlertCircle size={14} />
+										<div className="flex items-center gap-2 mb-1.5">
+											<AlertCircle size={16} />
 											<span className="font-medium">Error Message</span>
 										</div>
 										<p className="text-xs whitespace-pre-wrap break-words">
@@ -360,8 +372,8 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 
 								<div className="bg-card rounded-[var(--radius)] overflow-hidden mb-3 border border-border">
 									<div className="flex items-center justify-between px-3 py-1.5 bg-accent/50 border-b border-border">
-										<div className="font-medium text-xs text-card-foreground">
-											Input Parameters
+										<div className="font-medium text-xs text-card-foreground flex items-center gap-1.5">
+											<span>Input Parameters</span>
 										</div>
 									</div>
 									<div className="p-3">
@@ -387,7 +399,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 									>
 										<div
 											className={cn(
-												"font-medium text-xs",
+												"font-medium text-xs flex items-center gap-1.5",
 												hasError ? "text-destructive" : "text-card-foreground",
 											)}
 										>
