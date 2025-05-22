@@ -20,16 +20,18 @@ import {
 	AudioWaveform,
 	Loader2,
 } from "lucide-react";
-import { Markdown } from "./markdown";
-import { CopyButton } from "./copy-button";
+import { Markdown } from "../markdown";
+import { CopyButton } from "../copy-button";
 import type {
 	MessagePart,
 	ToolInvocationPart as ToolInvocationPartType,
 	ResultContent,
 	FilePart,
 	UIMessage,
+	ReasoningPart as ReasoningPartType,
 } from "@/types/tool-invocation";
-import { ChatItem } from "./chat/chat-item";
+import { ChatItem } from "./chat-item";
+import { ReasoningPart } from "./reasoning-part";
 
 interface ChatMessageProps {
 	message: Message | UIMessage;
@@ -50,20 +52,7 @@ function renderMessagePart(part: MessagePart, key: string | number) {
 		case "tool-invocation":
 			return <ToolInvocationPart key={key} part={part} />;
 		case "reasoning":
-			return (
-				<div
-					key={key}
-					className="border rounded-[var(--radius)] p-3 bg-accent/30"
-				>
-					<div className="flex items-center gap-2 mb-2">
-						<Loader2 size={14} className="text-primary animate-spin" />
-						<span className="text-xs font-medium">Reasoning</span>
-					</div>
-					<pre className="whitespace-pre-wrap break-words text-xs">
-						{part.reasoning}
-					</pre>
-				</div>
-			);
+			return <ReasoningPart key={key} part={part} />;
 		case "file":
 			return (
 				<div

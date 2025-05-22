@@ -4,8 +4,16 @@ import { openai } from "@ai-sdk/openai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { appendResponseMessages, streamText, type ToolSet } from "ai";
 import { loadMCPTools, type MCPClient } from "@/lib/mcp-utils";
+import { createDeepSeek } from "@ai-sdk/deepseek";
 
 export const maxDuration = 30;
+
+function isOpenai(url: string) {
+	if (url.includes("openai") || url.includes("api.openai")) {
+		return true;
+	}
+	return false;
+}
 
 export async function POST(req: Request) {
 	console.log("POST /api/chat");
@@ -43,6 +51,7 @@ export async function POST(req: Request) {
 				const compatibleAI = createOpenAI({
 					baseURL: baseUrl || "https://api.openai.com/v1",
 					apiKey: apiKey,
+					compatibility: isOpenai(baseUrl) ? "strict" : "compatible",
 				});
 
 				// Use the user-specified model
@@ -54,12 +63,12 @@ export async function POST(req: Request) {
 				);
 			}
 		}
-		// const deepseek = createDeepSeek({
-		// 	apiKey: apiKey,
-		// });
+		const deepseek = createDeepSeek({
+			apiKey: apiKey,
+		});
 		console.log(mcpEnabled, allTools, "allTools");
 		const result = streamText({
-			model: modelConfig,
+			model: deepseek(modelName),
 			system: `You are a helpful AI assistant with access to various tools through the Model Control Protocol (MCP). 
 				TOOLS:
 				You can use mcp tools to perform specific tasks. Each tool has a name, description, and parameters. You can call these tools by their names and provide the required parameters.

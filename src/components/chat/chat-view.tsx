@@ -15,7 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { ChatMessage } from "../chat-message";
+import { ChatMessage } from "./chat-message";
 import { ChatItem } from "./chat-item";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom-mutation";
 import type { Message } from "@ai-sdk/react";
