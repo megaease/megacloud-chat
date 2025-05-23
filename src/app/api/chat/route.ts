@@ -2,7 +2,12 @@ import { saveToChatsTable } from "@/server/db/chats";
 import { saveToMessagesTable } from "@/server/db/messages";
 import { openai } from "@ai-sdk/openai";
 import { createOpenAI } from "@ai-sdk/openai";
-import { appendResponseMessages, streamText, type ToolSet } from "ai";
+import {
+	appendResponseMessages,
+	smoothStream,
+	streamText,
+	type ToolSet,
+} from "ai";
 import { loadMCPTools, type MCPClient } from "@/lib/mcp-utils";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { nanoid } from "nanoid";
@@ -96,6 +101,9 @@ export async function POST(req: Request) {
 					reasoningSummary: "detailed",
 				},
 			},
+			experimental_transform: smoothStream({
+				chunking: "line",
+			}),
 			onFinish: async (result) => {
 				const allMessages = appendResponseMessages({
 					messages,
@@ -108,16 +116,27 @@ export async function POST(req: Request) {
 				// Close all connections after request completes
 				await closeAllMcpClients();
 			},
-			onError: async (error) => {
-				console.error("AI Stream error:", JSON.stringify(error));
+			onError: async (response) => {
+				console.error(
+					"AI Stream error:",
+					JSON.stringify(response?.error, null, 2),
+				);
 				// Handle error gracefully
-				const errorContent = `Sorry, I encountered an error: ${
-					error instanceof Error ? error.message : "Unknown error"
-				}. Please try again or rephrase your question.`;
+				const error =
+					response?.error &&
+					typeof response.error === "object" &&
+					"data" in response.error &&
+					response.error.data &&
+					typeof response.error.data === "object" &&
+					"error" in response.error.data
+						? (response.error.data as { error?: { message?: string } }).error
+						: undefined;
+				const errorContent = `Sorry, I encountered an error: ${error?.message || "Unknown error"}. Please try again or rephrase your question.`;
 				const errorMessage = {
 					id: nanoid(16),
 					role: "assistant" as const,
 					content: errorContent,
+					chatId: chatId,
 				};
 				// Append error message to the chat
 				const allMessages = appendResponseMessages({
@@ -136,7 +155,6 @@ export async function POST(req: Request) {
 		return result.toDataStreamResponse({
 			sendReasoning: true,
 			getErrorMessage: (error) => {
-				console.error("Error in stream:", JSON.stringify(error));
 				return error instanceof Error
 					? error.message
 					: "An unknown error occurred, please try again later";
