@@ -193,7 +193,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 		}
 
 		// Handle loading state
-		if (state === "processing" || state === "partial-call") {
+		if (state === "call" || state === "partial-call") {
 			return (
 				<div className="animate-spin">
 					<Clock size={16} className="text-primary" />
@@ -209,7 +209,7 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 		const { result, state } = toolInvocation;
 
 		// Handle loading state
-		if (state === "processing" || state === "partial-call") {
+		if (state === "call" || state === "partial-call") {
 			return (
 				<div className="flex items-center gap-2 text-muted-foreground">
 					<div className="animate-spin h-4 w-4 rounded-full border-2 border-primary border-r-transparent" />
@@ -300,16 +300,6 @@ function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
 					: "border-primary/30 bg-accent/30",
 			)}
 		>
-			<div>
-				{step !== undefined && (
-					<div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-accent/50 rounded-t-[var(--radius)]">
-						<div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary">
-							<span className="text-xs font-semibold">{step + 1}</span>
-						</div>
-						<span className="text-xs font-medium">Step</span>
-					</div>
-				)}
-			</div>
 			<Accordion
 				type="single"
 				collapsible

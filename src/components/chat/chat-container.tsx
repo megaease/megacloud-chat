@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useChat } from "@ai-sdk/react";
+import { useChat, type Message } from "@ai-sdk/react";
 import { nanoid } from "nanoid";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,16 +16,38 @@ function useChatMessages(chatId: string | undefined) {
 	const query = useQuery({
 		queryKey: ["chats", "user-id", chatId],
 		queryFn: async () => {
+			// Don't fetch if no chatId (new chat)
+			if (!chatId) {
+				return [];
+			}
+
 			const res = await fetch(`/api/chats/${chatId}`, {
 				headers: {
 					userId: "user-id",
 				},
 			});
+
+			// Handle 404 for new chats that don't exist yet
+			if (!res.ok) {
+				if (res.status === 404) {
+					return []; // Return empty array for new chats
+				}
+				throw new Error(`Failed to fetch chat: ${res.status}`);
+			}
+
 			const data = await res.json();
 			return data.chat.messages;
 		},
 		staleTime: 1000 * 60 * 2,
-		enabled: !!chatId,
+		enabled: !!chatId, // Only fetch when chatId exists
+		refetchOnWindowFocus: false,
+		retry: (failureCount, error) => {
+			// Don't retry on 404 errors (new chat doesn't exist yet)
+			if (error instanceof Error && error.message.includes("404")) {
+				return false;
+			}
+			return failureCount < 3;
+		},
 	});
 	return query;
 }
@@ -38,18 +60,13 @@ export function ChatContainer() {
 	const queryClient = useQueryClient();
 	const { apiKey, modelName, baseUrl } = useApiSettings();
 	const { mcpEnabled, toggleMcpEnabled } = useMcpEnabled();
-	const [randomChatId, setRandomChatId] = useState<string | undefined>(
-		undefined,
-	);
-	const inputRef = useRef<HTMLTextAreaElement>(null);
-
-	// Generate random ID if no chatId exists
-	useEffect(() => {
+	const [randomChatId, setRandomChatId] = useState<string | undefined>(() => {
 		if (!chatId) {
-			const newChatId = nanoid(16);
-			setRandomChatId(newChatId);
+			return nanoid(16);
 		}
-	}, [chatId]);
+		return undefined;
+	});
+	const inputRef = useRef<HTMLTextAreaElement>(null);
 
 	// Get chat messages
 	const chatMessagesQuery = useChatMessages(chatId);
@@ -100,26 +117,76 @@ export function ChatContainer() {
 			queryClient.invalidateQueries({
 				queryKey: ["chats", "user-id"],
 			});
-			if (!chatId) {
-				router.push(`/chat/${randomChatId}`);
-			}
 		},
 		onError: (error) => {
 			console.error("Error in chat:", JSON.stringify(error, null, 2));
-			toast.error("Error in chat", {
+
+			// When an error occurs, add an error message to maintain conversation flow
+			// This prevents the "consecutive user messages" error on next input
+			const errorMessage = {
+				id: nanoid(16),
+				role: "assistant" as const,
+				content: `Sorry, I encountered an error: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}. Please try again or rephrase your question.`,
+				createdAt: new Date(),
+			} as Message;
+
+			// Add the error message to maintain conversation alternation
+			setMessages((prev) => [...prev, errorMessage]);
+
+			toast.error("Chat error", {
 				description: error instanceof Error ? error.message : "Unknown error",
 			});
+
+			// Invalidate queries after a short delay to refresh from the database
+			// This ensures frontend and backend stay in sync
+			setTimeout(() => {
+				console.log("Refreshing chat data after error");
+				queryClient.invalidateQueries({
+					queryKey: ["chats", "user-id", chatId],
+				});
+			}, 1000);
 		},
 	});
 
 	// Calculate loading state
 	const isLoading = status === "streaming" || status === "submitted";
 
-	// Form submit handler
+	// Form submit handler with improved routing
 	const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!input.trim()) return;
-		handleSubmit(e);
+
+		// Prevent multiple submissions
+		if (isLoading) {
+			return;
+		}
+
+		// If we have an existing chatId, just submit normally
+		if (chatId) {
+			handleSubmit(e);
+			return;
+		}
+
+		// For new chats, we need to handle the routing more smoothly
+		if (!chatId && randomChatId) {
+			// Submit first to prevent interruption by route change
+			handleSubmit(e);
+
+			// Then handle route change after a brief delay
+			setTimeout(() => {
+				router.push(`/chat/${randomChatId}`, {
+					scroll: false, // Prevent scroll jumping
+				});
+
+				// Update query cache to refresh sidebar chat list
+				queryClient.invalidateQueries({
+					queryKey: ["chats", "user-id"],
+				});
+			}, 100);
+			return;
+		}
 	};
 
 	// Stop generation handler
@@ -133,11 +200,13 @@ export function ChatContainer() {
 		}, 100);
 	};
 
-	// Let parent handle loading state
 	if (isLoadingMessage) {
-		return null;
+		return (
+			<div className="flex items-center justify-center h-full">
+				<Loader2 className="animate-spin text-primary" />
+			</div>
+		);
 	}
-
 	// Render chat view
 	return (
 		<ChatView

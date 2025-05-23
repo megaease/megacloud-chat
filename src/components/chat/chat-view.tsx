@@ -107,28 +107,6 @@ export function ChatView({
 							<ChatMessage key={message.id} message={message} />
 						))}
 
-						{error && (
-							<ChatItem isUser={false}>
-								<div className="flex flex-col gap-2">
-									<div className="flex items-center gap-2">
-										<div>
-											{error.message && error.message !== "An error occurred."
-												? error.message
-												: "Error occurred"}
-										</div>
-										<Button
-											type="button"
-											onClick={() => reload()}
-											size={"sm"}
-											variant="outline"
-										>
-											Retry
-										</Button>
-									</div>
-								</div>
-							</ChatItem>
-						)}
-
 						<div ref={endRef} />
 					</div>
 				</div>

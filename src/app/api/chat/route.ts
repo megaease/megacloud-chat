@@ -5,6 +5,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { appendResponseMessages, streamText, type ToolSet } from "ai";
 import { loadMCPTools, type MCPClient } from "@/lib/mcp-utils";
 import { createDeepSeek } from "@ai-sdk/deepseek";
+import { nanoid } from "nanoid";
 
 export const maxDuration = 30;
 
@@ -28,13 +29,6 @@ export async function POST(req: Request) {
 	}
 
 	try {
-		// Load MCP tools using the extracted utility function
-		const {
-			tools: allTools,
-			clients: mcpClients,
-			closeAllMcpClients,
-		} = await loadMCPTools(mcpEnabled);
-
 		// Set up the AI model based on user configuration
 		let modelConfig = openai("gpt-4-turbo", {
 			structuredOutputs: true,
@@ -63,6 +57,15 @@ export async function POST(req: Request) {
 				);
 			}
 		}
+		// create a new chat in the database chats table
+		await saveToChatsTable(userId, chatId, messages);
+		// Load MCP tools using the extracted utility function
+		const {
+			tools: allTools,
+			clients: mcpClients,
+			closeAllMcpClients,
+		} = await loadMCPTools(mcpEnabled);
+
 		const deepseek = createDeepSeek({
 			apiKey: apiKey,
 		});
@@ -98,6 +101,7 @@ export async function POST(req: Request) {
 					messages,
 					responseMessages: result.response.messages,
 				});
+				// update the chat in the database
 				await saveToChatsTable(userId, chatId, allMessages);
 				await saveToMessagesTable(chatId, allMessages);
 
@@ -105,8 +109,26 @@ export async function POST(req: Request) {
 				await closeAllMcpClients();
 			},
 			onError: async (error) => {
-				// Close all connections on error
 				console.error("AI Stream error:", JSON.stringify(error));
+				// Handle error gracefully
+				const errorContent = `Sorry, I encountered an error: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}. Please try again or rephrase your question.`;
+				const errorMessage = {
+					id: nanoid(16),
+					role: "assistant" as const,
+					content: errorContent,
+				};
+				// Append error message to the chat
+				const allMessages = appendResponseMessages({
+					messages,
+					responseMessages: [errorMessage],
+				});
+				// Save the error message to the database
+				await saveToMessagesTable(chatId, allMessages);
+				// Update the chat in the database
+				await saveToChatsTable(userId, chatId, allMessages);
+				// Close all connections after error
 				await closeAllMcpClients();
 			},
 		});
@@ -115,10 +137,20 @@ export async function POST(req: Request) {
 			sendReasoning: true,
 			getErrorMessage: (error) => {
 				console.error("Error in stream:", JSON.stringify(error));
-				return error instanceof Error ? error.message : "An error occurred";
+				return error instanceof Error
+					? error.message
+					: "An unknown error occurred, please try again later";
 			},
 		});
 	} catch (error) {
 		console.error("Error processing request:", JSON.stringify(error));
+		// Return a proper error response instead of nothing
+		return Response.json(
+			{
+				error: "Error processing request",
+				details: error instanceof Error ? error.message : "Unknown error",
+			},
+			{ status: 500 },
+		);
 	}
 }
