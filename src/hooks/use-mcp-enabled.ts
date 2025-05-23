@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -6,13 +8,16 @@ import { toast } from "sonner";
  * Persists the setting to localStorage and provides functions to toggle/update the state
  */
 export function useMcpEnabled() {
-	const [enabled, setEnabled] = useState<boolean>(true);
+	const [enabled, setEnabled] = useState<boolean>(false);
 
 	// Load from localStorage on initial mount
 	useEffect(() => {
-		const storedValue = localStorage.getItem("mcpEnabled");
-		if (storedValue !== null) {
-			setEnabled(storedValue === "true");
+		// Only run in browser environment
+		if (typeof window !== "undefined") {
+			const storedValue = localStorage.getItem("mcpEnabled");
+			if (storedValue !== null) {
+				setEnabled(storedValue === "true");
+			}
 		}
 	}, []);
 
