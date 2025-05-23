@@ -6,10 +6,11 @@ import { motion } from "framer-motion";
 export function Thinking() {
 	return (
 		<motion.div
-			className="flex items-center justify-center gap-2 max-w-xs w-auto mx-auto py-1.5 px-3 rounded-full border border-primary/10 shadow-sm"
+			className="flex items-center justify-center gap-2 max-w-xs w-auto mx-auto py-1.5 px-3 rounded-full border border-primary/10 shadow-sm dark:border-primary/30"
 			style={{
 				background: "rgba(var(--background), 0.6)",
 				backdropFilter: "blur(8px)",
+				boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
 			}}
 			initial={{ opacity: 0, y: 5 }}
 			animate={{ opacity: 1, y: 0 }}
@@ -18,7 +19,7 @@ export function Thinking() {
 			<WaveformAnimation />
 			<div className="relative">
 				<motion.span
-					className="text-primary text-xs font-medium"
+					className="text-primary text-xs font-medium dark:text-primary/90"
 					animate={{ opacity: [0.8, 1, 0.8] }}
 					transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
 				>
@@ -35,7 +36,7 @@ function WaveformAnimation() {
 			{[0.3, 0.6, 0.4, 0.8, 0.5].map((height, index, arr) => (
 				<motion.div
 					key={`${height}-${index}-${arr.length}`}
-					className="w-0.5 bg-primary/90 rounded-full"
+					className="w-0.5 bg-primary/90 dark:bg-primary/80 rounded-full"
 					initial={{ height: "30%" }}
 					animate={{
 						height: [
