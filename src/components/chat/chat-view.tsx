@@ -9,17 +9,13 @@ import {
 	AudioWaveform,
 	ArrowDown,
 	Paperclip,
-	Power,
-	PowerOff,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "./chat-message";
-import { ChatItem } from "./chat-item";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom-mutation";
 import type { Message } from "@ai-sdk/react";
-import { ModelSelector } from "./model-selector";
 import {
 	Tooltip,
 	TooltipContent,

@@ -1,5 +1,5 @@
-import { createOpenAI } from "@ai-sdk/openai";
 import { NextResponse } from "next/server";
+import { isOpenAI } from "@/lib/ai-providers";
 
 export async function POST(req: Request) {
 	try {
@@ -39,35 +39,13 @@ export async function POST(req: Request) {
 		}
 
 		// Parse response to get basic connection info
-		const modelsData = await modelsResponse.json();
-
-		// Determine API provider type
-		let providerType = "unknown";
-		const isOpenAI = formattedBaseUrl.includes("openai.com");
-		const isAzure = formattedBaseUrl.includes("azure");
-		const isAnthropic =
-			formattedBaseUrl.includes("anthropic") ||
-			modelsData.data?.some((m: { id: string }) => m.id.includes("claude"));
-
-		if (isOpenAI) providerType = "openai";
-		else if (isAzure) providerType = "azure";
-		else if (isAnthropic) providerType = "anthropic";
-
-		// Get total number of available models
-		const totalModels = modelsData.data?.length || 0;
-
-		// Return only a few models as samples
-		const sampleModels =
-			modelsData.data?.slice(0, 5)?.map((m: { id: string }) => m.id) || [];
+		await modelsResponse.json();
 
 		// If everything checks out, return success
 		return NextResponse.json(
 			{
 				success: true,
 				message: "Connection successful - API key is valid",
-				provider: providerType,
-				totalModels: totalModels,
-				sampleModels: sampleModels, // Only return a few sample models
 			},
 			{ status: 200 },
 		);

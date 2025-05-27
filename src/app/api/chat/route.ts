@@ -1,7 +1,5 @@
 import { saveToChatsTable } from "@/server/db/chats";
 import { saveToMessagesTable } from "@/server/db/messages";
-import { openai } from "@ai-sdk/openai";
-import { createOpenAI } from "@ai-sdk/openai";
 import {
 	appendResponseMessages,
 	smoothStream,
@@ -9,17 +7,10 @@ import {
 	type ToolSet,
 } from "ai";
 import { loadMCPTools, type MCPClient } from "@/lib/mcp-utils";
-import { createDeepSeek } from "@ai-sdk/deepseek";
 import { nanoid } from "nanoid";
+import { detectAndCreateAIModel } from "@/lib/ai-providers";
 
 export const maxDuration = 30;
-
-function isOpenai(url: string) {
-	if (url.includes("openai") || url.includes("api.openai")) {
-		return true;
-	}
-	return false;
-}
 
 export async function POST(req: Request) {
 	console.log("POST /api/chat");
@@ -34,49 +25,28 @@ export async function POST(req: Request) {
 	}
 
 	try {
-		// Set up the AI model based on user configuration
-		let modelConfig = openai("gpt-4-turbo", {
-			structuredOutputs: true,
+		const { model: modelConfig, detectedProvider } = detectAndCreateAIModel({
+			apiKey,
+			modelName: modelName || "gpt-4-turbo",
+			baseUrl,
 		});
-
-		// Check if user provided API key and model name
-		if (apiKey && modelName) {
-			try {
-				console.log(
-					`Using custom model: ${modelName} with custom API configuration`,
-				);
-
-				// Create OpenAI compatible client with user settings
-				const compatibleAI = createOpenAI({
-					baseURL: baseUrl || "https://api.openai.com/v1",
-					apiKey: apiKey,
-					compatibility: isOpenai(baseUrl) ? "strict" : "compatible",
-				});
-
-				// Use the user-specified model
-				modelConfig = compatibleAI(modelName);
-			} catch (error) {
-				console.error("Error configuring custom model:", error);
-				throw new Error(
-					`Failed to initialize model "${modelName}": ${error instanceof Error ? error.message : "Unknown error"}`,
-				);
-			}
-		}
+		console.log(modelConfig, "modelConfig");
 		// create a new chat in the database chats table
 		await saveToChatsTable(userId, chatId, messages);
+
 		// Load MCP tools using the extracted utility function
 		const {
 			tools: allTools,
 			clients: mcpClients,
 			closeAllMcpClients,
 		} = await loadMCPTools(mcpEnabled);
-
-		const deepseek = createDeepSeek({
-			apiKey: apiKey,
-		});
 		console.log(mcpEnabled, allTools, "allTools");
+
+		console.log(
+			`Using ${detectedProvider} model: ${modelName || "gpt-4-turbo"}`,
+		);
 		const result = streamText({
-			model: deepseek(modelName),
+			model: modelConfig,
 			system: `You are a helpful AI assistant with access to various tools through the Model Control Protocol (MCP). 
 				TOOLS:
 				You can use mcp tools to perform specific tasks. Each tool has a name, description, and parameters. You can call these tools by their names and provide the required parameters.
@@ -101,9 +71,6 @@ export async function POST(req: Request) {
 					reasoningSummary: "detailed",
 				},
 			},
-			experimental_transform: smoothStream({
-				chunking: "line",
-			}),
 			onFinish: async (result) => {
 				const allMessages = appendResponseMessages({
 					messages,

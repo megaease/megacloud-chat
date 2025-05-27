@@ -1,6 +1,6 @@
 "use client";
 
-import { BrainCircuit, CheckCircle2 } from "lucide-react";
+import { BrainCircuit, CheckCircle2, Sparkle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
 	Accordion,
@@ -17,7 +17,7 @@ export function ReasoningPart({ part }: { part: ReasoningPartType }) {
 				<AccordionItem value="item-0" className="border-0">
 					<AccordionTrigger className="px-3 py-2 hover:no-underline">
 						<div className="flex items-center gap-2 w-full">
-							<BrainCircuit size={18} className="text-primary" />
+							<Sparkle size={18} className="text-primary" />
 							<span className="font-medium text-primary">
 								Reasoning Process
 							</span>

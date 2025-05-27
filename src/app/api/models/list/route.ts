@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isOpenAI } from "@/lib/ai-providers";
 
 export async function POST(req: Request) {
 	try {
@@ -43,10 +44,9 @@ export async function POST(req: Request) {
 
 		// Sort and filter models based on different API providers
 		let sortedModels = availableModels;
-		const isOpenAI = formattedBaseUrl.includes("openai.com");
-		const isAzure = formattedBaseUrl.includes("azure");
+		const isOpenAIProvider = isOpenAI(formattedBaseUrl);
 
-		if (isOpenAI) {
+		if (isOpenAIProvider) {
 			// Prioritize GPT-4 and GPT-3.5 models for OpenAI
 			sortedModels = availableModels.sort((a, b) => {
 				// GPT-4 models first
