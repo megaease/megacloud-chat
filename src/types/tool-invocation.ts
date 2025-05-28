@@ -47,6 +47,25 @@ export interface FilePart {
 	name?: string;
 }
 
+export interface ImagePart {
+	type: "image";
+	src: string;
+	alt?: string;
+	width?: number;
+	height?: number;
+}
+
+export interface PDFPart {
+	type: "pdf";
+	src: string;
+}
+
+export interface TextFilePart {
+	type: "text-file";
+	content: string;
+	name: string;
+}
+
 export type MessagePart =
 	| string
 	| TextPart
@@ -55,14 +74,22 @@ export type MessagePart =
 	| ReasoningPart
 	| SourcePart
 	| FilePart
+	| ImagePart
+	| PDFPart
+	| TextFilePart
 	| ReasoningPart;
 
 export interface UIMessage {
 	id: string;
 	role: "user" | "assistant" | "system" | "function" | "data" | "tool";
-	content: string | any[];
+	content: string | MessagePart[];
 	createdAt?: Date;
 	name?: string;
 	parts?: MessagePart[];
 	isLatest?: boolean;
+	experimental_attachments?: Array<{
+		name?: string;
+		url: string;
+		contentType?: string;
+	}>;
 }

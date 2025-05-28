@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Message } from "ai";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -19,6 +20,12 @@ import {
 	File,
 	AudioWaveform,
 	Loader2,
+	FileType,
+	Image as ImageIcon,
+	FileText,
+	ZoomIn,
+	XCircle,
+	Download,
 } from "lucide-react";
 import { Markdown } from "../markdown";
 import { CopyButton } from "../copy-button";
@@ -32,13 +39,20 @@ import type {
 } from "@/types/tool-invocation";
 import { ChatItem } from "./chat-item";
 import { ReasoningPart } from "./reasoning-part";
+import { ToolInvocationPart } from "./tool-invocation-part";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 
 interface ChatMessageProps {
 	message: Message | UIMessage;
 }
 
 // Render different types of message parts
-function renderMessagePart(part: MessagePart, key: string | number) {
+function renderMessagePart(
+	part: MessagePart,
+	key: string | number,
+	isLastPart = true,
+) {
 	// If it's a string or no type specified
 	if (!part || typeof part === "string") {
 		return <Markdown key={key} content={part} />;
@@ -46,369 +60,110 @@ function renderMessagePart(part: MessagePart, key: string | number) {
 
 	// Handle different part types
 	switch (part.type) {
+		case "step-start":
+			return (
+				<div key={key} className="text-muted-foreground text-xs italic">
+					{
+						// If it's the last part, show a loading spinner
+						isLastPart ? (
+							<div className="flex items-center gap-1">
+								<Loader2 className="animate-spin" size={16} />
+								<span>Step started...</span>
+							</div>
+						) : null
+					}
+				</div>
+			);
 		case "text":
 			return <Markdown key={key} content={part.text} />;
 
 		case "tool-invocation":
-			return <ToolInvocationPart key={key} part={part} />;
+			return (
+				<ToolInvocationPart key={key} part={part} isLastPart={isLastPart} />
+			);
 		case "reasoning":
-			return <ReasoningPart key={key} part={part} />;
-		case "file":
+			return <ReasoningPart key={key} part={part} isLastPart={isLastPart} />;
+		// case "file":
+		// 	return (
+		// 		<div key={key} className="my-2">
+		// 			<div className="flex items-center gap-2 p-3 rounded-md bg-muted/40">
+		// 				<File size={20} className="text-primary" />
+		// 				<div className="flex-1 truncate">
+		// 					{part.name && <p className="font-medium text-sm">{part.name}</p>}
+		// 					<p className="text-xs text-muted-foreground truncate">
+		// 						{part.content.length} characters
+		// 					</p>
+		// 				</div>
+		// 				<CopyButton text={part.content} />
+		// 			</div>
+		// 		</div>
+		// 	);
+		case "image":
 			return (
-				<div
-					key={key}
-					className="border rounded-[var(--radius)] p-3 bg-accent/30"
-				>
-					<div className="flex items-center gap-2 mb-2">
-						<File size={14} className="text-primary" />
-						<span className="text-xs font-medium">File Content</span>
-					</div>
-					<pre className="whitespace-pre-wrap break-words text-xs">
-						{part.content}
-					</pre>
-				</div>
-			);
-
-		case "step-start":
-		case "source":
-			return null;
-
-		default:
-			return null;
-	}
-}
-
-function renderResultContent(content: ResultContent | string, key: string) {
-	// Function to try parsing JSON strings and display them with formatting
-	const tryParseAndRenderJSON = (text: string, contentKey: string) => {
-		try {
-			// Try to parse the JSON string
-			const parsed = JSON.parse(text);
-			return (
-				<div
-					key={contentKey}
-					className="relative rounded-[var(--radius)] border border-border overflow-hidden"
-				>
-					<pre className="whitespace-pre-wrap break-words text-xs p-2 max-h-[300px] overflow-auto m-0">
-						{JSON.stringify(parsed, null, 2)}
-					</pre>
-				</div>
-			);
-		} catch {
-			// If not JSON, return null to use fallback rendering method
-			return null;
-		}
-	};
-
-	if (typeof content === "string") {
-		// Try to parse as JSON
-		const jsonResult = tryParseAndRenderJSON(content, key);
-		if (jsonResult) return jsonResult;
-
-		// Not JSON, render with Markdown
-		return (
-			<Markdown
-				key={key}
-				className="whitespace-pre-wrap my-0"
-				content={content}
-			/>
-		);
-	}
-
-	switch (content.type) {
-		case "text":
-		case "markdown":
-			try {
-				const parsed = JSON.parse(content.text);
-				return (
-					<div
-						key={key}
-						className="relative rounded-[var(--radius)] border border-border overflow-hidden"
-					>
-						<pre className="whitespace-pre-wrap break-words text-xs p-2 max-h-[300px] overflow-auto m-0">
-							{JSON.stringify(parsed, null, 2)}
-						</pre>
-					</div>
-				);
-			} catch {
-				return (
-					<Markdown
-						key={key}
-						className="whitespace-pre-wrap my-0"
-						content={content.text}
-					/>
-				);
-			}
-		case "code":
-			return (
-				<div
-					key={key}
-					className="relative rounded-[var(--radius)] border border-border overflow-hidden"
-				>
-					<div className="bg-muted/50 px-3 py-1.5 border-b border-border flex items-center justify-between">
-						<span className="text-xs font-medium">Code</span>
-						<CopyButton text={content.text} />
-					</div>
-					<pre className="whitespace-pre-wrap break-words text-xs p-2 m-0">
-						<code className="font-mono">{content.text}</code>
-					</pre>
-				</div>
-			);
-		default:
-			return null;
-	}
-}
-
-function ToolInvocationPart({ part }: { part: ToolInvocationPartType }) {
-	const { toolInvocation } = part;
-	const toolName = toolInvocation.toolName;
-	const step = toolInvocation.step;
-	const isDatabase =
-		toolName.includes("sql") || toolName.includes("postgresql");
-	const args = JSON.stringify(toolInvocation.args, null, 2);
-
-	const hasError = toolInvocation.result?.isError;
-	const errorMessage = hasError
-		? toolInvocation.result?.error || "Unknown error"
-		: null;
-
-	// Determine icon based on tool name
-	const getToolIcon = (name: string) => {
-		if (isDatabase) {
-			return <Database size={18} className="text-primary" />;
-		}
-		return <Terminal size={18} className="text-primary" />;
-	};
-
-	// Determine status icon
-	const getStatusIcon = () => {
-		const { state } = toolInvocation;
-
-		if (state === "result") {
-			return hasError ? (
-				<AlertCircle size={16} className="text-destructive" />
-			) : (
-				<CheckCircle2 size={16} className="text-green-500" />
-			);
-		}
-
-		// Handle loading state
-		if (state === "call" || state === "partial-call") {
-			return (
-				<div className="animate-spin">
-					<Clock size={16} className="text-primary" />
-				</div>
-			);
-		}
-
-		return <Clock size={16} className="text-muted-foreground" />;
-	};
-
-	// Render result content
-	const renderResult = () => {
-		const { result, state } = toolInvocation;
-
-		// Handle loading state
-		if (state === "call" || state === "partial-call") {
-			return (
-				<div className="flex items-center gap-2 text-muted-foreground">
-					<div className="animate-spin h-4 w-4 rounded-full border-2 border-primary border-r-transparent" />
-					<span className="text-xs font-medium">Executing...</span>
-				</div>
-			);
-		}
-
-		// If there's no result
-		if (!result) {
-			return (
-				<div className="text-muted-foreground text-xs font-medium">
-					Waiting for execution results...
-				</div>
-			);
-		}
-
-		// If there's no content, display the complete result object
-		if (!result.content) {
-			return (
-				<pre className="whitespace-pre-wrap break-words text-xs p-2 max-h-[300px] overflow-auto m-0">
-					{JSON.stringify(result, null, 2)}
-				</pre>
-			);
-		}
-
-		if (typeof result.content === "string") {
-			try {
-				const parsed = JSON.parse(result.content);
-
-				return (
-					<div className="rounded-[var(--radius)] border border-border overflow-hidden">
-						<pre className="whitespace-pre-wrap break-words text-xs p-2 max-h-[300px] overflow-auto m-0">
-							{JSON.stringify(parsed, null, 2)}
-						</pre>
-					</div>
-				);
-			} catch {
-				return (
-					<Markdown
-						content={result.content}
-						className="text-xs max-h-[300px] overflow-auto my-0"
-					/>
-				);
-			}
-		}
-
-		// If content is an array
-		if (Array.isArray(result.content)) {
-			if (result.content.length === 1) {
-				const item = result.content[0];
-				if (item) {
-					const key = `${toolInvocation.toolName}-result-single-${typeof item === "string" ? "text" : item.type}`;
-					return renderResultContent(item, key);
-				}
-			}
-
-			return (
-				<div className="rounded-[var(--radius)] border border-border overflow-hidden">
-					<div className="bg-muted/50 px-3 py-1.5 border-b border-border">
-						<span className="text-xs font-medium">
-							Result List ({result.content.length})
-						</span>
-					</div>
-					<div className="divide-y divide-border">
-						{result.content.map((item, index) => {
-							const key = `${toolInvocation.toolName}-result-${index}-${typeof item === "string" ? "text" : item.type}`;
-							return (
-								<div key={key} className="p-2">
-									{renderResultContent(item, key)}
-								</div>
-							);
-						})}
+				<div key={key} className="my-2">
+					<div className="relative border rounded-md overflow-hidden">
+						<img
+							src={part.src}
+							alt={part.alt || "Image"}
+							className="object-cover object-center overflow-hidden rounded-md h-full max-h-96 max-w-64 w-fit transition-opacity duration-300 opacity-100"
+						/>
 					</div>
 				</div>
 			);
-		}
-
-		return null;
-	};
-
-	return (
-		<div
-			className={cn(
-				"border rounded-[var(--radius)] my-3 shadow-[var(--shadow-xs)]",
-				hasError
-					? "border-destructive/50 bg-destructive/10"
-					: "border-primary/30 bg-accent/30",
-			)}
-		>
-			<Accordion
-				type="single"
-				collapsible
-				defaultValue={hasError ? "item-0" : undefined}
-			>
-				<AccordionItem value="item-0" className="border-0">
-					<AccordionTrigger className="px-3 py-2 hover:no-underline">
-						<div className="flex items-center gap-2 w-full">
-							{getToolIcon(toolName)}
-							<span
-								className={cn(
-									"font-medium",
-									hasError ? "text-destructive" : "text-primary",
-								)}
-							>
-								{toolName}
-							</span>
-							<div className="ml-auto flex items-center gap-1.5 text-xs">
-								{getStatusIcon()}
-								<span
-									className={cn(
-										hasError ? "text-destructive" : "text-muted-foreground",
-										"font-medium",
-									)}
-								>
-									{toolInvocation.state === "result"
-										? hasError
-											? "Execution Failed"
-											: "Completed"
-										: "Processing"}
-								</span>
-							</div>
+		case "pdf":
+			return (
+				<div key={key} className="my-2">
+					<div className="border rounded-md overflow-hidden">
+						<iframe
+							src={part.src}
+							className="overflow-hidden rounded-md h-full max-h-96 max-w-64 w-fit transition-opacity duration-300 opacity-100"
+							title="PDF Document"
+						/>
+					</div>
+				</div>
+			);
+		case "text-file":
+			return (
+				<div key={key} className="my-2">
+					<div className="flex items-center gap-2 p-3 rounded-md bg-muted/40 mb-2">
+						<FileText size={20} className="text-primary" />
+						<div className="flex-1 truncate">
+							{part.name && <p className="font-medium text-sm">{part.name}</p>}
 						</div>
-					</AccordionTrigger>
-					<AccordionContent className="px-3 pb-3 pt-0">
-						{toolInvocation.state === "result" && (
-							<div className="text-sm">
-								{hasError && (
-									<div className="mb-3 p-3 rounded-[var(--radius)] bg-destructive/10 border border-destructive/30 text-destructive">
-										<div className="flex items-center gap-2 mb-1.5">
-											<AlertCircle size={16} />
-											<span className="font-medium">Error Message</span>
-										</div>
-										<p className="text-xs whitespace-pre-wrap break-words">
-											{errorMessage}
-										</p>
-									</div>
-								)}
-
-								<div className="bg-card rounded-[var(--radius)] overflow-hidden mb-3 border border-border">
-									<div className="flex items-center justify-between px-3 py-1.5 bg-accent/50 border-b border-border">
-										<div className="font-medium text-xs text-card-foreground flex items-center gap-1.5">
-											<span>Input Parameters</span>
-										</div>
-									</div>
-									<div className="p-3">
-										<pre className="whitespace-pre-wrap break-words text-xs">
-											{args}
-										</pre>
-									</div>
-								</div>
-
-								<div
-									className={cn(
-										"bg-card rounded-[var(--radius)] overflow-hidden border",
-										hasError ? "border-destructive/50" : "border-border",
-									)}
-								>
-									<div
-										className={cn(
-											"flex items-center justify-between px-3 py-1.5 border-b",
-											hasError
-												? "bg-destructive/10 border-destructive/50"
-												: "bg-accent/50 border-border",
-										)}
-									>
-										<div
-											className={cn(
-												"font-medium text-xs flex items-center gap-1.5",
-												hasError ? "text-destructive" : "text-card-foreground",
-											)}
-										>
-											Execution Results
-										</div>
-									</div>
-									<div className="p-3">{renderResult()}</div>
-								</div>
-							</div>
-						)}
-					</AccordionContent>
-				</AccordionItem>
-			</Accordion>
-		</div>
-	);
+						<CopyButton text={part.content} />
+					</div>
+					<pre className="bg-muted/40 p-4 rounded-md overflow-x-auto">
+						<code>{part.content}</code>
+					</pre>
+				</div>
+			);
+		default:
+			return null;
+	}
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
 	const isUser = message.role === "user";
+	const [previewAttachment, setPreviewAttachment] = useState<{
+		url: string;
+		type: string;
+		name?: string;
+	} | null>(null);
+
 	// Handle message content display
 	const renderContent = () => {
 		// If message has parts array
 		if (message.parts && Array.isArray(message.parts)) {
 			// Filter out parts that would render as null (like step-start)
-			const validParts = message.parts
-				.map((part, index) => {
-					const convertedPart = part as MessagePart;
-					return renderMessagePart(convertedPart, `message-part-${index}`);
-				})
-				.filter((part) => part && part.type !== "step-start");
+			const validParts = message.parts.map((part, index) => {
+				const convertedPart = part as MessagePart;
+				const isLastPart = index === (message?.parts?.length ?? 0) - 1;
+				return renderMessagePart(
+					convertedPart,
+					`message-part-${index}`,
+					isLastPart,
+				);
+			});
 
 			return validParts.length > 0 ? validParts : null;
 		}
@@ -417,9 +172,213 @@ export function ChatMessage({ message }: ChatMessageProps) {
 		return <Markdown content={message.content as string} />;
 	};
 
+	// Render attachments if present
+	const renderAttachments = () => {
+		if (
+			!message.experimental_attachments ||
+			message.experimental_attachments.length === 0
+		) {
+			return null;
+		}
+
+		return (
+			<div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2">
+				{message.experimental_attachments.map((attachment) => {
+					const uniqueKey = `${message.id}-${attachment.name || ""}-${attachment.url}`;
+
+					if (attachment.contentType?.startsWith("image/")) {
+						return (
+							<div
+								key={uniqueKey}
+								className="border rounded-md overflow-hidden group relative"
+							>
+								<div className="relative w-full h-full">
+									<img
+										src={attachment.url}
+										alt={attachment.name || "Image attachment"}
+										className="object-cover object-center overflow-hidden rounded-lg h-full max-h-96 max-w-64 w-fit transition-opacity duration-300 opacity-100"
+									/>
+									<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+										<Button
+											variant="ghost"
+											size="icon"
+											className="bg-background/80 hover:bg-background rounded-full p-2 mr-2"
+											onClick={() =>
+												setPreviewAttachment({
+													url: attachment.url,
+													type: attachment.contentType || "image/*",
+													name: attachment.name,
+												})
+											}
+										>
+											<ZoomIn className="h-4 w-4" />
+										</Button>
+										<a
+											href={attachment.url}
+											download={attachment.name}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="bg-background/80 hover:bg-background rounded-full p-2 inline-flex items-center justify-center"
+											title={`下载${attachment.name || "图片"}`}
+											aria-label={`下载${attachment.name || "图片"}`}
+										>
+											<Download className="h-4 w-4" />
+										</a>
+									</div>
+								</div>
+								{attachment.name && (
+									<div className="p-2 text-xs text-center text-muted-foreground">
+										{attachment.name}
+									</div>
+								)}
+							</div>
+						);
+					}
+
+					if (attachment.contentType?.startsWith("application/pdf")) {
+						return (
+							<div
+								key={uniqueKey}
+								className="border rounded-md overflow-hidden group relative"
+							>
+								<div className="relative">
+									<iframe
+										src={attachment.url}
+										className="w-full h-[300px]"
+										title={attachment.name || "PDF attachment"}
+									/>
+									<div className="absolute top-2 right-2 flex gap-2">
+										<Button
+											variant="ghost"
+											size="icon"
+											className="bg-background/80 hover:bg-background rounded-full p-2"
+											onClick={() =>
+												setPreviewAttachment({
+													url: attachment.url,
+													type: "application/pdf",
+													name: attachment.name,
+												})
+											}
+										>
+											<ZoomIn className="h-4 w-4" />
+										</Button>
+										<a
+											href={attachment.url}
+											download={attachment.name}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="bg-background/80 hover:bg-background rounded-full p-2 inline-flex items-center justify-center"
+											title={`下载${attachment.name || "PDF文档"}`}
+											aria-label={`下载${attachment.name || "PDF文档"}`}
+										>
+											<Download className="h-4 w-4" />
+										</a>
+									</div>
+								</div>
+								{attachment.name && (
+									<div className="p-2 text-xs text-center text-muted-foreground">
+										{attachment.name}
+									</div>
+								)}
+							</div>
+						);
+					}
+
+					// For other file types show a file icon with name
+					return (
+						<div
+							key={uniqueKey}
+							className="flex items-center gap-2 p-3 rounded-md bg-muted/40"
+						>
+							<FileType size={20} className="text-primary" />
+							<div className="flex-1 truncate">
+								<p className="font-medium text-sm">
+									{attachment.name || "File attachment"}
+								</p>
+								<p className="text-xs text-muted-foreground">
+									{attachment.contentType}
+								</p>
+							</div>
+							<a
+								href={attachment.url}
+								download={attachment.name}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="bg-muted/80 hover:bg-muted rounded-full p-2 inline-flex items-center justify-center"
+								title={`下载${attachment.name || "文件"}`}
+								aria-label={`下载${attachment.name || "文件"}`}
+							>
+								<Download className="h-4 w-4" />
+							</a>
+						</div>
+					);
+				})}
+			</div>
+		);
+	};
+
 	// Check if there's any actual content to render
 	const content = renderContent();
 	const hasContent = content !== null && content !== undefined;
 
-	return hasContent ? <ChatItem isUser={isUser}>{content}</ChatItem> : null;
+	return hasContent ? (
+		<>
+			<ChatItem isUser={isUser}>
+				{content}
+				{renderAttachments()}
+			</ChatItem>
+
+			<Dialog
+				open={!!previewAttachment}
+				onOpenChange={(open) => !open && setPreviewAttachment(null)}
+			>
+				<DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-1">
+					<div className="flex justify-between items-center p-2 border-b">
+						<div className="text-sm font-medium truncate max-w-[80%]">
+							{previewAttachment?.name || "文件预览"}
+						</div>
+						<div className="flex gap-2">
+							<a
+								href={previewAttachment?.url}
+								download={previewAttachment?.name}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="hover:bg-muted rounded-full p-2 inline-flex items-center justify-center"
+								title="下载文件"
+								aria-label="下载文件"
+							>
+								<Download className="h-4 w-4" />
+							</a>
+							<DialogClose asChild>
+								<Button
+									variant="ghost"
+									size="icon"
+									className="rounded-full h-8 w-8"
+								>
+									<XCircle className="h-5 w-5" />
+								</Button>
+							</DialogClose>
+						</div>
+					</div>
+					<div className="flex-1 overflow-auto p-1 min-h-0">
+						{previewAttachment?.type?.startsWith("image/") ? (
+							<div className="h-full w-full flex items-center justify-center">
+								<img
+									src={previewAttachment.url}
+									alt={previewAttachment.name || "预览图片"}
+									className="max-h-full max-w-full object-contain"
+								/>
+							</div>
+						) : previewAttachment?.type === "application/pdf" ? (
+							<iframe
+								src={previewAttachment.url}
+								title={previewAttachment.name || "PDF预览"}
+								className="w-full h-full border-0"
+							/>
+						) : null}
+					</div>
+				</DialogContent>
+			</Dialog>
+		</>
+	) : null;
 }

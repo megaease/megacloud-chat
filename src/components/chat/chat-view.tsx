@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Loader2,
@@ -9,6 +9,7 @@ import {
 	AudioWaveform,
 	ArrowDown,
 	Paperclip,
+	X,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -34,7 +35,10 @@ interface ChatViewProps {
 	messages: Message[];
 	input: string;
 	handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-	handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+	handleSubmit: (
+		e: React.FormEvent<HTMLFormElement>,
+		options?: { experimental_attachments?: FileList },
+	) => void;
 	handleStopGeneration: () => void;
 	isLoading: boolean;
 	error: Error | null;
@@ -56,6 +60,8 @@ export function ChatView({
 	toggleMcpEnabled,
 }: ChatViewProps) {
 	const inputRef = useRef<HTMLTextAreaElement>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [files, setFiles] = useState<FileList | undefined>(undefined);
 
 	const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
 		useScrollToBottom({
@@ -72,13 +78,31 @@ export function ChatView({
 					cancelable: true,
 					bubbles: true,
 				}) as unknown as React.FormEvent<HTMLFormElement>;
-				handleSubmit(event);
+				handleSubmit(event, { experimental_attachments: files });
+
+				setFiles(undefined);
+				if (fileInputRef.current) {
+					fileInputRef.current.value = "";
+				}
 
 				// Scroll to bottom after submitting
 				setTimeout(() => {
 					scrollToBottom();
 				}, 100);
 			}
+		}
+	};
+
+	const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (e.target.files && e.target.files.length > 0) {
+			setFiles(e.target.files);
+		}
+	};
+
+	const handleRemoveFiles = () => {
+		setFiles(undefined);
+		if (fileInputRef.current) {
+			fileInputRef.current.value = "";
 		}
 	};
 
@@ -122,8 +146,46 @@ export function ChatView({
 			{isLoading && <Thinking />}
 			{/* Chat input */}
 			<div className="p-4 relative max-w-4xl text-center w-full mx-auto">
-				<form onSubmit={handleSubmit} className="relative">
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						handleSubmit(e, { experimental_attachments: files });
+					}}
+					className="relative"
+				>
 					<div className="relative rounded-2xl border border-border/50 bg-background/95 shadow-md transition-all duration-300 ease-in-out focus-within:shadow-lg focus-within:border-primary/60 hover:shadow-lg group">
+						<input
+							type="file"
+							ref={fileInputRef}
+							className="hidden"
+							onChange={handleFileUpload}
+							multiple
+							aria-label="Upload files"
+							title="Upload files"
+						/>
+						{files && files.length > 0 && (
+							<div className="px-4 py-2 flex flex-wrap gap-2 border-t border-border/50">
+								{Array.from(files).map((file) => {
+									return (
+										<div
+											key={file.name}
+											className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+										>
+											<span className="truncate max-w-32">{file.name}</span>
+											<Button
+												type="button"
+												size="icon"
+												variant="ghost"
+												className="h-4 w-4 p-0 hover:bg-destructive/10 hover:text-destructive"
+												onClick={handleRemoveFiles}
+											>
+												<X className="h-3 w-3" />
+											</Button>
+										</div>
+									);
+								})}
+							</div>
+						)}
 						<Textarea
 							ref={inputRef}
 							value={input}
@@ -135,6 +197,7 @@ export function ChatView({
 							rows={2}
 							autoFocus
 						/>
+
 						{/* MCP Toggle switch */}
 						<div className="absolute bottom-2 left-2 flex items-center gap-2">
 							<TooltipProvider>
@@ -166,6 +229,7 @@ export function ChatView({
 											size="icon"
 											variant="ghost"
 											className="h-9 w-9 rounded-full text-muted-foreground/80 hover:text-primary hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200"
+											onClick={() => fileInputRef.current?.click()}
 										>
 											<Paperclip className="h-4 w-4 transition-transform group-hover:rotate-12" />
 										</Button>

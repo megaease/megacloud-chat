@@ -154,7 +154,10 @@ export function ChatContainer() {
 	const isLoading = status === "streaming" || status === "submitted";
 
 	// Form submit handler with improved routing
-	const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	const handleFormSubmit = (
+		e: React.FormEvent<HTMLFormElement>,
+		options?: { experimental_attachments?: FileList },
+	) => {
 		e.preventDefault();
 		if (!input.trim()) return;
 
@@ -165,14 +168,14 @@ export function ChatContainer() {
 
 		// If we have an existing chatId, just submit normally
 		if (chatId) {
-			handleSubmit(e);
+			handleSubmit(e, options);
 			return;
 		}
 
 		// For new chats, we need to handle the routing more smoothly
 		if (!chatId && randomChatId) {
 			// Submit first to prevent interruption by route change
-			handleSubmit(e);
+			handleSubmit(e, options);
 
 			// Then handle route change after a brief delay
 			setTimeout(() => {

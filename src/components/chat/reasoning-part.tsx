@@ -1,6 +1,6 @@
 "use client";
 
-import { BrainCircuit, CheckCircle2, Sparkle } from "lucide-react";
+import { BrainCircuit, CheckCircle2, Loader2, Sparkle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
 	Accordion,
@@ -10,7 +10,10 @@ import {
 } from "@/components/ui/accordion";
 import type { ReasoningPart as ReasoningPartType } from "@/types/tool-invocation";
 
-export function ReasoningPart({ part }: { part: ReasoningPartType }) {
+export function ReasoningPart({
+	part,
+	isLastPart,
+}: { part: ReasoningPartType; isLastPart: boolean }) {
 	return (
 		<div className="border rounded-[var(--radius)] my-3 shadow-[var(--shadow-xs)] border-primary/30 bg-accent/30">
 			<Accordion type="single" collapsible defaultValue="item-0">
@@ -21,6 +24,11 @@ export function ReasoningPart({ part }: { part: ReasoningPartType }) {
 							<span className="font-medium text-primary">
 								Reasoning Process
 							</span>
+							{isLastPart ? (
+								<Loader2 className="animate-spin ml-2 text-primary" size={16} />
+							) : (
+								<CheckCircle2 className="text-green-500" size={16} />
+							)}
 						</div>
 					</AccordionTrigger>
 					<AccordionContent className="px-3 pb-3 pt-0">
