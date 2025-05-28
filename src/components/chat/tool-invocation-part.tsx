@@ -102,8 +102,8 @@ function renderResultContent(content: ResultContent | string, key: string) {
 
 export function ToolInvocationPart({
 	part,
-	isLastPart,
-}: { part: ToolInvocationPartType; isLastPart: boolean }) {
+	isLoading,
+}: { part: ToolInvocationPartType; isLoading: boolean }) {
 	const { toolInvocation } = part;
 	const toolName = toolInvocation.toolName;
 	const step = toolInvocation.step;

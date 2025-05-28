@@ -10,6 +10,7 @@ import { useApiSettings } from "@/context/api-settings-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { ChatView } from "./chat-view";
 import { Loader2 } from "lucide-react";
+import { appendClientMessage } from "ai";
 
 // Fetch chat messages hook
 function useChatMessages(chatId: string | undefined) {
@@ -133,7 +134,11 @@ export function ChatContainer() {
 			} as Message;
 
 			// Add the error message to maintain conversation alternation
-			setMessages((prev) => [...prev, errorMessage]);
+			const messagesWithError = appendClientMessage({
+				messages,
+				message: errorMessage,
+			});
+			setMessages(messagesWithError);
 
 			toast.error("Chat error", {
 				description: error instanceof Error ? error.message : "Unknown error",
@@ -218,11 +223,11 @@ export function ChatContainer() {
 			handleInputChange={handleInputChange}
 			handleSubmit={handleFormSubmit}
 			handleStopGeneration={handleStopGeneration}
-			isLoading={isLoading}
 			error={error || null}
 			reload={reload}
 			mcpEnabled={mcpEnabled}
 			toggleMcpEnabled={toggleMcpEnabled}
+			status={status}
 		/>
 	);
 }

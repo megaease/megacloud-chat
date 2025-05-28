@@ -40,11 +40,11 @@ interface ChatViewProps {
 		options?: { experimental_attachments?: FileList },
 	) => void;
 	handleStopGeneration: () => void;
-	isLoading: boolean;
 	error: Error | null;
 	reload: () => void;
 	mcpEnabled: boolean;
 	toggleMcpEnabled: () => boolean;
+	status: "error" | "submitted" | "streaming" | "ready";
 }
 
 export function ChatView({
@@ -53,11 +53,9 @@ export function ChatView({
 	handleInputChange,
 	handleSubmit,
 	handleStopGeneration,
-	isLoading,
-	error,
-	reload,
 	mcpEnabled,
 	toggleMcpEnabled,
+	status,
 }: ChatViewProps) {
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -123,9 +121,16 @@ export function ChatView({
 					id="scrollable-chat"
 				>
 					<div className="w-full max-w-4xl mx-auto flex flex-col gap-2">
-						{messages.map((message) => (
-							<ChatMessage key={message.id} message={message} />
-						))}
+						{messages.map((message, index) => {
+							const isLastMessage = index === messages.length - 1;
+							return (
+								<ChatMessage
+									key={message.id}
+									message={message}
+									isLoading={status === "streaming" && isLastMessage}
+								/>
+							);
+						})}
 
 						<div ref={endRef} />
 					</div>
@@ -143,7 +148,7 @@ export function ChatView({
 				</Button>
 			)}
 
-			{isLoading && <Thinking />}
+			{status === "submitted" && <Thinking />}
 			{/* Chat input */}
 			<div className="p-4 relative max-w-4xl text-center w-full mx-auto">
 				<form
@@ -241,7 +246,7 @@ export function ChatView({
 								</Tooltip>
 							</TooltipProvider>
 
-							{isLoading ? (
+							{status === "submitted" ? (
 								<TooltipProvider>
 									<Tooltip delayDuration={300}>
 										<TooltipTrigger asChild>
@@ -269,7 +274,7 @@ export function ChatView({
 											<Button
 												type="submit"
 												size="icon"
-												disabled={isLoading || !input.trim()}
+												disabled={!input.trim()}
 												className="h-9 w-9 rounded-full bg-primary text-primary-foreground shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
 											>
 												<Send className="h-4 w-4" />

@@ -12,8 +12,8 @@ import type { ReasoningPart as ReasoningPartType } from "@/types/tool-invocation
 
 export function ReasoningPart({
 	part,
-	isLastPart,
-}: { part: ReasoningPartType; isLastPart: boolean }) {
+	isLoading,
+}: { part: ReasoningPartType; isLoading: boolean }) {
 	return (
 		<div className="border rounded-[var(--radius)] my-3 shadow-[var(--shadow-xs)] border-primary/30 bg-accent/30">
 			<Accordion type="single" collapsible defaultValue="item-0">
@@ -24,7 +24,7 @@ export function ReasoningPart({
 							<span className="font-medium text-primary">
 								Reasoning Process
 							</span>
-							{isLastPart ? (
+							{isLoading ? (
 								<Loader2 className="animate-spin ml-2 text-primary" size={16} />
 							) : (
 								<CheckCircle2 className="text-green-500" size={16} />

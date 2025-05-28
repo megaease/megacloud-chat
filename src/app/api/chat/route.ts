@@ -2,6 +2,7 @@ import { saveToChatsTable } from "@/server/db/chats";
 import { saveToMessagesTable } from "@/server/db/messages";
 import {
 	appendResponseMessages,
+	convertToCoreMessages,
 	smoothStream,
 	streamText,
 	type ToolSet,
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
 
 				Remember that your primary goal is to be helpful, accurate, and transparent about your capabilities and limitations.`,
 
-			messages,
+			messages: convertToCoreMessages(messages),
 			tools: allTools,
 			providerOptions: {
 				openai: {

@@ -26,6 +26,7 @@ import {
 	ZoomIn,
 	XCircle,
 	Download,
+	Loader,
 } from "lucide-react";
 import { Markdown } from "../markdown";
 import { CopyButton } from "../copy-button";
@@ -42,16 +43,18 @@ import { ReasoningPart } from "./reasoning-part";
 import { ToolInvocationPart } from "./tool-invocation-part";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { is } from "drizzle-orm";
 
 interface ChatMessageProps {
 	message: Message | UIMessage;
+	isLoading: boolean;
 }
 
 // Render different types of message parts
 function renderMessagePart(
 	part: MessagePart,
 	key: string | number,
-	isLastPart = true,
+	isLoading: boolean,
 ) {
 	// If it's a string or no type specified
 	if (!part || typeof part === "string") {
@@ -60,44 +63,14 @@ function renderMessagePart(
 
 	// Handle different part types
 	switch (part.type) {
-		case "step-start":
-			return (
-				<div key={key} className="text-muted-foreground text-xs italic">
-					{
-						// If it's the last part, show a loading spinner
-						isLastPart ? (
-							<div className="flex items-center gap-1">
-								<Loader2 className="animate-spin" size={16} />
-								<span>Step started...</span>
-							</div>
-						) : null
-					}
-				</div>
-			);
 		case "text":
 			return <Markdown key={key} content={part.text} />;
 
 		case "tool-invocation":
-			return (
-				<ToolInvocationPart key={key} part={part} isLastPart={isLastPart} />
-			);
+			return <ToolInvocationPart key={key} part={part} isLoading={isLoading} />;
 		case "reasoning":
-			return <ReasoningPart key={key} part={part} isLastPart={isLastPart} />;
-		// case "file":
-		// 	return (
-		// 		<div key={key} className="my-2">
-		// 			<div className="flex items-center gap-2 p-3 rounded-md bg-muted/40">
-		// 				<File size={20} className="text-primary" />
-		// 				<div className="flex-1 truncate">
-		// 					{part.name && <p className="font-medium text-sm">{part.name}</p>}
-		// 					<p className="text-xs text-muted-foreground truncate">
-		// 						{part.content.length} characters
-		// 					</p>
-		// 				</div>
-		// 				<CopyButton text={part.content} />
-		// 			</div>
-		// 		</div>
-		// 	);
+			return <ReasoningPart key={key} part={part} isLoading={isLoading} />;
+
 		case "image":
 			return (
 				<div key={key} className="my-2">
@@ -142,7 +115,7 @@ function renderMessagePart(
 	}
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 	const isUser = message.role === "user";
 	const [previewAttachment, setPreviewAttachment] = useState<{
 		url: string;
@@ -157,11 +130,10 @@ export function ChatMessage({ message }: ChatMessageProps) {
 			// Filter out parts that would render as null (like step-start)
 			const validParts = message.parts.map((part, index) => {
 				const convertedPart = part as MessagePart;
-				const isLastPart = index === (message?.parts?.length ?? 0) - 1;
 				return renderMessagePart(
 					convertedPart,
 					`message-part-${index}`,
-					isLastPart,
+					isLoading,
 				);
 			});
 
@@ -198,36 +170,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
 										alt={attachment.name || "Image attachment"}
 										className="object-cover object-center overflow-hidden rounded-lg h-full max-h-96 max-w-64 w-fit transition-opacity duration-300 opacity-100"
 									/>
-									<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-										<Button
-											variant="ghost"
-											size="icon"
-											className="bg-background/80 hover:bg-background rounded-full p-2 mr-2"
-											onClick={() =>
-												setPreviewAttachment({
-													url: attachment.url,
-													type: attachment.contentType || "image/*",
-													name: attachment.name,
-												})
-											}
-										>
-											<ZoomIn className="h-4 w-4" />
-										</Button>
-										<a
-											href={attachment.url}
-											download={attachment.name}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="bg-background/80 hover:bg-background rounded-full p-2 inline-flex items-center justify-center"
-											title={`下载${attachment.name || "图片"}`}
-											aria-label={`下载${attachment.name || "图片"}`}
-										>
-											<Download className="h-4 w-4" />
-										</a>
-									</div>
 								</div>
 								{attachment.name && (
-									<div className="p-2 text-xs text-center text-muted-foreground">
+									<div className="p-2 text-xs text-center text-foreground">
 										{attachment.name}
 									</div>
 								)}
@@ -247,36 +192,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
 										className="w-full h-[300px]"
 										title={attachment.name || "PDF attachment"}
 									/>
-									<div className="absolute top-2 right-2 flex gap-2">
-										<Button
-											variant="ghost"
-											size="icon"
-											className="bg-background/80 hover:bg-background rounded-full p-2"
-											onClick={() =>
-												setPreviewAttachment({
-													url: attachment.url,
-													type: "application/pdf",
-													name: attachment.name,
-												})
-											}
-										>
-											<ZoomIn className="h-4 w-4" />
-										</Button>
-										<a
-											href={attachment.url}
-											download={attachment.name}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="bg-background/80 hover:bg-background rounded-full p-2 inline-flex items-center justify-center"
-											title={`下载${attachment.name || "PDF文档"}`}
-											aria-label={`下载${attachment.name || "PDF文档"}`}
-										>
-											<Download className="h-4 w-4" />
-										</a>
-									</div>
 								</div>
 								{attachment.name && (
-									<div className="p-2 text-xs text-center text-muted-foreground">
+									<div className="p-2 text-xs text-center text-foreground">
 										{attachment.name}
 									</div>
 								)}
@@ -320,12 +238,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
 	// Check if there's any actual content to render
 	const content = renderContent();
 	const hasContent = content !== null && content !== undefined;
-
+	console.log("ChatMessage content:", isLoading && !isUser);
 	return hasContent ? (
 		<>
 			<ChatItem isUser={isUser}>
-				{content}
 				{renderAttachments()}
+				<div>{content}</div>
 			</ChatItem>
 
 			<Dialog
@@ -335,7 +253,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
 				<DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-1">
 					<div className="flex justify-between items-center p-2 border-b">
 						<div className="text-sm font-medium truncate max-w-[80%]">
-							{previewAttachment?.name || "文件预览"}
+							{previewAttachment?.name || "Preview"}
 						</div>
 						<div className="flex gap-2">
 							<a
@@ -344,8 +262,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
 								target="_blank"
 								rel="noopener noreferrer"
 								className="hover:bg-muted rounded-full p-2 inline-flex items-center justify-center"
-								title="下载文件"
-								aria-label="下载文件"
+								title="Download"
+								aria-label="Download"
 							>
 								<Download className="h-4 w-4" />
 							</a>
@@ -365,14 +283,14 @@ export function ChatMessage({ message }: ChatMessageProps) {
 							<div className="h-full w-full flex items-center justify-center">
 								<img
 									src={previewAttachment.url}
-									alt={previewAttachment.name || "预览图片"}
+									alt={previewAttachment.name || "Preview"}
 									className="max-h-full max-w-full object-contain"
 								/>
 							</div>
 						) : previewAttachment?.type === "application/pdf" ? (
 							<iframe
 								src={previewAttachment.url}
-								title={previewAttachment.name || "PDF预览"}
+								title={previewAttachment.name || "Preview"}
 								className="w-full h-full border-0"
 							/>
 						) : null}
