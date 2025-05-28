@@ -113,6 +113,8 @@ export function ChatContainer() {
 			mcpEnabled,
 		},
 		initialMessages: chatMessages,
+		experimental_throttle: 100,
+		sendExtraMessageFields: true,
 		onFinish: (message) => {
 			console.log("Message finished:", message);
 			queryClient.invalidateQueries({

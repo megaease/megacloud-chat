@@ -1,6 +1,12 @@
 "use client";
 
-import { BrainCircuit, CheckCircle2, Loader2, Sparkle } from "lucide-react";
+import {
+	BrainCircuit,
+	CheckCircle2,
+	Loader,
+	Loader2,
+	Sparkle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
 	Accordion,
@@ -21,13 +27,15 @@ export function ReasoningPart({
 					<AccordionTrigger className="px-3 py-2 hover:no-underline">
 						<div className="flex items-center gap-2 w-full">
 							<Sparkle size={18} className="text-primary" />
-							<span className="font-medium text-primary">
-								Reasoning Process
-							</span>
 							{isLoading ? (
-								<Loader2 className="animate-spin ml-2 text-primary" size={16} />
+								<>
+									<span className="font-medium text-primary">Reasoning</span>
+									<Loader className="h-4 w-4 animate-spin text-primary" />
+								</>
 							) : (
-								<CheckCircle2 className="text-green-500" size={16} />
+								<span className="font-medium text-primary">
+									Reasoned for a few seconds
+								</span>
 							)}
 						</div>
 					</AccordionTrigger>

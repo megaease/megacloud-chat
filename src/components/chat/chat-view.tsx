@@ -226,7 +226,7 @@ export function ChatView({
 						</div>
 						<div className="absolute bottom-2 right-2 flex items-center gap-2">
 							{/* Upload button */}
-							<TooltipProvider>
+							{/* <TooltipProvider>
 								<Tooltip delayDuration={300}>
 									<TooltipTrigger asChild>
 										<Button
@@ -244,7 +244,7 @@ export function ChatView({
 										<p>Upload file</p>
 									</TooltipContent>
 								</Tooltip>
-							</TooltipProvider>
+							</TooltipProvider> */}
 
 							{status === "submitted" ? (
 								<TooltipProvider>
@@ -274,7 +274,7 @@ export function ChatView({
 											<Button
 												type="submit"
 												size="icon"
-												disabled={!input.trim()}
+												disabled={!input.trim() || status === "streaming"}
 												className="h-9 w-9 rounded-full bg-primary text-primary-foreground shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
 											>
 												<Send className="h-4 w-4" />

@@ -28,6 +28,7 @@ import {
 	Download,
 	Loader,
 } from "lucide-react";
+import { DotLoader } from "@/components/ui/dot-loader";
 import { Markdown } from "../markdown";
 import { CopyButton } from "../copy-button";
 import type {
@@ -44,6 +45,7 @@ import { ToolInvocationPart } from "./tool-invocation-part";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { is } from "drizzle-orm";
+import { Spinner } from "../spinner";
 
 interface ChatMessageProps {
 	message: Message | UIMessage;
@@ -242,6 +244,11 @@ export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 	return hasContent ? (
 		<>
 			<ChatItem isUser={isUser}>
+				{isLoading && !isUser && (
+					<div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+						<Spinner variant="ellipsis" />
+					</div>
+				)}
 				{renderAttachments()}
 				<div>{content}</div>
 			</ChatItem>

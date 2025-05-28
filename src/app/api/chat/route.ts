@@ -52,6 +52,7 @@ export async function POST(req: Request) {
 				TOOLS:
 				You can use mcp tools to perform specific tasks. Each tool has a name, description, and parameters. You can call these tools by their names and provide the required parameters.
 				GUIDELINES FOR TOOL USAGE:
+				- Before using a tool, tell the user what you are going to do and why.
 				- Use tools only when necessary to provide accurate and helpful responses.
 				- When you need information you don't have, use the appropriate tool rather than guessing.
 				- Always explain to the user when you're using a tool and why.
@@ -66,6 +67,8 @@ export async function POST(req: Request) {
 
 			messages: convertToCoreMessages(messages),
 			tools: allTools,
+			experimental_transform: smoothStream({ chunking: "word" }),
+			maxSteps: 10,
 			providerOptions: {
 				openai: {
 					reasoningEffort: "low",

@@ -11,6 +11,7 @@ import {
 	Clock,
 	CheckCircle2,
 	AlertCircle,
+	Loader,
 } from "lucide-react";
 import type {
 	ToolInvocationPart as ToolInvocationPartType,
