@@ -1,7 +1,7 @@
 // Example model schema from the Drizzle docs
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
-import { sql } from "drizzle-orm";
+import { sql, type InferSelectModel } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import {
 	index,
@@ -47,6 +47,7 @@ export const chatMessages = createTable("chat_messages", {
 	content: text("content").notNull(),
 	parts: json("parts").notNull(),
 	role: text("role").notNull(), // 'user', 'assistant', 'system'
+	attachments: json("attachments").notNull(),
 });
 
 export const chatsSchema = createSelectSchema(chats);
@@ -132,7 +133,7 @@ export const insertMcpServerSchema = z.union([
 export const selectMcpServerSchema = createSelectSchema(mcpServers);
 
 // Export type definitions
-export type McpServer = z.infer<typeof selectMcpServerSchema>;
+export type McpServer = InferSelectModel<typeof mcpServers>;
 export type NewMcpServer = z.infer<typeof insertMcpServerSchema>;
 export type McpServerSSE = Extract<NewMcpServer, { type: typeof TypeEnum.SSE }>;
 export type McpServerSTDIO = Extract<

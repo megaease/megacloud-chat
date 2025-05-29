@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "..";
-import { chatMessages, chatMessagesSchema } from "../schema";
+import { chatMessages } from "../schema";
 import { nanoid } from "nanoid";
 import type { Message } from "ai";
 
