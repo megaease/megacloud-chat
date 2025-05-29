@@ -10,7 +10,8 @@ import { useApiSettings } from "@/context/api-settings-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { ChatView } from "./chat-view";
 import { Loader2 } from "lucide-react";
-import { appendClientMessage } from "ai";
+import { appendClientMessage, type UIMessage } from "ai";
+import type { DBMessage } from "@/server/db/schema";
 
 // Fetch chat messages hook
 function useChatMessages(chatId: string | undefined) {
@@ -37,7 +38,16 @@ function useChatMessages(chatId: string | undefined) {
 			}
 
 			const data = await res.json();
-			return data.chat.messages;
+			const uiMessages = data.chat.messages.map((message: DBMessage) => ({
+				id: message.id,
+				role: message.role,
+				content: message.content,
+				createdAt: new Date(message.createdAt),
+				experimental_attachments: message.attachments || [],
+				parts: message.parts || [],
+			})) as UIMessage[];
+
+			return uiMessages;
 		},
 		staleTime: 1000 * 60 * 2,
 		enabled: !!chatId, // Only fetch when chatId exists
@@ -104,14 +114,6 @@ export function ChatContainer() {
 	} = useChat({
 		id: chatId || randomChatId,
 		maxSteps: 10,
-		// body: {
-		// 	chatId: chatId || randomChatId,
-		// 	userId: "user-id",
-		// 	apiKey,
-		// 	modelName,
-		// 	baseUrl,
-		// 	mcpEnabled,
-		// },
 		initialMessages: chatMessages,
 		experimental_prepareRequestBody: (body) => {
 			return {
@@ -135,36 +137,9 @@ export function ChatContainer() {
 		onError: (error) => {
 			console.error("Error in chat:", JSON.stringify(error, null, 2));
 
-			// When an error occurs, add an error message to maintain conversation flow
-			// This prevents the "consecutive user messages" error on next input
-			const errorMessage = {
-				id: nanoid(16),
-				role: "assistant" as const,
-				content: `Sorry, I encountered an error: ${
-					error instanceof Error ? error.message : "Unknown error"
-				}. Please try again or rephrase your question.`,
-				createdAt: new Date(),
-			} as Message;
-
-			// Add the error message to maintain conversation alternation
-			const messagesWithError = appendClientMessage({
-				messages,
-				message: errorMessage,
-			});
-			setMessages(messagesWithError);
-
 			toast.error("Chat error", {
 				description: error instanceof Error ? error.message : "Unknown error",
 			});
-
-			// Invalidate queries after a short delay to refresh from the database
-			// This ensures frontend and backend stay in sync
-			setTimeout(() => {
-				console.log("Refreshing chat data after error");
-				queryClient.invalidateQueries({
-					queryKey: ["chats", "user-id", chatId],
-				});
-			}, 1000);
 		},
 	});
 
@@ -229,6 +204,7 @@ export function ChatContainer() {
 		);
 	}
 	// Render chat view
+	console.log("Rendering chat view with messages:", messages);
 	return (
 		<ChatView
 			messages={messages}

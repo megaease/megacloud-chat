@@ -12,6 +12,7 @@ import {
 	streamText,
 	type Message,
 	type ToolSet,
+	type UIMessage,
 } from "ai";
 import { loadMCPTools, type MCPClient } from "@/lib/mcp-utils";
 import { nanoid } from "nanoid";
@@ -28,7 +29,7 @@ type requestBody = {
 	modelName?: string;
 	baseUrl?: string;
 	mcpEnabled?: boolean;
-	message: Message;
+	message: UIMessage;
 };
 export async function POST(req: Request) {
 	console.log("POST /api/chat");
@@ -100,7 +101,7 @@ export async function POST(req: Request) {
 
 				Remember that your primary goal is to be helpful, accurate, and transparent about your capabilities and limitations.`,
 
-			messages: convertToCoreMessages(messages),
+			messages: messages,
 			tools: allTools,
 			experimental_transform: smoothStream({ chunking: "word" }),
 			maxSteps: 10,
@@ -135,10 +136,11 @@ export async function POST(req: Request) {
 					{
 						id: assistantId,
 						role: lastMessage.role,
-						parts: lastMessage.parts,
+						parts: lastMessage.parts ?? [],
 						createdAt: new Date(),
 						content: lastMessage.content,
-						// attachments: lastMessage.experimental_attachments ?? [],
+						experimental_attachments:
+							lastMessage.experimental_attachments ?? [],
 					},
 				]);
 

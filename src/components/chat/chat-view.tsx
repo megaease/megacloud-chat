@@ -226,7 +226,7 @@ export function ChatView({
 						</div>
 						<div className="absolute bottom-2 right-2 flex items-center gap-2">
 							{/* Upload button */}
-							{/* <TooltipProvider>
+							<TooltipProvider>
 								<Tooltip delayDuration={300}>
 									<TooltipTrigger asChild>
 										<Button
@@ -244,7 +244,7 @@ export function ChatView({
 										<p>Upload file</p>
 									</TooltipContent>
 								</Tooltip>
-							</TooltipProvider> */}
+							</TooltipProvider>
 
 							{status === "submitted" ? (
 								<TooltipProvider>

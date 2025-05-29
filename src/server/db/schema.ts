@@ -55,7 +55,7 @@ export const chatMessagesSchema = createSelectSchema(chatMessages);
 export const ChatRoleEnum = z.enum(["user", "assistant", "system"]);
 export type ChatRole = z.infer<typeof ChatRoleEnum>;
 export type Chat = z.infer<typeof chatsSchema>;
-
+export type DBMessage = InferSelectModel<typeof chatMessages>;
 // MCP server-related type definitions
 // =========================================
 
