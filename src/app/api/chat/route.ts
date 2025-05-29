@@ -1,30 +1,45 @@
-import { saveToChatsTable } from "@/server/db/chats";
-import { saveToMessagesTable } from "@/server/db/messages";
 import {
+	generateTitle,
+	getChatById,
+	saveToChatsTable,
+} from "@/server/db/chats";
+import { saveMessages } from "@/server/db/messages";
+import {
+	appendClientMessage,
 	appendResponseMessages,
 	convertToCoreMessages,
 	smoothStream,
 	streamText,
+	type Message,
 	type ToolSet,
 } from "ai";
 import { loadMCPTools, type MCPClient } from "@/lib/mcp-utils";
 import { nanoid } from "nanoid";
 import { detectAndCreateAIModel } from "@/lib/ai-providers";
+import { getChatMessageById } from "@/server/db/chat";
+import { getTrailingMessageId } from "@/lib/utils";
 
 export const maxDuration = 30;
 
+type requestBody = {
+	userId: string;
+	chatId: string;
+	apiKey?: string;
+	modelName?: string;
+	baseUrl?: string;
+	mcpEnabled?: boolean;
+	message: Message;
+};
 export async function POST(req: Request) {
 	console.log("POST /api/chat");
-	const { messages, userId, chatId, apiKey, modelName, baseUrl, mcpEnabled } =
-		await req.json();
-
-	if (!messages) {
-		return new Response("Invalid request", { status: 400 });
-	}
+	const json = await req.json();
+	const requestBody: requestBody = json as requestBody;
+	const { userId, chatId, apiKey, modelName, baseUrl, mcpEnabled, message } =
+		requestBody;
 	if (!userId) {
 		return Response.json({ error: "User ID is required" }, { status: 400 });
 	}
-
+	console.log("chatId:", chatId);
 	try {
 		const { model: modelConfig, detectedProvider } = detectAndCreateAIModel({
 			apiKey,
@@ -32,9 +47,29 @@ export async function POST(req: Request) {
 			baseUrl,
 		});
 		console.log(modelConfig, "modelConfig");
-		// create a new chat in the database chats table
-		await saveToChatsTable(userId, chatId, messages);
 
+		const chat = await getChatById({ chatId, userId });
+		console.log(chat, "chat");
+		if (!chat) {
+			const title = await generateTitle(chatId, [message], modelConfig);
+
+			await saveToChatsTable({
+				userId,
+				chatId,
+				title,
+			});
+			console.log("New chat created with title:", title);
+		}
+
+		// Fetch existing messages or create a new chat if it doesn't exist
+		const existingChatMessages = await getChatMessageById(userId, chatId);
+		console.log(existingChatMessages, "existingChatMessages");
+		const messages = appendClientMessage({
+			// @ts-ignore
+			messages: existingChatMessages || [],
+			message,
+		});
+		await saveMessages(chatId, [message]);
 		// Load MCP tools using the extracted utility function
 		const {
 			tools: allTools,
@@ -48,7 +83,7 @@ export async function POST(req: Request) {
 		);
 		const result = streamText({
 			model: modelConfig,
-			system: `You are a helpful AI assistant with access to various tools through the Model Control Protocol (MCP). 
+			system: `You are a helpful AI assistant with access to various tools through the Model Control Protocol (MCP).
 				TOOLS:
 				You can use mcp tools to perform specific tasks. Each tool has a name, description, and parameters. You can call these tools by their names and provide the required parameters.
 				GUIDELINES FOR TOOL USAGE:
@@ -76,49 +111,37 @@ export async function POST(req: Request) {
 				},
 			},
 			onFinish: async (result) => {
-				const allMessages = appendResponseMessages({
-					messages,
-					responseMessages: result.response.messages,
-				});
-				// update the chat in the database
-				await saveToChatsTable(userId, chatId, allMessages);
-				await saveToMessagesTable(chatId, allMessages);
+				const responseMessages = result.response.messages;
 
-				// Close all connections after request completes
-				await closeAllMcpClients();
-			},
-			onError: async (response) => {
-				console.error(
-					"AI Stream error:",
-					JSON.stringify(response?.error, null, 2),
-				);
-				// Handle error gracefully
-				const error =
-					response?.error &&
-					typeof response.error === "object" &&
-					"data" in response.error &&
-					response.error.data &&
-					typeof response.error.data === "object" &&
-					"error" in response.error.data
-						? (response.error.data as { error?: { message?: string } }).error
-						: undefined;
-				const errorContent = `Sorry, I encountered an error: ${error?.message || "Unknown error"}. Please try again or rephrase your question.`;
-				const errorMessage = {
-					id: nanoid(16),
-					role: "assistant" as const,
-					content: errorContent,
-					chatId: chatId,
-				};
-				// Append error message to the chat
-				const allMessages = appendResponseMessages({
-					messages,
-					responseMessages: [errorMessage],
+				const assistantId = getTrailingMessageId({
+					messages: responseMessages.filter(
+						(message) => message.role === "assistant",
+					),
 				});
-				// Save the error message to the database
-				await saveToMessagesTable(chatId, allMessages);
-				// Update the chat in the database
-				await saveToChatsTable(userId, chatId, allMessages);
-				// Close all connections after error
+				if (!assistantId) {
+					console.error("No assistant message found in response");
+					throw new Error("No assistant message found in response");
+				}
+
+				const [, lastMessage] = appendResponseMessages({
+					messages: [message],
+					responseMessages: responseMessages,
+				});
+				if (!lastMessage) {
+					console.error("No last message found in response");
+					throw new Error("No last message found in response");
+				}
+				await saveMessages(chatId, [
+					{
+						id: assistantId,
+						role: lastMessage.role,
+						parts: lastMessage.parts,
+						createdAt: new Date(),
+						content: lastMessage.content,
+						// attachments: lastMessage.experimental_attachments ?? [],
+					},
+				]);
+
 				await closeAllMcpClients();
 			},
 		});

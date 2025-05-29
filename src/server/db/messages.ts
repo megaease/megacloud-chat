@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from ".";
 import { chatMessages, chatMessagesSchema } from "./schema";
 import { nanoid } from "nanoid";
+import type { Message } from "ai";
 
 function convertToDBMessages(messages: any[], chatId: string) {
 	return messages.map((message) => {
@@ -49,4 +50,23 @@ export async function saveToMessagesTable(
 			throw error;
 		}
 	});
+}
+
+export async function saveMessages(chatId: string, messages: Message[]) {
+	if (!messages || messages.length === 0) {
+		throw new Error("Messages are required");
+	}
+
+	if (!chatId) {
+		throw new Error("Chat ID is required");
+	}
+
+	const dbMessages = convertToDBMessages(messages, chatId);
+
+	try {
+		return await db.insert(chatMessages).values(dbMessages).returning();
+	} catch (error) {
+		console.error("Error saving messages:", error);
+		throw new Error("Failed to save messages");
+	}
 }

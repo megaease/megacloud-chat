@@ -104,15 +104,26 @@ export function ChatContainer() {
 	} = useChat({
 		id: chatId || randomChatId,
 		maxSteps: 10,
-		body: {
-			chatId: chatId || randomChatId,
-			userId: "user-id",
-			apiKey,
-			modelName,
-			baseUrl,
-			mcpEnabled,
-		},
+		// body: {
+		// 	chatId: chatId || randomChatId,
+		// 	userId: "user-id",
+		// 	apiKey,
+		// 	modelName,
+		// 	baseUrl,
+		// 	mcpEnabled,
+		// },
 		initialMessages: chatMessages,
+		experimental_prepareRequestBody: (body) => {
+			return {
+				chatId: chatId || randomChatId,
+				userId: "user-id",
+				apiKey,
+				modelName,
+				baseUrl,
+				mcpEnabled,
+				message: body.messages.at(-1),
+			};
+		},
 		experimental_throttle: 100,
 		sendExtraMessageFields: true,
 		onFinish: (message) => {

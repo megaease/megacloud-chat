@@ -1,11 +1,15 @@
 import { db } from "@/server/db";
 import { chatMessages, chats } from "@/server/db/schema";
 import { and, eq } from "drizzle-orm";
-import { generateObject, type Message } from "ai";
+import { generateObject, type LanguageModelV1, type Message } from "ai";
 import { z } from "zod";
 import { deepseek } from "@ai-sdk/deepseek";
 
-async function generateTitle(chatId: string, messages: Message[]) {
+export async function generateTitle(
+	chatId: string,
+	messages: Message[],
+	modelConfig: LanguageModelV1,
+) {
 	console.log("Creating new chat", chatId);
 	let title = "";
 	if (messages.length === 0) {
@@ -14,7 +18,7 @@ async function generateTitle(chatId: string, messages: Message[]) {
 		title = messages[0]?.content?.substring(0, 50) || "Untitled Chat";
 	} else {
 		const { object } = await generateObject({
-			model: deepseek("deepseek-chat"),
+			model: modelConfig,
 			schema: z.object({
 				title: z.string().min(1).max(50),
 			}),
@@ -30,42 +34,42 @@ async function generateTitle(chatId: string, messages: Message[]) {
 	return title;
 }
 
-export async function saveToChatsTable(
-	userId: string,
-	chatId: string,
-	messages: Message[],
-) {
-	let currentChatId = chatId;
-	if (currentChatId) {
-		const existingChat = await db.query.chats.findFirst({
-			where: and(eq(chats.id, currentChatId), eq(chats.userId, userId)),
-		});
+export async function saveToChatsTable({
+	userId,
+	chatId,
+	title,
+}: { userId: string; chatId: string; title: string }) {
+	try {
+		return await db
+			.insert(chats)
+			.values({
+				id: chatId,
+				userId: userId,
+				title,
+			})
+			.returning({ id: chats.id });
+	} catch (error) {
+		console.error("Error saving to chats table:", error);
+		throw new Error("Failed to save chat");
+	}
+}
 
-		if (existingChat) {
-			console.log("existingChat", existingChat);
-			if (existingChat.title === "Untitled Chat") {
-				const title = await generateTitle(currentChatId, messages);
-				await db
-					.update(chats)
-					.set({ title: title, updatedAt: new Date() })
-					.where(and(eq(chats.id, currentChatId), eq(chats.userId, userId)));
-			}
-		} else {
-			console.log("Chat not found, creating new chat", chatId);
-			const [newChat] = await db
-				.insert(chats)
-				.values({
-					id: chatId,
-					userId: userId,
-					title: "Untitled Chat",
-				})
-				.returning({ id: chats.id });
-
-			if (newChat) {
-				currentChatId = newChat.id;
-			} else {
-				throw new Error("Failed to create a new chat");
-			}
-		}
+export async function getChatById({
+	chatId,
+	userId,
+}: {
+	chatId: string;
+	userId: string;
+}) {
+	try {
+		const [selectedChat] = await db
+			.select()
+			.from(chats)
+			.where(and(eq(chats.id, chatId), eq(chats.userId, userId)));
+		console.log("Selected chat:", selectedChat);
+		return selectedChat;
+	} catch (error) {
+		console.error("Error fetching chat by ID:", error);
+		throw new Error("Failed to fetch chat");
 	}
 }
