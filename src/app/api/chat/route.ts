@@ -2,8 +2,8 @@ import {
 	generateTitle,
 	getChatById,
 	saveToChatsTable,
-} from "@/server/db/chats";
-import { saveMessages } from "@/server/db/messages";
+} from "@/server/db/queries/chats";
+import { saveMessages } from "@/server/db/queries/messages";
 import {
 	appendClientMessage,
 	appendResponseMessages,
@@ -16,7 +16,7 @@ import {
 import { loadMCPTools, type MCPClient } from "@/lib/mcp-utils";
 import { nanoid } from "nanoid";
 import { detectAndCreateAIModel } from "@/lib/ai-providers";
-import { getChatMessageById } from "@/server/db/chat";
+import { getChatMessageById } from "@/server/db/queries/chat";
 import { getTrailingMessageId } from "@/lib/utils";
 
 export const maxDuration = 30;
