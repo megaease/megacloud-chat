@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useApiSettings } from "@/context/api-settings-context";
+import { useApiProvider } from "@/context/api-provider-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { ChatView } from "./chat-view";
 import { Loader2 } from "lucide-react";
@@ -69,7 +69,7 @@ export function ChatContainer() {
 	const chatId = id as string | undefined;
 	const router = useRouter();
 	const queryClient = useQueryClient();
-	const { apiKey, modelName, baseUrl } = useApiSettings();
+	const { currentProvider, currentModel, isConfigured } = useApiProvider();
 	const { mcpEnabled, toggleMcpEnabled } = useMcpEnabled();
 	const [randomChatId, setRandomChatId] = useState<string | undefined>(() => {
 		if (!chatId) {
@@ -116,14 +116,24 @@ export function ChatContainer() {
 		maxSteps: 10,
 		initialMessages: chatMessages,
 		experimental_prepareRequestBody: (body) => {
+			// 检查提供商和模型是否已配置
+			if (!currentProvider) {
+				throw new Error("Please configure API provider first");
+			}
+
+			if (!currentModel) {
+				throw new Error("Please select a model");
+			}
+
 			return {
 				chatId: chatId || randomChatId,
 				userId: "user-id",
-				apiKey,
-				modelName,
-				baseUrl,
+				apiKey: currentProvider.apiKey,
+				modelName: currentModel,
+				baseUrl: currentProvider.baseUrl,
 				mcpEnabled,
 				message: body.messages.at(-1),
+				providerType: currentProvider.providerType,
 			};
 		},
 		experimental_throttle: 100,
@@ -198,13 +208,12 @@ export function ChatContainer() {
 
 	if (isLoadingMessage) {
 		return (
-			<div className="flex items-center justify-center h-full">
-				<Loader2 className="animate-spin text-primary" />
+			<div className="flex h-full w-full flex-col items-center justify-center gap-2">
+				<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
 			</div>
 		);
 	}
-	// Render chat view
-	console.log("Rendering chat view with messages:", messages);
+
 	return (
 		<ChatView
 			messages={messages}

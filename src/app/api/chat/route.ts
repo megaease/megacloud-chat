@@ -28,6 +28,7 @@ type requestBody = {
 	apiKey?: string;
 	modelName?: string;
 	baseUrl?: string;
+	providerType?: string;
 	mcpEnabled?: boolean;
 	message: UIMessage;
 };
@@ -35,10 +36,30 @@ export async function POST(req: Request) {
 	console.log("POST /api/chat");
 	const json = await req.json();
 	const requestBody: requestBody = json as requestBody;
-	const { userId, chatId, apiKey, modelName, baseUrl, mcpEnabled, message } =
-		requestBody;
+	const {
+		userId,
+		chatId,
+		apiKey,
+		modelName,
+		baseUrl,
+		providerType,
+		mcpEnabled,
+		message,
+	} = requestBody;
 	if (!userId) {
 		return Response.json({ error: "User ID is required" }, { status: 400 });
+	}
+	if (!chatId) {
+		return Response.json({ error: "Chat ID is required" }, { status: 400 });
+	}
+	if (!modelName) {
+		return Response.json({ error: "Model name is required" }, { status: 400 });
+	}
+	if (!apiKey && !baseUrl && !providerType) {
+		return Response.json(
+			{ error: "API key, base URL, or provider type is required" },
+			{ status: 400 },
+		);
 	}
 	console.log("chatId:", chatId);
 	try {
@@ -46,6 +67,7 @@ export async function POST(req: Request) {
 			apiKey,
 			modelName: modelName || "gpt-4-turbo",
 			baseUrl,
+			providerType,
 		});
 		console.log(modelConfig, "modelConfig");
 

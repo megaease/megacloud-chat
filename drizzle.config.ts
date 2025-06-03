@@ -8,5 +8,5 @@ export default {
 	dbCredentials: {
 		url: env.DATABASE_URL,
 	},
-	tablesFilter: ["megacloud-mcp-client_*"],
+	tablesFilter: ["t_*"],
 } satisfies Config;

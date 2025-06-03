@@ -2,8 +2,8 @@
 
 import React from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ModelSelector } from "./chat/model-selector";
-import { ApiSettingsButton } from "./api-settings-button";
+import { UnifiedProviderModelSelector } from "./provider/unified-provider-model-selector";
+import { ApiProviderSettingsButton } from "./provider/api-provider-settings-button";
 import { ModeToggle } from "./mode-toggle";
 import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
@@ -13,10 +13,10 @@ export function HeaderNav() {
 		<header className="relative flex shrink-0 items-center border-b px-4 justify-between py-2.5 h-14">
 			<div className="flex items-center gap-3">
 				<SidebarTrigger />
-				<ModelSelector />
+				<UnifiedProviderModelSelector />
 			</div>
 			<div className="flex items-center gap-3">
-				<ApiSettingsButton />
+				<ApiProviderSettingsButton />
 				<ModeToggle />
 				<Button
 					variant="ghost"

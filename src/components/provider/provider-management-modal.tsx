@@ -1,0 +1,598 @@
+"use client";
+
+import type React from "react";
+
+import { useState, useMemo } from "react";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useApiProvider } from "@/context/api-provider-context";
+import { toast } from "sonner";
+import type { ApiProvider } from "@/types/api-provider";
+import {
+	Check,
+	Edit,
+	MoreVertical,
+	Star,
+	Trash,
+	RefreshCw,
+	Search,
+	Plus,
+	Zap,
+	Globe,
+	Cpu,
+	Shield,
+	AlertCircle,
+	CheckCircle2,
+	Clock,
+	Settings,
+	Copy,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ProviderForm } from "@/components/provider/provider-form";
+
+export function ProviderManagementModal() {
+	const [searchTerm, setSearchTerm] = useState("");
+	const [deleteConfirmProvider, setDeleteConfirmProvider] = useState<
+		string | null
+	>(null);
+	const [testingProvider, setTestingProvider] = useState<string | null>(null);
+	const [isFormOpen, setIsFormOpen] = useState(false);
+	const [editingProvider, setEditingProvider] = useState<ApiProvider | null>(
+		null,
+	);
+
+	const {
+		// 基础状态
+		providers,
+		currentProvider,
+		isLoading,
+		addProvider,
+		isProviderModalOpen,
+		setProviderModalOpen,
+		switchProvider,
+		setDefaultProvider,
+		deleteProvider,
+		testConnection,
+		updateProvider,
+	} = useApiProvider();
+
+	// 获取提供商类型信息
+	const getProviderTypeInfo = (type: string) => {
+		const types: Record<
+			string,
+			{ name: string; icon: React.ReactNode; color: string }
+		> = {
+			openai: {
+				name: "OpenAI",
+				icon: <Zap className="h-4 w-4" />,
+				color: "text-green-600 dark:text-green-400",
+			},
+			deepseek: {
+				name: "DeepSeek",
+				icon: <Cpu className="h-4 w-4" />,
+				color: "text-blue-600 dark:text-blue-400",
+			},
+			custom: {
+				name: "Custom",
+				icon: <Settings className="h-4 w-4" />,
+				color: "text-purple-600 dark:text-purple-400",
+			},
+		};
+		return (
+			types[type] || {
+				name: type,
+				icon: <Globe className="h-4 w-4" />,
+				color: "text-gray-600",
+			}
+		);
+	};
+
+	// 处理设置默认提供商
+	const handleSetDefault = async (providerId: string) => {
+		try {
+			await setDefaultProvider(providerId);
+			toast.success("Set as default provider");
+		} catch (error) {
+			toast.error("Failed to set default provider", {
+				description: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	};
+
+	// 处理删除提供商
+	const handleDelete = async (providerId: string) => {
+		try {
+			await deleteProvider(providerId);
+			toast.success("Provider deleted");
+			setDeleteConfirmProvider(null);
+		} catch (error) {
+			toast.error("Failed to delete provider", {
+				description: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	};
+
+	// 处理测试连接
+	const handleTestConnection = async (provider: ApiProvider) => {
+		setTestingProvider(provider.id);
+		try {
+			const models = await testConnection({
+				apiKey: provider.apiKey,
+				baseUrl: provider.baseUrl,
+				providerType: provider.providerType,
+			});
+
+			toast.success("Connection test successful", {
+				description: `Found ${models.length} available models`,
+			});
+
+			// 更新提供商信息
+			await updateProvider(provider.id, {
+				availableModels: models,
+				lastTestedAt: new Date(),
+				lastTestSuccess: true,
+			});
+		} catch (error) {
+			toast.error("Connection test failed", {
+				description: error instanceof Error ? error.message : "Unknown error",
+			});
+
+			// 更新失败状态
+			await updateProvider(provider.id, {
+				lastTestedAt: new Date(),
+				lastTestSuccess: false,
+			});
+		} finally {
+			setTestingProvider(null);
+		}
+	};
+
+	// 切换提供商
+	const handleSwitchProvider = async (providerId: string) => {
+		try {
+			await switchProvider(providerId);
+			toast.success("Provider switched");
+		} catch (error) {
+			toast.error("Failed to switch provider", {
+				description: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	};
+
+	// 复制 API 密钥
+	const handleCopyApiKey = (apiKey: string) => {
+		navigator.clipboard.writeText(apiKey);
+		toast.success("API key copied to clipboard");
+	};
+
+	// 过滤提供商
+	const filteredProviders = useMemo(() => {
+		return providers.filter(
+			(provider) =>
+				provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				provider.providerType.toLowerCase().includes(searchTerm.toLowerCase()),
+		);
+	}, [providers, searchTerm]);
+
+	// 获取连接状态
+	const getConnectionStatus = (provider: ApiProvider) => {
+		if (!provider.lastTestedAt) {
+			return {
+				status: "untested",
+				label: "Not tested",
+				color: "text-muted-foreground",
+				icon: Clock,
+			};
+		}
+		if (provider.lastTestSuccess) {
+			return {
+				status: "success",
+				label: "Connected",
+				color: "text-green-600",
+				icon: CheckCircle2,
+			};
+		}
+		return {
+			status: "failed",
+			label: "Connection failed",
+			color: "text-red-600",
+			icon: AlertCircle,
+		};
+	};
+
+	if (isLoading) {
+		return (
+			<Dialog open={isProviderModalOpen} onOpenChange={setProviderModalOpen}>
+				<DialogContent className="max-w-4xl max-h-[80vh]">
+					<DialogHeader>
+						<DialogTitle>Manage API Providers</DialogTitle>
+					</DialogHeader>
+					<div className="flex items-center justify-center h-64">
+						<div className="flex items-center gap-2 text-muted-foreground">
+							<RefreshCw className="h-4 w-4 animate-spin" />
+							<span>Loading...</span>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
+		);
+	}
+
+	return (
+		<>
+			<Dialog open={isProviderModalOpen} onOpenChange={setProviderModalOpen}>
+				<DialogContent
+					className="max-w-5xl max-h-[85vh] p-0 
+					md:min-w-xl
+				"
+				>
+					<DialogHeader className="p-6 pb-0">
+						<div className="flex items-center justify-between">
+							<div>
+								<DialogTitle className="text-xl">
+									Manage API Providers
+								</DialogTitle>
+								<p className="text-sm text-muted-foreground mt-1">
+									Manage your AI service provider configurations and connection
+									status
+								</p>
+							</div>
+						</div>
+					</DialogHeader>
+
+					<div className="px-6 flex gap-2 items-center">
+						<div className="relative flex-1">
+							<Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+							<Input
+								placeholder="Search provider name or type..."
+								className="pl-9"
+								value={searchTerm}
+								onChange={(e) => setSearchTerm(e.target.value)}
+							/>
+						</div>
+						<Button
+							onClick={() => {
+								setEditingProvider(null);
+								setIsFormOpen(true);
+							}}
+							size="sm"
+							className="gap-2"
+						>
+							<Plus />
+							Add Provider
+						</Button>
+					</div>
+
+					<ScrollArea className="flex-1 px-6">
+						{filteredProviders.length === 0 ? (
+							<div className="flex flex-col items-center justify-center py-12">
+								<div className="rounded-full bg-muted p-3 mb-4">
+									<Settings className="h-8 w-8 text-muted-foreground" />
+								</div>
+								<h3 className="text-lg font-medium mb-2">
+									{providers.length === 0
+										? "No API providers"
+										: "No matching providers found"}
+								</h3>
+								<p className="text-sm text-muted-foreground text-center mb-4">
+									{providers.length === 0
+										? "Add your first API provider to start using AI features"
+										: "Try adjusting your search or add a new provider"}
+								</p>
+								<Button
+									onClick={() => {
+										setProviderModalOpen(true);
+									}}
+									variant="outline"
+									className="gap-2"
+								>
+									<Plus className="h-4 w-4" />
+									Add Provider
+								</Button>
+							</div>
+						) : (
+							<div className="space-y-3 p-1">
+								{filteredProviders.map((provider) => {
+									const typeInfo = getProviderTypeInfo(provider.providerType);
+									const connectionStatus = getConnectionStatus(provider);
+									const isCurrentProvider = currentProvider?.id === provider.id;
+									const isTesting = testingProvider === provider.id;
+
+									return (
+										<div
+											key={provider.id}
+											className={cn(
+												"rounded-lg border p-4 transition-all duration-200 hover:shadow-sm",
+												isCurrentProvider &&
+													"ring-2 ring-ring ring-offset-2 bg-accent/50",
+											)}
+										>
+											<div className="flex items-start justify-between">
+												<div className="flex-1 min-w-0">
+													{/* Header Information */}
+													<div className="flex items-center gap-3 mb-3">
+														<div
+															className={cn(
+																"flex items-center gap-1.5",
+																typeInfo.color,
+															)}
+														>
+															{typeInfo.icon}
+															<span className="text-sm font-medium">
+																{typeInfo.name}
+															</span>
+														</div>
+														<h3 className="font-semibold text-lg truncate">
+															{provider.name}
+														</h3>
+														<div className="flex items-center gap-2">
+															{provider.isDefault && (
+																<Badge variant="secondary" className="gap-1">
+																	<Star className="h-3 w-3" />
+																	Default
+																</Badge>
+															)}
+															{isCurrentProvider && (
+																<Badge variant="default" className="gap-1">
+																	<Check className="h-3 w-3" />
+																	In use
+																</Badge>
+															)}
+														</div>
+													</div>
+
+													{/* Detailed Information */}
+													<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+														<div>
+															<div className="text-muted-foreground block mb-1">
+																API Key
+															</div>
+															<div className="flex items-center gap-2">
+																<code className="bg-muted px-2 py-1 rounded text-xs">
+																	{provider.apiKey.substring(0, 8)}****
+																	{provider.apiKey.substring(
+																		provider.apiKey.length - 4,
+																	)}
+																</code>
+																<Button
+																	variant="ghost"
+																	size="sm"
+																	className="h-6 w-6 p-0"
+																	onClick={() =>
+																		handleCopyApiKey(provider.apiKey)
+																	}
+																>
+																	<Copy className="h-3 w-3" />
+																</Button>
+															</div>
+														</div>
+
+														<div>
+															<div className="text-muted-foreground block mb-1">
+																API Endpoint
+															</div>
+															<code className="bg-muted px-2 py-1 rounded text-xs block truncate">
+																{provider.baseUrl}
+															</code>
+														</div>
+
+														<div>
+															<div className="text-muted-foreground block mb-1">
+																Connection Status
+															</div>
+															<div className="flex items-center gap-2">
+																<connectionStatus.icon
+																	className={cn(
+																		"h-4 w-4",
+																		connectionStatus.color,
+																	)}
+																/>
+																<span
+																	className={cn(
+																		"text-sm",
+																		connectionStatus.color,
+																	)}
+																>
+																	{connectionStatus.label}
+																</span>
+																{provider.lastTestedAt && (
+																	<span className="text-xs text-muted-foreground">
+																		{new Date(
+																			provider.lastTestedAt,
+																		).toLocaleString()}
+																	</span>
+																)}
+															</div>
+														</div>
+													</div>
+
+													{/* Available Models */}
+													{provider.availableModels &&
+														provider.availableModels.length > 0 && (
+															<div className="mt-3">
+																<div className="text-muted-foreground text-sm block mb-2">
+																	Available Models (
+																	{provider.availableModels.length})
+																</div>
+																<div className="flex flex-wrap gap-1">
+																	{provider.availableModels
+																		.slice(0, 6)
+																		.map((model) => (
+																			<Badge
+																				key={model}
+																				variant="outline"
+																				className="text-xs"
+																			>
+																				{model}
+																			</Badge>
+																		))}
+																	{provider.availableModels.length > 6 && (
+																		<Badge
+																			variant="outline"
+																			className="text-xs"
+																		>
+																			+{provider.availableModels.length - 6}{" "}
+																			more
+																		</Badge>
+																	)}
+																</div>
+															</div>
+														)}
+												</div>
+
+												{/* Action Menu */}
+												<DropdownMenu>
+													<DropdownMenuTrigger asChild>
+														<Button
+															variant="ghost"
+															size="sm"
+															className="h-8 w-8 p-0"
+														>
+															<MoreVertical className="h-4 w-4" />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent align="end" className="w-48">
+														<DropdownMenuItem
+															onClick={() => handleSwitchProvider(provider.id)}
+															disabled={isCurrentProvider}
+														>
+															<Check className="mr-2 h-4 w-4" />
+															Use this provider
+														</DropdownMenuItem>
+														<DropdownMenuItem
+															onClick={() => handleSetDefault(provider.id)}
+															disabled={provider.isDefault}
+														>
+															<Star className="mr-2 h-4 w-4" />
+															Set as default
+														</DropdownMenuItem>
+														<DropdownMenuSeparator />
+														<DropdownMenuItem
+															onClick={() => handleTestConnection(provider)}
+															disabled={isTesting}
+														>
+															<RefreshCw
+																className={cn(
+																	"mr-2 h-4 w-4",
+																	isTesting && "animate-spin",
+																)}
+															/>
+															{isTesting ? "Testing..." : "Test connection"}
+														</DropdownMenuItem>
+														<DropdownMenuItem
+															onClick={() => {
+																setEditingProvider(provider);
+																setIsFormOpen(true);
+															}}
+														>
+															<Edit className="mr-2 h-4 w-4" />
+															Edit configuration
+														</DropdownMenuItem>
+														<DropdownMenuSeparator />
+														<DropdownMenuItem
+															onClick={() =>
+																setDeleteConfirmProvider(provider.id)
+															}
+															className="text-destructive focus:text-destructive"
+														>
+															<Trash className="mr-2 h-4 w-4" />
+															Delete provider
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
+											</div>
+										</div>
+									);
+								})}
+							</div>
+						)}
+					</ScrollArea>
+
+					<div className="border-t p-6">
+						<div className="flex items-center justify-between text-sm text-muted-foreground">
+							<span>Total {providers.length} providers</span>
+							<span>Current: {currentProvider?.name || "None selected"}</span>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
+
+			{/* Delete Confirmation Dialog */}
+			<AlertDialog
+				open={!!deleteConfirmProvider}
+				onOpenChange={(isOpen) => {
+					if (!isOpen) setDeleteConfirmProvider(null);
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle className="flex items-center gap-2">
+							<AlertCircle className="h-5 w-5 text-destructive" />
+							Confirm provider deletion
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to delete this API provider? This action
+							cannot be undone and all related configurations and history will
+							be permanently removed.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={() => {
+								if (deleteConfirmProvider) {
+									handleDelete(deleteConfirmProvider);
+								}
+							}}
+							className="bg-destructive hover:bg-destructive/90"
+						>
+							Confirm Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+			{/* Add/Edit Provider Form Dialog */}
+			<Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+				<DialogContent className="max-w-md">
+					<DialogHeader>
+						<DialogTitle>
+							{editingProvider ? "Edit Provider" : "Add New Provider"}
+						</DialogTitle>
+					</DialogHeader>
+					<ProviderForm
+						initialProvider={editingProvider || undefined}
+						onSuccess={() => {
+							setIsFormOpen(false);
+							setEditingProvider(null);
+						}}
+					/>
+				</DialogContent>
+			</Dialog>
+		</>
+	);
+}

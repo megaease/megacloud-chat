@@ -36,7 +36,6 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { use, useState } from "react";
-import { ApiSettingsButton } from "./api-settings-button";
 import { useMCPDrawer } from "@/context/mcp-drawer-context";
 const userId = "user-id"; // Replace with actual user ID
 
@@ -198,7 +197,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				</SidebarGroup>
 			</SidebarContent>
 			<SidebarFooter>
-				<div className="px-4 py-2">
+				<div className="space-y-3 px-4 py-2">
+					<Separator />
 					<Button
 						variant={"outline"}
 						className="relative w-full"

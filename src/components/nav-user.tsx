@@ -31,9 +31,8 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 
-import { ApiSettingsButton } from "@/components/api-settings-button";
 import { useTheme } from "next-themes";
-import { useApiSettings } from "@/context/api-settings-context";
+import { useApiProvider } from "@/context/api-provider-context";
 import { useMCPDrawer } from "@/context/mcp-drawer-context";
 
 export function NavUser({
@@ -47,7 +46,7 @@ export function NavUser({
 }) {
 	const { isMobile } = useSidebar();
 	const { theme, setTheme } = useTheme();
-	const { setIsOpen: setIsAPIOpen } = useApiSettings();
+	const { setProviderModalOpen } = useApiProvider();
 	const { openDrawer } = useMCPDrawer();
 
 	return (
@@ -90,9 +89,9 @@ export function NavUser({
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
-							<DropdownMenuItem onClick={() => setIsAPIOpen(true)}>
+							<DropdownMenuItem onClick={() => setProviderModalOpen(true)}>
 								<Settings className="mr-2 size-4" />
-								<span>API Settings</span>
+								<span>API Providers</span>
 							</DropdownMenuItem>
 
 							<DropdownMenuItem onClick={() => openDrawer()}>

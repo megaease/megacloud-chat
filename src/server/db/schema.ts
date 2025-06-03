@@ -50,6 +50,22 @@ export const chatMessages = createTable("chat_messages", {
 	attachments: json("attachments").notNull(),
 });
 
+export const apiProviders = createTable("api_providers", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => nanoid(16)),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	name: text("name").notNull(), // User custom name for provider
+	providerType: text("provider_type").notNull(), // openai, deepseek, azure, anthropic, together, custom
+	apiKey: text("api_key").notNull(),
+	baseUrl: text("base_url").notNull(),
+	isDefault: integer("is_default").notNull().default(0), // Whether this is the default provider
+	userId: text("user_id").notNull(),
+	availableModels: json("available_models").default([]), // Cached available models list
+	lastModelUsed: text("last_model_used"), // Last used model
+});
+
 export const chatsSchema = createSelectSchema(chats);
 export const chatMessagesSchema = createSelectSchema(chatMessages);
 export const ChatRoleEnum = z.enum(["user", "assistant", "system"]);

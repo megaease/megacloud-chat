@@ -149,6 +149,7 @@ export function ChatView({
 			)}
 
 			{status === "submitted" && <Thinking />}
+
 			{/* Chat input */}
 			<div className="p-4 relative max-w-4xl text-center w-full mx-auto">
 				<form
@@ -246,7 +247,7 @@ export function ChatView({
 								</Tooltip>
 							</TooltipProvider>
 
-							{status === "submitted" ? (
+							{status === "submitted" || status === "streaming" ? (
 								<TooltipProvider>
 									<Tooltip delayDuration={300}>
 										<TooltipTrigger asChild>
@@ -274,7 +275,7 @@ export function ChatView({
 											<Button
 												type="submit"
 												size="icon"
-												disabled={!input.trim() || status === "streaming"}
+												disabled={!input.trim()}
 												className="h-9 w-9 rounded-full bg-primary text-primary-foreground shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
 											>
 												<Send className="h-4 w-4" />
