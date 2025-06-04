@@ -66,7 +66,6 @@ export async function getChatById({
 			.select()
 			.from(chats)
 			.where(and(eq(chats.id, chatId), eq(chats.userId, userId)));
-		console.log("Selected chat:", selectedChat);
 		return selectedChat;
 	} catch (error) {
 		console.error("Error fetching chat by ID:", error);

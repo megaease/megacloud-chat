@@ -28,6 +28,7 @@ export function createAIModelConfig(
 
 	switch (providerType) {
 		case "openai": {
+			console.log("Creating AI model for provider:", "openai");
 			const customOpenAI = createOpenAI({
 				baseURL: baseUrl || "https://api.openai.com/v1",
 				apiKey: apiKey,
@@ -48,8 +49,13 @@ export function createAIModelConfig(
 			const openRouter = createOpenRouter({
 				apiKey: apiKey || "",
 				baseURL: baseUrl || "https://openrouter.ai/api/v1",
+				extraBody: {
+					reasoning: {
+						max_tokens: 10,
+					},
+				},
 			});
-			return openRouter(modelName || "gpt-4-turbo");
+			return openRouter(modelName || "openai/gpt-4o-mini");
 		}
 
 		case "custom": {

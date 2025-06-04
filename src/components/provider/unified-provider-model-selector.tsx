@@ -4,7 +4,16 @@ import type React from "react";
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Settings, ChevronDown, Check, Zap, Globe, Cpu } from "lucide-react";
+import {
+	Settings,
+	ChevronDown,
+	Check,
+	Zap,
+	Globe,
+	Cpu,
+	Search,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApiProvider } from "@/context/api-provider-context";
 import { cn } from "@/lib/utils";
@@ -29,6 +38,7 @@ export function UnifiedProviderModelSelector({
 	} = useApiProvider();
 
 	const [isOpen, setIsOpen] = useState(false);
+	const [searchQuery, setSearchQuery] = useState("");
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	// Close dropdown when clicking outside
@@ -58,6 +68,16 @@ export function UnifiedProviderModelSelector({
 		}
 		return `${currentProvider.name} / ${currentModel || "Select Model"}`;
 	}, [currentProvider, currentModel]);
+
+	// Filter models based on search query
+	const filteredModels = useMemo(() => {
+		if (!currentProvider?.availableModels?.length) return [];
+		if (!searchQuery.trim()) return currentProvider.availableModels;
+
+		return currentProvider.availableModels.filter((model) =>
+			model.toLowerCase().includes(searchQuery.toLowerCase()),
+		);
+	}, [currentProvider, searchQuery]);
 
 	// If no current provider, show settings button
 	if (!currentProvider) {
@@ -178,49 +198,71 @@ export function UnifiedProviderModelSelector({
 								<p className="text-xs text-muted-foreground mt-0.5">
 									Model list for {currentProvider.name}
 								</p>
+								<div className="relative mt-2">
+									<Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+									<Input
+										placeholder="Search models..."
+										className="pl-8 h-8 text-xs"
+										onChange={(e) => setSearchQuery(e.target.value)}
+									/>
+								</div>
 							</div>
-							<ScrollArea className="h-[calc(400px-60px)]">
+							<ScrollArea className="h-[300px]">
 								{currentProvider?.availableModels?.length ? (
 									<div className="p-1">
-										{currentProvider.availableModels.map((model) => {
-											const isSelected = currentModel === model;
+										{filteredModels.length > 0 ? (
+											filteredModels.map((model) => {
+												const isSelected = currentModel === model;
 
-											return (
-												<Button
-													key={model}
-													variant="ghost"
-													className={cn(
-														"flex h-auto w-full items-center justify-between rounded-md p-3 mb-1 hover:bg-accent/80 transition-all duration-150",
-														isSelected && "bg-accent border border-border",
-													)}
-													onClick={() => {
-														switchModel(model);
-														setIsOpen(false);
-													}}
-												>
-													<div className="flex items-center gap-2 flex-1 text-left min-w-0">
-														<div className="flex flex-col min-w-0 flex-1">
-															<span className="font-medium truncate text-sm">
-																{model}
-															</span>
-															{model.includes("gpt-4") && (
-																<span className="text-xs text-muted-foreground">
-																	Advanced Model
+												return (
+													<Button
+														key={model}
+														variant="ghost"
+														className={cn(
+															"flex h-auto w-full items-center justify-between rounded-md p-3 mb-1 hover:bg-accent/80 transition-all duration-150",
+															isSelected && "bg-accent border border-border",
+														)}
+														onClick={() => {
+															switchModel(model);
+															setIsOpen(false);
+														}}
+													>
+														<div className="flex items-center gap-2 flex-1 text-left min-w-0">
+															<div className="flex flex-col min-w-0 flex-1">
+																<span className="font-medium truncate text-sm">
+																	{model}
 																</span>
-															)}
-															{model.includes("gpt-3.5") && (
-																<span className="text-xs text-muted-foreground">
-																	Standard Model
-																</span>
-															)}
+																{model.includes("gpt-4") && (
+																	<span className="text-xs text-muted-foreground">
+																		Advanced Model
+																	</span>
+																)}
+																{model.includes("gpt-3.5") && (
+																	<span className="text-xs text-muted-foreground">
+																		Standard Model
+																	</span>
+																)}
+															</div>
 														</div>
-													</div>
-													{isSelected && (
-														<Check className="h-4 w-4 text-primary shrink-0" />
-													)}
-												</Button>
-											);
-										})}
+														{isSelected && (
+															<Check className="h-4 w-4 text-primary shrink-0" />
+														)}
+													</Button>
+												);
+											})
+										) : (
+											<div className="flex flex-col items-center justify-center h-full p-6 text-center">
+												<div className="rounded-full bg-muted p-3 mb-3">
+													<Search className="h-6 w-6 text-muted-foreground" />
+												</div>
+												<p className="text-sm font-medium text-foreground mb-1">
+													No Matching Models
+												</p>
+												<p className="text-xs text-muted-foreground">
+													Try a different search term
+												</p>
+											</div>
+										)}
 									</div>
 								) : (
 									<div className="flex flex-col items-center justify-center h-full p-6 text-center">
