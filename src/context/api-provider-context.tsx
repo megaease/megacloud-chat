@@ -37,6 +37,7 @@ export interface ApiProviderContextType {
 		providerType: ProviderType;
 		apiKey: string;
 		baseUrl: string;
+		availableModels?: string[];
 	}) => Promise<ApiProvider>;
 	updateProvider: (
 		id: string,
@@ -77,6 +78,7 @@ const addNewProvider = async (provider: {
 	providerType: ProviderType;
 	apiKey: string;
 	baseUrl: string;
+	availableModels?: string[];
 }): Promise<ApiProvider> => {
 	const response = await fetch("/api/providers", {
 		method: "POST",
@@ -230,7 +232,7 @@ function ApiProviderProvider({ children }: { children: ReactNode }) {
 		}
 		return null;
 	});
-	
+
 	const [currentProvider, setCurrentProvider] = useState<ApiProvider | null>(
 		null,
 	);
@@ -251,7 +253,7 @@ function ApiProviderProvider({ children }: { children: ReactNode }) {
 		isError,
 		error,
 	} = useQuery<ApiProvider[], Error>({
-		queryKey: ["providers", TEST_USER_ID],
+		queryKey: ["providers"],
 		queryFn: fetchProviders,
 	});
 
@@ -263,6 +265,7 @@ function ApiProviderProvider({ children }: { children: ReactNode }) {
 			providerType: ProviderType;
 			apiKey: string;
 			baseUrl: string;
+			availableModels?: string[];
 		}
 	>({
 		mutationFn: addNewProvider,
@@ -387,7 +390,7 @@ function ApiProviderProvider({ children }: { children: ReactNode }) {
 		if (providers.length > 0 && !currentProvider) {
 			// 第一优先级：使用 localStorage 中保存的 providerId
 			if (savedProviderId) {
-				const savedProvider = providers.find(p => p.id === savedProviderId);
+				const savedProvider = providers.find((p) => p.id === savedProviderId);
 				if (savedProvider) {
 					setCurrentProvider(savedProvider);
 					// 如果 localStorage 中也有保存的模型，优先使用该模型
@@ -395,16 +398,18 @@ function ApiProviderProvider({ children }: { children: ReactNode }) {
 					if (savedModel) {
 						setCurrentModel(savedModel);
 						return; // 成功恢复用户上次的选择，直接返回
-					} else if (savedProvider.lastModelUsed) {
+					}
+					if (savedProvider.lastModelUsed) {
 						setCurrentModel(savedProvider.lastModelUsed);
 						return;
-					} else if (savedProvider.availableModels?.length > 0) {
+					}
+					if (savedProvider.availableModels?.length > 0) {
 						setCurrentModel(savedProvider.availableModels[0] || "");
 						return;
 					}
 				}
 			}
-			
+
 			// 第二优先级：使用默认提供者
 			const defaultProvider = providers.find((p) => p.isDefault);
 			if (defaultProvider) {
@@ -454,7 +459,7 @@ function ApiProviderProvider({ children }: { children: ReactNode }) {
 	const switchModel = useCallback(
 		async (modelName: string) => {
 			setCurrentModel(modelName);
-			
+
 			// 保存当前模型到 localStorage，使其在页面刷新后能够持久保留
 			if (typeof window !== "undefined") {
 				localStorage.setItem("currentModel", modelName);
@@ -482,6 +487,7 @@ function ApiProviderProvider({ children }: { children: ReactNode }) {
 			providerType: ProviderType;
 			apiKey: string;
 			baseUrl: string;
+			availableModels?: string[];
 		}) => {
 			return addProviderMutation.mutateAsync(provider);
 		},

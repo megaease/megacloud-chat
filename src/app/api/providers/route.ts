@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
 	try {
 		const body = await request.json();
-		const { name, providerType, apiKey, baseUrl, userId } =
+		const { name, providerType, apiKey, baseUrl, userId, availableModels } =
 			body as CreateApiProviderData;
 
 		if (!name || !providerType || !apiKey || !baseUrl || !userId) {
@@ -63,6 +63,7 @@ export async function POST(request: Request) {
 				baseUrl,
 				userId,
 				isDefault: isFirstProvider ? 1 : 0,
+				availableModels: availableModels || [],
 			})
 			.returning();
 

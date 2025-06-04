@@ -53,7 +53,7 @@ export async function DELETE(
 			.where(eq(apiProviders.id, id))
 			.limit(1);
 
-		if (provider.length === 0) {
+		if (!provider || provider.length === 0) {
 			return NextResponse.json(
 				{ error: "Provider not found" },
 				{ status: 404 },

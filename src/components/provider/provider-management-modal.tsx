@@ -54,6 +54,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProviderForm } from "@/components/provider/provider-form";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ProviderManagementModal() {
 	const [searchTerm, setSearchTerm] = useState("");
@@ -65,7 +66,7 @@ export function ProviderManagementModal() {
 	const [editingProvider, setEditingProvider] = useState<ApiProvider | null>(
 		null,
 	);
-
+	const queryClient = useQueryClient();
 	const {
 		// 基础状态
 		providers,
@@ -116,7 +117,6 @@ export function ProviderManagementModal() {
 	const handleSetDefault = async (providerId: string) => {
 		try {
 			await setDefaultProvider(providerId);
-			toast.success("Set as default provider");
 		} catch (error) {
 			toast.error("Failed to set default provider", {
 				description: error instanceof Error ? error.message : "Unknown error",
@@ -124,11 +124,9 @@ export function ProviderManagementModal() {
 		}
 	};
 
-	// 处理删除提供商
 	const handleDelete = async (providerId: string) => {
 		try {
 			await deleteProvider(providerId);
-			toast.success("Provider deleted");
 			setDeleteConfirmProvider(null);
 		} catch (error) {
 			toast.error("Failed to delete provider", {
@@ -247,8 +245,8 @@ export function ProviderManagementModal() {
 		<>
 			<Dialog open={isProviderModalOpen} onOpenChange={setProviderModalOpen}>
 				<DialogContent
-					className="max-w-5xl max-h-[85vh] p-0 
-					md:min-w-xl
+					className="max-w-6xl max-h-[90vh] p-0 
+					md:min-w-2xl
 				"
 				>
 					<DialogHeader className="p-6 pb-0">
@@ -288,7 +286,7 @@ export function ProviderManagementModal() {
 						</Button>
 					</div>
 
-					<ScrollArea className="flex-1 px-6">
+					<ScrollArea className="h-[calc(100vh-320px)] px-6">
 						{filteredProviders.length === 0 ? (
 							<div className="flex flex-col items-center justify-center py-12">
 								<div className="rounded-full bg-muted p-3 mb-4">
@@ -533,7 +531,7 @@ export function ProviderManagementModal() {
 						)}
 					</ScrollArea>
 
-					<div className="border-t p-6">
+					<div className="border-t p-4">
 						<div className="flex items-center justify-between text-sm text-muted-foreground">
 							<span>Total {providers.length} providers</span>
 							<span>Current: {currentProvider?.name || "None selected"}</span>

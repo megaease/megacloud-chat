@@ -22,6 +22,7 @@ export interface CreateApiProviderData {
 	apiKey: string;
 	baseUrl: string;
 	userId: string;
+	availableModels?: string[];
 }
 
 export interface UpdateApiProviderData {

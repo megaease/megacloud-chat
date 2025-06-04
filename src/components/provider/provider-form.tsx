@@ -77,7 +77,6 @@ export function ProviderForm({
 					baseUrl: data.baseUrl,
 					availableModels,
 				});
-				toast.success("Provider updated successfully");
 			} else {
 				// Add new provider
 				await addProvider({
@@ -85,8 +84,8 @@ export function ProviderForm({
 					providerType: data.providerType as ProviderType,
 					apiKey: data.apiKey,
 					baseUrl: data.baseUrl,
+					availableModels: availableModels,
 				});
-				toast.success("Provider added successfully");
 			}
 
 			if (onSuccess) {
@@ -185,7 +184,7 @@ export function ProviderForm({
 			<div className="space-y-2">
 				<Label htmlFor="providerType">Provider Type</Label>
 				<Select
-					value={form.getValues("providerType")}
+					value={form.watch("providerType")}
 					onValueChange={handleProviderTypeChange}
 				>
 					<SelectTrigger id="providerType">
@@ -273,23 +272,13 @@ function getDefaultUrlForProvider(providerType: ProviderType): string {
 			return "https://api.openai.com/v1";
 		case "deepseek":
 			return "https://api.deepseek.com";
-		case "anthropic":
-			return "https://api.anthropic.com";
-		case "azure":
-			return "https://YOUR_RESOURCE_NAME.openai.azure.com";
-		case "together":
-			return "https://api.together.xyz";
+
 		default:
 			return "";
 	}
 }
 
 function isKnownDefaultUrl(url: string): boolean {
-	const knownUrls = [
-		"https://api.openai.com/v1",
-		"https://api.deepseek.com",
-		"https://api.anthropic.com",
-		"https://api.together.xyz",
-	];
-	return knownUrls.includes(url) || url.includes("azure") || url === "";
+	const knownUrls = ["https://api.openai.com/v1", "https://api.deepseek.com"];
+	return knownUrls.includes(url) || url === "";
 }
