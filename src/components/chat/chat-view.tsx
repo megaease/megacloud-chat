@@ -211,7 +211,8 @@ export function ChatView({
 
 						const attachments = uploadedFiles.map((file) => ({
 							url: file.url,
-							contentType: file.type,
+							contentType: file.contentType,
+							name: file.name,
 						}));
 
 						handleSubmit(e, {

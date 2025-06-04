@@ -1,13 +1,7 @@
 import { openai, createOpenAI } from "@ai-sdk/openai";
 import { createDeepSeek } from "@ai-sdk/deepseek";
-
-export type ProviderType =
-	| "openai"
-	| "deepseek"
-	| "azure"
-	| "anthropic"
-	| "together"
-	| "custom";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+export type ProviderType = "openai" | "deepseek" | "openrouter" | "custom";
 
 interface ProviderConfig {
 	apiKey?: string;
@@ -48,6 +42,14 @@ export function createAIModelConfig(
 				baseURL: baseUrl || "https://api.deepseek.com",
 			});
 			return deepseek(modelName);
+		}
+
+		case "openrouter": {
+			const openRouter = createOpenRouter({
+				apiKey: apiKey || "",
+				baseURL: baseUrl || "https://api.openrouter.ai/v1",
+			});
+			return openRouter(modelName || "gpt-4-turbo");
 		}
 
 		case "custom": {

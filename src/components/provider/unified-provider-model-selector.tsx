@@ -8,6 +8,7 @@ import { Settings, ChevronDown, Check, Zap, Globe, Cpu } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApiProvider } from "@/context/api-provider-context";
 import { cn } from "@/lib/utils";
+import { getProviderTypeInfo } from "./utils";
 
 interface UnifiedProviderModelSelectorProps {
 	className?: string;
@@ -49,37 +50,6 @@ export function UnifiedProviderModelSelector({
 			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, [isOpen]);
-
-	// Get friendly name and icon for provider type
-	const getProviderTypeInfo = (type: string) => {
-		const types: Record<
-			string,
-			{ name: string; icon: React.ReactNode; color: string }
-		> = {
-			openai: {
-				name: "OpenAI",
-				icon: <Zap className="h-3 w-3" />,
-				color: "text-green-600 dark:text-green-400",
-			},
-			deepseek: {
-				name: "DeepSeek",
-				icon: <Cpu className="h-3 w-3" />,
-				color: "text-blue-600 dark:text-blue-400",
-			},
-			custom: {
-				name: "Custom",
-				icon: <Globe className="h-3 w-3" />,
-				color: "text-purple-600 dark:text-purple-400",
-			},
-		};
-		return (
-			types[type] || {
-				name: type,
-				icon: <Globe className="h-3 w-3" />,
-				color: "text-gray-600",
-			}
-		);
-	};
 
 	// Current selection display text
 	const currentSelection = useMemo(() => {
