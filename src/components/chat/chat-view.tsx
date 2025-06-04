@@ -45,6 +45,7 @@ interface ChatViewProps {
 	mcpEnabled: boolean;
 	toggleMcpEnabled: () => boolean;
 	status: "error" | "submitted" | "streaming" | "ready";
+	isUploading?: boolean;
 }
 
 export function ChatView({
@@ -56,10 +57,15 @@ export function ChatView({
 	mcpEnabled,
 	toggleMcpEnabled,
 	status,
+	isUploading = false,
 }: ChatViewProps) {
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [files, setFiles] = useState<FileList | undefined>(undefined);
+	const [uploadedFiles, setUploadedFiles] = useState<
+		Array<{ name: string; url: string; contentType: string }>
+	>([]);
+	const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
 
 	const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
 		useScrollToBottom({
@@ -71,14 +77,20 @@ export function ChatView({
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
-			if (input.trim()) {
+			if (input.trim() || uploadedFiles.length > 0) {
 				const event = new Event("submit", {
 					cancelable: true,
 					bubbles: true,
 				}) as unknown as React.FormEvent<HTMLFormElement>;
-				handleSubmit(event, { experimental_attachments: files });
 
-				setFiles(undefined);
+				// 将已上传的文件转换为附件格式
+				const attachments = uploadedFiles;
+				handleSubmit(event, {
+					experimental_attachments: attachments as unknown as FileList,
+				});
+
+				// 清空已上传的文件
+				setUploadedFiles([]);
 				if (fileInputRef.current) {
 					fileInputRef.current.value = "";
 				}
@@ -91,14 +103,55 @@ export function ChatView({
 		}
 	};
 
-	const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
-			setFiles(e.target.files);
+			const selectedFiles = Array.from(e.target.files);
+
+			// 立即上传文件
+			for (const file of selectedFiles) {
+				const fileName = file.name;
+				setUploadingFiles((prev) => new Set([...prev, fileName]));
+
+				try {
+					const formData = new FormData();
+					formData.append("file", file);
+
+					const response = await fetch("/api/files/upload", {
+						method: "POST",
+						body: formData,
+					});
+
+					if (!response.ok) {
+						const errorData = await response.json();
+						throw new Error(errorData.error || "Upload failed");
+					}
+
+					const data = await response.json();
+
+					setUploadedFiles((prev) => [
+						...prev,
+						{
+							name: data.pathname,
+							url: data.url,
+							contentType: data.contentType,
+						},
+					]);
+				} catch (error) {
+					console.error("Upload failed:", error);
+				} finally {
+					setUploadingFiles((prev) => {
+						const newSet = new Set(prev);
+						newSet.delete(fileName);
+						return newSet;
+					});
+				}
+			}
 		}
 	};
 
 	const handleRemoveFiles = () => {
 		setFiles(undefined);
+		setUploadedFiles([]);
 		if (fileInputRef.current) {
 			fileInputRef.current.value = "";
 		}
@@ -155,7 +208,24 @@ export function ChatView({
 				<form
 					onSubmit={(e) => {
 						e.preventDefault();
-						handleSubmit(e, { experimental_attachments: files });
+
+						const attachments = uploadedFiles.map((file) => ({
+							url: file.url,
+							contentType: file.type,
+						}));
+
+						handleSubmit(e, {
+							experimental_attachments:
+								attachments.length > 0
+									? (attachments as unknown as FileList)
+									: undefined,
+						});
+
+						// 清空已上传的文件
+						setUploadedFiles([]);
+						if (fileInputRef.current) {
+							fileInputRef.current.value = "";
+						}
 					}}
 					className="relative"
 				>
@@ -169,27 +239,41 @@ export function ChatView({
 							aria-label="Upload files"
 							title="Upload files"
 						/>
-						{files && files.length > 0 && (
+						{(uploadedFiles.length > 0 || uploadingFiles.size > 0) && (
 							<div className="px-4 py-2 flex flex-wrap gap-2 border-t border-border/50">
-								{Array.from(files).map((file) => {
-									return (
-										<div
-											key={file.name}
-											className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+								{/* 显示正在上传的文件 */}
+								{Array.from(uploadingFiles).map((fileName) => (
+									<div
+										key={`uploading-${fileName}`}
+										className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+									>
+										<Loader2 className="h-3 w-3 animate-spin" />
+										<span className="truncate max-w-32">{fileName}</span>
+									</div>
+								))}
+
+								{/* 显示已上传的文件 */}
+								{uploadedFiles.map((file) => (
+									<div
+										key={file.url}
+										className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+									>
+										<span className="truncate max-w-32">{file.name}</span>
+										<Button
+											type="button"
+											size="icon"
+											variant="ghost"
+											className="h-4 w-4 p-0 hover:bg-destructive/10 hover:text-destructive"
+											onClick={() => {
+												setUploadedFiles((prev) =>
+													prev.filter((f) => f.url !== file.url),
+												);
+											}}
 										>
-											<span className="truncate max-w-32">{file.name}</span>
-											<Button
-												type="button"
-												size="icon"
-												variant="ghost"
-												className="h-4 w-4 p-0 hover:bg-destructive/10 hover:text-destructive"
-												onClick={handleRemoveFiles}
-											>
-												<X className="h-3 w-3" />
-											</Button>
-										</div>
-									);
-								})}
+											<X className="h-3 w-3" />
+										</Button>
+									</div>
+								))}
 							</div>
 						)}
 						<Textarea
@@ -275,14 +359,18 @@ export function ChatView({
 											<Button
 												type="submit"
 												size="icon"
-												disabled={!input.trim()}
+												disabled={!input.trim() || isUploading}
 												className="h-9 w-9 rounded-full bg-primary text-primary-foreground shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
 											>
-												<Send className="h-4 w-4" />
+												{isUploading ? (
+													<Loader2 className="h-4 w-4 animate-spin" />
+												) : (
+													<Send className="h-4 w-4" />
+												)}
 											</Button>
 										</TooltipTrigger>
 										<TooltipContent side="top" className="text-xs font-medium">
-											<p>Send message</p>
+											<p>{isUploading ? "Uploading..." : "Send message"}</p>
 										</TooltipContent>
 									</Tooltip>
 								</TooltipProvider>
