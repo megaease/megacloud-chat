@@ -47,7 +47,7 @@ export function createAIModelConfig(
 		case "openrouter": {
 			const openRouter = createOpenRouter({
 				apiKey: apiKey || "",
-				baseURL: baseUrl || "https://api.openrouter.ai/v1",
+				baseURL: baseUrl || "https://openrouter.ai/api/v1",
 			});
 			return openRouter(modelName || "gpt-4-turbo");
 		}
@@ -116,4 +116,25 @@ export function detectAndCreateAIModel(config: {
 		}),
 		detectedProvider,
 	};
+}
+export function getDefaultUrlForProvider(providerType: ProviderType): string {
+	switch (providerType) {
+		case "openai":
+			return "https://api.openai.com/v1";
+		case "deepseek":
+			return "https://api.deepseek.com";
+		case "openrouter":
+			return "https://openrouter.ai/api/v1";
+		default:
+			return "";
+	}
+}
+
+export function isKnownDefaultUrl(url: string): boolean {
+	const knownUrls = [
+		"https://api.openai.com/v1",
+		"https://api.deepseek.com",
+		"https://openrouter.ai/api/v1",
+	];
+	return knownUrls.includes(url) || url === "";
 }

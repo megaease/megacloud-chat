@@ -18,6 +18,10 @@ import { useApiProvider } from "@/context/api-provider-context";
 import { toast } from "sonner";
 import { Loader2, Check } from "lucide-react";
 import type { ProviderType } from "@/lib/ai-providers";
+import {
+	getDefaultUrlForProvider,
+	isKnownDefaultUrl,
+} from "@/lib/ai-providers";
 import type { ApiProvider } from "@/types/api-provider";
 
 const providerSchema = z.object({
@@ -193,6 +197,7 @@ export function ProviderForm({
 					<SelectContent>
 						<SelectItem value="openai">OpenAI</SelectItem>
 						<SelectItem value="deepseek">DeepSeek</SelectItem>
+						<SelectItem value="openrouter">OpenRouter</SelectItem>
 						<SelectItem value="custom">Custom</SelectItem>
 					</SelectContent>
 				</Select>
@@ -263,22 +268,4 @@ export function ProviderForm({
 			</div>
 		</form>
 	);
-}
-
-// Utility functions
-function getDefaultUrlForProvider(providerType: ProviderType): string {
-	switch (providerType) {
-		case "openai":
-			return "https://api.openai.com/v1";
-		case "deepseek":
-			return "https://api.deepseek.com";
-
-		default:
-			return "";
-	}
-}
-
-function isKnownDefaultUrl(url: string): boolean {
-	const knownUrls = ["https://api.openai.com/v1", "https://api.deepseek.com"];
-	return knownUrls.includes(url) || url === "";
 }
