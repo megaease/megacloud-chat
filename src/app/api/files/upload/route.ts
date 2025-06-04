@@ -45,6 +45,7 @@ export async function POST(request: Request) {
 		try {
 			const data = await put(`${filename}`, fileBuffer, {
 				access: "public",
+				allowOverwrite: true,
 			});
 
 			return NextResponse.json(data);
