@@ -41,7 +41,7 @@ export function ChatItem({
 						"inline-block rounded-[var(--radius)] px-4 py-3 overflow-hidden text-left",
 						isUser
 							? "bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto"
-							: "bg-card text-card-foreground border border-border shadow-[var(--shadow-xs)] w-full",
+							: "bg-card text-card-foreground  w-full",
 					)}
 				>
 					{children}
