@@ -2,17 +2,16 @@
 
 import type React from "react";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	IconSettings,
 	IconChevronDown,
-	IconCheck,
-	IconBolt,
-	IconGlobe,
-	IconCpu,
 	IconSearch,
-	IconPin,
+	IconWorld,
+	IconCpu,
+	IconBolt,
+	IconCheck,
 } from "@tabler/icons-react";
 import {
 	CommandDialog,
@@ -22,10 +21,12 @@ import {
 	CommandItem,
 	CommandList,
 	CommandSeparator,
+	Command,
 } from "@/components/ui/command";
 import { useApiProvider } from "@/context/api-provider-context";
 import { cn } from "@/lib/utils";
 import { getProviderTypeInfo } from "./utils";
+import { CornerDownLeftIcon } from "lucide-react";
 
 interface UnifiedProviderModelSelectorProps {
 	className?: string;
@@ -46,6 +47,159 @@ export function UnifiedProviderModelSelector({
 	} = useApiProvider();
 
 	const [isOpen, setIsOpen] = useState(false);
+	const [selectedValue, setSelectedValue] = useState<string>("");
+	const [searchValue, setSearchValue] = useState<string>("");
+	const [resultsCount, setResultsCount] = useState<number>(0);
+
+	// Parse selected value to get display info
+	const getSelectedItemInfo = (value: string) => {
+		if (!value) return null;
+
+		// Provider selection
+		if (value.includes("provider:") && value.includes("-provider")) {
+			const match = value.match(/provider:(.+)-(.+)-provider/);
+			if (match) {
+				const providerName = match[1];
+				const category = match[2];
+				return {
+					type: "Provider",
+					name: providerName,
+					category: category,
+					icon: "🌐"
+				};
+			}
+		}
+
+		// Model selection
+		if (value.includes("model:") && value.includes("-model")) {
+			const match = value.match(/model:(.+)-model/);
+			if (match) {
+				const modelName = match[1];
+				return {
+					type: "Model",
+					name: modelName,
+					category: currentProvider?.name || "",
+					icon: "🤖"
+				};
+			}
+		}
+
+		// Quick access items
+		if (value.includes("quick-browse-show-all-providers")) {
+			return {
+				type: "Quick Access",
+				name: "Show All Providers",
+				category: "Browse",
+				icon: "🚀"
+			};
+		}
+
+		if (value.includes("quick-browse-show-all-models")) {
+			return {
+				type: "Quick Access",
+				name: "Show All Models",
+				category: "Browse",
+				icon: "🚀"
+			};
+		}
+
+		if (value.includes("quick-show-tips")) {
+			return {
+				type: "Quick Access",
+				name: "Show Usage Tips",
+				category: "Help",
+				icon: "💡"
+			};
+		}
+
+		// Tips sections
+		if (value.includes("tips:keyboard-shortcuts")) {
+			return {
+				type: "Usage Tips",
+				name: "Keyboard Shortcuts",
+				category: "Help",
+				icon: "⌨️"
+			};
+		}
+
+		if (value.includes("tips:search-patterns")) {
+			return {
+				type: "Usage Tips",
+				name: "Search Patterns",
+				category: "Help",
+				icon: "🔍"
+			};
+		}
+
+		if (value.includes("tips:workflow")) {
+			return {
+				type: "Usage Tips",
+				name: "Workflow Tips",
+				category: "Help",
+				icon: "💡"
+			};
+		}
+
+		// Actions
+		if (value.toLowerCase().includes("manage") || value.toLowerCase().includes("settings")) {
+			return {
+				type: "Action",
+				name: "Manage Providers",
+				category: "Settings",
+				icon: "⚙️"
+			};
+		}
+
+		// Fallback for any other items
+		if (value.length > 0) {
+			// Try to extract a meaningful name from the value
+			let displayName = value;
+			
+			// Remove common prefixes
+			displayName = displayName.replace(/^(provider:|model:|tips:|quick-)/, '');
+			displayName = displayName.replace(/-[a-z]+$/, ''); // Remove suffix like -provider, -model
+			
+			// Capitalize first letter and limit length
+			displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+			if (displayName.length > 25) {
+				displayName = displayName.substring(0, 25) + "...";
+			}
+
+			return {
+				type: "Item",
+				name: displayName,
+				category: "",
+				icon: "📄"
+			};
+		}
+
+		return null;
+	};
+
+	// Optimized keyboard shortcuts handler - defined before useEffect
+	const handleKeyboardShortcut = useCallback((inputValue: string) => {
+		const input = document.querySelector("[cmdk-input]") as HTMLInputElement;
+		if (!input) return;
+
+		const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+			window.HTMLInputElement.prototype,
+			"value",
+		)?.set;
+		
+		if (nativeInputValueSetter) {
+			nativeInputValueSetter.call(input, inputValue);
+			input.dispatchEvent(
+				new InputEvent("input", {
+					bubbles: true,
+					cancelable: true,
+					inputType: "insertText",
+					data: inputValue,
+					composed: true,
+				}),
+			);
+			input.dispatchEvent(new Event("change", { bubbles: true }));
+		}
+	}, []);
 
 	// Keyboard shortcut support
 	useEffect(() => {
@@ -63,26 +217,7 @@ export function UnifiedProviderModelSelector({
 					) as HTMLInputElement;
 					if (input && document.activeElement === input && input.value === "") {
 						e.preventDefault();
-						// Use a more comprehensive approach to trigger React's input handler
-						const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-							window.HTMLInputElement.prototype,
-							"value",
-						)?.set;
-						if (nativeInputValueSetter) {
-							nativeInputValueSetter.call(input, "provider:");
-							// Dispatch a more complete InputEvent with all necessary properties
-							input.dispatchEvent(
-								new InputEvent("input", {
-									bubbles: true,
-									cancelable: true,
-									inputType: "insertText",
-									data: "provider:",
-									composed: true,
-								}),
-							);
-							// Also trigger change event as backup
-							input.dispatchEvent(new Event("change", { bubbles: true }));
-						}
+						handleKeyboardShortcut("provider:");
 					}
 				}
 
@@ -97,26 +232,7 @@ export function UnifiedProviderModelSelector({
 						currentProvider?.availableModels?.length
 					) {
 						e.preventDefault();
-						// Use a more comprehensive approach to trigger React's input handler
-						const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-							window.HTMLInputElement.prototype,
-							"value",
-						)?.set;
-						if (nativeInputValueSetter) {
-							nativeInputValueSetter.call(input, "model:");
-							// Dispatch a more complete InputEvent with all necessary properties
-							input.dispatchEvent(
-								new InputEvent("input", {
-									bubbles: true,
-									cancelable: true,
-									inputType: "insertText",
-									data: "model:",
-									composed: true,
-								}),
-							);
-							// Also trigger change event as backup
-							input.dispatchEvent(new Event("change", { bubbles: true }));
-						}
+						handleKeyboardShortcut("model:");
 					}
 				}
 
@@ -126,33 +242,14 @@ export function UnifiedProviderModelSelector({
 					) as HTMLInputElement;
 					if (input && document.activeElement === input && input.value === "") {
 						e.preventDefault();
-						// Use a more comprehensive approach to trigger React's input handler
-						const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-							window.HTMLInputElement.prototype,
-							"value",
-						)?.set;
-						if (nativeInputValueSetter) {
-							nativeInputValueSetter.call(input, "tips:");
-							// Dispatch a more complete InputEvent with all necessary properties
-							input.dispatchEvent(
-								new InputEvent("input", {
-									bubbles: true,
-									cancelable: true,
-									inputType: "insertText",
-									data: "tips:",
-									composed: true,
-								}),
-							);
-							// Also trigger change event as backup
-							input.dispatchEvent(new Event("change", { bubbles: true }));
-						}
+						handleKeyboardShortcut("tips:");
 					}
 				}
 			}
 		};
 		document.addEventListener("keydown", down);
 		return () => document.removeEventListener("keydown", down);
-	}, [isOpen, currentProvider?.availableModels?.length]);
+	}, [isOpen, currentProvider?.availableModels?.length, handleKeyboardShortcut]);
 
 	// Group providers by type for better browsing
 	const providersByType = useMemo(() => {
@@ -174,6 +271,40 @@ export function UnifiedProviderModelSelector({
 
 		return grouped;
 	}, [providers, currentProvider?.id]);
+
+	// Track search results count for footer display
+	const searchResultsCount = useMemo(() => {
+		if (!searchValue.trim()) return 0;
+		
+		// Count potential matches
+		let count = 0;
+		
+		// Quick access items
+		if ("provider:".includes(searchValue.toLowerCase()) || "providers".includes(searchValue.toLowerCase())) count++;
+		if ("model:".includes(searchValue.toLowerCase()) || "models".includes(searchValue.toLowerCase())) count++;
+		if ("tips:".includes(searchValue.toLowerCase()) || "tips".includes(searchValue.toLowerCase())) count++;
+		
+		// Current provider's models
+		if (currentProvider?.availableModels) {
+			count += currentProvider.availableModels.filter(model => 
+				model.toLowerCase().includes(searchValue.toLowerCase())
+			).length;
+		}
+		
+		// Other providers
+		count += providers.filter(provider => 
+			provider.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+			provider.providerType.toLowerCase().includes(searchValue.toLowerCase())
+		).length;
+		
+		return count;
+	}, [searchValue, providers, currentProvider]);
+
+	// Optimized input handler with debouncing
+	const handleSearchChange = useCallback((value: string) => {
+		setSearchValue(value);
+		setResultsCount(searchResultsCount);
+	}, [searchResultsCount]);
 
 	// If no current provider, show settings button
 	if (!currentProvider) {
@@ -225,9 +356,14 @@ export function UnifiedProviderModelSelector({
 				</div>
 			</Button>
 
-			<CommandDialog open={isOpen} onOpenChange={setIsOpen}>
-				<CommandInput placeholder="Search providers & models..." autoFocus />
-				<CommandList>
+			<CommandDialog open={isOpen} onOpenChange={setIsOpen} className="pb-11">
+				<Command value={selectedValue} onValueChange={setSelectedValue}>
+					<CommandInput 
+						placeholder="Search providers & models..." 
+						autoFocus 
+						onValueChange={handleSearchChange}
+					/>
+					<CommandList>
 					<CommandEmpty>
 						<div className="flex flex-col items-center gap-3 py-8 text-center">
 							<IconSearch className="h-10 w-10 text-muted-foreground" />
@@ -309,7 +445,7 @@ export function UnifiedProviderModelSelector({
 							}}
 							className="flex items-center gap-2"
 						>
-							<IconGlobe className="h-4 w-4 text-blue-500" />
+							<IconWorld className="h-4 w-4 text-blue-500" />
 							<div className="flex flex-col flex-1">
 								<span>Show All Providers</span>
 								<span className="text-xs text-muted-foreground">
@@ -592,7 +728,7 @@ export function UnifiedProviderModelSelector({
 						>
 							<div className="w-full">
 								<div className="flex items-center gap-2 mb-2">
-									<IconGlobe className="h-4 w-4 text-green-500" />
+									<IconWorld className="h-4 w-4 text-green-500" />
 									<h4 className="font-medium text-sm">Workflow Tips</h4>
 								</div>
 								<div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground">
@@ -631,7 +767,147 @@ export function UnifiedProviderModelSelector({
 						</CommandItem>
 					</CommandGroup>
 				</CommandList>
+				{/* Enhanced Footer with better accessibility and functionality */}
+				<footer 
+					className="text-muted-foreground absolute inset-x-0 bottom-0 z-20 flex h-12 items-center justify-between rounded-b-xl border-t border-t-neutral-100 bg-neutral-50/95 backdrop-blur-sm px-4 text-xs font-medium dark:border-t-neutral-700 dark:bg-neutral-800/95"
+					role="status"
+					aria-label="Command palette status and shortcuts"
+				>
+					{/* Left side - Current selection or search status */}
+					<div className="flex items-center gap-2 min-w-0 flex-1" role="status" aria-live="polite">
+						{(() => {
+							// Show search status if actively searching
+							if (searchValue && searchValue.trim()) {
+								const resultText = searchResultsCount > 0 
+									? `${searchResultsCount} results` 
+									: "No results";
+								return (
+									<>
+										<span className="text-[10px]" aria-hidden="true">🔍</span>
+										<span className="text-[10px] text-blue-500">Search:</span>
+										<span className="truncate font-medium text-foreground text-[11px] sm:text-xs">
+											{searchValue}
+										</span>
+										<span className="text-[10px] text-muted-foreground/70 hidden md:inline">
+											({resultText})
+										</span>
+									</>
+								);
+							}
+
+							// Show selected item info
+							const selectedInfo = getSelectedItemInfo(selectedValue);
+							if (selectedInfo) {
+								return (
+									<>
+										<div className="flex items-center gap-1 shrink-0">
+											<span className="text-[10px]" aria-hidden="true">{selectedInfo.icon}</span>
+											<span className="text-[10px] text-muted-foreground/80 hidden sm:inline">
+												{selectedInfo.type}
+											</span>
+										</div>
+										<span className="text-muted-foreground/60 hidden sm:inline" aria-hidden="true">→</span>
+										<div className="flex items-center gap-1 min-w-0 flex-1">
+											<span className="truncate font-medium text-foreground text-[11px] sm:text-xs">
+												{selectedInfo.name}
+											</span>
+											{selectedInfo.category && (
+												<span className="text-[10px] text-muted-foreground/60 hidden lg:inline shrink-0">
+													({selectedInfo.category})
+												</span>
+											)}
+										</div>
+										<div className="flex items-center gap-1 shrink-0 ml-2">
+											<CommandMenuKbd className="h-4 text-[10px]" aria-label="Press Enter to select">
+												<CornerDownLeftIcon className="h-3 w-3" />
+											</CommandMenuKbd>
+											<span className="text-[10px] hidden sm:inline">Select</span>
+										</div>
+									</>
+								);
+							}
+
+							// Default state - show basic info
+							const totalProviders = providers.length;
+							const totalModels = currentProvider?.availableModels?.length || 0;
+							return (
+								<div className="flex items-center gap-2">
+									<span className="text-[10px]" aria-hidden="true">📊</span>
+									<span className="text-[10px] text-muted-foreground">
+										{totalProviders} providers, {totalModels} models
+									</span>
+									<span className="text-muted-foreground/60 hidden sm:inline" aria-hidden="true">•</span>
+									<CommandMenuKbd className="hidden sm:inline-flex h-4 text-[10px]" aria-label="Press Enter to select">
+										<CornerDownLeftIcon className="h-3 w-3" />
+									</CommandMenuKbd>
+									<span className="hidden sm:inline text-[10px]">Select</span>
+								</div>
+							);
+						})()}
+					</div>
+
+					{/* Center - Quick shortcuts (only when not searching/selecting) */}
+					{!searchValue && !getSelectedItemInfo(selectedValue) && (
+						<nav className="hidden md:flex" role="navigation" aria-label="Keyboard shortcuts">
+							{/* Extra large screens - full labels */}
+							<div className="hidden xl:flex items-center gap-4">
+								<div className="flex items-center gap-1 hover:text-foreground transition-colors cursor-help" title="Press P to filter providers">
+									<CommandMenuKbd className="h-4 text-[10px]" aria-label="Press P for providers">P</CommandMenuKbd>
+									<span className="text-[10px]">Providers</span>
+								</div>
+								<div className="flex items-center gap-1 hover:text-foreground transition-colors cursor-help" title="Press M to filter models">
+									<CommandMenuKbd className="h-4 text-[10px]" aria-label="Press M for models">M</CommandMenuKbd>
+									<span className="text-[10px]">Models</span>
+									{currentProvider?.availableModels?.length ? (
+										<span className="text-green-500 ml-1 text-[8px]" aria-hidden="true">•</span>
+									) : null}
+								</div>
+								<div className="flex items-center gap-1 hover:text-foreground transition-colors cursor-help" title="Press T to show tips">
+									<CommandMenuKbd className="h-4 text-[10px]" aria-label="Press T for tips">T</CommandMenuKbd>
+									<span className="text-[10px]">Tips</span>
+								</div>
+							</div>
+
+							{/* Large screens - compact version */}
+							<div className="hidden lg:flex xl:hidden items-center gap-2">
+								<CommandMenuKbd className="h-4 text-[10px]" aria-label="Press P for providers" title="Press P to filter providers">P</CommandMenuKbd>
+								<CommandMenuKbd className="h-4 text-[10px]" aria-label="Press M for models" title="Press M to filter models">M</CommandMenuKbd>
+								<CommandMenuKbd className="h-4 text-[10px]" aria-label="Press T for tips" title="Press T to show tips">T</CommandMenuKbd>
+							</div>
+
+							{/* Medium screens - ultra compact */}
+							<div className="hidden md:flex lg:hidden items-center gap-1">
+								<CommandMenuKbd className="text-[10px] h-4 px-1" aria-label="Press P, M, or T for shortcuts" title="Press P (providers), M (models), or T (tips)">PMT</CommandMenuKbd>
+							</div>
+						</nav>
+					)}
+
+					{/* Right side - Navigation hints */}
+					<nav className="flex items-center gap-2 shrink-0" role="navigation" aria-label="Navigation shortcuts">
+						<div className="hidden sm:flex items-center gap-1">
+							<CommandMenuKbd className="h-4 text-[10px]" aria-label="Use arrow keys to navigate" title="Use arrow keys to navigate">↑↓</CommandMenuKbd>
+							<span className="hidden lg:inline text-[10px]">Navigate</span>
+						</div>
+						<div className="flex items-center gap-1">
+							<CommandMenuKbd className="h-4 text-[10px]" aria-label="Press Escape to close" title="Press Escape to close">ESC</CommandMenuKbd>
+							<span className="hidden md:inline text-[10px]">Close</span>
+						</div>
+					</nav>
+				</footer>
+				</Command>
 			</CommandDialog>
 		</>
 	);
+}
+
+function CommandMenuKbd({ className, ...props }: React.ComponentProps<"kbd">) {
+  return (
+    <kbd
+      className={cn(
+        "bg-background text-muted-foreground pointer-events-none flex h-5 items-center justify-center gap-1 rounded border px-1 font-sans text-[0.7rem] font-medium select-none [&_svg:not([class*='size-'])]:size-3",
+        className
+      )}
+      {...props}
+    />
+  )
 }

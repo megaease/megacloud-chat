@@ -6,7 +6,7 @@ import {
 	IconMoon,
 	IconSun,
 	IconBrandGithub,
-	IconChevronsDown,
+	IconDotsVertical,
 } from "@tabler/icons-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -61,7 +61,7 @@ export function NavUser({
 								<span className="truncate font-semibold">{user.name}</span>
 								<span className="truncate text-xs">{user.email}</span>
 							</div>
-							<IconChevronsDown className="ml-auto size-4" />
+							<IconDotsVertical className="ml-auto size-4" />
 						</SidebarMenuButton>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
