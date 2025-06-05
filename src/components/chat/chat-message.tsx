@@ -28,7 +28,7 @@ import {
 	Download,
 	Loader,
 } from "lucide-react";
-import { DotLoader } from "@/components/ui/dot-loader";
+import { Spinner } from "../spinner";
 import { Markdown } from "../markdown";
 import { CopyButton } from "../copy-button";
 import type {
@@ -43,9 +43,8 @@ import { ChatItem } from "./chat-item";
 import { ReasoningPart } from "./reasoning-part";
 import { ToolInvocationPart } from "./tool-invocation-part";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
 import { is } from "drizzle-orm";
-import { Spinner } from "../spinner";
 
 interface ChatMessageProps {
 	message: Message | UIMessage;
@@ -57,6 +56,9 @@ function renderMessagePart(
 	part: MessagePart,
 	key: string | number,
 	isLoading: boolean,
+	setPreviewAttachment: (
+		attachment: { url: string; type: string; name?: string } | null,
+	) => void,
 ) {
 	// If it's a string or no type specified
 	if (!part || typeof part === "string") {
@@ -76,13 +78,23 @@ function renderMessagePart(
 		case "image":
 			return (
 				<div key={key} className="my-2">
-					<div className="relative border rounded-md overflow-hidden">
+					<button
+						type="button"
+						className="relative border rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+						onClick={() =>
+							setPreviewAttachment({
+								url: part.src,
+								type: "image",
+								name: part.alt || "图片",
+							})
+						}
+					>
 						<img
 							src={part.src}
 							alt={part.alt || "Image"}
 							className="object-cover object-center overflow-hidden rounded-md h-full max-h-96 max-w-64 w-fit transition-opacity duration-300 opacity-100"
 						/>
-					</div>
+					</button>
 				</div>
 			);
 		case "pdf":
@@ -136,6 +148,7 @@ export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 					convertedPart,
 					`message-part-${index}`,
 					isLoading,
+					setPreviewAttachment,
 				);
 			});
 
@@ -162,9 +175,18 @@ export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 
 					if (attachment.contentType?.startsWith("image/")) {
 						return (
-							<div
+							<button
 								key={uniqueKey}
-								className="border rounded-md overflow-hidden group relative"
+								type="button"
+								className="border rounded-md overflow-hidden group relative cursor-pointer hover:opacity-90 transition-opacity"
+								onClick={() =>
+									setPreviewAttachment({
+										url: attachment.url,
+										type: attachment.contentType || "",
+										name: attachment.name || "图片附件",
+									})
+								}
+								aria-label={`预览图片：${attachment.name || "图片附件"}`}
 							>
 								<div className="relative w-full h-full">
 									<img
@@ -178,7 +200,7 @@ export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 										{attachment.name}
 									</div>
 								)}
-							</div>
+							</button>
 						);
 					}
 
@@ -253,57 +275,14 @@ export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 				<div>{content}</div>
 			</ChatItem>
 
-			<Dialog
-				open={!!previewAttachment}
-				onOpenChange={(open) => !open && setPreviewAttachment(null)}
-			>
-				<DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-1">
-					<div className="flex justify-between items-center p-2 border-b">
-						<div className="text-sm font-medium truncate max-w-[80%]">
-							{previewAttachment?.name || "Preview"}
-						</div>
-						<div className="flex gap-2">
-							<a
-								href={previewAttachment?.url}
-								download={previewAttachment?.name}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="hover:bg-muted rounded-full p-2 inline-flex items-center justify-center"
-								title="Download"
-								aria-label="Download"
-							>
-								<Download className="h-4 w-4" />
-							</a>
-							<DialogClose asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="rounded-full h-8 w-8"
-								>
-									<XCircle className="h-5 w-5" />
-								</Button>
-							</DialogClose>
-						</div>
-					</div>
-					<div className="flex-1 overflow-auto p-1 min-h-0">
-						{previewAttachment?.type?.startsWith("image/") ? (
-							<div className="h-full w-full flex items-center justify-center">
-								<img
-									src={previewAttachment.url}
-									alt={previewAttachment.name || "Preview"}
-									className="max-h-full max-w-full object-contain"
-								/>
-							</div>
-						) : previewAttachment?.type === "application/pdf" ? (
-							<iframe
-								src={previewAttachment.url}
-								title={previewAttachment.name || "Preview"}
-								className="w-full h-full border-0"
-							/>
-						) : null}
-					</div>
-				</DialogContent>
-			</Dialog>
+			<ImagePreviewDialog
+				isOpen={
+					!!previewAttachment && previewAttachment.type.startsWith("image/")
+				}
+				onClose={() => setPreviewAttachment(null)}
+				imageUrl={previewAttachment?.url || ""}
+				imageName={previewAttachment?.name}
+			/>
 		</>
 	) : null;
 }

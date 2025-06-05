@@ -2,7 +2,18 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, Square, Paperclip, X } from "lucide-react";
+import {
+	Loader2,
+	Send,
+	Square,
+	Paperclip,
+	X,
+	FileText,
+	Image,
+	Film,
+	Music,
+	File,
+} from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -11,6 +22,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
 
 interface ChatInputProps {
 	input: string;
@@ -43,7 +55,32 @@ export function ChatInput({
 	const [uploadedFiles, setUploadedFiles] = useState<
 		Array<{ name: string; url: string; contentType: string }>
 	>([]);
-	const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+	const [uploadingFiles, setUploadingFiles] = useState<
+		Map<string, { name: string; contentType: string; previewUrl?: string }>
+	>(new Map());
+	const [previewImage, setPreviewImage] = useState<{
+		url: string;
+		name: string;
+	} | null>(null);
+
+	// 获取文件类型图标
+	const getFileTypeIcon = (contentType: string) => {
+		if (contentType.startsWith("image/")) {
+			return <Image className="h-4 w-4" />;
+		}
+		if (
+			contentType.includes("text/") ||
+			contentType.includes("application/pdf")
+		) {
+			return <FileText className="h-4 w-4" />;
+		}
+		return <File className="h-4 w-4" />;
+	};
+
+	// 判断是否为图片文件
+	const isImageFile = (contentType: string) => {
+		return contentType.startsWith("image/");
+	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 		if (e.key === "Enter" && !e.shiftKey) {
@@ -71,12 +108,23 @@ export function ChatInput({
 
 	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
-			const selectedFiles = Array.from(e.target.files);
-
-			// 立即上传文件
+			const selectedFiles = Array.from(e.target.files); // 立即上传文件
 			for (const file of selectedFiles) {
 				const fileName = file.name;
-				setUploadingFiles((prev) => new Set([...prev, fileName]));
+				const previewUrl = file.type.startsWith("image/")
+					? URL.createObjectURL(file)
+					: undefined;
+
+				setUploadingFiles(
+					(prev) =>
+						new Map([
+							...prev,
+							[
+								fileName,
+								{ name: fileName, contentType: file.type, previewUrl },
+							],
+						]),
+				);
 
 				try {
 					const formData = new FormData();
@@ -106,9 +154,13 @@ export function ChatInput({
 					console.error("Upload failed:", error);
 				} finally {
 					setUploadingFiles((prev) => {
-						const newSet = new Set(prev);
-						newSet.delete(fileName);
-						return newSet;
+						const newMap = new Map(prev);
+						const fileInfo = newMap.get(fileName);
+						if (fileInfo?.previewUrl) {
+							URL.revokeObjectURL(fileInfo.previewUrl);
+						}
+						newMap.delete(fileName);
+						return newMap;
 					});
 				}
 			}
@@ -154,16 +206,36 @@ export function ChatInput({
 						aria-label="Upload files"
 						title="Upload files"
 					/>
-					{(uploadedFiles.length > 0 || uploadingFiles.size > 0) && (
+					{uploadedFiles.length > 0 || uploadingFiles.size > 0 ? (
 						<div className="px-4 py-2 flex flex-wrap gap-2 border-t border-border/50">
 							{/* 显示正在上传的文件 */}
-							{Array.from(uploadingFiles).map((fileName) => (
+							{Array.from(uploadingFiles).map(([fileName, fileInfo]) => (
 								<div
 									key={`uploading-${fileName}`}
-									className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+									className={`relative group ${
+										isImageFile(fileInfo.contentType)
+											? "rounded-lg overflow-hidden"
+											: "flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+									}`}
 								>
-									<Loader2 className="h-3 w-3 animate-spin" />
-									<span className="truncate max-w-32">{fileName}</span>
+									{isImageFile(fileInfo.contentType) && fileInfo.previewUrl ? (
+										<div className="relative">
+											<img
+												src={fileInfo.previewUrl}
+												alt={fileInfo.name}
+												className="h-20 w-20 rounded-lg object-cover"
+											/>
+											<div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+												<Loader2 className="h-6 w-6 animate-spin text-white" />
+											</div>
+										</div>
+									) : (
+										<>
+											{getFileTypeIcon(fileInfo.contentType)}
+											<Loader2 className="h-3 w-3 animate-spin" />
+											<span className="truncate max-w-32">{fileInfo.name}</span>
+										</>
+									)}
 								</div>
 							))}
 
@@ -171,26 +243,70 @@ export function ChatInput({
 							{uploadedFiles.map((file) => (
 								<div
 									key={file.url}
-									className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+									className={`relative group ${
+										isImageFile(file.contentType)
+											? "rounded-lg overflow-hidden"
+											: "flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+									}`}
 								>
-									<span className="truncate max-w-32">{file.name}</span>
-									<Button
-										type="button"
-										size="icon"
-										variant="ghost"
-										className="h-4 w-4 p-0 hover:bg-destructive/10 hover:text-destructive"
-										onClick={() => {
-											setUploadedFiles((prev) =>
-												prev.filter((f) => f.url !== file.url),
-											);
-										}}
-									>
-										<X className="h-3 w-3" />
-									</Button>
+									{isImageFile(file.contentType) ? (
+										<>
+											<div
+												className="cursor-pointer"
+												onClick={() => {
+													setPreviewImage({ url: file.url, name: file.name });
+												}}
+												onKeyDown={(e) => {
+													if (e.key === "Enter" || e.key === " ") {
+														e.preventDefault();
+														setPreviewImage({ url: file.url, name: file.name });
+													}
+												}}
+												aria-label={`Open ${file.name}`}
+											>
+												<img
+													src={file.url}
+													alt={file.name}
+													className="h-20 w-20 rounded-lg object-cover hover:opacity-80 transition-opacity"
+												/>
+											</div>
+											<Button
+												type="button"
+												size="icon"
+												variant="ghost"
+												className="absolute top-1 right-1 h-5 w-5 p-0 rounded-full  shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/80 hover:bg-white/90"
+												onClick={() => {
+													setUploadedFiles((prev) =>
+														prev.filter((f) => f.url !== file.url),
+													);
+												}}
+											>
+												<X className="h-3 w-3" />
+											</Button>
+										</>
+									) : (
+										<>
+											{getFileTypeIcon(file.contentType)}
+											<span className="truncate max-w-32">{file.name}</span>
+											<Button
+												type="button"
+												size="icon"
+												variant="ghost"
+												className="h-4 w-4 p-0"
+												onClick={() => {
+													setUploadedFiles((prev) =>
+														prev.filter((f) => f.url !== file.url),
+													);
+												}}
+											>
+												<X className="h-3 w-3" />
+											</Button>
+										</>
+									)}
 								</div>
 							))}
 						</div>
-					)}
+					) : null}
 					<Textarea
 						ref={inputRef}
 						value={input}
@@ -292,6 +408,15 @@ export function ChatInput({
 					</div>
 				</div>
 			</form>
+
+			{/* 图片预览对话框 */}
+			<ImagePreviewDialog
+				isOpen={!!previewImage}
+				onClose={() => setPreviewImage(null)}
+				imageUrl={previewImage?.url || ""}
+				imageName={previewImage?.name}
+				variant="simple"
+			/>
 		</div>
 	);
 }
