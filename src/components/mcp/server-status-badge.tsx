@@ -1,4 +1,4 @@
-import { Circle } from "lucide-react";
+import { IconCircle } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { type ServerStatus, ServerStatusEnum } from "@/server/db/schema";
 
@@ -40,7 +40,7 @@ export function ServerStatusBadge({
 
 	return (
 		<div className={cn("flex items-center gap-1.5", className)}>
-			<Circle className={cn("h-3 w-3 fill-current", config.color)} />
+			<IconCircle className={cn("h-3 w-3 fill-current", config.color)} />
 			{showLabel && <span className="text-sm font-medium">{config.label}</span>}
 		</div>
 	);

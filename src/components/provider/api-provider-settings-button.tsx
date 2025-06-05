@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+import { IconSettings } from "@tabler/icons-react";
 import { useApiProvider } from "@/context/api-provider-context";
 
 export function ApiProviderSettingsButton() {
@@ -14,7 +14,7 @@ export function ApiProviderSettingsButton() {
 			size={"icon"}
 			className="ml-auto"
 		>
-			<Settings className="h-4 w-4" />
+			<IconSettings className="h-4 w-4" />
 		</Button>
 	);
 }

@@ -25,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Server } from "lucide-react";
+import { IconLoader2, IconServer } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { KeyValueEditor } from "./key-value-editor";
 import { updateMcpServer, getMcpServerById } from "@/lib/mcp-server-action";
@@ -167,7 +167,7 @@ export function EditServerDialog({
 					<DialogDescription asChild>
 						{isLoading ? (
 							<div className="flex items-center justify-center py-8">
-								<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+								<IconLoader2 className="h-8 w-8 animate-spin text-muted-foreground" />
 								<span className="ml-2 text-muted-foreground">Loading...</span>
 							</div>
 						) : !server ? (
@@ -202,11 +202,11 @@ export function EditServerDialog({
 										>
 											<TabsList className="grid w-full grid-cols-2">
 												<TabsTrigger value={TypeEnum.SSE}>
-													<Server className="mr-2 h-4 w-4" />
+													<IconServer className="mr-2 h-4 w-4" />
 													SSE
 												</TabsTrigger>
 												<TabsTrigger value={TypeEnum.STDIO}>
-													<Server className="mr-2 h-4 w-4" />
+													<IconServer className="mr-2 h-4 w-4" />
 													STDIO
 												</TabsTrigger>
 											</TabsList>
@@ -425,7 +425,7 @@ export function EditServerDialog({
 										<Button type="submit" disabled={isSubmitting}>
 											{isSubmitting ? (
 												<>
-													<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+													<IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
 													Updating...
 												</>
 											) : (

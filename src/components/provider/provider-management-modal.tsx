@@ -34,24 +34,24 @@ import { useApiProvider } from "@/context/api-provider-context";
 import { toast } from "sonner";
 import type { ApiProvider } from "@/types/api-provider";
 import {
-	Check,
-	Edit,
-	MoreVertical,
-	Star,
-	Trash,
-	RefreshCw,
-	Search,
-	Plus,
-	Zap,
-	Globe,
-	Cpu,
-	Shield,
-	AlertCircle,
-	CheckCircle2,
-	Clock,
-	Settings,
-	Copy,
-} from "lucide-react";
+	IconCheck,
+	IconEdit,
+	IconDots,
+	IconStar,
+	IconTrash,
+	IconRefresh,
+	IconSearch,
+	IconPlus,
+	IconBolt,
+	IconGlobe,
+	IconCpu,
+	IconShield,
+	IconAlertCircle,
+	IconCircleCheck,
+	IconClock,
+	IconSettings,
+	IconCopy,
+} from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { ProviderForm } from "@/components/provider/provider-form";
 import { useQueryClient } from "@tanstack/react-query";
@@ -174,7 +174,7 @@ export function ProviderManagementModal() {
 				status: "untested",
 				label: "Not tested",
 				color: "text-muted-foreground",
-				icon: Clock,
+				icon: IconClock,
 			};
 		}
 		if (provider.lastTestSuccess) {
@@ -182,14 +182,14 @@ export function ProviderManagementModal() {
 				status: "success",
 				label: "Connected",
 				color: "text-green-600",
-				icon: CheckCircle2,
+				icon: IconCircleCheck,
 			};
 		}
 		return {
 			status: "failed",
 			label: "Connection failed",
 			color: "text-red-600",
-			icon: AlertCircle,
+			icon: IconAlertCircle,
 		};
 	};
 
@@ -202,7 +202,7 @@ export function ProviderManagementModal() {
 					</DialogHeader>
 					<div className="flex items-center justify-center h-64">
 						<div className="flex items-center gap-2 text-muted-foreground">
-							<RefreshCw className="h-4 w-4 animate-spin" />
+							<IconRefresh className="h-4 w-4 animate-spin" />
 							<span>Loading...</span>
 						</div>
 					</div>
@@ -235,7 +235,7 @@ export function ProviderManagementModal() {
 
 					<div className="px-6 flex gap-2 items-center">
 						<div className="relative flex-1">
-							<Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+							<IconSearch className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
 							<Input
 								placeholder="Search provider name or type..."
 								className="pl-9"
@@ -251,7 +251,7 @@ export function ProviderManagementModal() {
 							size="sm"
 							className="gap-2"
 						>
-							<Plus />
+							<IconPlus />
 							Add Provider
 						</Button>
 					</div>
@@ -260,7 +260,7 @@ export function ProviderManagementModal() {
 						{filteredProviders.length === 0 ? (
 							<div className="flex flex-col items-center justify-center py-12">
 								<div className="rounded-full bg-muted p-3 mb-4">
-									<Settings className="h-8 w-8 text-muted-foreground" />
+									<IconSettings className="h-8 w-8 text-muted-foreground" />
 								</div>
 								<h3 className="text-lg font-medium mb-2">
 									{providers.length === 0
@@ -279,7 +279,7 @@ export function ProviderManagementModal() {
 									variant="outline"
 									className="gap-2"
 								>
-									<Plus className="h-4 w-4" />
+									<IconPlus className="h-4 w-4" />
 									Add Provider
 								</Button>
 							</div>
@@ -321,13 +321,13 @@ export function ProviderManagementModal() {
 														<div className="flex items-center gap-2">
 															{provider.isDefault && (
 																<Badge variant="secondary" className="gap-1">
-																	<Star className="h-3 w-3" />
+																	<IconStar className="h-3 w-3" />
 																	Default
 																</Badge>
 															)}
 															{isCurrentProvider && (
 																<Badge variant="default" className="gap-1">
-																	<Check className="h-3 w-3" />
+																	<IconCheck className="h-3 w-3" />
 																	In use
 																</Badge>
 															)}
@@ -355,7 +355,7 @@ export function ProviderManagementModal() {
 																		handleCopyApiKey(provider.apiKey)
 																	}
 																>
-																	<Copy className="h-3 w-3" />
+																	<IconCopy className="h-3 w-3" />
 																</Button>
 															</div>
 														</div>
@@ -412,7 +412,7 @@ export function ProviderManagementModal() {
 															size="sm"
 															className="h-8 w-8 p-0"
 														>
-															<MoreVertical className="h-4 w-4" />
+															<IconDots className="h-4 w-4" />
 														</Button>
 													</DropdownMenuTrigger>
 													<DropdownMenuContent align="end" className="w-48">
@@ -420,14 +420,14 @@ export function ProviderManagementModal() {
 															onClick={() => handleSwitchProvider(provider.id)}
 															disabled={isCurrentProvider}
 														>
-															<Check className="mr-2 h-4 w-4" />
+															<IconCheck className="mr-2 h-4 w-4" />
 															Use this provider
 														</DropdownMenuItem>
 														<DropdownMenuItem
 															onClick={() => handleSetDefault(provider.id)}
 															disabled={provider.isDefault}
 														>
-															<Star className="mr-2 h-4 w-4" />
+															<IconStar className="mr-2 h-4 w-4" />
 															Set as default
 														</DropdownMenuItem>
 														<DropdownMenuSeparator />
@@ -435,7 +435,7 @@ export function ProviderManagementModal() {
 															onClick={() => handleTestConnection(provider)}
 															disabled={isTesting}
 														>
-															<RefreshCw
+															<IconRefresh
 																className={cn(
 																	"mr-2 h-4 w-4",
 																	isTesting && "animate-spin",
@@ -449,7 +449,7 @@ export function ProviderManagementModal() {
 																setIsFormOpen(true);
 															}}
 														>
-															<Edit className="mr-2 h-4 w-4" />
+															<IconEdit className="mr-2 h-4 w-4" />
 															Edit configuration
 														</DropdownMenuItem>
 														<DropdownMenuSeparator />
@@ -459,7 +459,7 @@ export function ProviderManagementModal() {
 															}
 															className="text-destructive focus:text-destructive"
 														>
-															<Trash className="mr-2 h-4 w-4" />
+															<IconTrash className="mr-2 h-4 w-4" />
 															Delete provider
 														</DropdownMenuItem>
 													</DropdownMenuContent>
@@ -491,7 +491,7 @@ export function ProviderManagementModal() {
 				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle className="flex items-center gap-2">
-							<AlertCircle className="h-5 w-5 text-destructive" />
+							<IconAlertCircle className="h-5 w-5 text-destructive" />
 							Confirm provider deletion
 						</AlertDialogTitle>
 						<AlertDialogDescription>

@@ -11,23 +11,10 @@ import {
 	AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-	Code,
-	Terminal,
-	Database,
-	Clock,
-	CheckCircle2,
-	AlertCircle,
-	File,
-	AudioWaveform,
-	Loader2,
-	FileType,
-	Image as ImageIcon,
-	FileText,
-	ZoomIn,
-	XCircle,
-	Download,
-	Loader,
-} from "lucide-react";
+	IconFileText,
+	IconDownload,
+	IconFileTypography,
+} from "@tabler/icons-react";
 import { Spinner } from "../spinner";
 import { Markdown } from "../markdown";
 import { CopyButton } from "../copy-button";
@@ -113,7 +100,7 @@ function renderMessagePart(
 			return (
 				<div key={key} className="my-2">
 					<div className="flex items-center gap-2 p-3 rounded-md bg-muted/40 mb-2">
-						<FileText size={20} className="text-primary" />
+						<IconFileText size={20} className="text-primary" />
 						<div className="flex-1 truncate">
 							{part.name && <p className="font-medium text-sm">{part.name}</p>}
 						</div>
@@ -232,7 +219,7 @@ export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 							key={uniqueKey}
 							className="flex items-center gap-2 p-3 rounded-md bg-muted/40"
 						>
-							<FileType size={20} className="text-primary" />
+							<IconFileTypography size={20} className="text-primary" />
 							<div className="flex-1 truncate">
 								<p className="font-medium text-sm">
 									{attachment.name || "File attachment"}
@@ -250,7 +237,7 @@ export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 								title={`下载${attachment.name || "文件"}`}
 								aria-label={`下载${attachment.name || "文件"}`}
 							>
-								<Download className="h-4 w-4" />
+								<IconDownload className="h-4 w-4" />
 							</a>
 						</div>
 					);

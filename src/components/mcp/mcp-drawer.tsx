@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Server, Plus } from "lucide-react";
+import { IconServer, IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
 	Sheet,
@@ -40,7 +40,7 @@ export function MCPDrawer({ children, trigger }: MCPDrawerProps) {
 					<SheetHeader className="px-6 py-4 border-b">
 						<div className="flex items-center justify-between">
 							<SheetTitle className="flex items-center">
-								<Server className="mr-2 h-5 w-5" />
+								<IconServer className="mr-2 h-5 w-5" />
 								MCP Servers
 							</SheetTitle>
 						</div>

@@ -3,17 +3,17 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-	Loader2,
-	Send,
-	Square,
-	Paperclip,
-	X,
-	FileText,
-	Image,
-	Film,
-	Music,
-	File,
-} from "lucide-react";
+	IconLoader2,
+	IconSend,
+	IconSquare,
+	IconPaperclip,
+	IconX,
+	IconFileText,
+	IconPhoto,
+	IconVideo,
+	IconMusic,
+	IconFile,
+} from "@tabler/icons-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -66,15 +66,15 @@ export function ChatInput({
 	// 获取文件类型图标
 	const getFileTypeIcon = (contentType: string) => {
 		if (contentType.startsWith("image/")) {
-			return <Image className="h-4 w-4" />;
+			return <IconPhoto className="h-4 w-4" />;
 		}
 		if (
 			contentType.includes("text/") ||
 			contentType.includes("application/pdf")
 		) {
-			return <FileText className="h-4 w-4" />;
+			return <IconFileText className="h-4 w-4" />;
 		}
-		return <File className="h-4 w-4" />;
+		return <IconFile className="h-4 w-4" />;
 	};
 
 	// 判断是否为图片文件
@@ -226,13 +226,13 @@ export function ChatInput({
 												className="h-20 w-20 rounded-lg object-cover"
 											/>
 											<div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
-												<Loader2 className="h-6 w-6 animate-spin text-white" />
+												<IconLoader2 className="h-6 w-6 animate-spin text-white" />
 											</div>
 										</div>
 									) : (
 										<>
 											{getFileTypeIcon(fileInfo.contentType)}
-											<Loader2 className="h-3 w-3 animate-spin" />
+											<IconLoader2 className="h-3 w-3 animate-spin" />
 											<span className="truncate max-w-32">{fileInfo.name}</span>
 										</>
 									)}
@@ -281,7 +281,7 @@ export function ChatInput({
 													);
 												}}
 											>
-												<X className="h-3 w-3" />
+												<IconX className="h-3 w-3" />
 											</Button>
 										</>
 									) : (
@@ -299,7 +299,7 @@ export function ChatInput({
 													);
 												}}
 											>
-												<X className="h-3 w-3" />
+												<IconX className="h-3 w-3" />
 											</Button>
 										</>
 									)}
@@ -352,7 +352,7 @@ export function ChatInput({
 										className="h-9 w-9 rounded-full text-muted-foreground/80 hover:text-primary hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200"
 										onClick={() => fileInputRef.current?.click()}
 									>
-										<Paperclip className="h-4 w-4 transition-transform group-hover:rotate-12" />
+										<IconPaperclip className="h-4 w-4 transition-transform group-hover:rotate-12" />
 									</Button>
 								</TooltipTrigger>
 								<TooltipContent side="top" className="text-xs font-medium">
@@ -374,7 +374,7 @@ export function ChatInput({
 											shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
 											type="button"
 										>
-											<Square className="h-4 w-4" />
+											<IconSquare className="h-4 w-4" />
 										</Button>
 									</TooltipTrigger>
 									<TooltipContent side="top" className="text-xs font-medium">
@@ -393,9 +393,9 @@ export function ChatInput({
 											className="h-9 w-9 rounded-full bg-primary text-primary-foreground shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
 										>
 											{isUploading ? (
-												<Loader2 className="h-4 w-4 animate-spin" />
+												<IconLoader2 className="h-4 w-4 animate-spin" />
 											) : (
-												<Send className="h-4 w-4" />
+												<IconSend className="h-4 w-4" />
 											)}
 										</Button>
 									</TooltipTrigger>

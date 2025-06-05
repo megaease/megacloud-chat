@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, AudioWaveform } from "lucide-react";
+import { IconLoader2, IconWaveSquare } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 
 export function Thinking() {

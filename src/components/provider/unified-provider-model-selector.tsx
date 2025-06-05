@@ -5,15 +5,15 @@ import type React from "react";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-	Settings,
-	ChevronDown,
-	Check,
-	Zap,
-	Globe,
-	Cpu,
-	Search,
-	Pin,
-} from "lucide-react";
+	IconSettings,
+	IconChevronDown,
+	IconCheck,
+	IconBolt,
+	IconGlobe,
+	IconCpu,
+	IconSearch,
+	IconPin,
+} from "@tabler/icons-react";
 import {
 	CommandDialog,
 	CommandEmpty,
@@ -187,7 +187,7 @@ export function UnifiedProviderModelSelector({
 				)}
 				onClick={() => setProviderModalOpen(true)}
 			>
-				<Settings className="h-4 w-4 text-muted-foreground" />
+				<IconSettings className="h-4 w-4 text-muted-foreground" />
 				<span className="text-muted-foreground">Set API Provider</span>
 			</Button>
 		);
@@ -218,7 +218,7 @@ export function UnifiedProviderModelSelector({
 					</span>
 				</div>
 				<div className="flex items-center gap-2">
-					<ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+					<IconChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
 					<kbd className="hidden sm:inline-flex pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 group-hover:bg-muted-foreground/10 transition-colors">
 						<span className="text-xs">⌘</span>K
 					</kbd>
@@ -230,7 +230,7 @@ export function UnifiedProviderModelSelector({
 				<CommandList>
 					<CommandEmpty>
 						<div className="flex flex-col items-center gap-3 py-8 text-center">
-							<Search className="h-10 w-10 text-muted-foreground" />
+							<IconSearch className="h-10 w-10 text-muted-foreground" />
 							<div className="text-sm text-muted-foreground">
 								<p className="mb-2 font-medium">No results found.</p>
 								<div className="space-y-1 text-xs">
@@ -309,7 +309,7 @@ export function UnifiedProviderModelSelector({
 							}}
 							className="flex items-center gap-2"
 						>
-							<Globe className="h-4 w-4 text-blue-500" />
+							<IconGlobe className="h-4 w-4 text-blue-500" />
 							<div className="flex flex-col flex-1">
 								<span>Show All Providers</span>
 								<span className="text-xs text-muted-foreground">
@@ -355,7 +355,7 @@ export function UnifiedProviderModelSelector({
 								}}
 								className="flex items-center gap-2"
 							>
-								<Cpu className="h-4 w-4 text-purple-500" />
+								<IconCpu className="h-4 w-4 text-purple-500" />
 								<div className="flex flex-col flex-1">
 									<span>Show All Models</span>
 									<span className="text-xs text-muted-foreground">
@@ -401,7 +401,7 @@ export function UnifiedProviderModelSelector({
 							}}
 							className="flex items-center gap-2"
 						>
-							<Zap className="h-4 w-4 text-orange-500" />
+							<IconBolt className="h-4 w-4 text-orange-500" />
 							<div className="flex flex-col flex-1">
 								<span>Show Quick Tips</span>
 								<span className="text-xs text-muted-foreground">
@@ -445,7 +445,7 @@ export function UnifiedProviderModelSelector({
 													</span>
 												)}
 											</div>
-											{isSelected && <Check className="h-4 w-4" />}
+											{isSelected && <IconCheck className="h-4 w-4" />}
 										</CommandItem>
 									);
 								})}
@@ -534,7 +534,7 @@ export function UnifiedProviderModelSelector({
 						>
 							<div className="w-full">
 								<div className="flex items-center gap-2 mb-2">
-									<Zap className="h-4 w-4 text-yellow-500" />
+									<IconBolt className="h-4 w-4 text-yellow-500" />
 									<h4 className="font-medium text-sm">Keyboard Shortcuts</h4>
 								</div>
 								<div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground">
@@ -565,7 +565,7 @@ export function UnifiedProviderModelSelector({
 						>
 							<div className="w-full">
 								<div className="flex items-center gap-2 mb-2">
-									<Search className="h-4 w-4 text-blue-500" />
+									<IconSearch className="h-4 w-4 text-blue-500" />
 									<h4 className="font-medium text-sm">Search Patterns</h4>
 								</div>
 								<div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground">
@@ -592,7 +592,7 @@ export function UnifiedProviderModelSelector({
 						>
 							<div className="w-full">
 								<div className="flex items-center gap-2 mb-2">
-									<Globe className="h-4 w-4 text-green-500" />
+									<IconGlobe className="h-4 w-4 text-green-500" />
 									<h4 className="font-medium text-sm">Workflow Tips</h4>
 								</div>
 								<div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground">
@@ -621,7 +621,7 @@ export function UnifiedProviderModelSelector({
 							}}
 							className="flex items-center gap-2"
 						>
-							<Settings className="h-4 w-4 text-gray-500" />
+							<IconSettings className="h-4 w-4 text-gray-500" />
 							<div className="flex flex-col flex-1">
 								<span>Manage Providers</span>
 								<span className="text-xs text-muted-foreground">

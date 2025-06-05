@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useApiProvider } from "@/context/api-provider-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { ChatView } from "./chat-view";
-import { Loader2 } from "lucide-react";
+import { IconLoader2 } from "@tabler/icons-react";
 import { appendClientMessage, type UIMessage } from "ai";
 import type { DBMessage } from "@/server/db/schema";
 
@@ -216,7 +216,7 @@ export function Chat() {
 	if (isLoadingMessage) {
 		return (
 			<div className="flex h-full w-full flex-col items-center justify-center gap-2">
-				<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+				<IconLoader2 className="h-8 w-8 animate-spin text-muted-foreground" />
 			</div>
 		);
 	}

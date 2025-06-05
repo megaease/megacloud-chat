@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { Chat } from "@/server/db/schema";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Server, X } from "lucide-react";
+import { IconPlus, IconServer, IconX } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter, usePathname } from "next/navigation";
@@ -129,7 +129,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						title="New Chat"
 						className="w-full"
 					>
-						<Plus className="mr-2 h-4 w-4" />
+						<IconPlus className="mr-2 h-4 w-4" />
 						New Chat
 					</Button>
 				</div>
@@ -184,7 +184,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 														onClick={(e) => handleDeleteChat(item.id, e)}
 														title="Delete chat"
 													>
-														<X className="h-4 w-4" />
+														<IconX className="h-4 w-4" />
 													</Button>
 												</Link>
 											</SidebarMenuButton>
@@ -208,7 +208,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 							openDrawer();
 						}}
 					>
-						<Server className="mr-2 h-4 w-4" />
+						<IconServer className="mr-2 h-4 w-4" />
 						MCP Servers
 					</Button>
 				</div>

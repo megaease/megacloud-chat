@@ -6,13 +6,13 @@ import {
 	AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-	Terminal,
-	Database,
-	Clock,
-	CheckCircle2,
-	AlertCircle,
-	Loader,
-} from "lucide-react";
+	IconTerminal,
+	IconDatabase,
+	IconClock,
+	IconCircleCheck2,
+	IconAlertCircle,
+	IconLoader,
+} from "@tabler/icons-react";
 import type {
 	ToolInvocationPart as ToolInvocationPartType,
 	ResultContent,
@@ -120,9 +120,9 @@ export function ToolInvocationPart({
 	// Determine icon based on tool name
 	const getToolIcon = (name: string) => {
 		if (isDatabase) {
-			return <Database size={18} className="text-primary" />;
+			return <IconDatabase size={18} className="text-primary" />;
 		}
-		return <Terminal size={18} className="text-primary" />;
+		return <IconTerminal size={18} className="text-primary" />;
 	};
 
 	// Determine status icon

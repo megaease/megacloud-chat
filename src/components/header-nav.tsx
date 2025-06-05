@@ -6,7 +6,7 @@ import { UnifiedProviderModelSelector } from "./provider/unified-provider-model-
 import { ApiProviderSettingsButton } from "./provider/api-provider-settings-button";
 import { ModeToggle } from "./mode-toggle";
 import { Button } from "@/components/ui/button";
-import { Github } from "lucide-react";
+import { IconBrandGithub } from "@tabler/icons-react";
 
 export function HeaderNav() {
 	return (
@@ -17,7 +17,6 @@ export function HeaderNav() {
 			</div>
 			<div className="flex items-center gap-3">
 				<ApiProviderSettingsButton />
-				<ModeToggle />
 				<Button
 					variant="ghost"
 					size="sm"
@@ -30,10 +29,11 @@ export function HeaderNav() {
 						rel="noopener noreferrer"
 						title="View on GitHub"
 					>
-						<Github className="h-5 w-5" />
+						<IconBrandGithub className="h-5 w-5" />
 						<span className="sr-only">GitHub</span>
 					</a>
 				</Button>
+				<ModeToggle />
 			</div>
 		</header>
 	);

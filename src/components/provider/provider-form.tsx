@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useApiProvider } from "@/context/api-provider-context";
 import { toast } from "sonner";
-import { Loader2, Check } from "lucide-react";
+import { IconLoader2, IconCheck } from "@tabler/icons-react";
 import type { ProviderType } from "@/lib/ai-providers";
 import {
 	getDefaultUrlForProvider,
@@ -249,12 +249,12 @@ export function ProviderForm({
 				>
 					{isTesting ? (
 						<>
-							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							<IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
 							Testing connection...
 						</>
 					) : connectionTested ? (
 						<>
-							<Check className="mr-2 h-4 w-4" />
+							<IconCheck className="mr-2 h-4 w-4" />
 							Connection successful
 						</>
 					) : (

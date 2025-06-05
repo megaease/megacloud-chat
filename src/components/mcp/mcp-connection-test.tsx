@@ -10,7 +10,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { IconLoader2, IconCircleCheck, IconCircleX, IconAlertCircle } from "@tabler/icons-react";
 import type {} from "@/server/db/schema";
 
 import { toast } from "sonner";
@@ -43,21 +43,21 @@ export function MCPConnectionTest({ server }: MCPConnectionTestProps) {
 				<div className="flex items-center justify-center py-4">
 					{isLoading ? (
 						<div className="flex flex-col items-center">
-							<Loader2 className="h-10 w-10 animate-spin text-primary" />
+							<IconLoader2 className="h-10 w-10 animate-spin text-primary" />
 							<p className="mt-2 text-sm text-muted-foreground">
 								Testing connection...
 							</p>
 						</div>
 					) : testResult === "success" ? (
 						<div className="flex flex-col items-center">
-							<CheckCircle className="h-10 w-10 text-green-500" />
+							<IconCircleCheck className="h-10 w-10 text-green-500" />
 							<p className="mt-2 text-sm font-medium text-green-500">
 								Connection successful!
 							</p>
 						</div>
 					) : testResult === "error" ? (
 						<div className="flex flex-col items-center">
-							<XCircle className="h-10 w-10 text-red-500" />
+							<IconCircleX className="h-10 w-10 text-red-500" />
 							<p className="mt-2 text-sm font-medium text-red-500">
 								Connection failed
 							</p>
@@ -69,7 +69,7 @@ export function MCPConnectionTest({ server }: MCPConnectionTestProps) {
 						</div>
 					) : (
 						<div className="flex flex-col items-center">
-							<AlertCircle className="h-10 w-10 text-amber-500" />
+							<IconAlertCircle className="h-10 w-10 text-amber-500" />
 							<p className="mt-2 text-sm text-muted-foreground">
 								Click the button below to test the connection
 							</p>
@@ -85,7 +85,7 @@ export function MCPConnectionTest({ server }: MCPConnectionTestProps) {
 				>
 					{isLoading ? (
 						<>
-							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							<IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
 							Testing...
 						</>
 					) : testResult === "success" ? (

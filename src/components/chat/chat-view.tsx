@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowDown } from "lucide-react";
+import { IconArrowDown } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "./chat-message";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom-mutation";
@@ -90,7 +90,7 @@ export function ChatView({
 					size="icon"
 					variant="secondary"
 				>
-					<ArrowDown className="h-4 w-4" />
+					<IconArrowDown className="h-4 w-4" />
 				</Button>
 			)}
 

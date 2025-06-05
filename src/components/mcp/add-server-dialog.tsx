@@ -26,7 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Plus, Server } from "lucide-react";
+import {IconPlus, IconServer } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { KeyValueEditor } from "./key-value-editor";
 import { createMcpServer } from "@/lib/mcp-server-action";
@@ -125,7 +125,7 @@ export function AddServerDialog({
 			<DialogTrigger asChild>
 				<div className="w-full px-4 py-2">
 					<Button className="w-full">
-						<Plus className="mr-2 h-4 w-4" />
+						<IconPlus className="mr-2 h-4 w-4" />
 						Add Server
 					</Button>
 				</div>
@@ -167,11 +167,11 @@ export function AddServerDialog({
 								>
 									<TabsList className="grid w-full grid-cols-2">
 										<TabsTrigger value={TypeEnum.SSE}>
-											<Server className="mr-2 h-4 w-4" />
+											<IconServer className="mr-2 h-4 w-4" />
 											SSE
 										</TabsTrigger>
 										<TabsTrigger value={TypeEnum.STDIO}>
-											<Server className="mr-2 h-4 w-4" />
+											<IconServer className="mr-2 h-4 w-4" />
 											STDIO
 										</TabsTrigger>
 									</TabsList>

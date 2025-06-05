@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, X, ArrowRightCircle } from "lucide-react";
+import { IconPlus, IconX, IconArrowRight } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import {
 	Tooltip,
@@ -87,7 +87,7 @@ export function KeyValueEditor({
 									size="icon"
 									onClick={() => handleRemove(key)}
 								>
-									<X className="h-4 w-4" />
+									<IconX className="h-4 w-4" />
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent>
@@ -136,7 +136,7 @@ export function KeyValueEditor({
 									disabled={!newKey.trim()}
 									className="gap-1"
 								>
-									<ArrowRightCircle className="h-4 w-4" />
+									<IconArrowRight className="h-4 w-4" />
 									<span>Add</span>
 								</Button>
 							</TooltipTrigger>

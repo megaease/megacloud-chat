@@ -1,18 +1,13 @@
 "use client";
 
 import {
-	BadgeCheck,
-	Bell,
-	ChevronsUpDown,
-	CreditCard,
-	LogOut,
-	Sparkles,
-	Settings,
-	Server,
-	Moon,
-	Sun,
-	Github,
-} from "lucide-react";
+	IconSettings,
+	IconServer,
+	IconMoon,
+	IconSun,
+	IconBrandGithub,
+	IconChevronsDown,
+} from "@tabler/icons-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -66,7 +61,7 @@ export function NavUser({
 								<span className="truncate font-semibold">{user.name}</span>
 								<span className="truncate text-xs">{user.email}</span>
 							</div>
-							<ChevronsUpDown className="ml-auto size-4" />
+							<IconChevronsDown className="ml-auto size-4" />
 						</SidebarMenuButton>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
@@ -90,12 +85,12 @@ export function NavUser({
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
 							<DropdownMenuItem onClick={() => setProviderModalOpen(true)}>
-								<Settings className="mr-2 size-4" />
+								<IconSettings className="mr-2 size-4" />
 								<span>API Providers</span>
 							</DropdownMenuItem>
 
 							<DropdownMenuItem onClick={() => openDrawer()}>
-								<Server className="mr-2 size-4" />
+								<IconServer className="mr-2 size-4" />
 								<span>MCP Servers</span>
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
@@ -105,9 +100,9 @@ export function NavUser({
 								onClick={() => setTheme(theme === "light" ? "dark" : "light")}
 							>
 								{theme === "light" ? (
-									<Moon className="mr-2 size-4" />
+									<IconMoon className="mr-2 size-4" />
 								) : (
-									<Sun className="mr-2 size-4" />
+									<IconSun className="mr-2 size-4" />
 								)}
 								<span>{theme === "light" ? "Dark Theme" : "Light Theme"}</span>
 							</DropdownMenuItem>
@@ -121,7 +116,7 @@ export function NavUser({
 									rel="noopener noreferrer"
 									className="cursor-pointer"
 								>
-									<Github className="h-4 w-4" />
+									<IconBrandGithub className="h-4 w-4" />
 									<span className="ml-2">GitHub</span>
 								</a>
 							</DropdownMenuItem>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { IconCheck, IconCopy } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ export function CopyButton({
 						className={cn(className)}
 						size={"icon"}
 					>
-						{copied ? <CheckIcon /> : <CopyIcon />}
+						{copied ? <IconCheck /> : <IconCopy />}
 					</Button>
 				</TooltipTrigger>
 				<TooltipContent className="px-2 py-1 text-xs">

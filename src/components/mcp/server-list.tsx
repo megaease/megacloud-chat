@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from "react";
 import {
-	Edit,
-	Trash,
-	Server,
-	MoreVertical,
-	Power,
-	PowerOff,
-	Plus,
-	Loader2,
-} from "lucide-react";
+	IconEdit,
+	IconTrash,
+	IconServer,
+	IconDots,
+	IconPower,
+	IconCircleOff,
+	IconPlus,
+	IconLoader2,
+} from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -128,7 +128,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 	if (isLoading) {
 		return (
 			<div className="flex flex-col items-center justify-center py-12">
-				<Loader2 className="h-8 w-8 animate-spin text-primary" />
+				<IconLoader2 className="h-8 w-8 animate-spin text-primary" />
 				<p className="mt-4 text-sm text-muted-foreground">
 					Loading server list...
 				</p>
@@ -140,13 +140,13 @@ export function ServerList({ onAddServer }: ServersListProps) {
 	if (servers.length === 0) {
 		return (
 			<div className="text-center py-12">
-				<Server className="mx-auto h-12 w-12 text-gray-400" />
+				<IconServer className="mx-auto h-12 w-12 text-gray-400" />
 				<h3 className="mt-4 text-lg font-medium">No servers found</h3>
 				<p className="mt-2 text-sm text-gray-500">
 					Add a new MCP server to get started.
 				</p>
 				<Button onClick={onAddServer} className="mt-4">
-					<Plus className="mr-2 h-4 w-4" />
+					<IconPlus className="mr-2 h-4 w-4" />
 					Add Server
 				</Button>
 			</div>
@@ -161,7 +161,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 						<CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
 							<div>
 								<CardTitle className="text-base flex items-center">
-									<Server className="mr-2 h-4 w-4" />
+									<IconServer className="mr-2 h-4 w-4" />
 									{server.name}
 								</CardTitle>
 								<div className="text-sm text-muted-foreground mt-1">
@@ -173,7 +173,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
 										<Button variant="ghost" size="icon">
-											<MoreVertical className="h-4 w-4" />
+											<IconDots className="h-4 w-4" />
 											<span className="sr-only">Open menu</span>
 										</Button>
 									</DropdownMenuTrigger>
@@ -185,12 +185,12 @@ export function ServerList({ onAddServer }: ServersListProps) {
 										>
 											{server.status === ServerStatusEnum.ONLINE ? (
 												<>
-													<PowerOff className="mr-2 h-4 w-4" />
+													<IconCircleOff className="mr-2 h-4 w-4" />
 													<span>Disable</span>
 												</>
 											) : (
 												<>
-													<Power className="mr-2 h-4 w-4" />
+													<IconPower className="mr-2 h-4 w-4" />
 													<span>Enable</span>
 												</>
 											)}
@@ -198,7 +198,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 										<DropdownMenuItem
 											onClick={() => setServerToEdit(server.id)}
 										>
-											<Edit className="mr-2 h-4 w-4" />
+											<IconEdit className="mr-2 h-4 w-4" />
 											<span>Edit</span>
 										</DropdownMenuItem>
 										<DropdownMenuSeparator />
@@ -209,7 +209,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 												setServerToDelete(server.id);
 											}}
 										>
-											<Trash className="mr-2 h-4 w-4" />
+											<IconTrash className="mr-2 h-4 w-4" />
 											<span>Delete</span>
 										</DropdownMenuItem>
 									</DropdownMenuContent>
@@ -260,19 +260,19 @@ export function ServerList({ onAddServer }: ServersListProps) {
 										{loadingStates[server.id] ||
 										server.status === ServerStatusEnum.CONNECTING ? (
 											<>
-												<Loader2 className="mr-2 h-3 w-3 animate-spin" />
+												<IconLoader2 className="mr-2 h-3 w-3 animate-spin" />
 												{server.status === ServerStatusEnum.ONLINE
 													? "Disconnecting..."
 													: "Connecting..."}
 											</>
 										) : server.status === ServerStatusEnum.ONLINE ? (
 											<>
-												<PowerOff className="mr-2 h-3 w-3" />
+												<IconCircleOff className="mr-2 h-3 w-3" />
 												Disable
 											</>
 										) : (
 											<>
-												<Power className="mr-2 h-3 w-3" />
+												<IconPower className="mr-2 h-3 w-3" />
 												Enable
 											</>
 										)}
