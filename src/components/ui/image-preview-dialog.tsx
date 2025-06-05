@@ -7,6 +7,7 @@ interface ImagePreviewDialogProps {
 	onClose: () => void;
 	imageUrl: string;
 	imageName?: string;
+	showCloseButton?: boolean;
 }
 
 export function ImagePreviewDialog({
@@ -14,10 +15,14 @@ export function ImagePreviewDialog({
 	onClose,
 	imageUrl,
 	imageName,
+	showCloseButton = false,
 }: ImagePreviewDialogProps) {
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-			<DialogContent className="max-w-4xl w-fit p-0 bg-transparent border-none shadow-none [&>button]:hidden">
+			<DialogContent
+				className="max-w-4xl w-fit p-0 bg-transparent border-none shadow-none"
+				showCloseButton={showCloseButton}
+			>
 				<DialogTitle className="sr-only">{imageName || "图片预览"}</DialogTitle>
 				<div>
 					{imageUrl ? (
