@@ -123,24 +123,19 @@ export function detectAndCreateAIModel(config: {
 		detectedProvider,
 	};
 }
+
+const providerUrlMapping: Record<ProviderType, string> = {
+	openai: "https://api.openai.com/v1",
+	deepseek: "https://api.deepseek.com",
+	openrouter: "https://openrouter.ai/api/v1",
+	custom: "https://api.openai.com/v1",
+};
+
 export function getDefaultUrlForProvider(providerType: ProviderType): string {
-	switch (providerType) {
-		case "openai":
-			return "https://api.openai.com/v1";
-		case "deepseek":
-			return "https://api.deepseek.com";
-		case "openrouter":
-			return "https://openrouter.ai/api/v1";
-		default:
-			return "";
-	}
+	return providerUrlMapping[providerType] || "";
 }
 
 export function isKnownDefaultUrl(url: string): boolean {
-	const knownUrls = [
-		"https://api.openai.com/v1",
-		"https://api.deepseek.com",
-		"https://openrouter.ai/api/v1",
-	];
+	const knownUrls = Object.values(providerUrlMapping);
 	return knownUrls.includes(url) || url === "";
 }
