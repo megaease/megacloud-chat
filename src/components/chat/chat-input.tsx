@@ -197,7 +197,7 @@ export function ChatInput({
 						onChange={handleInputChange}
 						onKeyDown={handleKeyDown}
 						placeholder="Type your message..."
-						className="min-h-24 w-full resize-none border-0 bg-transparent px-4 py-3 pr-14 focus-visible:ring-0 
+						className="min-h-30 w-full resize-none border-0 bg-transparent px-4 py-3 pr-14 focus-visible:ring-0 
 						focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 selection:bg-primary/20 pb-12"
 						rows={2}
 						autoFocus
