@@ -335,7 +335,7 @@ export function ProviderManagementModal() {
 													</div>
 
 													{/* Detailed Information */}
-													<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+													<div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 														<div>
 															<div className="text-muted-foreground block mb-1">
 																API Key
@@ -367,35 +367,6 @@ export function ProviderManagementModal() {
 															<code className="bg-muted px-2 py-1 rounded text-xs block truncate">
 																{provider.baseUrl}
 															</code>
-														</div>
-
-														<div>
-															<div className="text-muted-foreground block mb-1">
-																Connection Status
-															</div>
-															<div className="flex items-center gap-2">
-																<connectionStatus.icon
-																	className={cn(
-																		"h-4 w-4",
-																		connectionStatus.color,
-																	)}
-																/>
-																<span
-																	className={cn(
-																		"text-sm",
-																		connectionStatus.color,
-																	)}
-																>
-																	{connectionStatus.label}
-																</span>
-																{provider.lastTestedAt && (
-																	<span className="text-xs text-muted-foreground">
-																		{new Date(
-																			provider.lastTestedAt,
-																		).toLocaleString()}
-																	</span>
-																)}
-															</div>
 														</div>
 													</div>
 

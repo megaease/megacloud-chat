@@ -1,28 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-	Loader2,
-	Send,
-	Square,
-	AudioWaveform,
-	ArrowDown,
-	Paperclip,
-	X,
-} from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "./chat-message";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom-mutation";
 import type { Message } from "@ai-sdk/react";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ChatInput } from "./chat-input";
 import { Thinking } from "./thinking";
 
 // Define the Model interface
@@ -59,103 +43,12 @@ export function ChatView({
 	status,
 	isUploading = false,
 }: ChatViewProps) {
-	const inputRef = useRef<HTMLTextAreaElement>(null);
-	const fileInputRef = useRef<HTMLInputElement>(null);
-	const [files, setFiles] = useState<FileList | undefined>(undefined);
-	const [uploadedFiles, setUploadedFiles] = useState<
-		Array<{ name: string; url: string; contentType: string }>
-	>([]);
-	const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
-
 	const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
 		useScrollToBottom({
 			bottomThreshold: 100,
 			scrollOnMount: true,
 			forceScrollOnNewContent: false,
 		});
-
-	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-		if (e.key === "Enter" && !e.shiftKey) {
-			e.preventDefault();
-			if (input.trim() || uploadedFiles.length > 0) {
-				const event = new Event("submit", {
-					cancelable: true,
-					bubbles: true,
-				}) as unknown as React.FormEvent<HTMLFormElement>;
-
-				// 将已上传的文件转换为附件格式
-				const attachments = uploadedFiles;
-				handleSubmit(event, {
-					experimental_attachments: attachments as unknown as FileList,
-				});
-
-				// 清空已上传的文件
-				setUploadedFiles([]);
-				if (fileInputRef.current) {
-					fileInputRef.current.value = "";
-				}
-
-				// Scroll to bottom after submitting
-				setTimeout(() => {
-					scrollToBottom();
-				}, 100);
-			}
-		}
-	};
-
-	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		if (e.target.files && e.target.files.length > 0) {
-			const selectedFiles = Array.from(e.target.files);
-
-			// 立即上传文件
-			for (const file of selectedFiles) {
-				const fileName = file.name;
-				setUploadingFiles((prev) => new Set([...prev, fileName]));
-
-				try {
-					const formData = new FormData();
-					formData.append("file", file);
-
-					const response = await fetch("/api/files/upload", {
-						method: "POST",
-						body: formData,
-					});
-
-					if (!response.ok) {
-						const errorData = await response.json();
-						throw new Error(errorData.error || "Upload failed");
-					}
-
-					const data = await response.json();
-
-					setUploadedFiles((prev) => [
-						...prev,
-						{
-							name: data.pathname,
-							url: data.url,
-							contentType: data.contentType,
-						},
-					]);
-				} catch (error) {
-					console.error("Upload failed:", error);
-				} finally {
-					setUploadingFiles((prev) => {
-						const newSet = new Set(prev);
-						newSet.delete(fileName);
-						return newSet;
-					});
-				}
-			}
-		}
-	};
-
-	const handleRemoveFiles = () => {
-		setFiles(undefined);
-		setUploadedFiles([]);
-		if (fileInputRef.current) {
-			fileInputRef.current.value = "";
-		}
-	};
 
 	return (
 		<div
@@ -204,182 +97,16 @@ export function ChatView({
 			{status === "submitted" && <Thinking />}
 
 			{/* Chat input */}
-			<div className="p-4 relative max-w-4xl text-center w-full mx-auto">
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-
-						const attachments = uploadedFiles.map((file) => ({
-							url: file.url,
-							contentType: file.contentType,
-							name: file.name,
-						}));
-
-						handleSubmit(e, {
-							experimental_attachments:
-								attachments.length > 0
-									? (attachments as unknown as FileList)
-									: undefined,
-						});
-
-						// 清空已上传的文件
-						setUploadedFiles([]);
-						if (fileInputRef.current) {
-							fileInputRef.current.value = "";
-						}
-					}}
-					className="relative"
-				>
-					<div className="relative rounded-2xl border border-border/50 bg-background/95 shadow-md transition-all duration-300 ease-in-out focus-within:shadow-lg focus-within:border-primary/60 hover:shadow-lg group">
-						<input
-							type="file"
-							ref={fileInputRef}
-							className="hidden"
-							onChange={handleFileUpload}
-							multiple
-							aria-label="Upload files"
-							title="Upload files"
-						/>
-						{(uploadedFiles.length > 0 || uploadingFiles.size > 0) && (
-							<div className="px-4 py-2 flex flex-wrap gap-2 border-t border-border/50">
-								{/* 显示正在上传的文件 */}
-								{Array.from(uploadingFiles).map((fileName) => (
-									<div
-										key={`uploading-${fileName}`}
-										className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
-									>
-										<Loader2 className="h-3 w-3 animate-spin" />
-										<span className="truncate max-w-32">{fileName}</span>
-									</div>
-								))}
-
-								{/* 显示已上传的文件 */}
-								{uploadedFiles.map((file) => (
-									<div
-										key={file.url}
-										className="flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
-									>
-										<span className="truncate max-w-32">{file.name}</span>
-										<Button
-											type="button"
-											size="icon"
-											variant="ghost"
-											className="h-4 w-4 p-0 hover:bg-destructive/10 hover:text-destructive"
-											onClick={() => {
-												setUploadedFiles((prev) =>
-													prev.filter((f) => f.url !== file.url),
-												);
-											}}
-										>
-											<X className="h-3 w-3" />
-										</Button>
-									</div>
-								))}
-							</div>
-						)}
-						<Textarea
-							ref={inputRef}
-							value={input}
-							onChange={handleInputChange}
-							onKeyDown={handleKeyDown}
-							placeholder="Type your message..."
-							className="min-h-24 w-full resize-none border-0 bg-transparent px-4 py-3 pr-14 focus-visible:ring-0 
-							focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 selection:bg-primary/20 pb-12"
-							rows={2}
-							autoFocus
-						/>
-
-						{/* MCP Toggle switch */}
-						<div className="absolute bottom-2 left-2 flex items-center gap-2">
-							<TooltipProvider>
-								<Tooltip delayDuration={300}>
-									<TooltipTrigger asChild>
-										<div className="flex items-center rounded px-4 py-2 border border-border/50 transition-all duration-300 hover:border-primary/50 hover:bg-primary/10 group">
-											<span className="text-xs font-medium mr-2 text-muted-foreground group-hover:text-foreground/80">
-												MCP
-											</span>
-											<Switch
-												checked={mcpEnabled}
-												onCheckedChange={() => toggleMcpEnabled()}
-											/>
-										</div>
-									</TooltipTrigger>
-									<TooltipContent side="top" className="text-xs font-medium">
-										<p>{mcpEnabled ? "MCP Enabled" : "MCP Disabled"}</p>
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
-						</div>
-						<div className="absolute bottom-2 right-2 flex items-center gap-2">
-							{/* Upload button */}
-							<TooltipProvider>
-								<Tooltip delayDuration={300}>
-									<TooltipTrigger asChild>
-										<Button
-											type="button"
-											size="icon"
-											variant="ghost"
-											className="h-9 w-9 rounded-full text-muted-foreground/80 hover:text-primary hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200"
-											onClick={() => fileInputRef.current?.click()}
-										>
-											<Paperclip className="h-4 w-4 transition-transform group-hover:rotate-12" />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent side="top" className="text-xs font-medium">
-										{" "}
-										<p>Upload file</p>
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
-
-							{status === "submitted" || status === "streaming" ? (
-								<TooltipProvider>
-									<Tooltip delayDuration={300}>
-										<TooltipTrigger asChild>
-											<Button
-												size="icon"
-												onClick={handleStopGeneration}
-												variant="ghost"
-												className="h-9 w-9 rounded-full bg-primary text-primary-foreground 
-												hover:text-primary-foreground
-												shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
-												type="button"
-											>
-												<Square className="h-4 w-4" />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent side="top" className="text-xs font-medium">
-											<p>Stop generation</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-							) : (
-								<TooltipProvider>
-									<Tooltip delayDuration={300}>
-										<TooltipTrigger asChild>
-											<Button
-												type="submit"
-												size="icon"
-												disabled={!input.trim() || isUploading}
-												className="h-9 w-9 rounded-full bg-primary text-primary-foreground shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
-											>
-												{isUploading ? (
-													<Loader2 className="h-4 w-4 animate-spin" />
-												) : (
-													<Send className="h-4 w-4" />
-												)}
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent side="top" className="text-xs font-medium">
-											<p>{isUploading ? "Uploading..." : "Send message"}</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-							)}
-						</div>
-					</div>
-				</form>
-			</div>
+			<ChatInput
+				input={input}
+				handleInputChange={handleInputChange}
+				handleSubmit={handleSubmit}
+				handleStopGeneration={handleStopGeneration}
+				mcpEnabled={mcpEnabled}
+				toggleMcpEnabled={toggleMcpEnabled}
+				status={status}
+				isUploading={isUploading}
+			/>
 		</div>
 	);
 }
