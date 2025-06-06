@@ -30,7 +30,7 @@ export const getProviderTypeInfo = (type: string) => {
 		types[type] || {
 			name: type,
 			icon: <IconGlobe className="h-4 w-4" />,
-			color: "text-gray-600",
+			color: "text-gray-600 dark:text-gray-400",
 		}
 	);
 };
