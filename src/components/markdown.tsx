@@ -4,6 +4,7 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "./copy-button";
+import { CodeEditor } from "./code-editor";
 
 interface MarkdownProps {
 	content: string;
@@ -171,20 +172,13 @@ const components: Partial<Components> = {
 		if (match) {
 			const codeContent = String(children).replace(/\n$/, "");
 			return (
-				<div className="relative my-2 rounded-[var(--radius)] border border-border overflow-hidden">
-					<div className="flex items-center justify-between bg-muted/50 px-3 py-1 border-b border-border">
-						<span className="text-xs font-medium">{match[1]}</span>
-
-						<CopyButton text={codeContent} />
-					</div>
-					<div className="overflow-x-auto">
-						<pre className="p-3 bg-none text-sm">
-							<code className="font-mono whitespace-pre-wrap break-all">
-								{codeContent}
-							</code>
-						</pre>
-					</div>
-				</div>
+				<CodeEditor
+					value={codeContent}
+					language={match[1]}
+					editable={false}
+					showHeader={true}
+					showCopyButton={true}
+				/>
 			);
 		}
 
