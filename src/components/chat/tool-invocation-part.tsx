@@ -1,25 +1,25 @@
-import { cn } from "@/lib/utils";
 import {
 	Accordion,
 	AccordionContent,
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-	IconTerminal,
-	IconDatabase,
-	IconClock,
-	IconCircleCheck,
-	IconAlertCircle,
-	IconLoader,
-	IconClock2,
-} from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 import type {
-	ToolInvocationPart as ToolInvocationPartType,
 	ResultContent,
+	ToolInvocationPart as ToolInvocationPartType,
 } from "@/types/tool-invocation";
-import { Markdown } from "../markdown";
+import {
+	IconAlertCircle,
+	IconCircleCheck,
+	IconClock,
+	IconClock2,
+	IconDatabase,
+	IconLoader,
+	IconTerminal,
+} from "@tabler/icons-react";
 import { CopyButton } from "../copy-button";
+import { Markdown } from "../markdown";
 
 function renderResultContent(content: ResultContent | string, key: string) {
 	// Function to try parsing JSON strings and display them with formatting
