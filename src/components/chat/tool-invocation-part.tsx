@@ -9,9 +9,10 @@ import {
 	IconTerminal,
 	IconDatabase,
 	IconClock,
-	IconCircleCheck2,
+	IconCircleCheck,
 	IconAlertCircle,
 	IconLoader,
+	IconClock2,
 } from "@tabler/icons-react";
 import type {
 	ToolInvocationPart as ToolInvocationPartType,
@@ -131,9 +132,9 @@ export function ToolInvocationPart({
 
 		if (state === "result") {
 			return hasError ? (
-				<AlertCircle size={16} className="text-destructive" />
+				<IconAlertCircle size={16} className="text-destructive" />
 			) : (
-				<CheckCircle2 size={16} className="text-green-500" />
+				<IconCircleCheck size={16} className="text-green-500" />
 			);
 		}
 
@@ -141,12 +142,12 @@ export function ToolInvocationPart({
 		if (state === "call" || state === "partial-call") {
 			return (
 				<div className="animate-spin">
-					<Clock size={16} className="text-primary" />
+					<IconClock2 size={16} className="text-primary" />
 				</div>
 			);
 		}
 
-		return <Clock size={16} className="text-muted-foreground" />;
+		return <IconClock2 size={16} className="text-muted-foreground" />;
 	};
 
 	// Render result content
@@ -285,7 +286,7 @@ export function ToolInvocationPart({
 								{hasError && (
 									<div className="mb-3 p-3 rounded-[var(--radius)] bg-destructive/10 border border-destructive/30 text-destructive">
 										<div className="flex items-center gap-2 mb-1.5">
-											<AlertCircle size={16} />
+											<IconAlertCircle size={16} />
 											<span className="font-medium">Error Message</span>
 										</div>
 										<p className="text-xs whitespace-pre-wrap break-words">
