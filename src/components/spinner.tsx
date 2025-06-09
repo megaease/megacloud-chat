@@ -1,23 +1,23 @@
 import { cn } from "@/lib/utils";
 import {
-	IconLoader,
-	IconLoader2,
-	IconLoader3,
-	type TablerIconsProps,
-} from "@tabler/icons-react";
+	LoaderCircleIcon,
+	LoaderIcon,
+	LoaderPinwheelIcon,
+	type LucideProps,
+} from "lucide-react";
 
 type SpinnerVariantProps = Omit<SpinnerProps, "variant">;
 
 const Default = ({ className, ...props }: SpinnerVariantProps) => (
-	<IconLoader className={cn("animate-spin", className)} {...props} />
+	<LoaderIcon className={cn("animate-spin", className)} {...props} />
 );
 
 const Circle = ({ className, ...props }: SpinnerVariantProps) => (
-	<IconLoader2 className={cn("animate-spin", className)} {...props} />
+	<LoaderCircleIcon className={cn("animate-spin", className)} {...props} />
 );
 
 const Pinwheel = ({ className, ...props }: SpinnerVariantProps) => (
-	<IconLoader3 className={cn("animate-spin", className)} {...props} />
+	<LoaderPinwheelIcon className={cn("animate-spin", className)} {...props} />
 );
 
 const CircleFilled = ({
@@ -27,13 +27,13 @@ const CircleFilled = ({
 }: SpinnerVariantProps) => (
 	<div className="relative" style={{ width: size, height: size }}>
 		<div className="absolute inset-0 rotate-180">
-			<IconLoader2
+			<LoaderCircleIcon
 				className={cn("animate-spin", className, "text-foreground opacity-20")}
 				size={size}
 				{...props}
 			/>
 		</div>
-		<IconLoader2
+		<LoaderCircleIcon
 			className={cn("relative animate-spin", className)}
 			size={size}
 			{...props}
@@ -238,7 +238,7 @@ const Infinite = ({ size = 24, ...props }: SpinnerVariantProps) => (
 	</svg>
 );
 
-export type SpinnerProps = TablerIconsProps & {
+export type SpinnerProps = LucideProps & {
 	variant?:
 		| "default"
 		| "circle"

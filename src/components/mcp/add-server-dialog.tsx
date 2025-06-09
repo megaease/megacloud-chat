@@ -26,7 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {IconPlus, IconServer } from "@tabler/icons-react";
+import { IconLoader2, IconPlus, IconServer } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { KeyValueEditor } from "./key-value-editor";
 import { createMcpServer } from "@/lib/mcp-server-action";
@@ -383,7 +383,7 @@ export function AddServerDialog({
 								<Button type="submit" disabled={isSubmitting}>
 									{isSubmitting ? (
 										<>
-											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+											<IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
 											Adding...
 										</>
 									) : (
