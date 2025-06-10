@@ -8,13 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import type { ReasoningPart as ReasoningPartType } from "@/types/tool-invocation";
-import {
-	BrainCircuit,
-	CheckCircle2,
-	Loader,
-	Loader2,
-	Sparkle,
-} from "lucide-react";
+import { Loader, Sparkle } from "lucide-react";
 
 export function ReasoningPart({
 	part,

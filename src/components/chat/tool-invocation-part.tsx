@@ -12,10 +12,8 @@ import type {
 import {
 	IconAlertCircle,
 	IconCircleCheck,
-	IconClock,
-	IconClock2,
-	IconDatabase,
 	IconLoader,
+	IconDatabase,
 	IconTerminal,
 } from "@tabler/icons-react";
 import { CopyButton } from "../copy-button";
@@ -142,12 +140,12 @@ export function ToolInvocationPart({
 		if (state === "call" || state === "partial-call") {
 			return (
 				<div className="animate-spin">
-					<IconClock2 size={16} className="text-primary" />
+					<IconLoader size={16} className="text-primary" />
 				</div>
 			);
 		}
 
-		return <IconClock2 size={16} className="text-muted-foreground" />;
+		return <IconLoader size={16} className="text-muted-foreground" />;
 	};
 
 	// Render result content
@@ -265,6 +263,7 @@ export function ToolInvocationPart({
 							</span>
 							<div className="ml-auto flex items-center gap-1.5 text-xs">
 								{getStatusIcon()}
+
 								<span
 									className={cn(
 										hasError ? "text-destructive" : "text-muted-foreground",

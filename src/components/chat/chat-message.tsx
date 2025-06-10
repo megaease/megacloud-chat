@@ -131,10 +131,12 @@ export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 			// Filter out parts that would render as null (like step-start)
 			const validParts = message.parts.map((part, index) => {
 				const convertedPart = part as MessagePart;
+				const partLoading =
+					isLoading && !isUser && index === (message.parts?.length ?? 0) - 1;
 				return renderMessagePart(
 					convertedPart,
 					`message-part-${index}`,
-					isLoading,
+					partLoading,
 					setPreviewAttachment,
 				);
 			});
