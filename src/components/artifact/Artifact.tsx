@@ -19,7 +19,7 @@ interface ArtifactProps {
 	handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 	handleSubmit: (
 		e: React.FormEvent<HTMLFormElement>,
-		options?: { experimental_attachments?: FileList }
+		options?: { experimental_attachments?: FileList },
 	) => void;
 	status: "error" | "submitted" | "streaming" | "ready";
 	stop: () => void;
@@ -30,8 +30,8 @@ interface ArtifactProps {
 	toggleMcpEnabled: () => boolean;
 }
 
-export function Artifact({ 
-	chatId, 
+export function Artifact({
+	chatId,
 	onClose,
 	messages,
 	input,
@@ -43,7 +43,7 @@ export function Artifact({
 	reload,
 	isUploading,
 	mcpEnabled,
-	toggleMcpEnabled
+	toggleMcpEnabled,
 }: ArtifactProps) {
 	const { artifact, setArtifact } = useArtifact();
 	const [windowDimensions, setWindowDimensions] = useState({
@@ -105,13 +105,8 @@ export function Artifact({
 						}}
 					>
 						<div className="h-full flex flex-col">
-							<div className="p-4 border-b">
-								<div className="flex items-center justify-between">
-									<h2 className="font-semibold">Chat</h2>
-								</div>
-							</div>
 							<div className="flex-1 overflow-hidden">
-								<ArtifactChat 
+								<ArtifactChat
 									chatId={chatId}
 									messages={messages}
 									input={input}
@@ -156,7 +151,7 @@ export function Artifact({
 								</div>
 							</div>
 							<div className="flex-1 overflow-hidden">
-								<ArtifactChat 
+								<ArtifactChat
 									chatId={chatId}
 									messages={messages}
 									input={input}

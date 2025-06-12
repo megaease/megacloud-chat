@@ -4,19 +4,26 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 export function ChatItem({
 	children,
 	isUser,
+	isCompact = false,
 }: {
 	children: React.ReactNode;
 	isUser: boolean;
+	isCompact?: boolean;
 }) {
 	return (
 		<div
 			className={cn(
 				"flex gap-4 text-sm py-4",
 				isUser ? "flex-row-reverse pr-1" : "pl-1",
+				isCompact && isUser && "gap-0 pr-0",
 			)}
 		>
 			<Avatar
-				className={cn("mt-0.5 h-8 w-8 flex-shrink-0 shadow-[var(--shadow-xs)]")}
+				className={cn(
+					"mt-0.5 h-8 w-8 flex-shrink-0 shadow-[var(--shadow-xs)]",
+					// 在紧凑模式下隐藏用户头像
+					isCompact && isUser && "hidden",
+				)}
 			>
 				<AvatarFallback
 					className={cn(
@@ -31,17 +38,23 @@ export function ChatItem({
 			</Avatar>
 			<div
 				className={cn(
-					"flex-1 space-y-2",
+					"flex-1 space-y-2 min-w-0", // 添加 min-w-0 防止内容溢出
 					isUser ? "text-right" : "text-left",
-					"max-w-[89%]", // Limit maximum width
+					// 在紧凑模式下优化宽度处理
+					isCompact ? (isUser ? "max-w-full" : "max-w-full") : "max-w-[89%]",
 				)}
 			>
 				<div
 					className={cn(
-						"inline-block rounded-[var(--radius)] px-4 py-3 overflow-hidden text-left",
-						isUser
-							? "bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto"
-							: "bg-card text-card-foreground  w-full",
+						"rounded-[var(--radius)] px-4 py-3 text-left min-w-0", // 添加 min-w-0
+						// 在紧凑模式下优化显示
+						isCompact
+							? isUser
+								? "inline-block bg-primary text-primary-foreground shadow-[var(--shadow-xs)] max-w-full break-words"
+								: "block bg-transparent text-card-foreground w-full overflow-hidden"
+							: isUser
+								? "inline-block bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto"
+								: "inline-block bg-transparent text-card-foreground w-full",
 					)}
 				>
 					{children}

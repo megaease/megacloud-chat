@@ -241,7 +241,7 @@ export function Chat() {
 			/>
 
 			<DataStreamHandler chatId={chatId} />
-			<Artifact 
+			<Artifact
 				chatId={chatId}
 				messages={messages}
 				input={input}

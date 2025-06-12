@@ -19,7 +19,7 @@ interface ArtifactChatProps {
 	handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 	handleSubmit: (
 		e: React.FormEvent<HTMLFormElement>,
-		options?: { experimental_attachments?: FileList }
+		options?: { experimental_attachments?: FileList },
 	) => void;
 	status: "error" | "submitted" | "streaming" | "ready";
 	stop: () => void;
@@ -30,8 +30,8 @@ interface ArtifactChatProps {
 	toggleMcpEnabled: () => boolean;
 }
 
-export function ArtifactChat({ 
-	chatId, 
+export function ArtifactChat({
+	chatId,
 	className,
 	messages,
 	input,
@@ -43,7 +43,7 @@ export function ArtifactChat({
 	reload,
 	isUploading,
 	mcpEnabled,
-	toggleMcpEnabled
+	toggleMcpEnabled,
 }: ArtifactChatProps) {
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -96,10 +96,13 @@ export function ArtifactChat({
 	return (
 		<div className={`flex flex-col h-full ${className || ""}`}>
 			{/* 消息列表区域 */}
-			<div ref={scrollAreaRef} className="flex-1 overflow-y-auto">
+			<div
+				ref={scrollAreaRef}
+				className="flex-1 overflow-y-auto overflow-x-hidden"
+			>
 				{messages.length === 0 ? (
 					<div className="flex-1 flex items-center justify-center h-full">
-						<div className="text-center">
+						<div className="text-center px-4">
 							<p className="text-sm text-muted-foreground">开始新的对话</p>
 							<p className="text-xs text-muted-foreground mt-1">
 								在这里与 AI 进行交流
@@ -107,7 +110,7 @@ export function ArtifactChat({
 						</div>
 					</div>
 				) : (
-					<div className="space-y-0">
+					<div className="space-y-0 min-w-0">
 						{messages.map((message, index) => {
 							const isLastMessage = index === messages.length - 1;
 							return (
@@ -131,7 +134,7 @@ export function ArtifactChat({
 			)}
 
 			{/* 聊天输入区域 */}
-			<div className="border-t border-border-/50 bg-background/50">
+			<div className="border-t border-border-/50 bg-background/50 p-2">
 				<ChatInput
 					input={input}
 					handleInputChange={handleInputChange}
@@ -141,7 +144,7 @@ export function ArtifactChat({
 					toggleMcpEnabled={toggleMcpEnabled}
 					status={status}
 					isUploading={isUploading}
-					className="p-2 max-w-none" // 调整样式以适合侧边栏
+					className="max-w-none"
 				/>
 			</div>
 

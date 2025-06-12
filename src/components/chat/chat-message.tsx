@@ -31,11 +31,11 @@ import { ReasoningPart } from "./reasoning-part";
 import { ToolInvocationPart } from "./tool-invocation-part";
 import { Button } from "@/components/ui/button";
 import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
-import { is } from "drizzle-orm";
 
 interface ChatMessageProps {
 	message: Message | UIMessage;
 	isLoading: boolean;
+	isCompact?: boolean; // 紧凑模式，用于 Artifact 侧边栏等窄屏场景
 }
 
 // Render different types of message parts
@@ -43,6 +43,7 @@ function renderMessagePart(
 	part: MessagePart,
 	key: string | number,
 	isLoading: boolean,
+	isCompact: boolean,
 	setPreviewAttachment: (
 		attachment: { url: string; type: string; name?: string } | null,
 	) => void,
@@ -58,7 +59,14 @@ function renderMessagePart(
 			return <Markdown key={key} content={part.text} />;
 
 		case "tool-invocation":
-			return <ToolInvocationPart key={key} part={part} isLoading={isLoading} />;
+			return (
+				<ToolInvocationPart
+					key={key}
+					part={part}
+					isLoading={isLoading}
+					isCompact={isCompact}
+				/>
+			);
 		case "reasoning":
 			return <ReasoningPart key={key} part={part} isLoading={isLoading} />;
 
@@ -116,7 +124,11 @@ function renderMessagePart(
 	}
 }
 
-export function ChatMessage({ message, isLoading }: ChatMessageProps) {
+export function ChatMessage({
+	message,
+	isLoading,
+	isCompact = false,
+}: ChatMessageProps) {
 	const isUser = message.role === "user";
 	const [previewAttachment, setPreviewAttachment] = useState<{
 		url: string;
@@ -137,6 +149,7 @@ export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 					convertedPart,
 					`message-part-${index}`,
 					partLoading,
+					isCompact,
 					setPreviewAttachment,
 				);
 			});
@@ -254,7 +267,7 @@ export function ChatMessage({ message, isLoading }: ChatMessageProps) {
 	console.log("ChatMessage content:", isLoading && !isUser);
 	return hasContent ? (
 		<>
-			<ChatItem isUser={isUser}>
+			<ChatItem isUser={isUser} isCompact={isCompact}>
 				{isLoading && !isUser && (
 					<div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
 						<Spinner variant="ellipsis" />
