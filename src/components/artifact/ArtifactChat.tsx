@@ -13,7 +13,7 @@ import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom-mutation";
 interface ArtifactChatProps {
 	chatId: string;
 	className?: string;
-	// 来自父组件的聊天状态
+	// Chat state from parent component
 	messages: Message[];
 	input: string;
 	handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -54,7 +54,7 @@ export function ArtifactChat({
 			forceScrollOnNewContent: false,
 		});
 
-	// 表单提交处理器
+	// Form submission handler
 	const handleFormSubmit = async (
 		e: React.FormEvent<HTMLFormElement>,
 		options?: { experimental_attachments?: FileList },
@@ -63,7 +63,7 @@ export function ArtifactChat({
 
 		if (!input.trim() && !options?.experimental_attachments) return;
 
-		// 防止多次提交
+		// Prevent multiple submissions
 		if (status === "streaming" || status === "submitted" || isUploading) {
 			return;
 		}
@@ -77,7 +77,7 @@ export function ArtifactChat({
 		}
 	};
 
-	// 停止生成处理器
+	// Stop generation handler
 	const handleStopGeneration = () => {
 		stop();
 		toast.info("Generation stopped");
@@ -86,7 +86,7 @@ export function ArtifactChat({
 		}, 100);
 	};
 
-	// 自动滚动到底部
+	// Auto scroll to bottom
 	useEffect(() => {
 		if (messages.length > 0 && isAtBottom) {
 			scrollToBottom();
@@ -95,7 +95,7 @@ export function ArtifactChat({
 
 	return (
 		<div className={`flex flex-col h-full ${className || ""}`}>
-			{/* 消息列表区域 */}
+			{/* Message list area */}
 			<div
 				ref={scrollAreaRef}
 				className="flex-1 overflow-y-auto overflow-x-hidden"
@@ -103,9 +103,9 @@ export function ArtifactChat({
 				{messages.length === 0 ? (
 					<div className="flex-1 flex items-center justify-center h-full">
 						<div className="text-center px-4">
-							<p className="text-sm text-muted-foreground">开始新的对话</p>
+							<p className="text-sm text-muted-foreground">Start a new conversation</p>
 							<p className="text-xs text-muted-foreground mt-1">
-								在这里与 AI 进行交流
+								Chat with AI here
 							</p>
 						</div>
 					</div>
@@ -126,14 +126,14 @@ export function ArtifactChat({
 				)}
 			</div>
 
-			{/* 思考状态 */}
+			{/* Thinking status */}
 			{status === "submitted" && (
-				<div className="px-3 py-2">
+				<div className="px-3 py-2 bg-card">
 					<Thinking />
 				</div>
 			)}
 
-			{/* 聊天输入区域 */}
+			{/* Chat input area */}
 			<div className="border-t border-border-/50 bg-background/50 p-2">
 				<ChatInput
 					input={input}
@@ -148,7 +148,7 @@ export function ArtifactChat({
 				/>
 			</div>
 
-			{/* 错误显示 */}
+			{/* Error display */}
 			{error && (
 				<div className="px-3 py-2 bg-destructive/10 border-t border-destructive/20">
 					<p className="text-xs text-destructive">Error: {error.message}</p>

@@ -46,10 +46,10 @@ export function CompactToolInvocation({
 		kind?: string;
 	};
 
-	// 对于 document 工具，显示更简洁的卡片样式
+	// For document tools, display a more compact card style
 	if (toolState.isDocumentTool && status === "success") {
 		const IconComponent = getDocumentIcon(args.kind);
-		const title = args.title || "未命名文档";
+		const title = args.title || "Untitled Document";
 
 		return (
 			<motion.div
@@ -65,9 +65,9 @@ export function CompactToolInvocation({
 				}}
 				role="button"
 				tabIndex={0}
-				aria-label={`打开文档: ${title}`}
+				aria-label={`Open document: ${title}`}
 			>
-				{/* 紧凑的文档头部 */}
+				{/* Compact document header */}
 				<div className="flex items-center gap-3 p-3 relative">
 					<div className="flex items-center justify-center w-8 h-8 rounded-md bg-blue-500 text-white flex-shrink-0">
 						<IconComponent size={16} />
@@ -80,7 +80,7 @@ export function CompactToolInvocation({
 							{toolState.toolName}
 						</div>
 					</div>
-					{/* 右上角的小图标指示器 */}
+					{/* Small icon indicator in top right */}
 					{onOpenArtifact && (
 						<div className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex-shrink-0">
 							<IconExternalLink size={12} />
@@ -91,7 +91,7 @@ export function CompactToolInvocation({
 		);
 	}
 
-	// 对于普通工具调用，显示简洁的行样式
+	// For regular tool invocations, display a concise row style
 	return (
 		<motion.div
 			initial={{ opacity: 0, y: 4 }}
@@ -102,7 +102,7 @@ export function CompactToolInvocation({
 				theme.backgroundColor,
 			)}
 		>
-			{/* 紧凑的工具头部 */}
+			{/* Compact tool header */}
 			<div
 				className={cn(
 					"flex items-center gap-3 p-3 cursor-pointer transition-colors",
@@ -118,7 +118,7 @@ export function CompactToolInvocation({
 				role="button"
 				tabIndex={0}
 			>
-				{/* 工具图标 */}
+				{/* Tool icon */}
 				<div
 					className={cn(
 						"flex items-center justify-center w-6 h-6 rounded-md flex-shrink-0 text-white text-xs font-bold",
@@ -134,23 +134,23 @@ export function CompactToolInvocation({
 					{toolState.toolName.charAt(0).toUpperCase()}
 				</div>
 
-				{/* 工具信息 */}
+				{/* Tool information */}
 				<div className="flex-1 min-w-0">
 					<div className="text-sm font-medium text-gray-900 dark:text-gray-100">
 						{toolState.toolName}
 					</div>
 					<div className="text-xs text-gray-600 dark:text-gray-400">
 						{status === "executing"
-							? "执行中..."
+							? "Executing..."
 							: status === "success"
-								? "执行成功"
+								? "Executed successfully"
 								: status === "error"
-									? "执行失败"
-									: "就绪"}
+									? "Execution failed"
+									: "Ready"}
 					</div>
 				</div>
 
-				{/* 状态指示器 */}
+				{/* Status indicator */}
 				<div className="flex items-center gap-2">
 					{status === "executing" && (
 						<div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
@@ -167,7 +167,7 @@ export function CompactToolInvocation({
 				</div>
 			</div>
 
-			{/* 可展开的内容区域（紧凑版本） */}
+			{/* Expandable content area (compact version) */}
 			{isExpanded && (status === "success" || status === "error") && (
 				<motion.div
 					initial={{ height: 0, opacity: 0 }}
@@ -176,11 +176,11 @@ export function CompactToolInvocation({
 					className="border-t border-gray-200/50 dark:border-gray-700/50"
 				>
 					<div className="p-3 bg-gray-50/50 dark:bg-gray-900/20">
-						{/* 错误信息 */}
+						{/* Error message */}
 						{toolState.hasError && toolState.errorMessage && (
 							<div className="mb-3 p-2 bg-red-50 dark:bg-red-950/20 rounded border border-red-200 dark:border-red-800/40">
 								<div className="text-xs font-medium text-red-800 dark:text-red-200 mb-1">
-									执行错误
+									Execution Error
 								</div>
 								<div className="text-xs text-red-700 dark:text-red-300 font-mono">
 									{toolState.errorMessage}
@@ -188,11 +188,11 @@ export function CompactToolInvocation({
 							</div>
 						)}
 
-						{/* 简化的参数显示 */}
+						{/* Simplified parameter display */}
 						{Object.keys(toolState.args).length > 0 && (
 							<div className="mb-3">
 								<div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-									参数
+									Parameters
 								</div>
 								<div className="text-xs bg-white dark:bg-gray-900/40 rounded border p-2 font-mono">
 									{JSON.stringify(toolState.args, null, 2)}

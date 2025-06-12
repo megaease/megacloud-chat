@@ -38,13 +38,13 @@ const getDocumentIcon = (kind?: string) => {
 const getDocumentTypeLabel = (kind?: string) => {
 	switch (kind) {
 		case "code":
-			return "代码文档";
+			return "Code Document";
 		case "sheet":
-			return "电子表格";
+			return "Spreadsheet";
 		case "image":
-			return "图片";
+			return "Image";
 		default:
-			return "文本文档";
+			return "Text Document";
 	}
 };
 
@@ -60,13 +60,13 @@ export function DocumentToolInvocation({
 		kind?: string;
 	};
 
-	const title = args.title || "未命名文档";
+	const title = args.title || "Untitled Document";
 	const content = args.content || "";
 	const kind = args.kind || "text";
 	const IconComponent = getDocumentIcon(kind);
 	const typeLabel = getDocumentTypeLabel(kind);
 
-	// 获取内容预览（前 100 个字符）
+	// Get content preview (first 100 characters)
 	const contentPreview =
 		content.length > 100 ? `${content.substring(0, 100)}...` : content;
 
@@ -105,7 +105,7 @@ export function DocumentToolInvocation({
 						</span>
 					</div>
 					<p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-						由 {toolState.toolName} 创建
+						Created by {toolState.toolName}
 					</p>
 				</div>
 
@@ -119,11 +119,11 @@ export function DocumentToolInvocation({
 								className="bg-blue-500 hover:bg-blue-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
 							>
 								<IconExternalLink size={16} />
-								<span className="ml-2">打开文档</span>
+								<span className="ml-2">Open Document</span>
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>在侧边栏中打开文档</p>
+							<p>Open document content</p>
 						</TooltipContent>
 					</Tooltip>
 				)}
@@ -135,7 +135,7 @@ export function DocumentToolInvocation({
 					<div className="mb-3">
 						<span className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide flex items-center gap-2">
 							<div className="w-2 h-2 rounded-full bg-blue-500" />
-							内容预览
+							Content Preview
 						</span>
 					</div>
 					<div className="bg-white/80 dark:bg-gray-900/40 rounded-lg p-4 border border-blue-200/40 dark:border-blue-800/30">
@@ -144,7 +144,7 @@ export function DocumentToolInvocation({
 						</pre>
 						{content.length > 100 && (
 							<div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
-								点击"打开文档"查看完整内容...
+								Click "Open Document" to view full content...
 							</div>
 						)}
 					</div>

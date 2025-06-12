@@ -13,7 +13,7 @@ import type { Message } from "@ai-sdk/react";
 interface ArtifactProps {
 	chatId: string;
 	onClose?: () => void;
-	// 来自父组件的聊天状态
+	// Chat state from parent component
 	messages: Message[];
 	input: string;
 	handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -51,7 +51,7 @@ export function Artifact({
 		height: 0,
 	});
 	const [isMobile, setIsMobile] = useState(false);
-	const [showChat, setShowChat] = useState(false); // 移动端聊天显示状态
+	const [showChat, setShowChat] = useState(false); // Mobile chat display state
 
 	useEffect(() => {
 		const updateDimensions = () => {
@@ -83,7 +83,7 @@ export function Artifact({
 				animate={{ opacity: 1 }}
 				exit={{ opacity: 0, transition: { delay: 0.4 } }}
 			>
-				{/* 左侧聊天面板 - 仅桌面端 */}
+				{/* Left chat panel - desktop only */}
 				{!isMobile && (
 					<motion.div
 						className="w-[400px] bg-muted dark:bg-background h-full shrink-0 border-r"

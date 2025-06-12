@@ -120,7 +120,7 @@ export function Chat() {
 		maxSteps: 10,
 		initialMessages: chatMessages,
 		experimental_prepareRequestBody: (body) => {
-			// 检查提供商和模型是否已配置
+			// Check if provider and model are configured
 			if (!currentProvider) {
 				throw new Error("Please configure API provider first");
 			}

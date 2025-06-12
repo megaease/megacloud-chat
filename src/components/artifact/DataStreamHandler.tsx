@@ -74,5 +74,5 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 		}
 	}, [dataStream, setArtifact]);
 
-	return null; // 这个组件不渲染任何 UI
+	return null; // This component doesn't render any UI
 }

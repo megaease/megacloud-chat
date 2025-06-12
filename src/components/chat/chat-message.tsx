@@ -35,7 +35,7 @@ import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
 interface ChatMessageProps {
 	message: Message | UIMessage;
 	isLoading: boolean;
-	isCompact?: boolean; // 紧凑模式，用于 Artifact 侧边栏等窄屏场景
+	isCompact?: boolean; // Compact mode for narrow screens like Artifact sidebar
 }
 
 // Render different types of message parts
@@ -80,7 +80,7 @@ function renderMessagePart(
 							setPreviewAttachment({
 								url: part.src,
 								type: "image",
-								name: part.alt || "图片",
+								name: part.alt || "Image",
 							})
 						}
 					>
@@ -185,10 +185,10 @@ export function ChatMessage({
 									setPreviewAttachment({
 										url: attachment.url,
 										type: attachment.contentType || "",
-										name: attachment.name || "图片附件",
+										name: attachment.name || "Image Attachment",
 									})
 								}
-								aria-label={`预览图片：${attachment.name || "图片附件"}`}
+								aria-label={`Preview image: ${attachment.name || "Image attachment"}`}
 							>
 								<div className="relative w-full h-full">
 									<img
@@ -249,8 +249,8 @@ export function ChatMessage({
 								target="_blank"
 								rel="noopener noreferrer"
 								className="bg-muted/80 hover:bg-muted rounded-full p-2 inline-flex items-center justify-center"
-								title={`下载${attachment.name || "文件"}`}
-								aria-label={`下载${attachment.name || "文件"}`}
+								title={`Download ${attachment.name || "file"}`}
+								aria-label={`Download ${attachment.name || "file"}`}
 							>
 								<IconDownload className="h-4 w-4" />
 							</a>

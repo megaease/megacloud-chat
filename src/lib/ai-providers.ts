@@ -10,13 +10,13 @@ interface ProviderConfig {
 }
 
 export function isOpenAI(url: string): boolean {
-	if (!url) return true; // 默认认为是 OpenAI
+	if (!url) return true; // Default to OpenAI
 	return url.includes("openai") || url.includes("api.openai");
 }
 
 /**
- * 创建 AI 模型配置的统一抽象层
- * @param providerType 提供商类型
+ * Create unified abstraction layer for AI model configuration
+ * @param providerType Provider type
  * @param config 配置参数
  * @returns 配置好的 AI 模型
  */
