@@ -6,23 +6,45 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { ArtifactContent } from "./ArtifactContent";
 import { Button } from "@/components/ui/button";
-import {
-	X,
-	ChevronLeft,
-	ChevronRight,
-	MessageSquare,
-	History,
-	MessageCircle,
-} from "lucide-react";
-import { ArtifactChatList } from "./ArtifactChatList";
+import { X, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { ArtifactChat } from "./ArtifactChat";
+import type { Message } from "@ai-sdk/react";
 
 interface ArtifactProps {
 	chatId: string;
 	onClose?: () => void;
+	// 来自父组件的聊天状态
+	messages: Message[];
+	input: string;
+	handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+	handleSubmit: (
+		e: React.FormEvent<HTMLFormElement>,
+		options?: { experimental_attachments?: FileList }
+	) => void;
+	status: "error" | "submitted" | "streaming" | "ready";
+	stop: () => void;
+	error: Error | undefined;
+	reload: () => void;
+	isUploading: boolean;
+	mcpEnabled: boolean;
+	toggleMcpEnabled: () => boolean;
 }
 
-export function Artifact({ chatId, onClose }: ArtifactProps) {
+export function Artifact({ 
+	chatId, 
+	onClose,
+	messages,
+	input,
+	handleInputChange,
+	handleSubmit,
+	status,
+	stop,
+	error,
+	reload,
+	isUploading,
+	mcpEnabled,
+	toggleMcpEnabled
+}: ArtifactProps) {
 	const { artifact, setArtifact } = useArtifact();
 	const [windowDimensions, setWindowDimensions] = useState({
 		width: 0,
@@ -30,7 +52,6 @@ export function Artifact({ chatId, onClose }: ArtifactProps) {
 	});
 	const [isMobile, setIsMobile] = useState(false);
 	const [showChat, setShowChat] = useState(false); // 移动端聊天显示状态
-	const [chatMode, setChatMode] = useState<"history" | "live">("history"); // 聊天模式
 
 	useEffect(() => {
 		const updateDimensions = () => {
@@ -87,40 +108,23 @@ export function Artifact({ chatId, onClose }: ArtifactProps) {
 							<div className="p-4 border-b">
 								<div className="flex items-center justify-between">
 									<h2 className="font-semibold">Chat</h2>
-									<div className="flex items-center gap-1 bg-muted rounded-md p-1">
-										<button
-											type="button"
-											onClick={() => setChatMode("history")}
-											className={`p-1.5 rounded text-xs transition-all ${
-												chatMode === "history"
-													? "bg-background shadow-sm"
-													: "hover:bg-background/50"
-											}`}
-											title="查看历史消息"
-										>
-											<History className="h-3 w-3" />
-										</button>
-										<button
-											type="button"
-											onClick={() => setChatMode("live")}
-											className={`p-1.5 rounded text-xs transition-all ${
-												chatMode === "live"
-													? "bg-background shadow-sm"
-													: "hover:bg-background/50"
-											}`}
-											title="实时聊天"
-										>
-											<MessageCircle className="h-3 w-3" />
-										</button>
-									</div>
 								</div>
 							</div>
 							<div className="flex-1 overflow-hidden">
-								{chatMode === "history" ? (
-									<ArtifactChatList chatId={chatId} mode="history" />
-								) : (
-									<ArtifactChat chatId={chatId} />
-								)}
+								<ArtifactChat 
+									chatId={chatId}
+									messages={messages}
+									input={input}
+									handleInputChange={handleInputChange}
+									handleSubmit={handleSubmit}
+									status={status}
+									stop={stop}
+									error={error}
+									reload={reload}
+									isUploading={isUploading}
+									mcpEnabled={mcpEnabled}
+									toggleMcpEnabled={toggleMcpEnabled}
+								/>
 							</div>
 						</div>
 					</motion.div>
@@ -129,10 +133,9 @@ export function Artifact({ chatId, onClose }: ArtifactProps) {
 				{/* 移动端聊天面板覆盖层 */}
 				{isMobile && showChat && (
 					<motion.div
-						className={
-							"flex flex-row lex gap-3 p-3 text-sm border-b border-border-/50 last:border-b-0"
-						}
+						className="absolute inset-0 bg-background z-10"
 						initial={{ x: "-100%" }}
+						animate={{ x: 0 }}
 						exit={{ x: "-100%" }}
 						transition={{ type: "tween", duration: 0.3 }}
 					>
@@ -141,32 +144,6 @@ export function Artifact({ chatId, onClose }: ArtifactProps) {
 								<div className="flex items-center justify-between">
 									<h2 className="font-semibold">Chat</h2>
 									<div className="flex items-center gap-2">
-										<div className="flex items-center gap-1 bg-muted rounded-md p-1">
-											<button
-												type="button"
-												onClick={() => setChatMode("history")}
-												className={`p-1.5 rounded text-xs transition-all ${
-													chatMode === "history"
-														? "bg-background shadow-sm"
-														: "hover:bg-background/50"
-												}`}
-												title="查看历史消息"
-											>
-												<History className="h-3 w-3" />
-											</button>
-											<button
-												type="button"
-												onClick={() => setChatMode("live")}
-												className={`p-1.5 rounded text-xs transition-all ${
-													chatMode === "live"
-														? "bg-background shadow-sm"
-														: "hover:bg-background/50"
-												}`}
-												title="实时聊天"
-											>
-												<MessageCircle className="h-3 w-3" />
-											</button>
-										</div>
 										<Button
 											variant="ghost"
 											size="sm"
@@ -179,11 +156,20 @@ export function Artifact({ chatId, onClose }: ArtifactProps) {
 								</div>
 							</div>
 							<div className="flex-1 overflow-hidden">
-								{chatMode === "history" ? (
-									<ArtifactChatList chatId={chatId} mode="history" />
-								) : (
-									<ArtifactChat chatId={chatId} />
-								)}
+								<ArtifactChat 
+									chatId={chatId}
+									messages={messages}
+									input={input}
+									handleInputChange={handleInputChange}
+									handleSubmit={handleSubmit}
+									status={status}
+									stop={stop}
+									error={error}
+									reload={reload}
+									isUploading={isUploading}
+									mcpEnabled={mcpEnabled}
+									toggleMcpEnabled={toggleMcpEnabled}
+								/>
 							</div>
 						</div>
 					</motion.div>

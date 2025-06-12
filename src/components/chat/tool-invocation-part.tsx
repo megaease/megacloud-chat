@@ -18,6 +18,9 @@ import {
 } from "@tabler/icons-react";
 import { CopyButton } from "../copy-button";
 import { Markdown } from "../markdown";
+import { Button } from "@/components/ui/button";
+import { useArtifact } from "@/context/artifact-provider-context";
+import { IconExternalLink } from "@tabler/icons-react";
 
 function renderResultContent(content: ResultContent | string, key: string) {
 	// Function to try parsing JSON strings and display them with formatting
@@ -110,11 +113,46 @@ export function ToolInvocationPart({
 	const isDatabase =
 		toolName.includes("sql") || toolName.includes("postgresql");
 	const args = JSON.stringify(toolInvocation.args, null, 2);
+	const { setArtifact } = useArtifact();
 
 	const hasError = toolInvocation.result?.isError;
 	const errorMessage = hasError
 		? toolInvocation.result?.error || "Unknown error"
 		: null;
+
+	// 检查是否是创建文档的工具调用
+	const isDocumentTool =
+		toolName === "createDocument" || toolName === "updateDocument";
+	const isSuccessful = toolInvocation.state === "result" && !hasError;
+
+	// 处理打开 Artifact
+	const handleOpenArtifact = () => {
+		if (!isDocumentTool || !isSuccessful) return;
+
+		const args = toolInvocation.args as {
+			title?: string;
+			content?: string;
+			kind?: string;
+		};
+
+		// 创建一个模拟的 bounding box（从屏幕中心开始）
+		const boundingBox = {
+			top: window.innerHeight / 2 - 100,
+			left: window.innerWidth / 2 - 200,
+			width: 400,
+			height: 200,
+		};
+
+		setArtifact({
+			documentId: `doc_${Date.now()}`,
+			title: args.title || "Untitled Document",
+			kind: (args.kind as "text" | "code" | "sheet" | "image") || "text",
+			content: args.content || "",
+			isVisible: true,
+			status: "idle",
+			boundingBox,
+		});
+	};
 
 	// Determine icon based on tool name
 	const getToolIcon = (name: string) => {
@@ -261,21 +299,38 @@ export function ToolInvocationPart({
 							>
 								{toolName}
 							</span>
-							<div className="ml-auto flex items-center gap-1.5 text-xs">
-								{getStatusIcon()}
+							<div className="ml-auto flex items-center gap-2 text-xs">
+								{/* 如果是成功的文档工具调用，显示"查看 Artifact"按钮 */}
+								{isDocumentTool && isSuccessful && (
+									<Button
+										onClick={(e) => {
+											e.stopPropagation(); // 阻止折叠面板的展开/收起
+											handleOpenArtifact();
+										}}
+										variant="outline"
+										size="sm"
+										className="h-6 px-2 text-xs font-medium"
+									>
+										<IconExternalLink className="h-3 w-3 mr-1" />
+										查看 Artifact
+									</Button>
+								)}
 
-								<span
-									className={cn(
-										hasError ? "text-destructive" : "text-muted-foreground",
-										"font-medium",
-									)}
-								>
-									{toolInvocation.state === "result"
-										? hasError
-											? "Execution Failed"
-											: "Completed"
-										: "Processing"}
-								</span>
+								<div className="flex items-center gap-1.5">
+									{getStatusIcon()}
+									<span
+										className={cn(
+											hasError ? "text-destructive" : "text-muted-foreground",
+											"font-medium",
+										)}
+									>
+										{toolInvocation.state === "result"
+											? hasError
+												? "Execution Failed"
+												: "Completed"
+											: "Processing"}
+									</span>
+								</div>
 							</div>
 						</div>
 					</AccordionTrigger>

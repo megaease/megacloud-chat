@@ -1,12 +1,9 @@
 // components/artifact/ArtifactChat.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useChat } from "@ai-sdk/react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import type { Message } from "@ai-sdk/react";
 import { toast } from "sonner";
-import { useApiProvider } from "@/context/api-provider-context";
-import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { ArtifactChatList } from "./ArtifactChatList";
 import { ChatInput } from "../chat/chat-input";
 import { ArtifactMessage } from "./ArtifactMessage";
@@ -16,13 +13,38 @@ import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom-mutation";
 interface ArtifactChatProps {
 	chatId: string;
 	className?: string;
+	// 来自父组件的聊天状态
+	messages: Message[];
+	input: string;
+	handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+	handleSubmit: (
+		e: React.FormEvent<HTMLFormElement>,
+		options?: { experimental_attachments?: FileList }
+	) => void;
+	status: "error" | "submitted" | "streaming" | "ready";
+	stop: () => void;
+	error: Error | undefined;
+	reload: () => void;
+	isUploading: boolean;
+	mcpEnabled: boolean;
+	toggleMcpEnabled: () => boolean;
 }
 
-export function ArtifactChat({ chatId, className }: ArtifactChatProps) {
-	const queryClient = useQueryClient();
-	const { currentProvider, currentModel } = useApiProvider();
-	const { mcpEnabled, toggleMcpEnabled } = useMcpEnabled();
-	const [isUploading, setIsUploading] = useState(false);
+export function ArtifactChat({ 
+	chatId, 
+	className,
+	messages,
+	input,
+	handleInputChange,
+	handleSubmit,
+	status,
+	stop,
+	error,
+	reload,
+	isUploading,
+	mcpEnabled,
+	toggleMcpEnabled
+}: ArtifactChatProps) {
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 
 	const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
@@ -31,59 +53,6 @@ export function ArtifactChat({ chatId, className }: ArtifactChatProps) {
 			scrollOnMount: true,
 			forceScrollOnNewContent: false,
 		});
-
-	// 使用 useChat hook 管理聊天状态
-	const {
-		messages,
-		input,
-		handleInputChange,
-		handleSubmit,
-		status,
-		stop,
-		error,
-		reload,
-	} = useChat({
-		id: chatId,
-		maxSteps: 10,
-		experimental_prepareRequestBody: (body) => {
-			if (!currentProvider) {
-				throw new Error("Please configure API provider first");
-			}
-
-			if (!currentModel) {
-				throw new Error("Please select a model");
-			}
-
-			return {
-				chatId: chatId,
-				userId: "user-id",
-				apiKey: currentProvider.apiKey,
-				modelName: currentModel,
-				baseUrl: currentProvider.baseUrl,
-				mcpEnabled,
-				message: body.messages.at(-1),
-				providerType: currentProvider.providerType,
-			};
-		},
-		experimental_throttle: 100,
-		sendExtraMessageFields: true,
-		onFinish: (message) => {
-			console.log("Artifact chat message finished:", message);
-			// 刷新聊天列表和主聊天查询
-			queryClient.invalidateQueries({
-				queryKey: ["chats", "user-id"],
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["artifact-chat", "user-id", chatId],
-			});
-		},
-		onError: (error) => {
-			console.error("Artifact chat error:", error);
-			toast.error("Chat error", {
-				description: error instanceof Error ? error.message : "Unknown error",
-			});
-		},
-	});
 
 	// 表单提交处理器
 	const handleFormSubmit = async (

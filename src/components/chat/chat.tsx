@@ -241,7 +241,20 @@ export function Chat() {
 			/>
 
 			<DataStreamHandler chatId={chatId} />
-			<Artifact chatId={chatId} />
+			<Artifact 
+				chatId={chatId}
+				messages={messages}
+				input={input}
+				handleInputChange={handleInputChange}
+				handleSubmit={handleFormSubmit}
+				status={status}
+				stop={stop}
+				error={error}
+				reload={reload}
+				isUploading={isUploading}
+				mcpEnabled={mcpEnabled}
+				toggleMcpEnabled={toggleMcpEnabled}
+			/>
 		</ArtifactProvider>
 	);
 }
