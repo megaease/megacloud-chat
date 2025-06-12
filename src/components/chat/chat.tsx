@@ -12,6 +12,9 @@ import { ChatView } from "./chat-view";
 import { IconLoader2 } from "@tabler/icons-react";
 import { appendClientMessage, type UIMessage } from "ai";
 import type { DBMessage } from "@/server/db/schema";
+import { DataStreamHandler } from "../artifact/DataStreamHandler";
+import { Artifact } from "@/components/artifact/Artifact";
+import { ArtifactProvider } from "@/context/artifact-provider-context";
 
 // Fetch chat messages hook
 function useChatMessages(chatId: string | undefined) {
@@ -66,7 +69,7 @@ function useChatMessages(chatId: string | undefined) {
 // Container component that handles data and state
 export function Chat() {
 	const { id } = useParams();
-	const chatId = id as string | undefined;
+	const chatId = id as string;
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { currentProvider, currentModel, isConfigured } = useApiProvider();
@@ -222,18 +225,23 @@ export function Chat() {
 	}
 
 	return (
-		<ChatView
-			messages={messages}
-			input={input}
-			handleInputChange={handleInputChange}
-			handleSubmit={handleFormSubmit}
-			handleStopGeneration={handleStopGeneration}
-			error={error || null}
-			reload={reload}
-			mcpEnabled={mcpEnabled}
-			toggleMcpEnabled={toggleMcpEnabled}
-			status={status}
-			isUploading={isUploading}
-		/>
+		<ArtifactProvider>
+			<ChatView
+				messages={messages}
+				input={input}
+				handleInputChange={handleInputChange}
+				handleSubmit={handleFormSubmit}
+				handleStopGeneration={handleStopGeneration}
+				error={error || null}
+				reload={reload}
+				mcpEnabled={mcpEnabled}
+				toggleMcpEnabled={toggleMcpEnabled}
+				status={status}
+				isUploading={isUploading}
+			/>
+
+			<DataStreamHandler chatId={chatId} />
+			<Artifact chatId={chatId} />
+		</ArtifactProvider>
 	);
 }

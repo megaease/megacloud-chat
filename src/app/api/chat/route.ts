@@ -8,6 +8,7 @@ import {
 	appendClientMessage,
 	appendResponseMessages,
 	convertToCoreMessages,
+	createDataStream,
 	smoothStream,
 	streamText,
 	type Message,
@@ -19,9 +20,37 @@ import { nanoid } from "nanoid";
 import { detectAndCreateAIModel } from "@/lib/ai-providers";
 import { getChatMessageById } from "@/server/db/queries/chat";
 import { getTrailingMessageId } from "@/lib/utils";
+import { systemPrompt } from "@/lib/prompt";
+import { createDocumentTool } from "@/lib/ai/tools/create-document";
+import {
+	createResumableStreamContext,
+	type ResumableStreamContext,
+} from "resumable-stream";
+import { after } from "next/server";
 
 export const maxDuration = 30;
 
+let globalStreamContext: ResumableStreamContext | null = null;
+
+function getStreamContext() {
+	if (!globalStreamContext) {
+		try {
+			globalStreamContext = createResumableStreamContext({
+				waitUntil: after,
+			});
+		} catch (error: any) {
+			if (error.message.includes("REDIS_URL")) {
+				console.log(
+					" > Resumable streams are disabled due to missing REDIS_URL",
+				);
+			} else {
+				console.error(error);
+			}
+		}
+	}
+
+	return globalStreamContext;
+}
 type requestBody = {
 	userId: string;
 	chatId: string;
@@ -95,89 +124,96 @@ export async function POST(req: Request) {
 		await saveMessages(chatId, [message]);
 		// Load MCP tools using the extracted utility function
 		const {
-			tools: allTools,
+			tools: mcpTools,
 			clients: mcpClients,
 			closeAllMcpClients,
 		} = await loadMCPTools(mcpEnabled);
-		console.log(mcpEnabled, allTools, "allTools");
+		console.log(mcpEnabled, mcpTools, "allTools");
 
 		console.log(
 			`Using ${detectedProvider} model: ${modelName || "gpt-4-turbo"}`,
 		);
-		const result = streamText({
-			model: modelConfig,
-			system: `You are a helpful AI assistant with access to various tools through the Model Control Protocol (MCP).
-				TOOLS:
-				You can use mcp tools to perform specific tasks. Each tool has a name, description, and parameters. You can call these tools by their names and provide the required parameters.
-				GUIDELINES FOR TOOL USAGE:
-				- Before using a tool, tell the user what you are going to do and why.
-				- Use tools only when necessary to provide accurate and helpful responses.
-				- When you need information you don't have, use the appropriate tool rather than guessing.
-				- Always explain to the user when you're using a tool and why.
-				- After receiving results from a tool, interpret them clearly for the user.
-				- If a tool fails, gracefully explain the issue and suggest alternatives.
-				RESPONSE FORMAT:
-				- Be concise and direct in your responses.
-				- Format code, data, and lists appropriately for readability.
-				- When showing tool results, clearly distinguish them from your own commentary.
+		const streamId = nanoid(16);
 
-				Remember that your primary goal is to be helpful, accurate, and transparent about your capabilities and limitations.`,
+		// Create a new stream ID in the database
+		// await createStreamId({ streamId, chatId: id });
 
-			messages: messages,
-			tools: allTools,
-			experimental_transform: smoothStream({ chunking: "word" }),
-			maxSteps: 10,
-			providerOptions: {
-				openai: {
-					reasoningEffort: "low",
-					reasoningSummary: "detailed",
-				},
-			},
-			onFinish: async (result) => {
-				const responseMessages = result.response.messages;
+		const stream = createDataStream({
+			execute: (dataStream) => {
+				const result = streamText({
+					model: modelConfig,
+					system: systemPrompt,
+					messages: messages,
+					tools: {
+						...mcpTools,
+						createDocument: createDocumentTool(dataStream),
+						updateDocument: createDocumentTool(dataStream),
+					} as ToolSet,
 
-				const assistantId = getTrailingMessageId({
-					messages: responseMessages.filter(
-						(message) => message.role === "assistant",
-					),
-				});
-				if (!assistantId) {
-					console.error("No assistant message found in response");
-					throw new Error("No assistant message found in response");
-				}
-
-				const [, lastMessage] = appendResponseMessages({
-					messages: [message],
-					responseMessages: responseMessages,
-				});
-				if (!lastMessage) {
-					console.error("No last message found in response");
-					throw new Error("No last message found in response");
-				}
-				await saveMessages(chatId, [
-					{
-						id: assistantId,
-						role: lastMessage.role,
-						parts: lastMessage.parts ?? [],
-						createdAt: new Date(),
-						content: lastMessage.content,
-						experimental_attachments:
-							lastMessage.experimental_attachments ?? [],
+					experimental_transform: smoothStream({ chunking: "word" }),
+					maxSteps: 10,
+					providerOptions: {
+						openai: {
+							reasoningEffort: "low",
+							reasoningSummary: "detailed",
+						},
 					},
-				]);
+					onFinish: async (result) => {
+						const responseMessages = result.response.messages;
 
-				await closeAllMcpClients();
+						const assistantId = getTrailingMessageId({
+							messages: responseMessages.filter(
+								(message) => message.role === "assistant",
+							),
+						});
+						if (!assistantId) {
+							console.error("No assistant message found in response");
+							throw new Error("No assistant message found in response");
+						}
+
+						const [, lastMessage] = appendResponseMessages({
+							messages: [message],
+							responseMessages: responseMessages,
+						});
+						if (!lastMessage) {
+							console.error("No last message found in response");
+							throw new Error("No last message found in response");
+						}
+						await saveMessages(chatId, [
+							{
+								id: assistantId,
+								role: lastMessage.role,
+								parts: lastMessage.parts ?? [],
+								createdAt: new Date(),
+								content: lastMessage.content,
+								experimental_attachments:
+									lastMessage.experimental_attachments ?? [],
+							},
+						]);
+
+						await closeAllMcpClients();
+					},
+					onError: async (error) => {
+						console.error("Stream error:", error);
+						await closeAllMcpClients();
+					},
+				});
+
+				result.consumeStream();
+				result.mergeIntoDataStream(dataStream, {
+					sendReasoning: true,
+				});
 			},
 		});
 
-		return result.toDataStreamResponse({
-			sendReasoning: true,
-			getErrorMessage: (error) => {
-				return error instanceof Error
-					? error.message
-					: "An unknown error occurred, please try again later";
-			},
-		});
+		const streamContext = getStreamContext(); // not achieved
+
+		if (streamContext) {
+			return new Response(
+				await streamContext.resumableStream(streamId, () => stream),
+			);
+		}
+		return new Response(stream);
 	} catch (error) {
 		console.error("Error processing request:", JSON.stringify(error));
 		// Return a proper error response instead of nothing

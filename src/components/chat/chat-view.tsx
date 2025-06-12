@@ -8,6 +8,7 @@ import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom-mutation";
 import type { Message } from "@ai-sdk/react";
 import { ChatInput } from "./chat-input";
 import { Thinking } from "./thinking";
+import { Artifact } from "../artifact/Artifact";
 
 // Define the Model interface
 interface Model {
