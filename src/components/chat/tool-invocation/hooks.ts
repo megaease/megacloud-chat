@@ -17,6 +17,9 @@ export function useToolInvocationState(part: ToolInvocationPartType) {
 			toolName === "createDocument" || toolName === "updateDocument";
 		const isSuccessful = state === "result" && !hasError;
 
+		// Extract result content
+		const result = toolInvocation.result?.content || null;
+
 		return {
 			toolName,
 			state,
@@ -25,6 +28,7 @@ export function useToolInvocationState(part: ToolInvocationPartType) {
 			errorMessage,
 			isSuccessful,
 			isDocumentTool,
+			result,
 		};
 	}, [toolInvocation, toolName, state, args]);
 

@@ -1,4 +1,7 @@
-import type { ToolInvocationPart as ToolInvocationPartType } from "@/types/tool-invocation";
+import type {
+	ToolInvocationPart as ToolInvocationPartType,
+	ResultContent,
+} from "@/types/tool-invocation";
 
 export interface ToolInvocationProps {
 	part: ToolInvocationPartType;
@@ -14,6 +17,7 @@ export interface ToolState {
 	errorMessage: string | null;
 	isSuccessful: boolean;
 	isDocumentTool: boolean;
+	result: Array<ResultContent | string> | string | null;
 }
 
 export interface ToolTheme {

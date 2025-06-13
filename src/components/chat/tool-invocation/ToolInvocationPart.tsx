@@ -1,8 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useArtifact } from "@/context/artifact-provider-context";
-import { ToolInvocationHeader } from "./ToolInvocationHeader";
-import { ToolInvocationContent } from "./ToolInvocationContent";
 import { ToolExecutionStatus } from "./ToolExecutionStatus";
 import { DocumentToolInvocation } from "./DocumentToolInvocation";
 import { CompactToolInvocation } from "./CompactToolInvocation";
@@ -65,6 +63,7 @@ export function ToolInvocationPart({
 				onOpenArtifact={
 					toolState.isDocumentTool ? handleOpenArtifact : undefined
 				}
+				isCompact={true}
 			/>
 		);
 	}
@@ -101,40 +100,16 @@ export function ToolInvocationPart({
 		);
 	}
 
-	// 默认的工具调用样式（用于普通工具）
+	// 默认的工具调用样式（用于普通工具）- 使用简洁的单行风格
 	return (
-		<motion.div
-			initial={{ opacity: 0, y: 8, scale: 0.98 }}
-			animate={{ opacity: 1, y: 0, scale: 1 }}
-			transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-			className={cn(
-				"group relative rounded-lg border  my-4 overflow-hidden transition-all duration-300 hover:shadow-md",
-				theme.borderColor,
-				theme.backgroundColor,
-				theme.hoverShadowColor,
-			)}
-		>
-			{/* Header */}
-			<ToolInvocationHeader
-				toolState={toolState}
-				status={status}
-				theme={theme}
-				isExpanded={isExpanded}
-				hasExpandableContent={hasExpandableContent}
-				onToggleExpanded={toggleExpanded}
-				onOpenArtifact={handleOpenArtifact}
-			/>
-
-			{/* Execution Status */}
-			<ToolExecutionStatus status={status} toolName={toolState.toolName} />
-
-			{/* Expandable Content */}
-			<ToolInvocationContent
-				toolState={toolState}
-				status={status}
-				isExpanded={isExpanded}
-				part={part}
-			/>
-		</motion.div>
+		<CompactToolInvocation
+			toolState={toolState}
+			status={status}
+			theme={theme}
+			isExpanded={isExpanded}
+			onToggleExpanded={toggleExpanded}
+			onOpenArtifact={toolState.isDocumentTool ? handleOpenArtifact : undefined}
+			isCompact={false}
+		/>
 	);
 }
