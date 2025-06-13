@@ -108,7 +108,7 @@ export function ToolInvocationPart({
 			animate={{ opacity: 1, y: 0, scale: 1 }}
 			transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
 			className={cn(
-				"group relative rounded-lg border shadow-sm my-6 overflow-hidden transition-all duration-300 hover:shadow-md",
+				"group relative rounded-lg border  my-4 overflow-hidden transition-all duration-300 hover:shadow-md",
 				theme.borderColor,
 				theme.backgroundColor,
 				theme.hoverShadowColor,

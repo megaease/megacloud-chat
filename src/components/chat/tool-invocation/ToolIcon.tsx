@@ -17,7 +17,7 @@ export function ToolIcon({ toolName, theme, className }: ToolIconProps) {
 	return (
 		<div
 			className={cn(
-				"flex items-center justify-center w-10 h-10 rounded-lg shadow-lg transition-all duration-300 group-hover:scale-105 text-white",
+				"flex items-center justify-center w-10 h-10 rounded-lg shadow transition-all duration-300 group-hover:scale-105 text-white",
 				theme.iconGradient,
 				theme.iconShadowColor,
 				className,

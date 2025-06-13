@@ -142,12 +142,12 @@ export function MCPToggle({
 						onCloseAutoFocus={(e) => e.preventDefault()}
 					>
 						{/* MCP Global Toggle */}
-						<div className="flex items-center justify-between p-3 rounded-lg bg-gray-50/80 dark:bg-gray-900/50 mb-3 border border-gray-100/50 dark:border-gray-800/50">
+						<div className="flex items-center justify-between p-3 rounded-lg bg-gray-50/80 dark:bg-gray-900/50  border border-gray-100/50 dark:border-gray-800/50">
 							<div className="flex items-center gap-2.5">
 								<IconServer className="h-4 w-4 text-gray-600 dark:text-gray-400" />
 								<div className="flex flex-col">
 									<span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-										MCP Protocol
+										MCP
 									</span>
 									{mcpEnabled && onlineServers.length > 0 && (
 										<span className="text-xs text-green-600 dark:text-green-400">
@@ -168,7 +168,7 @@ export function MCPToggle({
 
 						{mcpEnabled && (
 							<>
-								<div className="flex items-center justify-between mb-3">
+								<div className="flex items-center justify-between my-3">
 									<div className="flex items-center gap-2">
 										<span className="text-sm font-medium text-gray-900 dark:text-gray-100">
 											Servers

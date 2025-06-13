@@ -95,7 +95,11 @@ export function ChatView({
 				</Button>
 			)}
 
-			{status === "submitted" && <Thinking />}
+			{status === "submitted" && (
+				<div className="relative">
+					<Thinking />
+				</div>
+			)}
 
 			{/* Chat input */}
 			<ChatInput

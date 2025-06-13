@@ -46,7 +46,7 @@ export function ToolInvocationHeader({
 	return (
 		<div
 			className={cn(
-				"flex items-center gap-4 px-5 py-4 cursor-pointer backdrop-blur-sm transition-all duration-300 relative",
+				"flex items-center gap-4 px-4 py-2 cursor-pointer backdrop-blur-sm transition-all duration-300 relative",
 				// 动态圆角：如果没有展开内容，使用完整圆角；如果有展开内容，只使用顶部圆角
 				hasExpandableContent ? "rounded-t-lg" : "rounded-lg",
 				"before:absolute before:inset-0 before:bg-white/40 before:dark:bg-gray-800/40 before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100",
@@ -71,7 +71,7 @@ export function ToolInvocationHeader({
 							{toolState.toolName}
 						</h3>
 						{/* Status Badge */}
-						<StatusBadge status={status} theme={theme} />
+						{/* <StatusBadge status={status} theme={theme} /> */}
 					</div>
 
 					{/* Status Description */}

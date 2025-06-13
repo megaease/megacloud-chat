@@ -238,9 +238,9 @@ export function HomePage() {
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
-									aria-label="MCP Protocol"
+									aria-label="MCP"
 								>
-									<title>MCP Protocol</title>
+									<title>MCP</title>
 									<path
 										strokeLinecap="round"
 										strokeLinejoin="round"
@@ -250,7 +250,7 @@ export function HomePage() {
 								</svg>
 							</div>
 							<div className="space-y-2">
-								<h3 className="font-semibold text-foreground">MCP Protocol</h3>
+								<h3 className="font-semibold text-foreground">MCP</h3>
 								<p className="text-sm text-muted-foreground">
 									Advanced Model Context Protocol for seamless integrations
 								</p>

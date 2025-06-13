@@ -103,7 +103,9 @@ export function ArtifactChat({
 				{messages.length === 0 ? (
 					<div className="flex-1 flex items-center justify-center h-full">
 						<div className="text-center px-4">
-							<p className="text-sm text-muted-foreground">Start a new conversation</p>
+							<p className="text-sm text-muted-foreground">
+								Start a new conversation
+							</p>
 							<p className="text-xs text-muted-foreground mt-1">
 								Chat with AI here
 							</p>
@@ -126,9 +128,8 @@ export function ArtifactChat({
 				)}
 			</div>
 
-			{/* Thinking status */}
 			{status === "submitted" && (
-				<div className="px-3 py-2 bg-card">
+				<div className="relative">
 					<Thinking />
 				</div>
 			)}
