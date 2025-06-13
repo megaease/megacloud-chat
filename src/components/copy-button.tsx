@@ -56,7 +56,7 @@ export function CopyButton({
 							"h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105",
 							"bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800",
 							"border border-gray-200/60 border-solid dark:border-gray-700/60",
-							"shadow-lg hover:shadow-xl",
+							"shadow-xs hover:shadow-sm",
 							"text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200",
 							copied &&
 								"text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300",

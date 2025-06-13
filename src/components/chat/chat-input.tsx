@@ -22,6 +22,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { MCPToggle } from "@/components/mcp/mcp-toggle";
 import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
 
 interface ChatInputProps {
@@ -319,26 +320,12 @@ export function ChatInput({
 						autoFocus
 					/>
 
-					{/* MCP Toggle switch */}
+					{/* MCP Toggle */}
 					<div className="absolute bottom-3 left-3 flex items-center gap-2">
-						<TooltipProvider>
-							<Tooltip delayDuration={300}>
-								<TooltipTrigger asChild>
-									<div className="flex items-center rounded-lg px-3 py-2 bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 shadow-xs transition-all duration-200 hover:shadow-sm hover:bg-white dark:hover:bg-gray-800 group">
-										<span className="text-xs font-medium mr-2 text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200">
-											MCP
-										</span>
-										<Switch
-											checked={mcpEnabled}
-											onCheckedChange={() => toggleMcpEnabled()}
-										/>
-									</div>
-								</TooltipTrigger>
-								<TooltipContent side="top">
-									<p>{mcpEnabled ? "MCP Enabled" : "MCP Disabled"}</p>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
+						<MCPToggle
+							mcpEnabled={mcpEnabled}
+							toggleMcpEnabled={toggleMcpEnabled}
+						/>
 					</div>
 					<div className="absolute bottom-3 right-3 flex items-center gap-2">
 						{/* Upload button */}
@@ -415,7 +402,6 @@ export function ChatInput({
 				onClose={() => setPreviewImage(null)}
 				imageUrl={previewImage?.url || ""}
 				imageName={previewImage?.name}
-				variant="simple"
 			/>
 		</div>
 	);
