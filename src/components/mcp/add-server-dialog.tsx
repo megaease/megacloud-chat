@@ -41,6 +41,7 @@ interface AddServerDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	onSuccess?: () => void;
+	customTrigger?: Boolean;
 }
 
 // Default values for SSE server
@@ -72,6 +73,7 @@ export function AddServerDialog({
 	onSuccess,
 	open,
 	onOpenChange,
+	customTrigger,
 }: AddServerDialogProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -123,12 +125,14 @@ export function AddServerDialog({
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogTrigger asChild>
-				<div className="w-full px-4 py-2">
-					<Button className="w-full">
-						<IconPlus className="mr-2 h-4 w-4" />
-						Add Server
-					</Button>
-				</div>
+				{customTrigger ? null : (
+					<div className="w-full px-4 py-2">
+						<Button className="w-full">
+							<IconPlus className="mr-2 h-4 w-4" />
+							Add Server
+						</Button>
+					</div>
+				)}
 			</DialogTrigger>
 			<DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(880px,90vh)] sm:max-w-xl  [&>button:last-child]:top-3.5">
 				<DialogHeader className="px-6 py-4">

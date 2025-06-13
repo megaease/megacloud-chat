@@ -7,6 +7,7 @@ import {
 	IconCircleOff,
 	IconLoader2,
 	IconSettings,
+	IconPlus,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -26,12 +27,14 @@ import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMcpServers, updateMcpServerStatus } from "@/lib/mcp-server-action";
 import { useMCPDrawer } from "@/context/mcp-drawer-context";
+import { AddServerDialog } from "./add-server-dialog";
 import {
 	type McpServer,
 	ServerStatusEnum,
 	type ServerStatus,
 } from "@/server/db/schema";
 import { toast } from "sonner";
+import { MCPDrawer } from "./mcp-drawer";
 
 interface MCPToggleProps {
 	mcpEnabled: boolean;
@@ -47,6 +50,7 @@ export function MCPToggle({
 	const [loadingStates, setLoadingStates] = useState<Record<number, boolean>>(
 		{},
 	);
+	const [addDialogOpen, setAddDialogOpen] = useState(false);
 	const queryClient = useQueryClient();
 	const { openDrawer } = useMCPDrawer();
 
@@ -99,7 +103,12 @@ export function MCPToggle({
 
 	return (
 		<TooltipProvider>
-			<div className={cn("relative", className)}>
+			<div
+				className={cn(
+					"relative flex items-center rounded-lg shadow-sm border border-gray-200/60 dark:border-gray-700/60 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:shadow-md transition-all duration-200 m-1",
+					className,
+				)}
+			>
 				<DropdownMenu>
 					<Tooltip delayDuration={300}>
 						<TooltipTrigger asChild>
@@ -107,23 +116,31 @@ export function MCPToggle({
 								<Button
 									variant="ghost"
 									size="sm"
-									className="h-8 w-8 p-0 rounded-lg bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 shadow-xs hover:shadow-sm hover:bg-white dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20"
+									className="h-8 w-auto px-3 pr-4 rounded-l-lg rounded-r-none bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800/80 dark:to-slate-800/80 border-0 hover:from-gray-100 hover:to-slate-100 dark:hover:from-gray-700/80 dark:hover:to-slate-700/80 focus:outline-none transition-all duration-200 relative"
 								>
-									<div className="relative">
+									<div className="relative flex items-center gap-2.5">
 										<IconServer
 											className={cn(
 												"h-4 w-4 transition-colors",
 												mcpEnabled
-													? "text-gray-700 dark:text-gray-300"
-													: "text-gray-400 dark:text-gray-600",
+													? "text-gray-700 dark:text-gray-200"
+													: "text-gray-400 dark:text-gray-500",
 											)}
 										/>
-										{onlineServers.length > 0 && mcpEnabled && (
-											<div className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold flex items-center justify-center border-2 border-white dark:border-gray-800 shadow-sm">
-												{onlineServers.length > 9 ? "9+" : onlineServers.length}
-											</div>
-										)}
+										<span className="font-medium text-gray-700 dark:text-gray-200">
+											MCP
+										</span>
 									</div>
+
+									{/* Badge positioned outside the text area */}
+									{onlineServers.length > 0 && mcpEnabled && (
+										<div className="absolute -top-2 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-gradient-to-r from-gray-600 to-slate-600 dark:from-gray-300 dark:to-slate-300 text-white dark:text-gray-800 text-xs font-bold flex items-center justify-center border-2 border-white dark:border-gray-800 shadow-lg z-10">
+											{onlineServers.length > 9 ? "9+" : onlineServers.length}
+										</div>
+									)}
+
+									{/* Separator line */}
+									<div className="absolute right-0 top-1 bottom-1 w-px bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent" />
 								</Button>
 							</DropdownMenuTrigger>
 						</TooltipTrigger>
@@ -182,18 +199,32 @@ export function MCPToggle({
 											</Badge>
 										)}
 									</div>
-									<Button
-										variant="ghost"
-										size="sm"
-										onClick={(e) => {
-											e.preventDefault();
-											openDrawer();
-										}}
-										className="h-7 w-7 p-0 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-700/50 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
-										aria-label="Server settings"
-									>
-										<IconSettings className="h-3.5 w-3.5" />
-									</Button>
+									<div className="flex items-center gap-1">
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={(e) => {
+												e.preventDefault();
+												setAddDialogOpen(true);
+											}}
+											className="h-7 w-7 p-0 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-700/50 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+											aria-label="Add server"
+										>
+											<IconPlus className="h-3.5 w-3.5" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={(e) => {
+												e.preventDefault();
+												openDrawer();
+											}}
+											className="h-7 w-7 p-0 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-700/50 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+											aria-label="Server settings"
+										>
+											<IconSettings className="h-3.5 w-3.5" />
+										</Button>
+									</div>
 								</div>
 
 								<div className="space-y-1 max-h-48 overflow-y-auto">
@@ -208,7 +239,7 @@ export function MCPToggle({
 												size="sm"
 												onClick={(e) => {
 													e.preventDefault();
-													openDrawer();
+													setAddDialogOpen(true);
 												}}
 												className="h-7 text-xs px-3 rounded-md"
 											>
@@ -270,6 +301,41 @@ export function MCPToggle({
 						)}
 					</DropdownMenuContent>
 				</DropdownMenu>
+
+				{/* Add Server Button */}
+				<Tooltip delayDuration={300}>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => setAddDialogOpen(true)}
+							className="h-8 w-8 p-0 rounded-r-lg rounded-l-none bg-gradient-to-r from-gray-100 to-slate-100 dark:from-gray-700/60 dark:to-slate-700/60 border-0 hover:from-gray-200 hover:to-slate-200 dark:hover:from-gray-600/60 dark:hover:to-slate-600/60 focus:outline-none transition-all duration-200 group"
+						>
+							<IconPlus className="h-4 w-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-all duration-200 group-hover:scale-110 transform" />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="top">
+						<p className="flex items-center gap-1.5">
+							<IconPlus className="h-3 w-3" />
+							Add MCP Server
+						</p>
+					</TooltipContent>
+				</Tooltip>
+
+				{/* Add Server Dialog */}
+				<AddServerDialog
+					open={addDialogOpen}
+					onOpenChange={setAddDialogOpen}
+					onSuccess={() => {
+						refetch();
+						queryClient.invalidateQueries({ queryKey: ["getMcpServers"] });
+						toast.success("Server added successfully");
+					}}
+					customTrigger
+				/>
+
+				{/* MCP Drawer */}
+				<MCPDrawer />
 			</div>
 		</TooltipProvider>
 	);

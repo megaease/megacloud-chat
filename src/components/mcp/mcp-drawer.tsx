@@ -58,6 +58,7 @@ export function MCPDrawer({ children, trigger }: MCPDrawerProps) {
 					open={isAddServerOpen}
 					onOpenChange={setIsAddServerOpen}
 					onSuccess={handleAddServerSuccess}
+					customTrigger
 				/>
 			</div>
 		</Sheet>

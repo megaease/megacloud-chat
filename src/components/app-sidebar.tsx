@@ -45,7 +45,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const queryClient = useQueryClient();
 	const [isAlertOpen, setIsAlertOpen] = useState(false);
 	const [chatToDelete, setChatToDelete] = useState<string | null>(null);
-	const { openDrawer } = useMCPDrawer();
 
 	const {
 		data: chatData = [],
@@ -197,23 +196,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				</SidebarGroup>
 			</SidebarContent>
 			<SidebarFooter>
-				<div className="space-y-3 px-4 py-2">
-					<Separator />
-					<Button
-						variant={"outline"}
-						className="relative w-full"
-						aria-label="MCP Settings"
-						title="MCP Servers"
-						onClick={() => {
-							openDrawer();
-						}}
-					>
-						<IconServer className="mr-2 h-4 w-4" />
-						MCP Servers
-					</Button>
-				</div>
-				<MCPDrawer />
-
 				<NavUser
 					user={{ name: "Megaease", email: "cloud@megaease.com", avatar: "" }}
 				/>
