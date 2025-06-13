@@ -15,34 +15,63 @@ import {
 export function CopyButton({
 	text,
 	className,
-}: { text: string; className?: string }) {
+	variant = "ghost",
+	size = "sm",
+}: {
+	text: string;
+	className?: string;
+	variant?:
+		| "default"
+		| "destructive"
+		| "outline"
+		| "secondary"
+		| "ghost"
+		| "link";
+	size?: "default" | "sm" | "lg" | "icon";
+}) {
 	const [copied, setCopied] = useState<boolean>(false);
 
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(text);
 			setCopied(true);
-			setTimeout(() => setCopied(false), 1500);
+			// 使用更合适的延迟时间
+			setTimeout(() => setCopied(false), 2000);
 		} catch (err) {
 			console.error("Failed to copy text: ", err);
+			// 可以添加错误状态处理
 		}
 	};
 
 	return (
-		<TooltipProvider delayDuration={0}>
+		<TooltipProvider delayDuration={300}>
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<Button
 						onClick={handleCopy}
 						aria-label="Copy to clipboard"
-						className={cn(className)}
-						size={"icon"}
+						variant={variant}
+						size={size}
+						className={cn(
+							"h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105",
+							"bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800",
+							"border border-gray-200/60 border-solid dark:border-gray-700/60",
+							"shadow-lg hover:shadow-xl",
+							"text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200",
+							copied &&
+								"text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300",
+							className,
+						)}
 					>
-						{copied ? <IconCheck /> : <IconCopy />}
+						{copied ? (
+							<IconCheck className="h-4 w-4 animate-in fade-in-0 zoom-in-95" />
+						) : (
+							<IconCopy className="h-4 w-4 animate-in fade-in-0 zoom-in-95" />
+						)}
 					</Button>
 				</TooltipTrigger>
-				<TooltipContent className="px-2 py-1 text-xs">
-					Click to copy
+				<TooltipContent side="top">
+					{copied ? "Copied!" : "Copy to clipboard"}
 				</TooltipContent>
 			</Tooltip>
 		</TooltipProvider>

@@ -96,7 +96,7 @@ export function ToolInvocationHeader({
 									}}
 									variant="secondary"
 									size="sm"
-									className="h-9 px-4 text-sm font-semibold bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+									className="h-9 px-4 text-sm font-semibold bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105"
 								>
 									<IconExternalLink className="h-4 w-4 mr-2" />
 									查看 Artifact
@@ -112,7 +112,7 @@ export function ToolInvocationHeader({
 						type="button"
 						whileHover={{ scale: 1.1 }}
 						whileTap={{ scale: 0.95 }}
-						className="p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 shadow-lg transition-all duration-200"
+						className="p-2 rounded-lg bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 shadow-xs transition-all duration-200"
 					>
 						<motion.div
 							animate={{ rotate: isExpanded ? 180 : 0 }}

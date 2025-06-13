@@ -196,7 +196,7 @@ export function ChatInput({
 				}}
 				className="relative"
 			>
-				<div className="relative rounded-2xl border border-border/50 bg-background/95 shadow-md transition-all duration-300 ease-in-out focus-within:shadow-lg focus-within:border-primary/60 hover:shadow-lg group">
+				<div className="relative rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white/90 dark:bg-gray-800/90 shadow-sm transition-all duration-300 ease-in-out focus-within:shadow-md focus-within:border-primary/50 hover:shadow-md group backdrop-blur-sm">
 					<input
 						type="file"
 						ref={fileInputRef}
@@ -207,7 +207,7 @@ export function ChatInput({
 						title="Upload files"
 					/>
 					{uploadedFiles.length > 0 || uploadingFiles.size > 0 ? (
-						<div className="px-4 py-2 flex flex-wrap gap-2 border-t border-border/50">
+						<div className="px-4 py-3 flex flex-wrap gap-2 border-b border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/50">
 							{/* 显示正在上传的文件 */}
 							{Array.from(uploadingFiles).map(([fileName, fileInfo]) => (
 								<div
@@ -215,7 +215,7 @@ export function ChatInput({
 									className={`relative group ${
 										isImageFile(fileInfo.contentType)
 											? "rounded-lg overflow-hidden"
-											: "flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+											: "flex items-center gap-2 px-3 py-2 bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-lg text-sm shadow-sm"
 									}`}
 								>
 									{isImageFile(fileInfo.contentType) && fileInfo.previewUrl ? (
@@ -245,8 +245,8 @@ export function ChatInput({
 									key={file.url}
 									className={`relative group ${
 										isImageFile(file.contentType)
-											? "rounded-lg overflow-hidden"
-											: "flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+											? "rounded-lg overflow-hidden shadow-md"
+											: "flex items-center gap-2 px-3 py-2 bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-lg text-sm shadow-sm"
 									}`}
 								>
 									{isImageFile(file.contentType) ? (
@@ -274,7 +274,7 @@ export function ChatInput({
 												type="button"
 												size="icon"
 												variant="ghost"
-												className="absolute top-1 right-1 h-5 w-5 p-0 rounded-full  shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/80 hover:bg-white/90"
+												className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60"
 												onClick={() => {
 													setUploadedFiles((prev) =>
 														prev.filter((f) => f.url !== file.url),
@@ -292,7 +292,7 @@ export function ChatInput({
 												type="button"
 												size="icon"
 												variant="ghost"
-												className="h-4 w-4 p-0"
+												className="h-5 w-5 p-0 rounded-full bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 shadow-xs hover:shadow-sm transition-all duration-200"
 												onClick={() => {
 													setUploadedFiles((prev) =>
 														prev.filter((f) => f.url !== file.url),
@@ -313,19 +313,19 @@ export function ChatInput({
 						onChange={handleInputChange}
 						onKeyDown={handleKeyDown}
 						placeholder="Type your message..."
-						className="min-h-30 w-full resize-none border-0 bg-transparent px-4 py-3 pr-14 focus-visible:ring-0 
-						focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 selection:bg-primary/20 pb-12"
+						className="min-h-30 w-full resize-none border-0 bg-transparent px-4 py-4 pr-14 focus-visible:ring-0 
+						focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 selection:bg-primary/20 pb-14 text-sm leading-relaxed"
 						rows={2}
 						autoFocus
 					/>
 
 					{/* MCP Toggle switch */}
-					<div className="absolute bottom-2 left-2 flex items-center gap-2">
+					<div className="absolute bottom-3 left-3 flex items-center gap-2">
 						<TooltipProvider>
 							<Tooltip delayDuration={300}>
 								<TooltipTrigger asChild>
-									<div className="flex items-center rounded px-4 py-2 border border-border/50 transition-all duration-300 hover:border-primary/50 hover:bg-primary/10 group">
-										<span className="text-xs font-medium mr-2 text-muted-foreground group-hover:text-foreground/80">
+									<div className="flex items-center rounded-lg px-3 py-2 bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 shadow-xs transition-all duration-200 hover:shadow-sm hover:bg-white dark:hover:bg-gray-800 group">
+										<span className="text-xs font-medium mr-2 text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200">
 											MCP
 										</span>
 										<Switch
@@ -334,13 +334,13 @@ export function ChatInput({
 										/>
 									</div>
 								</TooltipTrigger>
-								<TooltipContent side="top" className="text-xs font-medium">
+								<TooltipContent side="top">
 									<p>{mcpEnabled ? "MCP Enabled" : "MCP Disabled"}</p>
 								</TooltipContent>
 							</Tooltip>
 						</TooltipProvider>
 					</div>
-					<div className="absolute bottom-2 right-2 flex items-center gap-2">
+					<div className="absolute bottom-3 right-3 flex items-center gap-2">
 						{/* Upload button */}
 						<TooltipProvider>
 							<Tooltip delayDuration={300}>
@@ -349,13 +349,13 @@ export function ChatInput({
 										type="button"
 										size="icon"
 										variant="ghost"
-										className="h-9 w-9 rounded-full text-muted-foreground/80 hover:text-primary hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200"
+										className="h-9 w-9 rounded-lg bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 shadow-xs hover:shadow-sm transition-all duration-200 hover:scale-105 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
 										onClick={() => fileInputRef.current?.click()}
 									>
 										<IconPaperclip className="h-4 w-4 transition-transform group-hover:rotate-12" />
 									</Button>
 								</TooltipTrigger>
-								<TooltipContent side="top" className="text-xs font-medium">
+								<TooltipContent side="top">
 									<p>Upload file</p>
 								</TooltipContent>
 							</Tooltip>
@@ -369,15 +369,15 @@ export function ChatInput({
 											size="icon"
 											onClick={handleStopGeneration}
 											variant="ghost"
-											className="h-9 w-9 rounded-full bg-primary text-primary-foreground 
+											className="h-9 w-9 rounded-lg bg-primary text-primary-foreground 
 											hover:text-primary-foreground
-											shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
+											shadow-sm transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-sm active:scale-95"
 											type="button"
 										>
 											<IconSquare className="h-4 w-4" />
 										</Button>
 									</TooltipTrigger>
-									<TooltipContent side="top" className="text-xs font-medium">
+									<TooltipContent side="top">
 										<p>Stop generation</p>
 									</TooltipContent>
 								</Tooltip>
@@ -390,7 +390,7 @@ export function ChatInput({
 											type="submit"
 											size="icon"
 											disabled={!input.trim() || isUploading}
-											className="h-9 w-9 rounded-full bg-primary text-primary-foreground shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
+											className="h-9 w-9 rounded-lg bg-primary text-primary-foreground shadow-sm transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-sm active:scale-95"
 										>
 											{isUploading ? (
 												<IconLoader2 className="h-4 w-4 animate-spin" />
@@ -399,7 +399,7 @@ export function ChatInput({
 											)}
 										</Button>
 									</TooltipTrigger>
-									<TooltipContent side="top" className="text-xs font-medium">
+									<TooltipContent side="top">
 										<p>{isUploading ? "Uploading..." : "Send message"}</p>
 									</TooltipContent>
 								</Tooltip>

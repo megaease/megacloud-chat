@@ -18,24 +18,26 @@ export function ChatItem({
 				isCompact && isUser && "gap-0 pr-0",
 			)}
 		>
-			<Avatar
-				className={cn(
-					"mt-0.5 h-8 w-8 flex-shrink-0 shadow-[var(--shadow-xs)]",
-					// 在紧凑模式下隐藏用户头像
-					isCompact && isUser && "hidden",
-				)}
-			>
-				<AvatarFallback
+			{!isUser ? (
+				<Avatar
 					className={cn(
-						"rounded-[var(--radius)]",
-						isUser
-							? "bg-primary text-primary-foreground"
-							: "bg-secondary text-secondary-foreground",
+						"mt-0.5 h-8 w-8 flex-shrink-0 shadow-[var(--shadow-xs)]",
+						// 在紧凑模式下隐藏用户头像
+						isCompact && isUser && "hidden",
 					)}
 				>
-					{isUser ? "U" : "AI"}
-				</AvatarFallback>
-			</Avatar>
+					<AvatarFallback
+						className={cn(
+							"rounded-[var(--radius)]",
+							isUser
+								? "bg-primary text-primary-foreground"
+								: "bg-secondary text-secondary-foreground",
+						)}
+					>
+						{isUser ? "U" : "AI"}
+					</AvatarFallback>
+				</Avatar>
+			) : null}
 			<div
 				className={cn(
 					"flex-1 space-y-2 min-w-0", // 添加 min-w-0 防止内容溢出
