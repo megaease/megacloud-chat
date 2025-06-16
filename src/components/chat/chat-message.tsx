@@ -28,6 +28,7 @@ import type {
 } from "@/types/tool-invocation";
 import { ChatItem } from "./chat-item";
 import { ReasoningPart } from "./reasoning-part";
+import { FilePreviewDialog } from "@/components/ui/file-preview-dialog";
 import { ToolInvocationPart } from "./tool-invocation-part";
 import { Button } from "@/components/ui/button";
 import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
@@ -208,23 +209,30 @@ export function ChatMessage({
 
 					if (attachment.contentType?.startsWith("application/pdf")) {
 						return (
-							<div
+							<button
 								key={uniqueKey}
-								className="border rounded-md overflow-hidden group relative"
+								type="button"
+								onClick={() =>
+									setPreviewAttachment({
+										url: attachment.url,
+										type: attachment.contentType || "application/pdf",
+										name: attachment.name,
+									})
+								}
+								className="border rounded-md overflow-hidden group relative hover:shadow-md transition-shadow cursor-pointer bg-gray-50 dark:bg-gray-800"
 							>
-								<div className="relative">
-									<iframe
-										src={attachment.url}
-										className="w-full h-[300px]"
-										title={attachment.name || "PDF attachment"}
-									/>
+								<div className="relative p-6 flex flex-col items-center justify-center min-h-[120px] w-48">
+									<div className="text-4xl mb-2">📄</div>
+									<div className="text-xs text-gray-600 dark:text-gray-400 text-center">
+										PDF 文档
+									</div>
 								</div>
 								{attachment.name && (
-									<div className="p-2 text-xs text-center text-foreground">
+									<div className="p-2 text-xs text-center text-foreground border-t border-gray-200 dark:border-gray-700">
 										{attachment.name}
 									</div>
 								)}
-							</div>
+							</button>
 						);
 					}
 
@@ -277,13 +285,16 @@ export function ChatMessage({
 				<div>{content}</div>
 			</ChatItem>
 
-			<ImagePreviewDialog
+			<FilePreviewDialog
 				isOpen={
-					!!previewAttachment && previewAttachment.type.startsWith("image/")
+					!!previewAttachment &&
+					(previewAttachment.type === "application/pdf" ||
+						previewAttachment?.type.startsWith("image/"))
 				}
 				onClose={() => setPreviewAttachment(null)}
-				imageUrl={previewAttachment?.url || ""}
-				imageName={previewAttachment?.name}
+				fileUrl={previewAttachment?.url || ""}
+				fileName={previewAttachment?.name}
+				fileType={previewAttachment?.type || ""}
 			/>
 		</>
 	) : null;

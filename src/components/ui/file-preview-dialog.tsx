@@ -32,8 +32,8 @@ export function FilePreviewDialog({
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
 			<DialogContent
 				className={`p-0 border-none shadow-none ${
-					isImage 
-						? "max-w-4xl w-fit bg-transparent" 
+					isImage
+						? "max-w-4xl w-fit bg-transparent"
 						: "max-w-6xl w-[90vw] bg-transparent"
 				}`}
 				showCloseButton={showCloseButton}
@@ -41,7 +41,9 @@ export function FilePreviewDialog({
 				<DialogTitle className="sr-only">
 					{fileName || (isImage ? "图片预览" : isPDF ? "PDF 预览" : "文件预览")}
 				</DialogTitle>
-				<div className={`relative ${isPDF ? "flex justify-center items-center" : ""}`}>
+				<div
+					className={`relative ${isPDF ? "flex justify-center items-center" : ""}`}
+				>
 					{isImage ? (
 						<button
 							className="relative max-h-[90vh] max-w-[90vw] bg-black/80 rounded-lg overflow-hidden"
