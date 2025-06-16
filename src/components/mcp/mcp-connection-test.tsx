@@ -10,12 +10,17 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { IconLoader2, IconCircleCheck, IconCircleX, IconAlertCircle } from "@tabler/icons-react";
-import type {} from "@/server/db/schema";
+import {
+	IconLoader2,
+	IconCircleCheck,
+	IconCircleX,
+	IconAlertCircle,
+} from "@tabler/icons-react";
+import type { McpServer } from "@/server/db/schema";
 
 import { toast } from "sonner";
 interface MCPConnectionTestProps {
-	server: schema.McpServer;
+	server: McpServer;
 }
 
 export function MCPConnectionTest({ server }: MCPConnectionTestProps) {

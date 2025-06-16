@@ -1,5 +1,5 @@
 // lib/ai/tools/create-document.ts
-import { tool } from "ai";
+import { tool, type DataStreamWriter } from "ai";
 import { z } from "zod";
 import type { DataStreamDelta } from "@/lib/artifact-types";
 
@@ -28,7 +28,7 @@ export function createDocumentTool(dataStream: DataStreamWriter) {
 
 			// 逐个发送数据片段，模拟流式效果
 			for (const part of streamParts) {
-				dataStream.writeData(part);
+				dataStream.writeData(part as any);
 				// 添加小延迟模拟真实的流式体验
 				await new Promise((resolve) => setTimeout(resolve, 50));
 			}

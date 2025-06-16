@@ -23,7 +23,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { MCPToggle } from "@/components/mcp/mcp-toggle";
-import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
+import { FilePreviewDialog } from "@/components/ui/file-preview-dialog";
 
 interface ChatInputProps {
 	input: string;
@@ -59,9 +59,10 @@ export function ChatInput({
 	const [uploadingFiles, setUploadingFiles] = useState<
 		Map<string, { name: string; contentType: string; previewUrl?: string }>
 	>(new Map());
-	const [previewImage, setPreviewImage] = useState<{
+	const [previewFile, setPreviewFile] = useState<{
 		url: string;
 		name: string;
+		contentType: string;
 	} | null>(null);
 
 	// 获取文件类型图标
@@ -110,16 +111,18 @@ export function ChatInput({
 	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
 			const selectedFiles = Array.from(e.target.files);
-			
+
 			// 过滤支持的文件类型
-			const supportedFiles = selectedFiles.filter(file => {
-				const isImage = file.type.startsWith('image/');
-				const isPDF = file.type === 'application/pdf';
+			const supportedFiles = selectedFiles.filter((file) => {
+				const isImage = file.type.startsWith("image/");
+				const isPDF = file.type === "application/pdf";
 				return isImage || isPDF;
 			});
 
 			if (supportedFiles.length !== selectedFiles.length) {
-				console.warn('Some files were filtered out due to unsupported file types');
+				console.warn(
+					"Some files were filtered out due to unsupported file types",
+				);
 			}
 
 			// 立即上传文件
@@ -269,12 +272,20 @@ export function ChatInput({
 											<div
 												className="cursor-pointer"
 												onClick={() => {
-													setPreviewImage({ url: file.url, name: file.name });
+													setPreviewFile({
+														url: file.url,
+														name: file.name,
+														contentType: file.contentType,
+													});
 												}}
 												onKeyDown={(e) => {
 													if (e.key === "Enter" || e.key === " ") {
 														e.preventDefault();
-														setPreviewImage({ url: file.url, name: file.name });
+														setPreviewFile({
+															url: file.url,
+															name: file.name,
+															contentType: file.contentType,
+														});
 													}
 												}}
 												aria-label={`Open ${file.name}`}
@@ -301,8 +312,21 @@ export function ChatInput({
 										</>
 									) : (
 										<>
-											{getFileTypeIcon(file.contentType)}
-											<span className="truncate max-w-32">{file.name}</span>
+											<button
+												type="button"
+												className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-1 py-1 transition-colors"
+												onClick={() => {
+													setPreviewFile({
+														url: file.url,
+														name: file.name,
+														contentType: file.contentType,
+													});
+												}}
+												aria-label={`预览 ${file.name}`}
+											>
+												{getFileTypeIcon(file.contentType)}
+												<span className="truncate max-w-32">{file.name}</span>
+											</button>
 											<Button
 												type="button"
 												size="icon"
@@ -410,12 +434,13 @@ export function ChatInput({
 				</div>
 			</form>
 
-			{/* 图片预览对话框 */}
-			<ImagePreviewDialog
-				isOpen={!!previewImage}
-				onClose={() => setPreviewImage(null)}
-				imageUrl={previewImage?.url || ""}
-				imageName={previewImage?.name}
+			{/* 文件预览对话框 */}
+			<FilePreviewDialog
+				isOpen={!!previewFile}
+				onClose={() => setPreviewFile(null)}
+				fileUrl={previewFile?.url || ""}
+				fileName={previewFile?.name}
+				fileType={previewFile?.contentType || ""}
 			/>
 		</div>
 	);

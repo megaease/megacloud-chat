@@ -43,7 +43,7 @@ export function AutoScroll({
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	// Use hook to manage scrolling
-	const { hasScrolledUp, scrollToBottom } = useScrollToBottom(containerRef, {
+	const { hasScrolledUp, scrollToBottom } = useScrollToBottom({
 		behavior: scrollBehavior,
 		scrollOnMount: enabled,
 		scrollOnContentChange: enabled,
