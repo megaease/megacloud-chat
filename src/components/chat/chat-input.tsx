@@ -69,10 +69,10 @@ export function ChatInput({
 		if (contentType.startsWith("image/")) {
 			return <IconPhoto className="h-4 w-4" />;
 		}
-		if (
-			contentType.includes("text/") ||
-			contentType.includes("application/pdf")
-		) {
+		if (contentType === "application/pdf") {
+			return <IconFileText className="h-4 w-4" />;
+		}
+		if (contentType.includes("text/")) {
 			return <IconFileText className="h-4 w-4" />;
 		}
 		return <IconFile className="h-4 w-4" />;
@@ -109,8 +109,21 @@ export function ChatInput({
 
 	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
-			const selectedFiles = Array.from(e.target.files); // 立即上传文件
-			for (const file of selectedFiles) {
+			const selectedFiles = Array.from(e.target.files);
+			
+			// 过滤支持的文件类型
+			const supportedFiles = selectedFiles.filter(file => {
+				const isImage = file.type.startsWith('image/');
+				const isPDF = file.type === 'application/pdf';
+				return isImage || isPDF;
+			});
+
+			if (supportedFiles.length !== selectedFiles.length) {
+				console.warn('Some files were filtered out due to unsupported file types');
+			}
+
+			// 立即上传文件
+			for (const file of supportedFiles) {
 				const fileName = file.name;
 				const previewUrl = file.type.startsWith("image/")
 					? URL.createObjectURL(file)
@@ -138,7 +151,7 @@ export function ChatInput({
 
 					if (!response.ok) {
 						const errorData = await response.json();
-						throw new Error(errorData.error || "Upload failed");
+						throw new Error(errorData.error || `Failed to upload ${file.name}`);
 					}
 
 					const data = await response.json();
@@ -204,6 +217,7 @@ export function ChatInput({
 						className="hidden"
 						onChange={handleFileUpload}
 						multiple
+						accept="image/*,.pdf"
 						aria-label="Upload files"
 						title="Upload files"
 					/>
@@ -343,7 +357,7 @@ export function ChatInput({
 									</Button>
 								</TooltipTrigger>
 								<TooltipContent side="top">
-									<p>Upload file</p>
+									<p>Upload images or PDF files</p>
 								</TooltipContent>
 							</Tooltip>
 						</TooltipProvider>
