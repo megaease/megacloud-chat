@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
 		if (isOpenAIProvider) {
 			// Prioritize GPT-4 and GPT-3.5 models for OpenAI
-			sortedModels = availableModels.sort((a, b) => {
+			sortedModels = availableModels.sort((a: string, b: string) => {
 				// GPT-4 models first
 				if (a.includes("gpt-4") && !b.includes("gpt-4")) return -1;
 				if (!a.includes("gpt-4") && b.includes("gpt-4")) return 1;

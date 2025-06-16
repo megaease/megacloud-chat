@@ -84,19 +84,26 @@ export function ServerList({ onAddServer }: ServersListProps) {
 		// Set loading state for this server
 		setLoadingStates((prev) => ({ ...prev, [id]: true }));
 		try {
-			const newStatus =
-				currentStatus === ServerStatusEnum.ONLINE
-					? ServerStatusEnum.OFFLINE
-					: ServerStatusEnum.ONLINE;
+			const isOnline = currentStatus === ServerStatusEnum.ONLINE;
+			const action = isOnline ? "stop" : "start";
 
-			// Update server status
-			const result = await updateMcpServerStatus(id, newStatus);
+			// Call the appropriate API endpoint to actually start/stop the server
+			const response = await fetch(`/api/mcp/${id}/${action}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+
+			const result = await response.json();
+
 			if (result.success) {
 				toast.success(
-					`Server ${newStatus === ServerStatusEnum.ONLINE ? "enabled" : "disabled"} successfully`,
+					result.message ||
+						`Server ${isOnline ? "stopped" : "started"} successfully`,
 				);
 			} else {
-				toast.error("Operation failed, please try again");
+				toast.error(result.error || "Operation failed, please try again");
 			}
 		} catch (error) {
 			toast.error("Operation failed, please try again");
@@ -169,7 +176,11 @@ export function ServerList({ onAddServer }: ServersListProps) {
 								</div>
 							</div>
 							<div className="flex items-center gap-2">
-								<ServerStatusBadge status={server.status as any} />
+								<ServerStatusBadge
+									status={server.status as ServerStatus}
+									serverId={server.id}
+									useRealTimeStatus={true}
+								/>
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
 										<Button variant="ghost" size="icon">
@@ -180,7 +191,10 @@ export function ServerList({ onAddServer }: ServersListProps) {
 									<DropdownMenuContent align="end">
 										<DropdownMenuItem
 											onClick={() =>
-												handleToggleServer(server.id, server.status as any)
+												handleToggleServer(
+													server.id,
+													server.status as ServerStatus,
+												)
 											}
 										>
 											{server.status === ServerStatusEnum.ONLINE ? (

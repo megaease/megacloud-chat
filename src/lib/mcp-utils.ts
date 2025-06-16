@@ -1,12 +1,4 @@
-import { db } from "@/server/db";
-import { mcpServers, ServerStatusEnum, TypeEnum } from "@/server/db/schema";
-import {
-	experimental_createMCPClient as createMCPClient,
-	type Tool,
-	type ToolSet,
-} from "ai";
-import { Experimental_StdioMCPTransport } from "ai/mcp-stdio";
-import { eq } from "drizzle-orm";
+import type { ToolSet } from "ai";
 
 export type MCPClient = {
 	tools: () => Promise<ToolSet>;
@@ -19,86 +11,35 @@ type MCPClientWithName = {
 };
 
 /**
- * Loads and initializes MCP tools from all active servers in the database
+ * Loads and initializes MCP tools from all active connected servers
+ * 现在使用服务器端连接管理器通过 API 获取工具
  * @param mcpEnabled Whether MCP functionality is enabled
  * @returns Object containing MCP tools and client connections
  */
 export async function loadMCPTools(mcpEnabled = true) {
-	// Store all created MCP clients to close them after the request completes
-	const mcpClients: MCPClientWithName[] = [];
 	// Initialize an empty tools object
-	const mcpTools: ToolSet = {};
+	let mcpTools: ToolSet = {};
 
 	// Only load MCP servers if MCP is enabled
 	if (mcpEnabled !== false) {
 		try {
-			// Get all active MCP servers from the database
-			const activeServers = await db
-				.select()
-				.from(mcpServers)
-				.where(eq(mcpServers.status, ServerStatusEnum.ONLINE));
-
-			console.log(`Found ${activeServers.length} active MCP servers`);
-
-			// Create MCP clients and get tools for each active server
-			for (const server of activeServers) {
-				try {
-					let client: MCPClient;
-
-					// Create different clients based on server type
-					if (server.type === TypeEnum.STDIO) {
-						if (!server.command) {
-							console.warn(`STDIO server ${server.name} missing command`);
-							continue;
-						}
-
-						const transport = new Experimental_StdioMCPTransport({
-							command: server.command,
-							args: server.args as string[],
-							env: server.env as Record<string, string>,
-						});
-
-						client = await createMCPClient({ transport });
-					} else if (server.type === TypeEnum.SSE) {
-						if (!server.url) {
-							console.warn(`SSE server ${server.name} missing URL`);
-							continue;
-						}
-
-						client = await createMCPClient({
-							transport: {
-								type: "sse",
-								url: server.url,
-								headers: server.headers as Record<string, string>,
-							},
-						});
-					} else {
-						console.warn(`Unknown server type: ${server.type}`);
-						continue;
-					}
-
-					// Store client in array for later connection closing
-					mcpClients.push({ client, name: server.name });
-
-					// Get tools provided by this server
-					const serverTools = await client.tools();
-
-					// Merge server tools into main tool collection with server prefix to avoid conflicts
-					for (const [toolName, toolImpl] of Object.entries(serverTools)) {
-						const prefixedToolName = `${server.name}_${toolName}`;
-						mcpTools[prefixedToolName] = toolImpl as Tool;
-					}
-
-					console.log(`Loaded tools from server ${server.name}`);
-				} catch (error) {
-					console.error(
-						`Failed to connect to MCP server ${server.name}:`,
-						error,
-					);
-				}
-			} // End of for loop for active servers
+			// 在服务器端环境中，动态导入连接管理器
+			if (typeof window === "undefined") {
+				const { getMCPConnectionManager } = await import(
+					"./mcp-connection-manager"
+				);
+				const mcpConnectionManager = getMCPConnectionManager();
+				mcpTools = await mcpConnectionManager.getAllConnectedTools();
+				console.log(
+					"Loaded MCP tools from connected servers:",
+					Object.keys(mcpTools),
+				);
+			} else {
+				// 在客户端环境中，通过 API 获取工具（如果需要的话）
+				console.log("MCP tools loading skipped on client side");
+			}
 		} catch (error) {
-			console.error("Error loading MCP servers:", error);
+			console.error("Error loading MCP tools from connection manager:", error);
 		}
 	} else {
 		console.log("MCP is disabled, skipping MCP servers and tools");
@@ -108,17 +49,13 @@ export async function loadMCPTools(mcpEnabled = true) {
 	const allTools = mcpEnabled ? { ...mcpTools } : undefined;
 	console.log("mcpTools", Object.keys(mcpTools));
 
-	// Helper function to close all MCP client connections
+	// 由于使用持久连接，不需要立即关闭客户端
+	// 连接管理器会在适当的时候关闭连接
 	const closeAllMcpClients = async () => {
-		for (const { client, name } of mcpClients) {
-			try {
-				await client.close();
-				console.log(`Connection to MCP server ${name} closed`);
-			} catch (error) {
-				console.error(`Error closing MCP server ${name} connection:`, error);
-			}
-		}
+		console.log(
+			"Note: MCP clients are managed by connection manager, no immediate close needed",
+		);
 	};
 
-	return { tools: allTools, clients: mcpClients, closeAllMcpClients };
+	return { tools: allTools, clients: [], closeAllMcpClients };
 }

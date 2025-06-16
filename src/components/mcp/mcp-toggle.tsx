@@ -78,20 +78,28 @@ export function MCPToggle({
 	) => {
 		setLoadingStates((prev) => ({ ...prev, [id]: true }));
 		try {
-			const newStatus =
-				currentStatus === ServerStatusEnum.ONLINE
-					? ServerStatusEnum.OFFLINE
-					: ServerStatusEnum.ONLINE;
+			const isOnline = currentStatus === ServerStatusEnum.ONLINE;
+			const action = isOnline ? "stop" : "start";
 
-			const result = await updateMcpServerStatus(id, newStatus);
+			// Call the appropriate API endpoint to actually start/stop the server
+			const response = await fetch(`/api/mcp/${id}/${action}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+
+			const result = await response.json();
+
 			if (result.success) {
 				toast.success(
-					`Server ${newStatus === ServerStatusEnum.ONLINE ? "enabled" : "disabled"} successfully`,
+					result.message ||
+						`Server ${isOnline ? "stopped" : "started"} successfully`,
 				);
 				refetch();
 				queryClient.invalidateQueries({ queryKey: ["getMcpServers"] });
 			} else {
-				toast.error("Operation failed, please try again");
+				toast.error(result.error || "Operation failed, please try again");
 			}
 		} catch (error) {
 			console.error("Failed to toggle server:", error);
@@ -144,12 +152,19 @@ export function MCPToggle({
 								</Button>
 							</DropdownMenuTrigger>
 						</TooltipTrigger>
-						<TooltipContent side="top">
-							<p>
-								{mcpEnabled
-									? `MCP: ${onlineServers.length > 0 ? `${onlineServers.length} active` : "enabled"}`
-									: "MCP: disabled"}
-							</p>
+						<TooltipContent side="top" className="max-w-x">
+							<div className="space-y-1">
+								<p className="font-medium ">
+									{mcpEnabled
+										? `MCP System: ${onlineServers.length > 0 ? `${onlineServers.length} servers active` : "Ready for servers"}`
+										: "MCP System: External tools disabled"}
+								</p>
+								<p className="text-xs ">
+									{mcpEnabled
+										? "AI can access external tools, files & databases. Click to manage servers."
+										: "Enable to allow AI access to external tools, files & custom MCP servers."}
+								</p>
+							</div>
 						</TooltipContent>
 					</Tooltip>
 					<DropdownMenuContent
@@ -164,14 +179,13 @@ export function MCPToggle({
 								<IconServer className="h-4 w-4 text-gray-600 dark:text-gray-400" />
 								<div className="flex flex-col">
 									<span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-										MCP
+										MCP System
 									</span>
-									{mcpEnabled && onlineServers.length > 0 && (
-										<span className="text-xs text-green-600 dark:text-green-400">
-											{onlineServers.length} server
-											{onlineServers.length !== 1 ? "s" : ""} active
-										</span>
-									)}
+									<span className="text-xs text-gray-500 dark:text-gray-400">									{mcpEnabled 
+										? "Enables AI to use external tools & data"
+										: "Disables all MCP servers"
+									}
+									</span>
 								</div>
 							</div>
 							<Switch
@@ -183,19 +197,44 @@ export function MCPToggle({
 							/>
 						</div>
 
+						{/* Help text when MCP is disabled */}
+						{!mcpEnabled && (
+							<div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/10 rounded-md border border-blue-200/30 dark:border-blue-800/30 mt-2">
+								<p className="font-medium text-blue-700 dark:text-blue-400 mb-1">� Enable MCP System</p>
+								<p>Turn on to allow the AI assistant to access external tools, files, databases, and custom integrations. When disabled, the AI can only use its built-in capabilities.</p>
+							</div>
+						)}
+
+						{/* Status when MCP is enabled */}
+						{mcpEnabled && (
+							<div className="px-3 py-2 text-xs bg-green-50/50 dark:bg-green-900/10 rounded-md border border-green-200/30 dark:border-green-800/30 mt-2">
+								<div className="flex items-center gap-2 mb-1">
+									<div className="h-2 w-2 rounded-full bg-green-500"></div>
+									<p className="font-medium text-green-700 dark:text-green-400">
+										MCP System Active
+									</p>
+								</div>
+								<p className="text-green-600/80 dark:text-green-400/80">
+									{onlineServers.length > 0 
+										? `AI can now access ${onlineServers.length} MCP server${onlineServers.length !== 1 ? "s" : ""}`
+										: "AI ready for MCP servers - configure servers below"
+									}
+								</p>
+							</div>
+						)}
+
 						{mcpEnabled && (
 							<>
 								<div className="flex items-center justify-between my-3">
-									<div className="flex items-center gap-2">
-										<span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-											Servers
-										</span>
+									<div className="flex items-center gap-2">									<span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+										MCP Servers
+									</span>
 										{onlineServers.length > 0 && (
 											<Badge
 												variant="secondary"
 												className="h-5 px-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
 											>
-												{onlineServers.length} active
+												{onlineServers.length} connected
 											</Badge>
 										)}
 									</div>
@@ -231,8 +270,11 @@ export function MCPToggle({
 									{servers.length === 0 ? (
 										<div className="text-center py-6">
 											<IconServer className="h-8 w-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-											<p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-												No servers configured
+											<p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">
+												No MCP servers configured
+											</p>
+											<p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
+												Add MCP servers to give AI access to external tools, files & databases
 											</p>
 											<Button
 												variant="outline"
@@ -243,7 +285,7 @@ export function MCPToggle({
 												}}
 												className="h-7 text-xs px-3 rounded-md"
 											>
-												Add Server
+												Add Integration
 											</Button>
 										</div>
 									) : (
@@ -314,8 +356,8 @@ export function MCPToggle({
 							<IconPlus className="h-4 w-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-all duration-200 group-hover:scale-110 transform" />
 						</Button>
 					</TooltipTrigger>
-					<TooltipContent side="top">
-						<p className="flex items-center gap-1.5">
+					<TooltipContent side="top" className="">
+						<p className="flex items-center gap-1.5 ">
 							<IconPlus className="h-3 w-3" />
 							Add MCP Server
 						</p>

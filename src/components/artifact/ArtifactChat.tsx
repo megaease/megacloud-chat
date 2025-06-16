@@ -4,7 +4,6 @@
 import { useEffect, useRef } from "react";
 import type { Message } from "@ai-sdk/react";
 import { toast } from "sonner";
-import { ArtifactChatList } from "./ArtifactChatList";
 import { ChatInput } from "../chat/chat-input";
 import { ArtifactMessage } from "./ArtifactMessage";
 import { Thinking } from "../chat/thinking";

@@ -1,3 +1,4 @@
+import "server-only";
 import { db } from "..";
 import { chatMessages } from "../schema";
 import { nanoid } from "nanoid";
