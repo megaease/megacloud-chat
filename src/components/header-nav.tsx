@@ -10,7 +10,7 @@ import { IconBrandGithub } from "@tabler/icons-react";
 
 export function HeaderNav() {
 	return (
-		<header className="relative flex shrink-0 items-center border-b px-4 justify-between py-2.5 h-14">
+		<header className="relative flex shrink-0 items-center px-4 justify-between py-2.5 h-14">
 			<div className="flex items-center gap-3">
 				<SidebarTrigger />
 				<UnifiedProviderModelSelector />

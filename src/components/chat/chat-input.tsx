@@ -186,7 +186,7 @@ export function ChatInput({
 
 	return (
 		<div
-			className={`p-4 relative max-w-4xl text-center w-full mx-auto ${className}`}
+			className={`relative max-w-4xl text-center w-full mx-auto ${className} mb-2`}
 		>
 			<form
 				onSubmit={(e) => {

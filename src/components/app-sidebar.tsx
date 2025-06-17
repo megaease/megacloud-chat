@@ -117,11 +117,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	return (
 		<Sidebar {...props}>
 			<SidebarHeader>
-				<div className="flex items-center px-4 py-2 gap-1">
+				<div className="flex items-center px-4 py-2 gap-1 mb-1">
 					<Image src={logo} alt="alt" width={36} height={36} />
 					<h1 className="font-bold text-lg">Megacloud Chat</h1>
 				</div>
-				<Separator className="my-2" />
+
 				<div className="w-full px-4">
 					<Button
 						onClick={() => router.push("/")}
