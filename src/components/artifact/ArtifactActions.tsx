@@ -168,7 +168,6 @@ export function ArtifactActions({
 					text={content}
 					className="h-8 px-3"
 					size="sm"
-					variant="ghost"
 					showText={true}
 					textLabel="Copy"
 				/>
@@ -245,7 +244,7 @@ function getFileExtension(kind: ArtifactKind): string {
 		case "code":
 			return "js"; // 可以根据具体语言调整
 		case "text":
-			return "txt";
+			return "md";
 		case "sheet":
 			return "csv";
 		case "image":
@@ -261,7 +260,7 @@ function getContentType(kind: ArtifactKind): string {
 		case "code":
 			return "text/javascript";
 		case "text":
-			return "text/plain";
+			return "text/markdown";
 		case "sheet":
 			return "text/csv";
 		case "image":

@@ -50,7 +50,7 @@ export function CopyButton({
 						size={size}
 						className={cn(
 							showText ? "h-8 px-3 gap-2" : "h-8 w-8",
-							"hover:bg-transparent hover:text-current",
+							"hover:text-current",
 							copied && "text-green-600 hover:text-green-700",
 							className,
 						)}
