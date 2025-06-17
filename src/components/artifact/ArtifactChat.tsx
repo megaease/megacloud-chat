@@ -93,7 +93,7 @@ export function ArtifactChat({
 	}, [messages, isAtBottom, scrollToBottom]);
 
 	return (
-		<div className={`flex flex-col h-full ${className || ""}`}>
+		<div className={`flex flex-col h-full bg-card ${className || ""}`}>
 			{/* Message list area */}
 			<div
 				ref={scrollAreaRef}
@@ -134,7 +134,7 @@ export function ArtifactChat({
 			)}
 
 			{/* Chat input area */}
-			<div className="border-t border-border-/50 bg-background/50 p-2">
+			<div className="p-2">
 				<ChatInput
 					input={input}
 					handleInputChange={handleInputChange}

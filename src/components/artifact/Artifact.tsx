@@ -1,7 +1,7 @@
 // components/artifact/Artifact.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { ArtifactContent } from "./ArtifactContent";
@@ -58,6 +58,24 @@ export function Artifact({
 	});
 	const [isMobile, setIsMobile] = useState(false);
 	const [showChat, setShowChat] = useState(false); // Mobile chat display state
+	const [viewMode, setViewMode] = useState<"code" | "preview">("code"); // View mode state
+
+	// 检测是否支持预览
+	const canPreview = useMemo(() => {
+		if (artifact.kind !== "code") return false;
+		const content = artifact.content.toLowerCase();
+		return ["html", "react", "javascript", "js", "css"].some(
+			(lang) =>
+				content.includes(`${lang}`) ||
+				content.includes("<!doctype html") ||
+				content.includes("<html") ||
+				content.includes("import react") ||
+				content.includes("export default") ||
+				content.includes("function ") ||
+				content.includes("const ") ||
+				content.includes("let "),
+		);
+	}, [artifact.content, artifact.kind]);
 
 	useEffect(() => {
 		const updateDimensions = () => {
@@ -227,6 +245,9 @@ export function Artifact({
 									content={artifact.content}
 									onClose={handleClose}
 									isMobile={false}
+									viewMode={viewMode}
+									onViewModeChange={setViewMode}
+									canPreview={canPreview}
 								/>
 
 								{/* Artifact 内容区域 */}
@@ -236,6 +257,7 @@ export function Artifact({
 										content={artifact.content}
 										status={artifact.status}
 										title={artifact.title}
+										viewMode={viewMode}
 									/>
 								</div>
 							</motion.div>
@@ -288,6 +310,9 @@ export function Artifact({
 							onChatToggle={() => setShowChat(!showChat)}
 							showChatButton={true}
 							isMobile={true}
+							viewMode={viewMode}
+							onViewModeChange={setViewMode}
+							canPreview={canPreview}
 						/>
 
 						{/* Artifact 内容区域 */}
@@ -297,6 +322,7 @@ export function Artifact({
 								content={artifact.content}
 								status={artifact.status}
 								title={artifact.title}
+								viewMode={viewMode}
 							/>
 						</div>
 					</motion.div>

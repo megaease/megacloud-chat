@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 export function Thinking() {
 	return (
 		<motion.div
-			className="absolute inset-x-0 top-[-30px] flex items-center justify-center gap-2 max-w-[150px] w-auto mx-auto py-1.5 px-3 rounded-full border border-primary/10 shadow-sm dark:border-primary/30 z-10"
+			className="absolute inset-x-0 top-[-40px] flex items-center justify-center gap-2 max-w-[150px] w-auto mx-auto py-1.5 px-3 rounded-full border border-primary/10 shadow-sm dark:border-primary/30 z-10"
 			style={{
 				background: "rgba(var(--background), 0.6)",
 				backdropFilter: "blur(8px)",

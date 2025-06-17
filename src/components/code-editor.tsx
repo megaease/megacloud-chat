@@ -23,6 +23,7 @@ interface CodeEditorProps {
 	className?: string;
 	showHeader?: boolean;
 	showCopyButton?: boolean;
+	height?: string | number;
 }
 
 // 语言映射
@@ -65,6 +66,7 @@ export function CodeEditor({
 	className,
 	showHeader = true,
 	showCopyButton = true,
+	height = "auto",
 }: CodeEditorProps) {
 	const extensions = getLanguageExtension(language);
 	const { resolvedTheme } = useTheme();
@@ -80,7 +82,8 @@ export function CodeEditor({
 	return (
 		<div
 			className={cn(
-				"relative my-2 rounded-[var(--radius)] border border-border overflow-hidden",
+				"relative overflow-hidden flex flex-col bg-background",
+				height !== "auto" && "h-full",
 				className,
 			)}
 		>
@@ -90,10 +93,10 @@ export function CodeEditor({
 					{showCopyButton && <CopyButton text={value} />}
 				</div>
 			)}
-			<div className="overflow-x-auto">
+			<div className="flex-1 overflow-auto">
 				<CodeMirror
 					value={value}
-					height="auto"
+					height={height === "auto" ? "auto" : "100%"}
 					theme={getTheme()}
 					extensions={extensions}
 					editable={editable}

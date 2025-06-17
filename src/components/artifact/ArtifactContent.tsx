@@ -5,12 +5,14 @@ import type { ArtifactKind } from "@/lib/artifact-types";
 import ReactMarkdown from "react-markdown";
 import { CodeEditor } from "../code-editor";
 import { TextArtifact } from "./TextArtifact";
+import { CodePreview } from "./CodePreview";
 
 interface ArtifactContentProps {
 	kind: ArtifactKind;
 	content: string;
 	status: "streaming" | "idle";
 	title: string;
+	viewMode?: "code" | "preview";
 }
 
 export function ArtifactContent({
@@ -18,14 +20,13 @@ export function ArtifactContent({
 	content,
 	status,
 	title,
+	viewMode = "code",
 }: ArtifactContentProps) {
 	switch (kind) {
 		case "code":
 			return (
-				<div className="h-full flex flex-col">
-					<div className="flex-1 p-4">
-						<CodeEditor value={content} />
-					</div>
+				<div className="h-full">
+					<CodePreview content={content} className="h-full" mode={viewMode} />
 				</div>
 			);
 
