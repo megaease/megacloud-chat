@@ -4,6 +4,7 @@
 import type { ArtifactKind } from "@/lib/artifact-types";
 import ReactMarkdown from "react-markdown";
 import { CodeEditor } from "../code-editor";
+import { TextArtifact } from "./TextArtifact";
 
 interface ArtifactContentProps {
 	kind: ArtifactKind;
@@ -29,15 +30,7 @@ export function ArtifactContent({
 			);
 
 		case "text":
-			return (
-				<div className="h-full flex flex-col">
-					<div className="flex-1 p-4 overflow-auto">
-						<div className="prose max-w-none dark:prose-invert">
-							<ReactMarkdown>{content}</ReactMarkdown>
-						</div>
-					</div>
-				</div>
-			);
+			return <TextArtifact content={content} title={title} status={status} />;
 
 		case "sheet":
 			return (

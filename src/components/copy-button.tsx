@@ -15,19 +15,15 @@ import {
 export function CopyButton({
 	text,
 	className,
-	variant = "ghost",
 	size = "sm",
+	showText = false,
+	textLabel = "Copy",
 }: {
 	text: string;
 	className?: string;
-	variant?:
-		| "default"
-		| "destructive"
-		| "outline"
-		| "secondary"
-		| "ghost"
-		| "link";
 	size?: "default" | "sm" | "lg" | "icon";
+	showText?: boolean;
+	textLabel?: string;
 }) {
 	const [copied, setCopied] = useState<boolean>(false);
 
@@ -35,7 +31,7 @@ export function CopyButton({
 		try {
 			await navigator.clipboard.writeText(text);
 			setCopied(true);
-			// 使用更合适的延迟时间
+			// 使用更合适的延迟时间，并添加成功动画
 			setTimeout(() => setCopied(false), 2000);
 		} catch (err) {
 			console.error("Failed to copy text: ", err);
@@ -50,23 +46,25 @@ export function CopyButton({
 					<Button
 						onClick={handleCopy}
 						aria-label="Copy to clipboard"
-						variant={variant}
+						variant="ghost"
 						size={size}
 						className={cn(
-							"h-9 w-9 rounded-lg transition-all duration-200 hover:scale-105",
-							"bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800",
-							"border border-gray-200/60 border-solid dark:border-gray-700/60",
-							"shadow-xs hover:shadow-sm",
-							"text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200",
-							copied &&
-								"text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300",
+							showText ? "h-8 px-3 gap-2" : "h-8 w-8",
+							"hover:bg-transparent hover:text-current",
+							copied && "text-green-600 hover:text-green-700",
 							className,
 						)}
 					>
 						{copied ? (
-							<IconCheck className="h-4 w-4 animate-in fade-in-0 zoom-in-95" />
+							<>
+								<IconCheck className={showText ? "h-3 w-3" : "h-4 w-4"} />
+								{showText && <span className="text-xs">Copied!</span>}
+							</>
 						) : (
-							<IconCopy className="h-4 w-4 animate-in fade-in-0 zoom-in-95" />
+							<>
+								<IconCopy className={showText ? "h-3 w-3" : "h-4 w-4"} />
+								{showText && <span className="text-xs">{textLabel}</span>}
+							</>
 						)}
 					</Button>
 				</TooltipTrigger>

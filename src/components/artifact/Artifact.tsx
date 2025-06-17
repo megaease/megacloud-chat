@@ -5,7 +5,13 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { ArtifactContent } from "./ArtifactContent";
+import { ArtifactActions } from "./ArtifactActions";
 import { Button } from "@/components/ui/button";
+import {
+	ResizablePanelGroup,
+	ResizablePanel,
+	ResizableHandle,
+} from "@/components/ui/resizable";
 import { X, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { ArtifactChat } from "./ArtifactChat";
 import type { Message } from "@ai-sdk/react";
@@ -78,53 +84,11 @@ export function Artifact({
 		<AnimatePresence>
 			<motion.div
 				data-testid="artifact"
-				className="fixed inset-0 z-50 flex bg-background"
+				className="fixed inset-0 z-50 bg-background"
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
 				exit={{ opacity: 0, transition: { delay: 0.4 } }}
 			>
-				{/* Left chat panel - desktop only */}
-				{!isMobile && (
-					<motion.div
-						className="w-[400px] bg-muted dark:bg-background h-full shrink-0 border-r"
-						initial={{ opacity: 0, x: -20 }}
-						animate={{
-							opacity: 1,
-							x: 0,
-							transition: {
-								delay: 0.2,
-								type: "spring",
-								stiffness: 200,
-								damping: 30,
-							},
-						}}
-						exit={{
-							opacity: 0,
-							x: -20,
-							transition: { duration: 0.2 },
-						}}
-					>
-						<div className="h-full flex flex-col">
-							<div className="flex-1 overflow-hidden">
-								<ArtifactChat
-									chatId={chatId}
-									messages={messages}
-									input={input}
-									handleInputChange={handleInputChange}
-									handleSubmit={handleSubmit}
-									status={status}
-									stop={stop}
-									error={error}
-									reload={reload}
-									isUploading={isUploading}
-									mcpEnabled={mcpEnabled}
-									toggleMcpEnabled={toggleMcpEnabled}
-								/>
-							</div>
-						</div>
-					</motion.div>
-				)}
-
 				{/* 移动端聊天面板覆盖层 */}
 				{isMobile && showChat && (
 					<motion.div
@@ -170,87 +134,173 @@ export function Artifact({
 					</motion.div>
 				)}
 
-				{/* 右侧 Artifact 内容区域 */}
-				<motion.div
-					className="flex-1 bg-background flex flex-col border-l dark:border-zinc-700 border-zinc-200 border-solid"
-					initial={{
-						opacity: 1,
-						x: artifact.boundingBox.left,
-						y: artifact.boundingBox.top,
-						width: artifact.boundingBox.width,
-						height: artifact.boundingBox.height,
-						borderRadius: 12,
-					}}
-					animate={{
-						opacity: 1,
-						x: 0,
-						y: 0,
-						width: isMobile
-							? windowDimensions.width
-							: windowDimensions.width - 400,
-						height: windowDimensions.height,
-						borderRadius: 0,
-						transition: {
-							type: "spring",
-							stiffness: 200,
-							damping: 30,
-							duration: 0.6,
-						},
-					}}
-					exit={{
-						opacity: 0,
-						scale: 0.5,
-						transition: {
-							delay: 0.1,
-							type: "spring",
-							stiffness: 600,
-							damping: 30,
-						},
-					}}
-				>
-					{/* Artifact 头部工具栏 */}
-					<div className="flex items-center justify-between p-4 border-b bg-background">
-						<div className="flex items-center space-x-4">
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={handleClose}
-								className="h-8 w-8 p-0"
+				{/* 桌面端：可调整大小的面板布局 */}
+				{!isMobile ? (
+					<ResizablePanelGroup direction="horizontal" className="h-full">
+						{/* 左侧聊天面板 */}
+						<ResizablePanel defaultSize={30} minSize={25} maxSize={50}>
+							<motion.div
+								className="h-full bg-muted dark:bg-background border-r"
+								initial={{ opacity: 0, x: -20 }}
+								animate={{
+									opacity: 1,
+									x: 0,
+									transition: {
+										delay: 0.2,
+										type: "spring",
+										stiffness: 200,
+										damping: 30,
+									},
+								}}
+								exit={{
+									opacity: 0,
+									x: -20,
+									transition: { duration: 0.2 },
+								}}
 							>
-								<X className="h-4 w-4" />
-							</Button>
+								<div className="h-full flex flex-col">
+									<div className="flex-1 overflow-hidden">
+										<ArtifactChat
+											chatId={chatId}
+											messages={messages}
+											input={input}
+											handleInputChange={handleInputChange}
+											handleSubmit={handleSubmit}
+											status={status}
+											stop={stop}
+											error={error}
+											reload={reload}
+											isUploading={isUploading}
+											mcpEnabled={mcpEnabled}
+											toggleMcpEnabled={toggleMcpEnabled}
+										/>
+									</div>
+								</div>
+							</motion.div>
+						</ResizablePanel>
 
-							{/* 移动端聊天切换按钮 */}
-							{isMobile && (
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => setShowChat(!showChat)}
-									className="h-8 w-8 p-0"
-								>
-									<MessageSquare className="h-4 w-4" />
-								</Button>
-							)}
+						{/* 可拖动的分隔条 */}
+						<ResizableHandle withHandle />
 
-							<div>
-								<h3 className="font-semibold text-lg">{artifact.title}</h3>
-								<p className="text-sm text-muted-foreground">
-									{artifact.status === "streaming" ? "Generating..." : "Ready"}
-								</p>
-							</div>
-						</div>
-					</div>
+						{/* 右侧 Artifact 内容面板 */}
+						<ResizablePanel defaultSize={70} minSize={50}>
+							<motion.div
+								className="h-full bg-background flex flex-col"
+								initial={{
+									opacity: 1,
+									x: artifact.boundingBox.left,
+									y: artifact.boundingBox.top,
+									width: artifact.boundingBox.width,
+									height: artifact.boundingBox.height,
+									borderRadius: 12,
+								}}
+								animate={{
+									opacity: 1,
+									x: 0,
+									y: 0,
+									width: "100%",
+									height: "100%",
+									borderRadius: 0,
+									transition: {
+										type: "spring",
+										stiffness: 200,
+										damping: 30,
+										duration: 0.6,
+									},
+								}}
+								exit={{
+									opacity: 0,
+									scale: 0.5,
+									transition: {
+										delay: 0.1,
+										type: "spring",
+										stiffness: 600,
+										damping: 30,
+									},
+								}}
+							>
+								{/* Artifact 头部工具栏 */}
+								<ArtifactActions
+									title={artifact.title}
+									status={artifact.status}
+									kind={artifact.kind}
+									content={artifact.content}
+									onClose={handleClose}
+									isMobile={false}
+								/>
 
-					{/* Artifact 内容区域 */}
-					<div className="flex-1 overflow-hidden">
-						<ArtifactContent
+								{/* Artifact 内容区域 */}
+								<div className="flex-1 overflow-hidden">
+									<ArtifactContent
+										kind={artifact.kind}
+										content={artifact.content}
+										status={artifact.status}
+										title={artifact.title}
+									/>
+								</div>
+							</motion.div>
+						</ResizablePanel>
+					</ResizablePanelGroup>
+				) : (
+					/* 移动端：原有的布局 */
+					<motion.div
+						className="flex-1 bg-background flex flex-col"
+						initial={{
+							opacity: 1,
+							x: artifact.boundingBox.left,
+							y: artifact.boundingBox.top,
+							width: artifact.boundingBox.width,
+							height: artifact.boundingBox.height,
+							borderRadius: 12,
+						}}
+						animate={{
+							opacity: 1,
+							x: 0,
+							y: 0,
+							width: windowDimensions.width,
+							height: windowDimensions.height,
+							borderRadius: 0,
+							transition: {
+								type: "spring",
+								stiffness: 200,
+								damping: 30,
+								duration: 0.6,
+							},
+						}}
+						exit={{
+							opacity: 0,
+							scale: 0.5,
+							transition: {
+								delay: 0.1,
+								type: "spring",
+								stiffness: 600,
+								damping: 30,
+							},
+						}}
+					>
+						{/* Artifact 头部工具栏 */}
+						<ArtifactActions
+							title={artifact.title}
+							status={artifact.status}
 							kind={artifact.kind}
 							content={artifact.content}
-							status={artifact.status}
-							title={artifact.title}
+							onClose={handleClose}
+							onChatToggle={() => setShowChat(!showChat)}
+							showChatButton={true}
+							isMobile={true}
 						/>
-					</div>
-				</motion.div>
+
+						{/* Artifact 内容区域 */}
+						<div className="flex-1 overflow-hidden">
+							<ArtifactContent
+								kind={artifact.kind}
+								content={artifact.content}
+								status={artifact.status}
+								title={artifact.title}
+							/>
+						</div>
+					</motion.div>
+				)}
 			</motion.div>
 		</AnimatePresence>
 	);

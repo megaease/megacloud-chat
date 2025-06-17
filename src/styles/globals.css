@@ -207,6 +207,19 @@
   background-color: var(--color-primary);
 }
 
+/* Animation delay utilities */
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
 /* Custom button styles, because tailwindcss4 defaults to default button styles */
 button{
   cursor: pointer;
