@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export type ConnectionStatus =
 	| "disconnected"
@@ -12,8 +12,9 @@ interface MCPConnectionState {
 }
 
 /**
- * Hook to monitor MCP connection status in real-time
- * 通过 API 轮询获取状态，因为连接管理器在服务器端
+ * Simplified hook for MCP connection status
+ * No longer polls automatically - database status is the source of truth
+ * Kept for potential future use or manual status checking
  */
 export function useMCPConnectionStatus() {
 	const [connectionStates, setConnectionStates] = useState<MCPConnectionState>(
@@ -21,7 +22,7 @@ export function useMCPConnectionStatus() {
 	);
 	const [isLoading, setIsLoading] = useState(false);
 
-	// 获取连接统计信息
+	// Manual fetch function (no automatic polling)
 	const fetchConnectionStats = async () => {
 		try {
 			setIsLoading(true);
@@ -43,16 +44,6 @@ export function useMCPConnectionStatus() {
 		}
 	};
 
-	useEffect(() => {
-		// 初始加载
-		fetchConnectionStats();
-
-		// 定期轮询状态 (每30秒)
-		const interval = setInterval(fetchConnectionStats, 30000);
-
-		return () => clearInterval(interval);
-	}, []);
-
 	const getConnectionStatus = (serverId: number): ConnectionStatus => {
 		return connectionStates[serverId] || "disconnected";
 	};
@@ -70,7 +61,7 @@ export function useMCPConnectionStatus() {
 		return connectionStates[serverId] === "error";
 	};
 
-	// 手动刷新状态
+	// Manual refresh function (no automatic polling)
 	const refreshStatus = () => {
 		fetchConnectionStats();
 	};

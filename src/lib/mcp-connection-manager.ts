@@ -55,7 +55,7 @@ class MCPConnectionManager {
 				await this.stopServer(server.id);
 			}
 
-			this.updateStatus(server.id, "connecting");
+			this.updateStatus(server.id, "connecting").catch(console.error);
 
 			let client: MCPClient;
 
@@ -99,7 +99,7 @@ class MCPConnectionManager {
 				server,
 			});
 
-			this.updateStatus(server.id, "connected");
+			this.updateStatus(server.id, "connected").catch(console.error);
 			console.log(`MCP server ${server.name} started successfully`);
 
 			return { success: true };
@@ -110,7 +110,7 @@ class MCPConnectionManager {
 
 			// 清理可能的部分连接
 			this.connections.delete(server.id);
-			this.updateStatus(server.id, "error");
+			this.updateStatus(server.id, "error").catch(console.error);
 
 			return { success: false, error: errorMessage };
 		}
@@ -135,7 +135,7 @@ class MCPConnectionManager {
 			);
 		} finally {
 			this.connections.delete(serverId);
-			this.updateStatus(serverId, "disconnected");
+			this.updateStatus(serverId, "disconnected").catch(console.error);
 		}
 	}
 
@@ -190,7 +190,7 @@ class MCPConnectionManager {
 				connection.status = "error";
 				connection.lastError =
 					error instanceof Error ? error.message : "Unknown error";
-				this.updateStatus(serverId, "error");
+				this.updateStatus(serverId, "error").catch(console.error);
 			}
 		}
 
@@ -262,15 +262,46 @@ class MCPConnectionManager {
 	}
 
 	/**
-	 * 更新状态并通知监听器
+	 * Update status and sync to database
 	 */
-	private updateStatus(serverId: number, status: ConnectionStatus): void {
+	private async updateStatus(serverId: number, status: ConnectionStatus): Promise<void> {
 		const connection = this.connections.get(serverId);
 		if (connection) {
 			connection.status = status;
 		}
 
-		// 通知所有监听器
+		// Sync to database
+		try {
+			const { updateMcpServerStatus } = await import("./mcp-server-action");
+			const { ServerStatusEnum } = await import("@/server/db/schema");
+
+			// Map connection status to database status
+			let dbStatus: string;
+			switch (status) {
+				case "connected":
+					dbStatus = ServerStatusEnum.ONLINE;
+					break;
+				case "connecting":
+				case "reconnecting":
+					dbStatus = ServerStatusEnum.CONNECTING;
+					break;
+				case "error":
+					dbStatus = ServerStatusEnum.ERROR;
+					break;
+				case "disconnected":
+					dbStatus = ServerStatusEnum.OFFLINE;
+					break;
+				default:
+					dbStatus = ServerStatusEnum.OFFLINE;
+					break;
+			}
+
+			await updateMcpServerStatus(serverId, dbStatus as "online" | "offline" | "error" | "connecting");
+		} catch (error) {
+			console.error("Failed to sync status to database:", error);
+		}
+
+		// Notify all listeners
 		for (const listener of this.statusListeners) {
 			try {
 				listener(serverId, status);
@@ -301,8 +332,147 @@ class MCPConnectionManager {
 			connection.status = "error";
 			connection.lastError =
 				error instanceof Error ? error.message : "Health check failed";
-			this.updateStatus(serverId, "error");
+			this.updateStatus(serverId, "error").catch(console.error);
 			return false;
+		}
+	}
+
+	/**
+	 * Initialize all active MCP server connections
+	 * Called at app startup to auto-connect servers marked as ONLINE in database
+	 */
+	async initializeActiveServers(): Promise<void> {
+		try {
+			// 动态导入以避免循环依赖
+			const { getActiveMcpServers, updateMcpServerStatus } = await import(
+				"./mcp-server-action"
+			);
+			const { ServerStatusEnum } = await import("@/server/db/schema");
+
+			const result = await getActiveMcpServers();
+			if (!result.success || !result.data) {
+				console.log("No active MCP servers found in database");
+				return;
+			}
+
+			const activeServers = result.data;
+			console.log(
+				`Found ${activeServers.length} active MCP servers, initializing connections...`,
+			);
+
+			// 并行启动所有活跃的服务器
+			const startPromises = activeServers.map(async (server) => {
+				try {
+					console.log(`Starting MCP server: ${server.name}`);
+					const startResult = await this.startServer(server);
+
+					if (!startResult.success) {
+						console.error(
+							`Failed to start MCP server ${server.name}:`,
+							startResult.error,
+						);
+						// Update database status to ERROR
+						await updateMcpServerStatus(server.id, ServerStatusEnum.ERROR);
+					}
+				} catch (error) {
+					console.error(`Error starting MCP server ${server.name}:`, error);
+					// Update database status to ERROR
+					await updateMcpServerStatus(server.id, ServerStatusEnum.ERROR);
+				}
+			});
+
+			await Promise.allSettled(startPromises);
+			console.log("MCP servers initialization completed");
+		} catch (error) {
+			console.error("Error during MCP servers initialization:", error);
+		}
+	}
+
+	/**
+	 * Get all enabled and connected servers
+	 */
+	async getEnabledConnectedServers() {
+		const connectedServers = [];
+
+		for (const [serverId, connection] of this.connections) {
+			if (connection.status === "connected") {
+				connectedServers.push({
+					serverId,
+					serverName: connection.server.name,
+					server: connection.server,
+					status: connection.status,
+					connectedAt: connection.connectedAt,
+				});
+			}
+		}
+
+		return connectedServers;
+	}
+
+	/**
+	 * Sync database server status with actual connection status
+	 * This ensures database status reflects the real connection state
+	 */
+	async syncDatabaseStatus(): Promise<void> {
+		try {
+			// Dynamic import to avoid circular dependency
+			const { getMcpServers, updateMcpServerStatus } = await import(
+				"./mcp-server-action"
+			);
+			const { ServerStatusEnum } = await import("@/server/db/schema");
+
+			const serversResult = await getMcpServers();
+			if (!serversResult.success || !serversResult.data) {
+				console.log("No servers found in database");
+				return;
+			}
+
+			const dbServers = serversResult.data;
+
+			for (const dbServer of dbServers) {
+				const connectionStatus = this.getConnectionStatus(dbServer.id);
+				let newDbStatus: string | null = null;
+
+				// Map connection status to database status
+				switch (connectionStatus) {
+					case "connected":
+						if (dbServer.status !== ServerStatusEnum.ONLINE) {
+							newDbStatus = ServerStatusEnum.ONLINE;
+						}
+						break;
+					case "connecting":
+					case "reconnecting":
+						if (dbServer.status !== ServerStatusEnum.CONNECTING) {
+							newDbStatus = ServerStatusEnum.CONNECTING;
+						}
+						break;
+					case "error":
+						if (dbServer.status !== ServerStatusEnum.ERROR) {
+							newDbStatus = ServerStatusEnum.ERROR;
+						}
+						break;
+					case "disconnected":
+						if (dbServer.status !== ServerStatusEnum.OFFLINE) {
+							newDbStatus = ServerStatusEnum.OFFLINE;
+						}
+						break;
+				}
+
+				// Update database status if needed
+				if (newDbStatus) {
+					console.log(
+						`Syncing server ${dbServer.name} status: ${dbServer.status} -> ${newDbStatus}`,
+					);
+					await updateMcpServerStatus(
+						dbServer.id,
+						newDbStatus as "online" | "offline" | "error" | "connecting",
+					);
+				}
+			}
+
+			console.log("Database status sync completed");
+		} catch (error) {
+			console.error("Error syncing database status:", error);
 		}
 	}
 }

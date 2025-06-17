@@ -178,8 +178,7 @@ export function ServerList({ onAddServer }: ServersListProps) {
 							<div className="flex items-center gap-2">
 								<ServerStatusBadge
 									status={server.status as ServerStatus}
-									serverId={server.id}
-									useRealTimeStatus={true}
+									isLoading={loadingStates[server.id]}
 								/>
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>

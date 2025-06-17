@@ -12,7 +12,7 @@ type MCPClientWithName = {
 
 /**
  * Loads and initializes MCP tools from all active connected servers
- * 现在使用服务器端连接管理器通过 API 获取工具
+ * Now uses server-side connection manager and auto-initializes servers
  * @param mcpEnabled Whether MCP functionality is enabled
  * @returns Object containing MCP tools and client connections
  */
@@ -23,19 +23,24 @@ export async function loadMCPTools(mcpEnabled = true) {
 	// Only load MCP servers if MCP is enabled
 	if (mcpEnabled !== false) {
 		try {
-			// 在服务器端环境中，动态导入连接管理器
+			// In server-side environment, dynamically import connection manager
 			if (typeof window === "undefined") {
 				const { getMCPConnectionManager } = await import(
 					"./mcp-connection-manager"
 				);
 				const mcpConnectionManager = getMCPConnectionManager();
+
+				// Initialize active servers first (this will connect servers marked as ONLINE)
+				await mcpConnectionManager.initializeActiveServers();
+
+				// Then get all connected tools
 				mcpTools = await mcpConnectionManager.getAllConnectedTools();
 				console.log(
 					"Loaded MCP tools from connected servers:",
 					Object.keys(mcpTools),
 				);
 			} else {
-				// 在客户端环境中，通过 API 获取工具（如果需要的话）
+				// In client environment, get tools via API (if needed)
 				console.log("MCP tools loading skipped on client side");
 			}
 		} catch (error) {
@@ -49,8 +54,8 @@ export async function loadMCPTools(mcpEnabled = true) {
 	const allTools = mcpEnabled ? { ...mcpTools } : undefined;
 	console.log("mcpTools", Object.keys(mcpTools));
 
-	// 由于使用持久连接，不需要立即关闭客户端
-	// 连接管理器会在适当的时候关闭连接
+	// Close all MCP clients is managed by connection manager
+	// Connection manager will close connections when appropriate
 	const closeAllMcpClients = async () => {
 		console.log(
 			"Note: MCP clients are managed by connection manager, no immediate close needed",
