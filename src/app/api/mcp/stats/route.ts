@@ -7,10 +7,10 @@ export async function GET() {
 		// 获取连接管理器实例
 		const mcpConnectionManager = getMCPConnectionManager();
 		const connectionStats = mcpConnectionManager.getConnectionStats();
-		
+
 		// 获取数据库中的所有服务器
 		const serversResult = await getMcpServers();
-		
+
 		if (!serversResult.success) {
 			return NextResponse.json({
 				success: true,
@@ -18,28 +18,28 @@ export async function GET() {
 				timestamp: new Date().toISOString(),
 			});
 		}
-		
+
 		const dbServers = serversResult.data || [];
-		
+
 		// 合并数据库状态和连接状态
 		const enhancedConnections = dbServers.map((server) => {
 			const connectionInfo = connectionStats.connections.find(
-				(conn) => conn.serverId === server.id
+				(conn) => conn.serverId === server.id,
 			);
-			
+
 			return {
 				serverId: server.id,
 				serverName: server.name,
 				// 如果有连接信息，使用连接状态；否则根据数据库状态推断
-				status: connectionInfo?.status || (
-					server.status === "online" ? "disconnected" : server.status
-				),
+				status:
+					connectionInfo?.status ||
+					(server.status === "online" ? "disconnected" : server.status),
 				connectedAt: connectionInfo?.connectedAt,
 				lastError: connectionInfo?.lastError,
 				dbStatus: server.status,
 			};
 		});
-		
+
 		const enhancedStats = {
 			...connectionStats,
 			connections: enhancedConnections,

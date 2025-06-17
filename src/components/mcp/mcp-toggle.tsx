@@ -96,7 +96,8 @@ export function MCPToggle({
 					result.message ||
 						`Server ${isOnline ? "stopped" : "started"} successfully`,
 				);
-				refetch();
+				// Refetch to get updated server list
+				await refetch();
 				queryClient.invalidateQueries({ queryKey: ["getMcpServers"] });
 			} else {
 				toast.error(result.error || "Operation failed, please try again");
@@ -181,10 +182,11 @@ export function MCPToggle({
 									<span className="text-sm font-medium text-gray-900 dark:text-gray-100">
 										MCP System
 									</span>
-									<span className="text-xs text-gray-500 dark:text-gray-400">									{mcpEnabled 
-										? "Enables AI to use external tools & data"
-										: "Disables all MCP servers"
-									}
+									<span className="text-xs text-gray-500 dark:text-gray-400">
+										{" "}
+										{mcpEnabled
+											? "Enables AI to use external tools & data"
+											: "Disables all MCP servers"}
 									</span>
 								</div>
 							</div>
@@ -200,8 +202,14 @@ export function MCPToggle({
 						{/* Help text when MCP is disabled */}
 						{!mcpEnabled && (
 							<div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/10 rounded-md border border-blue-200/30 dark:border-blue-800/30 mt-2">
-								<p className="font-medium text-blue-700 dark:text-blue-400 mb-1">� Enable MCP System</p>
-								<p>Turn on to allow the AI assistant to access external tools, files, databases, and custom integrations. When disabled, the AI can only use its built-in capabilities.</p>
+								<p className="font-medium text-blue-700 dark:text-blue-400 mb-1">
+									� Enable MCP System
+								</p>
+								<p>
+									Turn on to allow the AI assistant to access external tools,
+									files, databases, and custom integrations. When disabled, the
+									AI can only use its built-in capabilities.
+								</p>
 							</div>
 						)}
 
@@ -209,16 +217,15 @@ export function MCPToggle({
 						{mcpEnabled && (
 							<div className="px-3 py-2 text-xs bg-green-50/50 dark:bg-green-900/10 rounded-md border border-green-200/30 dark:border-green-800/30 mt-2">
 								<div className="flex items-center gap-2 mb-1">
-									<div className="h-2 w-2 rounded-full bg-green-500"></div>
+									<div className="h-2 w-2 rounded-full bg-green-500" />
 									<p className="font-medium text-green-700 dark:text-green-400">
 										MCP System Active
 									</p>
 								</div>
 								<p className="text-green-600/80 dark:text-green-400/80">
-									{onlineServers.length > 0 
+									{onlineServers.length > 0
 										? `AI can now access ${onlineServers.length} MCP server${onlineServers.length !== 1 ? "s" : ""}`
-										: "AI ready for MCP servers - configure servers below"
-									}
+										: "AI ready for MCP servers - configure servers below"}
 								</p>
 							</div>
 						)}
@@ -226,9 +233,11 @@ export function MCPToggle({
 						{mcpEnabled && (
 							<>
 								<div className="flex items-center justify-between my-3">
-									<div className="flex items-center gap-2">									<span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-										MCP Servers
-									</span>
+									<div className="flex items-center gap-2">
+										{" "}
+										<span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+											MCP Servers
+										</span>
 										{onlineServers.length > 0 && (
 											<Badge
 												variant="secondary"
@@ -274,7 +283,8 @@ export function MCPToggle({
 												No MCP servers configured
 											</p>
 											<p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
-												Add MCP servers to give AI access to external tools, files & databases
+												Add MCP servers to give AI access to external tools,
+												files & databases
 											</p>
 											<Button
 												variant="outline"

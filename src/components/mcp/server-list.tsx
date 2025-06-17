@@ -109,7 +109,8 @@ export function ServerList({ onAddServer }: ServersListProps) {
 			toast.error("Operation failed, please try again");
 		} finally {
 			setLoadingStates((prev) => ({ ...prev, [id]: false }));
-			refetch();
+			// Refetch to get updated server list
+			await refetch();
 		}
 	};
 

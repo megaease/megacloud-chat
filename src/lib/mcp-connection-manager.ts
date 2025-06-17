@@ -264,7 +264,10 @@ class MCPConnectionManager {
 	/**
 	 * Update status and sync to database
 	 */
-	private async updateStatus(serverId: number, status: ConnectionStatus): Promise<void> {
+	private async updateStatus(
+		serverId: number,
+		status: ConnectionStatus,
+	): Promise<void> {
 		const connection = this.connections.get(serverId);
 		if (connection) {
 			connection.status = status;
@@ -296,7 +299,10 @@ class MCPConnectionManager {
 					break;
 			}
 
-			await updateMcpServerStatus(serverId, dbStatus as "online" | "offline" | "error" | "connecting");
+			await updateMcpServerStatus(
+				serverId,
+				dbStatus as "online" | "offline" | "error" | "connecting",
+			);
 		} catch (error) {
 			console.error("Failed to sync status to database:", error);
 		}
