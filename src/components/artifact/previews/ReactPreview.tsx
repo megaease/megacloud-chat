@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Code2, AlertCircle, RefreshCw } from "lucide-react";
@@ -11,6 +12,7 @@ interface ReactPreviewProps {
 }
 
 export const ReactPreview = ({ content }: ReactPreviewProps) => {
+	const tArtifact = useTranslations("Artifact");
 	const [error, setError] = useState<string>("");
 	const [loading, setLoading] = useState(false);
 	const [previewHtml, setPreviewHtml] = useState<string>("");
@@ -57,7 +59,7 @@ export const ReactPreview = ({ content }: ReactPreviewProps) => {
 				}
 
 				if (!componentName) {
-					throw new Error("无法找到组件名称");
+					throw new Error(tArtifact("componentNotFound"));
 				}
 
 				// 使用 Babel standalone 编译 JSX
@@ -67,7 +69,7 @@ export const ReactPreview = ({ content }: ReactPreviewProps) => {
 				});
 
 				if (!compiled.code) {
-					throw new Error("编译失败");
+					throw new Error(tArtifact("compilationFailed"));
 				}
 
 				// 创建完整的 HTML 页面
@@ -192,7 +194,7 @@ export const ReactPreview = ({ content }: ReactPreviewProps) => {
 		};
 
 		compile();
-	}, [content]);
+	}, [content, tArtifact]);
 
 	const handleManualRefresh = useCallback(() => {
 		setRefreshKey((prev) => prev + 1);
@@ -213,10 +215,10 @@ export const ReactPreview = ({ content }: ReactPreviewProps) => {
 				<div className="flex items-center gap-2">
 					<Code2 className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
 					<span className="text-sm font-medium text-cyan-700 dark:text-cyan-300">
-						React 组件预览
+						{tArtifact("reactComponentPreview")}
 					</span>
 					<Badge variant="secondary" className="text-xs">
-						实时渲染
+						{tArtifact("liveRendering")}
 					</Badge>
 				</div>
 				<div className="flex items-center gap-2">
@@ -229,7 +231,7 @@ export const ReactPreview = ({ content }: ReactPreviewProps) => {
 						disabled={loading}
 					>
 						<RefreshCw className="w-3 h-3 mr-1" />
-						重新渲染
+						{tArtifact("rerender")}
 					</Button>
 				</div>
 			</div>
@@ -243,7 +245,7 @@ export const ReactPreview = ({ content }: ReactPreviewProps) => {
 								<AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
 								<div>
 									<p className="text-sm font-medium text-red-700 dark:text-red-400">
-										编译错误
+										{tArtifact("compilationError")}
 									</p>
 									<p className="text-xs text-red-600 dark:text-red-300 mt-1">
 										{error}
@@ -252,7 +254,7 @@ export const ReactPreview = ({ content }: ReactPreviewProps) => {
 							</div>
 							<div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
 								<p className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">
-									💡 示例代码格式：
+									{tArtifact("exampleCodeFormat")}
 								</p>
 								<pre className="text-xs text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 p-2 rounded overflow-x-auto">
 									{`const MyComponent = () => {
@@ -276,7 +278,9 @@ export const ReactPreview = ({ content }: ReactPreviewProps) => {
 					<div className="flex items-center justify-center h-full">
 						<div className="text-center space-y-2">
 							<RefreshCw className="w-8 h-8 mx-auto animate-spin text-cyan-500" />
-							<p className="text-sm text-muted-foreground">正在编译组件...</p>
+							<p className="text-sm text-muted-foreground">
+								{tArtifact("compilingComponent")}
+							</p>
 						</div>
 					</div>
 				) : previewHtml ? (
@@ -291,7 +295,7 @@ export const ReactPreview = ({ content }: ReactPreviewProps) => {
 					<div className="flex items-center justify-center h-full text-muted-foreground">
 						<div className="text-center space-y-2">
 							<Code2 className="w-8 h-8 mx-auto opacity-30" />
-							<p className="text-sm">等待 React 组件代码...</p>
+							<p className="text-sm">{tArtifact("waitingForCode")}</p>
 						</div>
 					</div>
 				)}

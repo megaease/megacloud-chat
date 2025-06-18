@@ -22,10 +22,10 @@ export default function Page({ children }: React.PropsWithChildren) {
 				<MCPDrawerProvider>
 					<SidebarProvider>
 						<AppSidebar />
-						<SidebarInset className="flex h-dvh flex-col">
+						<div className="flex h-dvh flex-col w-full">
 							<HeaderNav />
-							<div className="flex-1 overflow-auto">{children}</div>
-						</SidebarInset>
+							<div className="flex-1">{children}</div>
+						</div>
 					</SidebarProvider>
 					<ProviderManagementModal />
 					<Toaster richColors position="top-right" />

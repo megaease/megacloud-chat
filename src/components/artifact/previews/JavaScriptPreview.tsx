@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, AlertCircle } from "lucide-react";
@@ -10,6 +11,7 @@ interface JavaScriptPreviewProps {
 }
 
 export const JavaScriptPreview = ({ content }: JavaScriptPreviewProps) => {
+	const tArtifact = useTranslations("Artifact");
 	const [output, setOutput] = useState<string>("");
 	const [error, setError] = useState<string>("");
 
@@ -43,13 +45,15 @@ export const JavaScriptPreview = ({ content }: JavaScriptPreviewProps) => {
 
 			if (result !== undefined) {
 				logs.push(
-					`返回值：${typeof result === "object" ? JSON.stringify(result, null, 2) : String(result)}`,
+					`${tArtifact("returnValue", { value: typeof result === "object" ? JSON.stringify(result, null, 2) : String(result) })}`,
 				);
 			}
 
-			setOutput(logs.join("\n") || "(没有输出)");
+			setOutput(logs.join("\n") || tArtifact("noOutput"));
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "执行错误");
+			setError(
+				err instanceof Error ? err.message : tArtifact("executionError"),
+			);
 		}
 	};
 
@@ -59,9 +63,11 @@ export const JavaScriptPreview = ({ content }: JavaScriptPreviewProps) => {
 			<div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 flex-shrink-0">
 				<div className="flex items-center gap-2">
 					<Play className="w-3.5 h-3.5" />
-					<span className="text-sm font-medium">JavaScript 执行</span>
+					<span className="text-sm font-medium">
+						{tArtifact("javascriptExecution")}
+					</span>
 					<Badge variant="outline" className="text-xs">
-						沙盒环境
+						{tArtifact("sandboxEnvironment")}
 					</Badge>
 				</div>
 				<Button
@@ -71,7 +77,7 @@ export const JavaScriptPreview = ({ content }: JavaScriptPreviewProps) => {
 					className="h-7 px-2"
 				>
 					<Play className="w-3 h-3 mr-1" />
-					运行
+					{tArtifact("run")}
 				</Button>
 			</div>
 
@@ -89,7 +95,7 @@ export const JavaScriptPreview = ({ content }: JavaScriptPreviewProps) => {
 				{output ? (
 					<div className="flex-1 bg-gray-900 text-green-400 p-4 font-mono text-sm border overflow-auto">
 						<div className="text-gray-400 mb-2 font-sans text-xs uppercase tracking-wide">
-							输出结果
+							{tArtifact("outputResult")}
 						</div>
 						<pre className="whitespace-pre-wrap leading-relaxed">{output}</pre>
 					</div>
@@ -97,7 +103,7 @@ export const JavaScriptPreview = ({ content }: JavaScriptPreviewProps) => {
 					<div className="flex-1 flex items-center justify-center text-muted-foreground">
 						<div className="text-center space-y-2">
 							<Play className="w-8 h-8 mx-auto opacity-30" />
-							<p className="text-sm">点击"运行"按钮执行 JavaScript 代码</p>
+							<p className="text-sm">{tArtifact("clickRunToExecute")}</p>
 						</div>
 					</div>
 				)}

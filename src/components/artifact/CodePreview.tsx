@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CodeEditor } from "@/components/code-editor";
 import { Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ export function CodePreview({
 	className,
 	mode = "code",
 }: CodePreviewProps) {
+	const tArtifact = useTranslations("Artifact");
 	const detectedLanguage = language || detectLanguage(content);
 
 	const renderPreview = () => {
@@ -38,9 +40,13 @@ export function CodePreview({
 						<div className="text-center space-y-3">
 							<Code2 className="w-12 h-12 mx-auto opacity-30" />
 							<div>
-								<p className="text-sm font-medium">暂不支持预览</p>
+								<p className="text-sm font-medium">
+									{tArtifact("previewNotSupported")}
+								</p>
 								<p className="text-xs text-muted-foreground/60">
-									{detectedLanguage.toUpperCase()} 语言暂时不支持可视化预览
+									{tArtifact("languageNotSupported", {
+										language: detectedLanguage.toUpperCase(),
+									})}
 								</p>
 							</div>
 						</div>

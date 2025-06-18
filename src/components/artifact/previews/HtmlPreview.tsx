@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,7 @@ interface HtmlPreviewProps {
 }
 
 export const HtmlPreview = ({ content }: HtmlPreviewProps) => {
+	const tArtifact = useTranslations("Artifact");
 	const [viewMode, setViewMode] = useState<"desktop" | "tablet" | "mobile">(
 		"desktop",
 	);
@@ -32,7 +34,7 @@ export const HtmlPreview = ({ content }: HtmlPreviewProps) => {
 				<div className="flex items-center gap-1.5">
 					<Monitor className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
 					<span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-						HTML 预览
+						{tArtifact("htmlPreview")}
 					</span>
 				</div>
 				<div className="flex items-center gap-1">
@@ -41,7 +43,7 @@ export const HtmlPreview = ({ content }: HtmlPreviewProps) => {
 						size="sm"
 						onClick={() => setViewMode("desktop")}
 						className="h-6 w-6 p-0"
-						title="桌面视图"
+						title={tArtifact("desktopView")}
 					>
 						<Monitor className="w-3 h-3" />
 					</Button>
@@ -50,7 +52,7 @@ export const HtmlPreview = ({ content }: HtmlPreviewProps) => {
 						size="sm"
 						onClick={() => setViewMode("tablet")}
 						className="h-6 w-6 p-0"
-						title="平板视图"
+						title={tArtifact("tabletView")}
 					>
 						<Tablet className="w-3 h-3" />
 					</Button>
@@ -59,7 +61,7 @@ export const HtmlPreview = ({ content }: HtmlPreviewProps) => {
 						size="sm"
 						onClick={() => setViewMode("mobile")}
 						className="h-6 w-6 p-0"
-						title="手机视图"
+						title={tArtifact("mobileView")}
 					>
 						<Smartphone className="w-3 h-3" />
 					</Button>

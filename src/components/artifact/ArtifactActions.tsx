@@ -55,6 +55,7 @@ export function ArtifactActions({
 	canPreview = false,
 }: ArtifactActionsProps) {
 	const tCommon = useTranslations("Common");
+	const tArtifact = useTranslations("Artifact");
 	const handleDownload = () => {
 		const fileExtension = getFileExtension(kind);
 		const filename = `${title || "artifact"}.${fileExtension}`;
@@ -94,7 +95,7 @@ export function ArtifactActions({
 					size="sm"
 					onClick={onClose}
 					className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
-					title="关闭"
+					title={tArtifact("close")}
 				>
 					<X className="h-3.5 w-3.5" />
 				</Button>
@@ -106,7 +107,7 @@ export function ArtifactActions({
 						size="sm"
 						onClick={onChatToggle}
 						className="h-7 w-7 p-0"
-						title="切换聊天"
+						title={tArtifact("toggleChat")}
 					>
 						<MessageSquare className="h-3.5 w-3.5" />
 					</Button>
@@ -118,7 +119,9 @@ export function ArtifactActions({
 					</h3>
 					<div className="flex items-center gap-2">
 						<p className="text-xs text-muted-foreground">
-							{status === "streaming" ? "生成中..." : "已完成"}
+							{status === "streaming"
+								? tArtifact("generating")
+								: tArtifact("completed")}
 						</p>
 						{status === "streaming" && (
 							<div className="flex items-center gap-1">
@@ -145,11 +148,13 @@ export function ArtifactActions({
 						<TabsList className="h-8">
 							<TabsTrigger value="code" className="h-6 px-2 text-xs">
 								<Code2 className="w-3 h-3 mr-1" />
-								代码
+								{tArtifact("code")}
 							</TabsTrigger>
 							<TabsTrigger value="preview" disabled={!canPreview}>
 								<Eye className="w-3 h-3 mr-1" />
-								{canPreview ? "预览" : "预览（不可用）"}
+								{canPreview
+									? tArtifact("preview")
+									: tArtifact("previewUnavailable")}
 							</TabsTrigger>
 						</TabsList>
 					</Tabs>
@@ -161,12 +166,14 @@ export function ArtifactActions({
 						onClick={onRefresh}
 						disabled={status === "streaming"}
 						className="h-7 px-2"
-						title="重新生成"
+						title={tArtifact("regenerate")}
 					>
 						<RefreshCw
 							className={`h-3 w-3 ${status === "streaming" ? "animate-spin" : ""}`}
 						/>
-						{!isMobile && <span className="ml-1 text-xs">重新生成</span>}
+						{!isMobile && (
+							<span className="ml-1 text-xs">{tArtifact("regenerate")}</span>
+						)}
 					</Button>
 				) : null}
 
@@ -199,7 +206,7 @@ export function ArtifactActions({
 						size="sm"
 						onClick={handleShare}
 						className="h-7 px-2"
-						title="分享"
+						title={tArtifact("share")}
 					>
 						<Share className="h-3 w-3" />
 						{!isMobile && <span className="ml-1 text-xs">分享</span>}
@@ -213,7 +220,11 @@ export function ArtifactActions({
 						size="sm"
 						onClick={onFullscreen}
 						className="h-7 px-2"
-						title={isFullscreen ? "退出全屏" : "全屏显示"}
+						title={
+							isFullscreen
+								? tArtifact("exitFullscreen")
+								: tArtifact("fullscreen")
+						}
 					>
 						{isFullscreen ? (
 							<Minimize2 className="h-3 w-3" />
