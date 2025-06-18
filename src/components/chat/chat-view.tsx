@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { IconArrowDown } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
@@ -45,7 +45,7 @@ export function ChatView({
 	status,
 	isUploading = false,
 }: ChatViewProps) {
-	const tCommon = useTranslations('Common');
+	const tCommon = useTranslations("Common");
 	const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
 		useScrollToBottom({
 			bottomThreshold: 100,

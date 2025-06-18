@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import {
 	IconSettings,
 	IconServer,
@@ -40,8 +40,8 @@ export function NavUser({
 		avatar: string;
 	};
 }) {
-	const t = useTranslations('Settings');
-	const tNav = useTranslations('Navigation');
+	const t = useTranslations("Settings");
+	const tNav = useTranslations("Navigation");
 	const { isMobile } = useSidebar();
 	const { theme, setTheme } = useTheme();
 	const { setProviderModalOpen } = useApiProvider();
@@ -107,7 +107,7 @@ export function NavUser({
 								) : (
 									<IconSun className="mr-2 size-4" />
 								)}
-								<span>{theme === "light" ? "Dark Theme" : "Light Theme"}</span>
+								<span>{theme === "light" ? t("theme") : t("theme")}</span>
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />

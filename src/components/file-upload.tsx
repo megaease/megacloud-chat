@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import type React from "react";
 import {
 	uploadFile,
@@ -23,7 +23,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 	onUploadError,
 	className = "",
 }) => {
-	const tCommon = useTranslations('Common');
+	const tCommon = useTranslations("Common");
 	const [uploading, setUploading] = useState(false);
 	const [dragOver, setDragOver] = useState(false);
 	const [selectedFiles, setSelectedFiles] = useState<File[]>([]);

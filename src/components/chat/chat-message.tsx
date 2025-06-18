@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import type { Message } from "ai";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -131,8 +131,8 @@ export function ChatMessage({
 	isLoading,
 	isCompact = false,
 }: ChatMessageProps) {
-	const t = useTranslations('Chat');
-	const tCommon = useTranslations('Common');
+	const t = useTranslations("Chat");
+	const tCommon = useTranslations("Common");
 	const isUser = message.role === "user";
 	const [previewAttachment, setPreviewAttachment] = useState<{
 		url: string;

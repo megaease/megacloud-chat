@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import {
 	IconServer,
 	IconPower,
@@ -48,8 +48,8 @@ export function MCPToggle({
 	toggleMcpEnabled,
 	className,
 }: MCPToggleProps) {
-	const t = useTranslations('Navigation');
-	const tCommon = useTranslations('Common');
+	const t = useTranslations("Navigation");
+	const tCommon = useTranslations("Common");
 	const [loadingStates, setLoadingStates] = useState<Record<number, boolean>>(
 		{},
 	);
@@ -239,7 +239,7 @@ export function MCPToggle({
 									<div className="flex items-center gap-2">
 										{" "}
 										<span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-											{t('mcpServers')}
+											{t("mcpServers")}
 										</span>
 										{onlineServers.length > 0 && (
 											<Badge

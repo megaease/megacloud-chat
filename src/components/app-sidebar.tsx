@@ -1,5 +1,5 @@
 "use client";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import {
 	Sidebar,
 	SidebarContent,
@@ -41,8 +41,8 @@ import { useMCPDrawer } from "@/context/mcp-drawer-context";
 const userId = "user-id"; // Replace with actual user ID
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-	const t = useTranslations('Navigation');
-	const tCommon = useTranslations('Common');
+	const t = useTranslations("Navigation");
+	const tCommon = useTranslations("Common");
 	const router = useRouter();
 	const pathname = usePathname();
 	const queryClient = useQueryClient();
@@ -128,11 +128,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				<div className="w-full px-4">
 					<Button
 						onClick={() => router.push("/")}
-						title={t('newChat')}
+						title={t("newChat")}
 						className="w-full"
 					>
 						<IconPlus className="mr-2 h-4 w-4" />
-						{t('newChat')}
+						{t("newChat")}
 					</Button>
 				</div>
 			</SidebarHeader>
@@ -140,7 +140,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<SidebarContent>
 				<SidebarGroup key={"chats"}>
 					<SidebarGroupLabel className="flex items-center justify-between">
-						{t('chat')}
+						{t("chat")}
 					</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
@@ -154,7 +154,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 								</div>
 							) : chatData.length === 0 ? (
 								<div className="px-4 py-2 text-muted-foreground text-sm">
-									{t('noChatsFound')}
+									{t("noChatsFound")}
 								</div>
 							) : (
 								chatData.map((item) => {

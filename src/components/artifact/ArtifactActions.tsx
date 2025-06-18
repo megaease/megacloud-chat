@@ -1,6 +1,7 @@
 // components/artifact/ArtifactActions.tsx
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -53,6 +54,7 @@ export function ArtifactActions({
 	onViewModeChange,
 	canPreview = false,
 }: ArtifactActionsProps) {
+	const tCommon = useTranslations("Common");
 	const handleDownload = () => {
 		const fileExtension = getFileExtension(kind);
 		const filename = `${title || "artifact"}.${fileExtension}`;
@@ -182,10 +184,12 @@ export function ArtifactActions({
 					size="sm"
 					onClick={handleDownload}
 					className="h-7 px-2"
-					title="下载文件"
+					title={tCommon("download")}
 				>
 					<Download className="h-3 w-3" />
-					{!isMobile && <span className="ml-1 text-xs">下载</span>}
+					{!isMobile && (
+						<span className="ml-1 text-xs">{tCommon("download")}</span>
+					)}
 				</Button>
 
 				{/* 分享按钮（支持 Web Share API 的浏览器） */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -75,6 +76,8 @@ export function AddServerDialog({
 	onOpenChange,
 	customTrigger,
 }: AddServerDialogProps) {
+	const t = useTranslations("MCPServer");
+	const tCommon = useTranslations("Common");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	// Use type assertion to resolve compatibility between complex union types and form library
@@ -102,16 +105,16 @@ export function AddServerDialog({
 			const result = await createMcpServer(cleanedData);
 
 			if (result.success) {
-				toast.success("Server added successfully!");
+				toast.success(t("serverAdded"));
 				form.reset();
 				onOpenChange(false);
 				if (onSuccess) onSuccess();
 			} else {
-				toast.error(result.error || "Failed to add server");
+				toast.error(result.error || t("serverAddFailed"));
 			}
 		} catch (error) {
 			console.error("Failed to add server:", error);
-			toast.error("Failed to add server");
+			toast.error(t("serverAddFailed"));
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -129,17 +132,15 @@ export function AddServerDialog({
 					<div className="w-full px-4 py-2">
 						<Button className="w-full">
 							<IconPlus className="mr-2 h-4 w-4" />
-							Add Server
+							{t("addServer")}
 						</Button>
 					</div>
 				)}
 			</DialogTrigger>
 			<DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(880px,90vh)] sm:max-w-xl  [&>button:last-child]:top-3.5">
 				<DialogHeader className="px-6 py-4">
-					<DialogTitle>Add MCP Server</DialogTitle>
-					<DialogDescription>
-						Add a new MCP server to enhance AI assistant capabilities.
-					</DialogDescription>
+					<DialogTitle>{t("addServer")}</DialogTitle>
+					<DialogDescription>{t("descriptionDescription")}</DialogDescription>
 				</DialogHeader>
 
 				<div className="overflow-y-auto  px-6 py-4">
@@ -150,16 +151,14 @@ export function AddServerDialog({
 								// Add error handling callback to display validation errors
 								(errors) => {
 									console.error("Form validation errors:", errors);
-									toast.error(
-										"Please correct the form errors before submitting",
-									);
+									toast.error(t("validationError"));
 								},
 							)}
 							className="space-y-6"
 						>
 							{/* Server type selection */}
 							<div className="space-y-2">
-								<FormLabel>Server Type</FormLabel>
+								<FormLabel>{t("serverType")}</FormLabel>
 								<Tabs
 									value={form.watch("type")}
 									onValueChange={(value) =>
@@ -182,8 +181,8 @@ export function AddServerDialog({
 								</Tabs>
 								<FormDescription>
 									{form.watch("type") === TypeEnum.SSE
-										? "SSE (Server-Sent Events) connects to MCP server via HTTP."
-										: "STDIO connects to local MCP process via standard input/output."}
+										? t("serverTypeDescription").split("|")[0]
+										: t("serverTypeDescription").split("|")[1]}
 								</FormDescription>
 							</div>
 
@@ -194,13 +193,11 @@ export function AddServerDialog({
 									name="name"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Name</FormLabel>
+											<FormLabel>{t("name")}</FormLabel>
 											<FormControl>
-												<Input placeholder="MCP Server Name" {...field} />
+												<Input placeholder={t("namePlaceholder")} {...field} />
 											</FormControl>
-											<FormDescription>
-												Display name for the server
-											</FormDescription>
+											<FormDescription>{t("nameDescription")}</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
@@ -211,18 +208,17 @@ export function AddServerDialog({
 									name="description"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Description</FormLabel>
+											<FormLabel>{t("description")}</FormLabel>
 											<FormControl>
 												<Textarea
-													placeholder="Server description (optional)"
+													placeholder={t("descriptionPlaceholder")}
 													className="resize-none"
 													{...field}
 													value={field.value || ""}
 												/>
 											</FormControl>
 											<FormDescription>
-												Brief description of this MCP server's functionality and
-												purpose
+												{t("descriptionDescription")}
 											</FormDescription>
 											<FormMessage />
 										</FormItem>
@@ -238,16 +234,11 @@ export function AddServerDialog({
 										name="url"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>URL</FormLabel>
+												<FormLabel>{t("url")}</FormLabel>
 												<FormControl>
-													<Input
-														placeholder="https://example.com/mcp"
-														{...field}
-													/>
+													<Input placeholder={t("urlPlaceholder")} {...field} />
 												</FormControl>
-												<FormDescription>
-													SSE endpoint URL for the MCP server
-												</FormDescription>
+												<FormDescription>{t("urlDescription")}</FormDescription>
 												<FormMessage />
 											</FormItem>
 										)}
@@ -258,17 +249,17 @@ export function AddServerDialog({
 										name="headers"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>HTTP Headers</FormLabel>
+												<FormLabel>{t("httpHeaders")}</FormLabel>
 												<FormControl>
 													<KeyValueEditor
-														keyPlaceholder="Header name"
-														valuePlaceholder="Header value"
+														keyPlaceholder={t("headerName")}
+														valuePlaceholder={t("headerValue")}
 														value={field.value || {}}
 														onChange={field.onChange}
 													/>
 												</FormControl>
 												<FormDescription>
-													Custom HTTP headers sent to the MCP server
+													{t("httpHeadersDescription")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -285,12 +276,15 @@ export function AddServerDialog({
 										name="command"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>Command</FormLabel>
+												<FormLabel>{t("command")}</FormLabel>
 												<FormControl>
-													<Input placeholder="npx" {...field} />
+													<Input
+														placeholder={t("commandPlaceholder")}
+														{...field}
+													/>
 												</FormControl>
 												<FormDescription>
-													Command to start the MCP server
+													{t("commandDescription")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -302,12 +296,12 @@ export function AddServerDialog({
 										name="args"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>Command Arguments</FormLabel>
+												<FormLabel>{t("commandArguments")}</FormLabel>
 												<FormControl>
 													<div className="space-y-2">
 														{field.value?.map((arg, i) => (
 															<div
-																key={`arg-${i}`}
+																key={`${arg}-${i}`}
 																className="flex items-center gap-2"
 															>
 																<Input
@@ -317,7 +311,9 @@ export function AddServerDialog({
 																		newArgs[i] = e.target.value;
 																		field.onChange(newArgs);
 																	}}
-																	placeholder={`Argument ${i + 1}`}
+																	placeholder={t("argumentPlaceholder", {
+																		number: i + 1,
+																	})}
 																/>
 																<Button
 																	type="button"
@@ -340,12 +336,12 @@ export function AddServerDialog({
 																field.onChange([...(field.value || []), ""]);
 															}}
 														>
-															Add Argument
+															{t("addArgument")}
 														</Button>
 													</div>
 												</FormControl>
 												<FormDescription>
-													List of arguments passed to the command
+													{t("commandArgumentsDescription")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -357,17 +353,17 @@ export function AddServerDialog({
 										name="env"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>Environment Variables</FormLabel>
+												<FormLabel>{t("environmentVariables")}</FormLabel>
 												<FormControl>
 													<KeyValueEditor
-														keyPlaceholder="Variable name"
-														valuePlaceholder="Variable value"
+														keyPlaceholder={t("variableName")}
+														valuePlaceholder={t("variableValue")}
 														value={field.value || {}}
 														onChange={field.onChange}
 													/>
 												</FormControl>
 												<FormDescription>
-													Environment variables passed to the MCP server process
+													{t("environmentVariablesDescription")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -382,16 +378,16 @@ export function AddServerDialog({
 									variant="outline"
 									onClick={() => onOpenChange(false)}
 								>
-									Cancel
+									{tCommon("cancel")}
 								</Button>
 								<Button type="submit" disabled={isSubmitting}>
 									{isSubmitting ? (
 										<>
 											<IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
-											Adding...
+											{t("adding")}
 										</>
 									) : (
-										"Add Server"
+										t("addServer")
 									)}
 								</Button>
 							</DialogFooter>

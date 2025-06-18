@@ -6,14 +6,14 @@ import { nanoid } from "nanoid";
 import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import { useApiProvider } from "@/context/api-provider-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { ChatInput } from "@/components/chat/chat-input";
 
 export function HomePage() {
-	const t = useTranslations('HomePage');
-	const tCommon = useTranslations('Common');
+	const t = useTranslations("HomePage");
+	const tCommon = useTranslations("Common");
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { currentProvider, currentModel, isConfigured } = useApiProvider();
@@ -120,16 +120,16 @@ export function HomePage() {
 					<div className="text-center space-y-6">
 						<div className="space-y-4">
 							<h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-primary/90 to-primary/80 bg-clip-text text-transparent">
-								{t('title')}
+								{t("title")}
 							</h1>
 							<p className="text-xl md:text-2xl text-foreground/70 font-medium">
-								{t('description')}
+								{t("description")}
 							</p>
 						</div>
 
 						<div className="max-w-2xl mx-auto space-y-4">
 							<p className="text-lg text-muted-foreground leading-relaxed">
-								{t('welcome')}
+								{t("welcome")}
 							</p>
 
 							{/* Status indicator */}
@@ -138,14 +138,14 @@ export function HomePage() {
 									<div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 border-solid dark:border-amber-800 rounded-full">
 										<div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
 										<span className="text-sm font-medium text-amber-700 dark:text-amber-400">
-											{t('configurationRequired')}
+											{t("configurationRequired")}
 										</span>
 									</div>
 								) : (
 									<div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950/20 border border-green-200 border-solid dark:border-green-800 rounded-full">
 										<div className="w-2 h-2 bg-green-500 rounded-full" />
 										<span className="text-sm font-medium text-green-700 dark:text-green-400">
-											{t('readyWith', { model: currentModel })}
+											{t("readyWith", { model: currentModel })}
 										</span>
 									</div>
 								)}

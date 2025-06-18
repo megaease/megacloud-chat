@@ -3,6 +3,7 @@
 import type React from "react";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import {
 	Dialog,
 	DialogContent,
@@ -58,6 +59,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getProviderTypeInfo } from "./utils";
 
 export function ProviderManagementModal() {
+	const t = useTranslations("Provider");
+	const tCommon = useTranslations("Common");
 	const [searchTerm, setSearchTerm] = useState("");
 	const [deleteConfirmProvider, setDeleteConfirmProvider] = useState<
 		string | null
@@ -87,8 +90,9 @@ export function ProviderManagementModal() {
 	const handleSetDefault = async (providerId: string) => {
 		try {
 			await setDefaultProvider(providerId);
+			toast.success(t("defaultProviderSet"));
 		} catch (error) {
-			toast.error("Failed to set default provider", {
+			toast.error(t("operationFailed"), {
 				description: error instanceof Error ? error.message : "Unknown error",
 			});
 		}
@@ -98,8 +102,9 @@ export function ProviderManagementModal() {
 		try {
 			await deleteProvider(providerId);
 			setDeleteConfirmProvider(null);
+			toast.success(t("providerDeleted"));
 		} catch (error) {
-			toast.error("Failed to delete provider", {
+			toast.error(t("operationFailed"), {
 				description: error instanceof Error ? error.message : "Unknown error",
 			});
 		}
@@ -115,8 +120,8 @@ export function ProviderManagementModal() {
 				providerType: provider.providerType,
 			});
 
-			toast.success("Connection test successful", {
-				description: `Found ${models.length} available models`,
+			toast.success(t("connectionTestSuccess"), {
+				description: t("modelsFound", { count: models.length }),
 			});
 
 			// 更新提供商信息
@@ -126,7 +131,7 @@ export function ProviderManagementModal() {
 				lastTestSuccess: true,
 			});
 		} catch (error) {
-			toast.error("Connection test failed", {
+			toast.error(t("connectionTestFailed"), {
 				description: error instanceof Error ? error.message : "Unknown error",
 			});
 
@@ -144,9 +149,9 @@ export function ProviderManagementModal() {
 	const handleSwitchProvider = async (providerId: string) => {
 		try {
 			await switchProvider(providerId);
-			toast.success("Provider switched");
+			toast.success(t("providerSwitched"));
 		} catch (error) {
-			toast.error("Failed to switch provider", {
+			toast.error(t("operationFailed"), {
 				description: error instanceof Error ? error.message : "Unknown error",
 			});
 		}
@@ -155,7 +160,7 @@ export function ProviderManagementModal() {
 	// 复制 API 密钥
 	const handleCopyApiKey = (apiKey: string) => {
 		navigator.clipboard.writeText(apiKey);
-		toast.success("API key copied to clipboard");
+		toast.success(tCommon("copied"));
 	};
 
 	// 过滤提供商
@@ -172,7 +177,7 @@ export function ProviderManagementModal() {
 		if (!provider.lastTestedAt) {
 			return {
 				status: "untested",
-				label: "Not tested",
+				label: t("never"),
 				color: "text-muted-foreground",
 				icon: IconClock,
 			};
@@ -198,12 +203,12 @@ export function ProviderManagementModal() {
 			<Dialog open={isProviderModalOpen} onOpenChange={setProviderModalOpen}>
 				<DialogContent className="max-w-4xl max-h-[80vh]">
 					<DialogHeader>
-						<DialogTitle>Manage API Providers</DialogTitle>
+						<DialogTitle>{t("manageProviders")}</DialogTitle>
 					</DialogHeader>
 					<div className="flex items-center justify-center h-64">
 						<div className="flex items-center gap-2 text-muted-foreground">
 							<IconRefresh className="h-4 w-4 animate-spin" />
-							<span>Loading...</span>
+							<span>{tCommon("loading")}</span>
 						</div>
 					</div>
 				</DialogContent>
@@ -223,7 +228,7 @@ export function ProviderManagementModal() {
 						<div className="flex items-center justify-between">
 							<div>
 								<DialogTitle className="text-xl">
-									Manage API Providers
+									{t("manageProviders")}
 								</DialogTitle>
 								<p className="text-sm text-muted-foreground mt-1">
 									Manage your AI service provider configurations and connection
@@ -237,7 +242,7 @@ export function ProviderManagementModal() {
 						<div className="relative flex-1">
 							<IconSearch className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
 							<Input
-								placeholder="Search provider name or type..."
+								placeholder={t("searchPlaceholder")}
 								className="pl-9"
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
@@ -252,7 +257,7 @@ export function ProviderManagementModal() {
 							className="gap-2"
 						>
 							<IconPlus />
-							Add Provider
+							{t("addProvider")}
 						</Button>
 					</div>
 
@@ -264,7 +269,7 @@ export function ProviderManagementModal() {
 								</div>
 								<h3 className="text-lg font-medium mb-2">
 									{providers.length === 0
-										? "No API providers"
+										? t("noProviders")
 										: "No matching providers found"}
 								</h3>
 								<p className="text-sm text-muted-foreground text-center mb-4">
@@ -280,7 +285,7 @@ export function ProviderManagementModal() {
 									className="gap-2"
 								>
 									<IconPlus className="h-4 w-4" />
-									Add Provider
+									{t("addProvider")}
 								</Button>
 							</div>
 						) : (
@@ -319,12 +324,12 @@ export function ProviderManagementModal() {
 															{provider.name}
 														</h3>
 														<div className="flex items-center gap-2">
-															{provider.isDefault && (
+															{provider.isDefault ? (
 																<Badge variant="secondary" className="gap-1">
 																	<IconStar className="h-3 w-3" />
 																	Default
 																</Badge>
-															)}
+															) : null}
 															{isCurrentProvider && (
 																<Badge variant="default" className="gap-1">
 																	<IconCheck className="h-3 w-3" />
@@ -362,7 +367,7 @@ export function ProviderManagementModal() {
 
 														<div>
 															<div className="text-muted-foreground block mb-1">
-																API Endpoint
+																{t("baseUrl")}
 															</div>
 															<code className="bg-muted px-2 py-1 rounded text-xs block truncate">
 																{provider.baseUrl}
@@ -375,7 +380,7 @@ export function ProviderManagementModal() {
 														provider.availableModels.length > 0 && (
 															<div className="mt-3">
 																<div className="text-muted-foreground text-sm block mb-2">
-																	Available Models (
+																	{t("availableModels")} (
 																	{provider.availableModels.length})
 																</div>
 																<div className="flex flex-wrap gap-1">
@@ -475,7 +480,9 @@ export function ProviderManagementModal() {
 					<div className="border-t p-4">
 						<div className="flex items-center justify-between text-sm text-muted-foreground">
 							<span>Total {providers.length} providers</span>
-							<span>Current: {currentProvider?.name || "None selected"}</span>
+							<span>
+								{t("current")}: {currentProvider?.name || "None selected"}
+							</span>
 						</div>
 					</div>
 				</DialogContent>
@@ -492,16 +499,14 @@ export function ProviderManagementModal() {
 					<AlertDialogHeader>
 						<AlertDialogTitle className="flex items-center gap-2">
 							<IconAlertCircle className="h-5 w-5 text-destructive" />
-							Confirm provider deletion
+							{t("deleteConfirmTitle")}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
-							Are you sure you want to delete this API provider? This action
-							cannot be undone and all related configurations and history will
-							be permanently removed.
+							{t("deleteConfirmDescription")}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
 						<AlertDialogAction
 							onClick={() => {
 								if (deleteConfirmProvider) {
@@ -510,7 +515,7 @@ export function ProviderManagementModal() {
 							}}
 							className="bg-destructive hover:bg-destructive/90"
 						>
-							Confirm Delete
+							{tCommon("confirm")} {tCommon("delete")}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>
@@ -520,7 +525,7 @@ export function ProviderManagementModal() {
 				<DialogContent className="max-w-md">
 					<DialogHeader>
 						<DialogTitle>
-							{editingProvider ? "Edit Provider" : "Add New Provider"}
+							{editingProvider ? t("editProvider") : t("addProvider")}
 						</DialogTitle>
 					</DialogHeader>
 					<ProviderForm

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
 	IconLoader2,
@@ -52,8 +52,8 @@ export function ChatInput({
 	isUploading = false,
 	className = "",
 }: ChatInputProps) {
-	const t = useTranslations('Chat');
-	const tCommon = useTranslations('Common');
+	const t = useTranslations("Chat");
+	const tCommon = useTranslations("Common");
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [uploadedFiles, setUploadedFiles] = useState<
@@ -354,7 +354,7 @@ export function ChatInput({
 						value={input}
 						onChange={handleInputChange}
 						onKeyDown={handleKeyDown}
-						placeholder={t('placeholder')}
+						placeholder={t("placeholder")}
 						className="min-h-30 w-full resize-none border-0 bg-transparent px-4 py-4 pr-14 focus-visible:ring-0 
 						focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 selection:bg-primary/20 pb-14 text-sm leading-relaxed"
 						rows={2}
@@ -428,7 +428,7 @@ export function ChatInput({
 										</Button>
 									</TooltipTrigger>
 									<TooltipContent side="top">
-										<p>{isUploading ? tCommon('loading') : t('send')}</p>
+										<p>{isUploading ? tCommon("loading") : t("send")}</p>
 									</TooltipContent>
 								</Tooltip>
 							</TooltipProvider>

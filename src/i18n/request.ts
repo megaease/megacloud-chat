@@ -1,13 +1,13 @@
-import { getRequestConfig } from 'next-intl/server';
-import { cookies } from 'next/headers';
+import { getRequestConfig } from "next-intl/server";
+import { cookies } from "next/headers";
 
 export default getRequestConfig(async () => {
-  // Get locale from cookies, with fallback to 'en'
-  const cookieStore = await cookies();
-  const locale = cookieStore.get('locale')?.value || 'en';
+	// Get locale from cookies, with fallback to 'en'
+	const cookieStore = await cookies();
+	const locale = cookieStore.get("locale")?.value || "en";
 
-  return {
-    locale,
-    messages: (await import(`../../messages/${locale}.json`)).default
-  };
+	return {
+		locale,
+		messages: (await import(`../../messages/${locale}.json`)).default,
+	};
 });

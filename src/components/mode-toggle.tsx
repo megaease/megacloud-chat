@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import { IconBrightness } from "@tabler/icons-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 
 export function ModeToggle() {
-	const t = useTranslations('Settings');
+	const t = useTranslations("Settings");
 	const { setTheme, resolvedTheme } = useTheme();
 
 	const toggleTheme = React.useCallback(() => {
@@ -23,7 +23,7 @@ export function ModeToggle() {
 			onClick={toggleTheme}
 		>
 			<IconBrightness />
-			<span className="sr-only">{t('theme')}</span>
+			<span className="sr-only">{t("theme")}</span>
 		</Button>
 	);
 }

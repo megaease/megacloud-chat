@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { IconServer, IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,8 @@ interface MCPDrawerProps {
 }
 
 export function MCPDrawer({ children, trigger }: MCPDrawerProps) {
+	const tNav = useTranslations("Navigation");
+	const tCommon = useTranslations("Common");
 	const [isAddServerOpen, setIsAddServerOpen] = useState(false);
 	const queryClient = useQueryClient();
 	const { isOpen, openDrawer, closeDrawer } = useMCPDrawer();
@@ -41,7 +44,7 @@ export function MCPDrawer({ children, trigger }: MCPDrawerProps) {
 						<div className="flex items-center justify-between">
 							<SheetTitle className="flex items-center">
 								<IconServer className="mr-2 h-5 w-5" />
-								MCP Servers
+								{tNav("mcpServers")}
 							</SheetTitle>
 						</div>
 					</SheetHeader>
