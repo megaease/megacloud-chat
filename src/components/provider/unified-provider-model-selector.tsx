@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { useTranslations } from 'next-intl';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,8 @@ export function UnifiedProviderModelSelector({
 	className,
 	mobile = false,
 }: UnifiedProviderModelSelectorProps) {
+	const t = useTranslations('Chat');
+	const tCommon = useTranslations('Common');
 	const {
 		providers,
 		currentProvider,
@@ -428,7 +431,7 @@ export function UnifiedProviderModelSelector({
 						/
 					</span>
 					<span className="truncate font-medium">
-						{currentModel || "Select Model"}
+						{currentModel || t('selectModel')}
 					</span>
 				</div>
 				<div className="flex items-center gap-2">
@@ -442,7 +445,7 @@ export function UnifiedProviderModelSelector({
 			<CommandDialog open={isOpen} onOpenChange={setIsOpen} className="pb-11">
 				<Command value={selectedValue} onValueChange={setSelectedValue}>
 					<CommandInput
-						placeholder="Search providers & models..."
+						placeholder={tCommon('search')}
 						autoFocus
 						onValueChange={handleSearchChange}
 					/>

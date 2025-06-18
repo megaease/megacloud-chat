@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from 'next-intl';
 import {
 	IconSettings,
 	IconServer,
@@ -39,6 +40,8 @@ export function NavUser({
 		avatar: string;
 	};
 }) {
+	const t = useTranslations('Settings');
+	const tNav = useTranslations('Navigation');
 	const { isMobile } = useSidebar();
 	const { theme, setTheme } = useTheme();
 	const { setProviderModalOpen } = useApiProvider();

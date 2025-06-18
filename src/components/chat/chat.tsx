@@ -6,6 +6,7 @@ import { nanoid } from "nanoid";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from 'next-intl';
 import { useApiProvider } from "@/context/api-provider-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { ChatView } from "./chat-view";
@@ -68,6 +69,8 @@ function useChatMessages(chatId: string | undefined) {
 
 // Container component that handles data and state
 export function Chat() {
+	const t = useTranslations('Chat');
+	const tCommon = useTranslations('Common');
 	const { id } = useParams();
 	const chatId = id as string;
 	const router = useRouter();

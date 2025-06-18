@@ -5,6 +5,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { UnifiedProviderModelSelector } from "./provider/unified-provider-model-selector";
 import { ApiProviderSettingsButton } from "./provider/api-provider-settings-button";
 import { ModeToggle } from "./mode-toggle";
+import { LanguageSwitcher } from "./language-switcher";
 import { Button } from "@/components/ui/button";
 import { IconBrandGithub } from "@tabler/icons-react";
 
@@ -33,6 +34,7 @@ export function HeaderNav() {
 						<span className="sr-only">GitHub</span>
 					</a>
 				</Button>
+				<LanguageSwitcher />
 				<ModeToggle />
 			</div>
 		</header>

@@ -1,0 +1,74 @@
+{
+  "HomePage": {
+    "title": "MegaCloud MCP",
+    "description": "基于 Model Context Protocol 的 AI 助手",
+    "welcome": "体验由先进 AI 模型和无缝上下文理解驱动的智能对话。",
+    "configurationRequired": "需要配置",
+    "readyWith": "已准备就绪：{model}",
+    "getStarted": "开始使用",
+    "startConversation": "开始对话..."
+  },
+  "Navigation": {
+    "dashboard": "仪表板",
+    "chat": "聊天",
+    "settings": "设置",
+    "newChat": "新建聊天",
+    "noChatsFound": "未找到聊天记录",
+    "mcpServers": "MCP 服务器"
+  },
+  "Chat": {
+    "placeholder": "输入您的消息...",
+    "send": "发送",
+    "newChat": "新建聊天",
+    "selectModel": "选择模型",
+    "thinking": "思考中...",
+    "stopGeneration": "停止生成",
+    "regenerateResponse": "重新生成回复",
+    "copyMessage": "复制消息",
+    "deleteMessage": "删除消息",
+    "editMessage": "编辑消息"
+  },
+  "Settings": {
+    "title": "设置",
+    "apiProvider": "API 提供商",
+    "model": "模型",
+    "apiKey": "API 密钥",
+    "baseUrl": "Base URL",
+    "save": "保存设置",
+    "reset": "重置",
+    "language": "语言",
+    "theme": "主题",
+    "general": "常规",
+    "advanced": "高级"
+  },
+  "Common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "retry": "重试",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "copy": "复制",
+    "copied": "已复制！",
+    "language": "语言",
+    "close": "关闭",
+    "open": "打开",
+    "submit": "提交",
+    "reset": "重置",
+    "confirm": "确认",
+    "back": "返回",
+    "next": "下一步",
+    "previous": "上一步",
+    "search": "搜索",
+    "upload": "上传",
+    "download": "下载"
+  },
+  "Error": {
+    "notFound": "页面未找到",
+    "serverError": "服务器错误",
+    "networkError": "网络错误",
+    "tryAgain": "请稍后重试",
+    "goHome": "回到首页"
+  }
+}

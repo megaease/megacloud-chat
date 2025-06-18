@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from 'next-intl';
 import { IconCheck, IconCopy } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
@@ -17,7 +18,7 @@ export function CopyButton({
 	className,
 	size = "sm",
 	showText = false,
-	textLabel = "Copy",
+	textLabel,
 }: {
 	text: string;
 	className?: string;
@@ -25,7 +26,9 @@ export function CopyButton({
 	showText?: boolean;
 	textLabel?: string;
 }) {
+	const t = useTranslations('Common');
 	const [copied, setCopied] = useState<boolean>(false);
+	const defaultTextLabel = textLabel || t('copy');
 
 	const handleCopy = async () => {
 		try {
@@ -58,18 +61,18 @@ export function CopyButton({
 						{copied ? (
 							<>
 								<IconCheck className={showText ? "h-3 w-3" : "h-4 w-4"} />
-								{showText && <span className="text-xs">Copied!</span>}
+								{showText && <span className="text-xs">{t('copied')}</span>}
 							</>
 						) : (
 							<>
 								<IconCopy className={showText ? "h-3 w-3" : "h-4 w-4"} />
-								{showText && <span className="text-xs">{textLabel}</span>}
+								{showText && <span className="text-xs">{defaultTextLabel}</span>}
 							</>
 						)}
 					</Button>
 				</TooltipTrigger>
 				<TooltipContent side="top">
-					{copied ? "Copied!" : "Copy to clipboard"}
+					{copied ? t('copied') : t('copy')}
 				</TooltipContent>
 			</Tooltip>
 		</TooltipProvider>

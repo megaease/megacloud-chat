@@ -1,0 +1,74 @@
+{
+  "HomePage": {
+    "title": "MegaCloud MCP",
+    "description": "AI Assistant with Model Context Protocol",
+    "welcome": "Experience intelligent conversations powered by advanced AI models and seamless context understanding.",
+    "configurationRequired": "Configuration required",
+    "readyWith": "Ready with {model}",
+    "getStarted": "Get Started",
+    "startConversation": "Start a conversation to begin..."
+  },
+  "Navigation": {
+    "dashboard": "Dashboard",
+    "chat": "Chats",
+    "settings": "Settings",
+    "newChat": "New Chat",
+    "noChatsFound": "No chats found",
+    "mcpServers": "MCP Servers"
+  },
+  "Chat": {
+    "placeholder": "Type your message...",
+    "send": "Send",
+    "newChat": "New Chat",
+    "selectModel": "Select Model",
+    "thinking": "Thinking...",
+    "stopGeneration": "Stop Generation",
+    "regenerateResponse": "Regenerate Response",
+    "copyMessage": "Copy Message",
+    "deleteMessage": "Delete Message",
+    "editMessage": "Edit Message"
+  },
+  "Settings": {
+    "title": "Settings",
+    "apiProvider": "API Provider",
+    "model": "Model",
+    "apiKey": "API Key",
+    "baseUrl": "Base URL",
+    "save": "Save Settings",
+    "reset": "Reset",
+    "language": "Language",
+    "theme": "Theme",
+    "general": "General",
+    "advanced": "Advanced"
+  },
+  "Common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "language": "Language",
+    "close": "Close",
+    "open": "Open",
+    "submit": "Submit",
+    "reset": "Reset",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "upload": "Upload",
+    "download": "Download"
+  },
+  "Error": {
+    "notFound": "Page not found",
+    "serverError": "Server error",
+    "networkError": "Network error",
+    "tryAgain": "Please try again later",
+    "goHome": "Go to Home"
+  }
+}
