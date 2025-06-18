@@ -110,7 +110,7 @@ export function ArtifactActions({
 					</Button>
 				)}
 
-				<div className="flex flex-col">
+				<div className="flex items-center gap-3">
 					<h3 className="font-semibold text-base truncate max-w-[200px] md:max-w-[300px]">
 						{title}
 					</h3>

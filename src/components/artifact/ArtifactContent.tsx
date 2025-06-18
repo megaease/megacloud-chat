@@ -2,8 +2,6 @@
 "use client";
 
 import type { ArtifactKind } from "@/lib/artifact-types";
-import ReactMarkdown from "react-markdown";
-import { CodeEditor } from "../code-editor";
 import { TextArtifact } from "./TextArtifact";
 import { CodePreview } from "./CodePreview";
 
