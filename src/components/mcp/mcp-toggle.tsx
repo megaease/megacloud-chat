@@ -50,9 +50,9 @@ export function MCPToggle({
 }: MCPToggleProps) {
 	const t = useTranslations("Navigation");
 	const tCommon = useTranslations("Common");
-	const [loadingStates, setLoadingStates] = useState<Record<number, 'starting' | 'stopping' | false>>(
-		{},
-	);
+	const [loadingStates, setLoadingStates] = useState<
+		Record<number, "starting" | "stopping" | false>
+	>({});
 	const [addDialogOpen, setAddDialogOpen] = useState(false);
 	const queryClient = useQueryClient();
 	const { openDrawer } = useMCPDrawer();
@@ -80,10 +80,10 @@ export function MCPToggle({
 		currentStatus: ServerStatus,
 	) => {
 		const currentLoadingState = loadingStates[id];
-		
+
 		// If server is currently starting, allow user to stop it
-		if (currentLoadingState === 'starting') {
-			setLoadingStates((prev) => ({ ...prev, [id]: 'stopping' }));
+		if (currentLoadingState === "starting") {
+			setLoadingStates((prev) => ({ ...prev, [id]: "stopping" }));
 			try {
 				const response = await fetch(`/api/mcp/${id}/stop`, {
 					method: "POST",
@@ -108,16 +108,16 @@ export function MCPToggle({
 			}
 			return;
 		}
-		
+
 		// If server is currently stopping, don't allow any action
-		if (currentLoadingState === 'stopping') {
+		if (currentLoadingState === "stopping") {
 			return;
 		}
-		
+
 		const isOnline = currentStatus === ServerStatusEnum.ONLINE;
 		const action = isOnline ? "stop" : "start";
-		const loadingState = isOnline ? 'stopping' : 'starting';
-		
+		const loadingState = isOnline ? "stopping" : "starting";
+
 		setLoadingStates((prev) => ({ ...prev, [id]: loadingState }));
 		try {
 			// Call the appropriate API endpoint to actually start/stop the server
@@ -372,13 +372,13 @@ export function MCPToggle({
 															server.status as ServerStatus,
 														);
 													}}
-													disabled={loadingStates[server.id] === 'stopping'}
+													disabled={loadingStates[server.id] === "stopping"}
 													className="h-7 w-7 p-0 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/20"
 													aria-label={`Toggle ${server.name}`}
 												>
-													{loadingStates[server.id] === 'starting' ? (
+													{loadingStates[server.id] === "starting" ? (
 														<IconLoader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
-													) : loadingStates[server.id] === 'stopping' ? (
+													) : loadingStates[server.id] === "stopping" ? (
 														<IconLoader2 className="h-3.5 w-3.5 animate-spin text-red-500" />
 													) : server.status === ServerStatusEnum.ONLINE ? (
 														<IconPower className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
