@@ -50,7 +50,7 @@ export function MCPToggle({
 }: MCPToggleProps) {
 	const t = useTranslations("Navigation");
 	const tCommon = useTranslations("Common");
-	const [loadingStates, setLoadingStates] = useState<Record<number, boolean>>(
+	const [loadingStates, setLoadingStates] = useState<Record<number, 'starting' | 'stopping' | false>>(
 		{},
 	);
 	const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -79,11 +79,47 @@ export function MCPToggle({
 		id: number,
 		currentStatus: ServerStatus,
 	) => {
-		setLoadingStates((prev) => ({ ...prev, [id]: true }));
-		try {
-			const isOnline = currentStatus === ServerStatusEnum.ONLINE;
-			const action = isOnline ? "stop" : "start";
+		const currentLoadingState = loadingStates[id];
+		
+		// If server is currently starting, allow user to stop it
+		if (currentLoadingState === 'starting') {
+			setLoadingStates((prev) => ({ ...prev, [id]: 'stopping' }));
+			try {
+				const response = await fetch(`/api/mcp/${id}/stop`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+				});
 
+				const result = await response.json();
+				if (result.success) {
+					toast.success(result.message || "Server stopped successfully");
+					await refetch();
+					queryClient.invalidateQueries({ queryKey: ["getMcpServers"] });
+				} else {
+					toast.error(result.error || "Failed to stop server");
+				}
+			} catch (error) {
+				console.error("Failed to stop server:", error);
+				toast.error("Failed to stop server");
+			} finally {
+				setLoadingStates((prev) => ({ ...prev, [id]: false }));
+			}
+			return;
+		}
+		
+		// If server is currently stopping, don't allow any action
+		if (currentLoadingState === 'stopping') {
+			return;
+		}
+		
+		const isOnline = currentStatus === ServerStatusEnum.ONLINE;
+		const action = isOnline ? "stop" : "start";
+		const loadingState = isOnline ? 'stopping' : 'starting';
+		
+		setLoadingStates((prev) => ({ ...prev, [id]: loadingState }));
+		try {
 			// Call the appropriate API endpoint to actually start/stop the server
 			const response = await fetch(`/api/mcp/${id}/${action}`, {
 				method: "POST",
@@ -336,12 +372,14 @@ export function MCPToggle({
 															server.status as ServerStatus,
 														);
 													}}
-													disabled={loadingStates[server.id]}
+													disabled={loadingStates[server.id] === 'stopping'}
 													className="h-7 w-7 p-0 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/20"
 													aria-label={`Toggle ${server.name}`}
 												>
-													{loadingStates[server.id] ? (
-														<IconLoader2 className="h-3.5 w-3.5 animate-spin text-gray-500" />
+													{loadingStates[server.id] === 'starting' ? (
+														<IconLoader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
+													) : loadingStates[server.id] === 'stopping' ? (
+														<IconLoader2 className="h-3.5 w-3.5 animate-spin text-red-500" />
 													) : server.status === ServerStatusEnum.ONLINE ? (
 														<IconPower className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
 													) : (
