@@ -38,11 +38,20 @@ import {
 	type McpServerSTDIO,
 } from "@/server/db/schema";
 
+// Generate unique ID for array items
+const generateId = () => Math.random().toString(36).substr(2, 9);
+
+// Argument item with unique ID
+interface ArgumentItem {
+	id: string;
+	value: string;
+}
+
 interface AddServerDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	onSuccess?: () => void;
-	customTrigger?: Boolean;
+	customTrigger?: boolean;
 }
 
 // Default values for SSE server
@@ -79,12 +88,32 @@ export function AddServerDialog({
 	const t = useTranslations("MCPServer");
 	const tCommon = useTranslations("Common");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [argItems, setArgItems] = useState<ArgumentItem[]>([]);
 
 	// Use type assertion to resolve compatibility between complex union types and form library
 	const form = useForm<ServerFormValues>({
 		resolver: zodResolver(insertMcpServerSchema) as Resolver<ServerFormValues>,
 		defaultValues: defaultSseValues,
 	});
+
+	// Initialize argItems from form data
+	useEffect(() => {
+		const formArgs = form.getValues("args") || [];
+		if (argItems.length === 0 && formArgs.length > 0) {
+			setArgItems(
+				formArgs.map((value) => ({
+					id: generateId(),
+					value,
+				}))
+			);
+		}
+	}, [argItems.length, form]);
+
+	// Update form when argItems change
+	const updateFormArgs = (newArgItems: ArgumentItem[]) => {
+		setArgItems(newArgItems);
+		form.setValue("args", newArgItems.map(item => item.value));
+	};
 
 	// Handle form submission
 	const onSubmit = async (data: ServerFormValues) => {
@@ -123,6 +152,11 @@ export function AddServerDialog({
 	// Switch server type
 	const handleTypeChange = (type: (typeof TypeEnum)[keyof typeof TypeEnum]) => {
 		form.setValue("type", type);
+		// Reset argItems when switching server type
+		if (type === TypeEnum.SSE) {
+			setArgItems([]);
+			form.setValue("args", []);
+		}
 	};
 
 	return (
@@ -294,22 +328,22 @@ export function AddServerDialog({
 									<FormField
 										control={form.control}
 										name="args"
-										render={({ field }) => (
+										render={() => (
 											<FormItem>
 												<FormLabel>{t("commandArguments")}</FormLabel>
 												<FormControl>
 													<div className="space-y-2">
-														{field.value?.map((arg, i) => (
+														{argItems.map((item, i) => (
 															<div
-																key={`${arg}-${i}`}
+																key={item.id}
 																className="flex items-center gap-2"
 															>
 																<Input
-																	value={arg}
+																	value={item.value}
 																	onChange={(e) => {
-																		const newArgs = [...(field.value || [])];
-																		newArgs[i] = e.target.value;
-																		field.onChange(newArgs);
+																		const newArgItems = [...argItems];
+																		newArgItems[i] = { ...item, value: e.target.value };
+																		updateFormArgs(newArgItems);
 																	}}
 																	placeholder={t("argumentPlaceholder", {
 																		number: i + 1,
@@ -320,9 +354,8 @@ export function AddServerDialog({
 																	variant="outline"
 																	size="icon"
 																	onClick={() => {
-																		const newArgs = [...(field.value || [])];
-																		newArgs.splice(i, 1);
-																		field.onChange(newArgs);
+																		const newArgItems = argItems.filter((_, idx) => idx !== i);
+																		updateFormArgs(newArgItems);
 																	}}
 																>
 																	×
@@ -333,7 +366,8 @@ export function AddServerDialog({
 															type="button"
 															variant="outline"
 															onClick={() => {
-																field.onChange([...(field.value || []), ""]);
+																const newArgItems = [...argItems, { id: generateId(), value: "" }];
+																updateFormArgs(newArgItems);
 															}}
 														>
 															{t("addArgument")}

@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { ArtifactContent } from "./ArtifactContent";
@@ -52,7 +51,6 @@ export function Artifact({
 	mcpEnabled,
 	toggleMcpEnabled,
 }: ArtifactProps) {
-	const tCommon = useTranslations("Common");
 	const { artifact, setArtifact } = useArtifact();
 	const [windowDimensions, setWindowDimensions] = useState({
 		width: 0,
