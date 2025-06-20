@@ -7,8 +7,9 @@ import {
 	IconPower,
 	IconCircleOff,
 	IconLoader2,
-	IconSettings,
 	IconPlus,
+	IconEdit,
+	IconTrash,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -26,16 +27,19 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getMcpServers, updateMcpServerStatus } from "@/lib/mcp-server-action";
-import { useMCPDrawer } from "@/context/mcp-drawer-context";
+import {
+	getMcpServers,
+	updateMcpServerStatus,
+	deleteMcpServer,
+} from "@/lib/mcp-server-action";
 import { AddServerDialog } from "./add-server-dialog";
+import { EditServerDialog } from "./edit-server-dialog";
 import {
 	type McpServer,
 	ServerStatusEnum,
 	type ServerStatus,
 } from "@/server/db/schema";
 import { toast } from "sonner";
-import { MCPDrawer } from "./mcp-drawer";
 
 interface MCPToggleProps {
 	mcpEnabled: boolean;
@@ -54,8 +58,9 @@ export function MCPToggle({
 		Record<number, "starting" | "stopping" | false>
 	>({});
 	const [addDialogOpen, setAddDialogOpen] = useState(false);
+	const [editDialogOpen, setEditDialogOpen] = useState(false);
+	const [editingServerId, setEditingServerId] = useState<number | null>(null);
 	const queryClient = useQueryClient();
-	const { openDrawer } = useMCPDrawer();
 
 	// Fetch servers
 	const { data: serversResult, refetch } = useQuery({
@@ -147,6 +152,37 @@ export function MCPToggle({
 		} finally {
 			setLoadingStates((prev) => ({ ...prev, [id]: false }));
 		}
+	};
+
+	// Delete server
+	const handleDeleteServer = async (id: number, name: string) => {
+		if (
+			!confirm(
+				`Are you sure you want to delete "${name}"? This action cannot be undone.`,
+			)
+		) {
+			return;
+		}
+
+		try {
+			const result = await deleteMcpServer(id);
+			if (result.success) {
+				toast.success("Server deleted successfully");
+				await refetch();
+				queryClient.invalidateQueries({ queryKey: ["getMcpServers"] });
+			} else {
+				toast.error(result.error || "Failed to delete server");
+			}
+		} catch (error) {
+			console.error("Failed to delete server:", error);
+			toast.error("Failed to delete server");
+		}
+	};
+
+	// Edit server
+	const handleEditServer = (id: number) => {
+		setEditingServerId(id);
+		setEditDialogOpen(true);
 	};
 
 	return (
@@ -299,18 +335,6 @@ export function MCPToggle({
 										>
 											<IconPlus className="h-3.5 w-3.5" />
 										</Button>
-										<Button
-											variant="ghost"
-											size="sm"
-											onClick={(e) => {
-												e.preventDefault();
-												openDrawer();
-											}}
-											className="h-7 w-7 p-0 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-700/50 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
-											aria-label="Server settings"
-										>
-											<IconSettings className="h-3.5 w-3.5" />
-										</Button>
 									</div>
 								</div>
 
@@ -361,31 +385,59 @@ export function MCPToggle({
 														</span>
 													</div>
 												</div>
-												<Button
-													variant="ghost"
-													size="sm"
-													onClick={(e) => {
-														e.stopPropagation();
-														e.preventDefault();
-														handleToggleServer(
-															server.id,
-															server.status as ServerStatus,
-														);
-													}}
-													disabled={loadingStates[server.id] === "stopping"}
-													className="h-7 w-7 p-0 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/20"
-													aria-label={`Toggle ${server.name}`}
-												>
-													{loadingStates[server.id] === "starting" ? (
-														<IconLoader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
-													) : loadingStates[server.id] === "stopping" ? (
-														<IconLoader2 className="h-3.5 w-3.5 animate-spin text-red-500" />
-													) : server.status === ServerStatusEnum.ONLINE ? (
-														<IconPower className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-													) : (
-														<IconCircleOff className="h-3.5 w-3.5 text-gray-400" />
-													)}
-												</Button>
+												<div className="flex items-center gap-1">
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={(e) => {
+															e.stopPropagation();
+															e.preventDefault();
+															handleEditServer(server.id);
+														}}
+														className="h-7 w-7 p-0 hover:bg-blue-100/60 dark:hover:bg-blue-900/30 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 opacity-0 group-hover:opacity-100"
+														aria-label={`Edit ${server.name}`}
+													>
+														<IconEdit className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={(e) => {
+															e.stopPropagation();
+															e.preventDefault();
+															handleDeleteServer(server.id, server.name);
+														}}
+														className="h-7 w-7 p-0 hover:bg-red-100/60 dark:hover:bg-red-900/30 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/20 opacity-0 group-hover:opacity-100"
+														aria-label={`Delete ${server.name}`}
+													>
+														<IconTrash className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={(e) => {
+															e.stopPropagation();
+															e.preventDefault();
+															handleToggleServer(
+																server.id,
+																server.status as ServerStatus,
+															);
+														}}
+														disabled={loadingStates[server.id] === "stopping"}
+														className="h-7 w-7 p-0 hover:bg-gray-200/60 dark:hover:bg-gray-700/60 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+														aria-label={`Toggle ${server.name}`}
+													>
+														{loadingStates[server.id] === "starting" ? (
+															<IconLoader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
+														) : loadingStates[server.id] === "stopping" ? (
+															<IconLoader2 className="h-3.5 w-3.5 animate-spin text-red-500" />
+														) : server.status === ServerStatusEnum.ONLINE ? (
+															<IconPower className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+														) : (
+															<IconCircleOff className="h-3.5 w-3.5 text-gray-400" />
+														)}
+													</Button>
+												</div>
 											</div>
 										))
 									)}
@@ -427,8 +479,18 @@ export function MCPToggle({
 					customTrigger
 				/>
 
-				{/* MCP Drawer */}
-				<MCPDrawer />
+				{/* Edit Server Dialog */}
+				<EditServerDialog
+					open={editDialogOpen}
+					onOpenChange={setEditDialogOpen}
+					serverId={editingServerId}
+					onSuccess={() => {
+						refetch();
+						queryClient.invalidateQueries({ queryKey: ["getMcpServers"] });
+						setEditDialogOpen(false);
+						setEditingServerId(null);
+					}}
+				/>
 			</div>
 		</TooltipProvider>
 	);

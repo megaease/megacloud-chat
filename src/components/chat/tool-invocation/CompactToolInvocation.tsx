@@ -194,7 +194,7 @@ export function CompactToolInvocation({
 			animate={{ opacity: 1, y: 0 }}
 			className={cn(
 				"rounded-md border overflow-hidden",
-				isCompact ? "mb-1" : "mb-2",
+				isCompact ? "my-1" : "my-2",
 				theme.borderColor,
 				theme.backgroundColor,
 			)}
