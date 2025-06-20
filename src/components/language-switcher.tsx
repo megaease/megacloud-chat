@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Globe } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 const languages = [
 	{ code: "en", name: "English", flag: "🇺🇸" },
@@ -19,6 +20,11 @@ const languages = [
 export function LanguageSwitcher() {
 	const t = useTranslations("Common");
 	const router = useRouter();
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
 	const getCurrentLanguage = () => {
 		if (typeof document === "undefined")
@@ -40,6 +46,10 @@ export function LanguageSwitcher() {
 		// Refresh the page to apply new locale
 		router.refresh();
 	};
+
+	if (!mounted) {
+		return null;
+	}
 
 	const currentLang = getCurrentLanguage();
 
