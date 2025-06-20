@@ -24,14 +24,59 @@ export function ToolInvocationPart({
 		(status === "success" || status === "error") && isExpanded;
 
 	// Handle opening Artifact
-	const handleOpenArtifact = () => {
+	const handleOpenArtifact = async () => {
 		if (!toolState.isDocumentTool || !toolState.isSuccessful) return;
 
-		const toolArgs = toolState.args as {
-			title?: string;
-			content?: string;
-			kind?: string;
-		};
+		// Debug: Log the full tool invocation result
+		console.log("Full toolInvocation.result:", part.toolInvocation.result);
+		console.log("toolState.result:", toolState.result);
+
+		// Get documentId from tool invocation result
+		const toolResult = part.toolInvocation.result;
+
+		// Try different ways to extract documentId
+		let documentId: string | undefined;
+
+		// Case 1: documentId is directly in result
+		if (toolResult && "documentId" in toolResult) {
+			documentId = (toolResult as Record<string, unknown>).documentId as string;
+		}
+
+		// Case 2: documentId is in result.content
+		if (!documentId && toolResult?.content) {
+			if (typeof toolResult.content === "string") {
+				try {
+					const parsed = JSON.parse(toolResult.content);
+					if (parsed && typeof parsed === "object" && "documentId" in parsed) {
+						documentId = parsed.documentId as string;
+					}
+				} catch {
+					// content is not JSON
+				}
+			} else if (Array.isArray(toolResult.content)) {
+				// Check if any content item has documentId
+				for (const item of toolResult.content) {
+					if (typeof item === "object" && item && "documentId" in item) {
+						documentId = (item as Record<string, unknown>).documentId as string;
+						break;
+					}
+				}
+			} else if (
+				typeof toolResult.content === "object" &&
+				toolResult.content &&
+				"documentId" in toolResult.content
+			) {
+				documentId = (toolResult.content as Record<string, unknown>)
+					.documentId as string;
+			}
+		}
+
+		console.log("Extracted documentId:", documentId);
+
+		if (!documentId) {
+			console.error("No documentId found in tool result:", toolResult);
+			return;
+		}
 
 		// Create a mock bounding box (from screen center)
 		const boundingBox = {
@@ -40,11 +85,13 @@ export function ToolInvocationPart({
 			width: 400,
 			height: 200,
 		};
+
+		// Set artifact with documentId only, let ArtifactContent handle data fetching
 		setArtifact({
-			documentId: `doc_${Date.now()}`,
-			title: toolArgs.title || "Untitled Document",
-			kind: (toolArgs.kind as "text" | "code" | "sheet" | "image") || "text",
-			content: toolArgs.content || "",
+			documentId: documentId,
+			title: "Loading...", // Placeholder title
+			kind: "text", // Placeholder kind
+			content: "", // Empty content to trigger database mode
 			isVisible: true,
 			status: "idle",
 			boundingBox,
@@ -68,35 +115,16 @@ export function ToolInvocationPart({
 		);
 	}
 
-	// 如果是 document 工具且成功执行，使用特殊的文档样式
-	if (toolState.isDocumentTool && status === "success") {
+	// 如果是 document 工具，使用特殊的文档样式（无论是否成功）
+	if (toolState.isDocumentTool) {
 		return (
 			<DocumentToolInvocation
 				toolState={toolState}
 				status={status}
 				theme={theme}
 				onOpenArtifact={handleOpenArtifact}
+				isLoading={isLoading}
 			/>
-		);
-	}
-
-	// 对于执行中的 document 工具，显示执行状态
-	if (toolState.isDocumentTool && status === "executing") {
-		return (
-			<motion.div
-				initial={{ opacity: 0, y: 8, scale: 0.98 }}
-				animate={{ opacity: 1, y: 0, scale: 1 }}
-				transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-				className={cn(
-					"group relative rounded-lg border shadow-md my-6 overflow-hidden transition-all duration-300",
-					"bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-950/40 dark:to-indigo-950/30",
-					"border-blue-200/60 dark:border-blue-800/40",
-				)}
-			>
-				<div className="p-5">
-					<ToolExecutionStatus status={status} toolName={toolState.toolName} />
-				</div>
-			</motion.div>
 		);
 	}
 

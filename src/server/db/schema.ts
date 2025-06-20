@@ -8,11 +8,13 @@ import {
 	integer,
 	json,
 	pgTableCreator,
+	primaryKey,
 	serial,
 	text,
 	timestamp,
 	uuid,
 	varchar,
+	boolean,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -66,12 +68,50 @@ export const apiProviders = createTable("api_providers", {
 	lastModelUsed: text("last_model_used"), // Last used model
 });
 
+// Artifacts table for storing created documents with version history
+export const artifacts = createTable(
+	"artifacts",
+	{
+		id: text("id").$defaultFn(() => nanoid(16)),
+		version: integer("version").notNull().default(1),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+		title: text("title").notNull(),
+		content: text("content").notNull(),
+		kind: text("kind").notNull(), // 'text', 'code', 'sheet', 'image'
+		userId: text("user_id").notNull(),
+		chatId: text("chat_id")
+			.references(() => chats.id, { onDelete: "cascade" })
+			.notNull(),
+		isPublic: boolean("is_public").notNull().default(false),
+		tags: json("tags").$type<string[]>().default([]),
+		changeDescription: text("change_description"), // Description of what changed in this version
+	},
+	(table) => ({
+		pk: primaryKey({ columns: [table.id, table.version] }),
+		// Add index for common queries
+		userIdIdx: index("artifacts_user_id_idx").on(table.userId),
+		chatIdIdx: index("artifacts_chat_id_idx").on(table.chatId),
+		idIdx: index("artifacts_id_idx").on(table.id),
+	}),
+);
+
 export const chatsSchema = createSelectSchema(chats);
 export const chatMessagesSchema = createSelectSchema(chatMessages);
+export const artifactsSchema = createSelectSchema(artifacts);
+
 export const ChatRoleEnum = z.enum(["user", "assistant", "system"]);
+export const ArtifactKindEnum = z.enum(["text", "code", "sheet", "image"]);
+
 export type ChatRole = z.infer<typeof ChatRoleEnum>;
+export type ArtifactKind = z.infer<typeof ArtifactKindEnum>;
 export type Chat = z.infer<typeof chatsSchema>;
 export type DBMessage = InferSelectModel<typeof chatMessages>;
+export type Artifact = InferSelectModel<typeof artifacts>;
+
+// Insert schemas for artifacts
+export const insertArtifactSchema = createInsertSchema(artifacts);
+
 // MCP server-related type definitions
 // =========================================
 

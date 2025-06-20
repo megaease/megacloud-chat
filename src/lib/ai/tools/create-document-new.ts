@@ -19,35 +19,11 @@ export function createDocumentTool(
 				.describe("Type of document"),
 		}),
 		execute: async ({ title, content, kind }) => {
-			// 先保存到数据库获取真实的ID（如果提供了必要的参数）
-			let realDocumentId: string;
+			const documentId = `doc_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
-			if (userId && chatId) {
-				try {
-					const artifact = await createArtifact({
-						title,
-						content,
-						kind,
-						userId,
-						chatId,
-						tags: [],
-						isPublic: false,
-					});
-					realDocumentId = artifact.id;
-					console.log("Artifact saved to database:", artifact.id);
-				} catch (error) {
-					console.error("Failed to save artifact to database:", error);
-					// 如果保存失败，使用临时ID
-					realDocumentId = `artifact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-				}
-			} else {
-				// 如果没有提供userId和chatId，使用临时ID
-				realDocumentId = `artifact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-			}
-
-			// 发送流式数据片段，使用真实的document ID
+			// 发送流式数据片段
 			const streamParts: DataStreamDelta[] = [
-				{ type: "id", content: realDocumentId },
+				{ type: "id", content: documentId },
 				{ type: "title", content: title },
 				{ type: "kind", content: kind },
 				{ type: "clear", content: "" },
@@ -62,7 +38,26 @@ export function createDocumentTool(
 				await new Promise((resolve) => setTimeout(resolve, 50));
 			}
 
-			return { success: true, documentId: realDocumentId };
+			// 保存到数据库（如果提供了必要的参数）
+			if (userId && chatId) {
+				try {
+					const artifact = await createArtifact({
+						title,
+						content,
+						kind,
+						userId,
+						chatId,
+						tags: [],
+						isPublic: false,
+					});
+					console.log("Artifact saved to database:", artifact.id);
+				} catch (error) {
+					console.error("Failed to save artifact to database:", error);
+					// 不抛出错误，因为流式传输已经成功
+				}
+			}
+
+			return { success: true, documentId };
 		},
 	});
 }

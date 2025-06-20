@@ -22,6 +22,7 @@ import { getChatMessageById } from "@/server/db/queries/chat";
 import { getTrailingMessageId } from "@/lib/utils";
 import { systemPrompt } from "@/lib/prompt";
 import { createDocumentTool } from "@/lib/ai/tools/create-document";
+import { updateDocumentTool } from "@/lib/ai/tools/update-document";
 import {
 	createResumableStreamContext,
 	type ResumableStreamContext,
@@ -38,8 +39,10 @@ function getStreamContext() {
 			globalStreamContext = createResumableStreamContext({
 				waitUntil: after,
 			});
-		} catch (error: any) {
-			if (error.message.includes("REDIS_URL")) {
+		} catch (error: unknown) {
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			if (errorMessage.includes("REDIS_URL")) {
 				console.log(
 					" > Resumable streams are disabled due to missing REDIS_URL",
 				);
@@ -146,8 +149,8 @@ export async function POST(req: Request) {
 					messages: messages,
 					tools: {
 						...mcpTools,
-						createDocument: createDocumentTool(dataStream),
-						updateDocument: createDocumentTool(dataStream),
+						createDocument: createDocumentTool(dataStream, userId, chatId),
+						updateDocument: updateDocumentTool(dataStream, userId),
 					} as ToolSet,
 
 					experimental_transform: smoothStream({ chunking: "word" }),

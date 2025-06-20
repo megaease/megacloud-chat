@@ -14,6 +14,7 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 	const { data: dataStream } = useChat({ id: chatId });
 	const { artifact, setArtifact } = useArtifact();
 	const lastProcessedIndex = useRef(-1);
+	const currentDocumentId = useRef<string>("");
 
 	useEffect(() => {
 		if (!dataStream?.length) return;
@@ -28,6 +29,7 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 			setArtifact((prev) => {
 				switch (delta.type) {
 					case "id":
+						currentDocumentId.current = delta.content;
 						return {
 							...prev,
 							documentId: delta.content,
@@ -59,9 +61,14 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 							...prev,
 							content: prev.content + delta.content,
 							isVisible: true,
+							status: "streaming", // Ensure we show streaming status
 						};
 
 					case "finish":
+						// When streaming finishes, fetch the final content from database
+						if (currentDocumentId.current) {
+							fetchFinalArtifactContent(currentDocumentId.current);
+						}
 						return {
 							...prev,
 							status: "idle",
@@ -73,6 +80,31 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 			});
 		}
 	}, [dataStream, setArtifact]);
+
+	// Fetch final artifact content from database
+	const fetchFinalArtifactContent = async (documentId: string) => {
+		try {
+			const response = await fetch(
+				`/api/artifacts/${documentId}?userId=user-id`,
+			);
+			if (response.ok) {
+				const { artifact: dbArtifact } = await response.json();
+				setArtifact((prev) => ({
+					...prev,
+					content: dbArtifact.content,
+					title: dbArtifact.title,
+					kind: dbArtifact.kind,
+					status: "idle",
+				}));
+			}
+		} catch (error) {
+			console.error("Error fetching final artifact content:", error);
+			setArtifact((prev) => ({
+				...prev,
+				status: "error",
+			}));
+		}
+	};
 
 	return null; // This component doesn't render any UI
 }

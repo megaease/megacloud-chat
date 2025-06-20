@@ -253,10 +253,14 @@ export function Artifact({
 								{/* Artifact 内容区域 */}
 								<div className="flex-1 overflow-hidden">
 									<ArtifactContent
-										kind={artifact.kind}
-										content={artifact.content}
-										status={artifact.status}
-										title={artifact.title}
+										{...(artifact.documentId && artifact.content === ""
+											? { documentId: artifact.documentId }
+											: {
+													kind: artifact.kind,
+													content: artifact.content,
+													status: artifact.status,
+													title: artifact.title,
+												})}
 										viewMode={viewMode}
 									/>
 								</div>
@@ -318,10 +322,14 @@ export function Artifact({
 						{/* Artifact 内容区域 */}
 						<div className="flex-1 overflow-hidden">
 							<ArtifactContent
-								kind={artifact.kind}
-								content={artifact.content}
-								status={artifact.status}
-								title={artifact.title}
+								{...(artifact.documentId && artifact.content === ""
+									? { documentId: artifact.documentId }
+									: {
+											kind: artifact.kind,
+											content: artifact.content,
+											status: artifact.status,
+											title: artifact.title,
+										})}
 								viewMode={viewMode}
 							/>
 						</div>

@@ -158,11 +158,29 @@ export function ChatMessage({
 				);
 			});
 
-			return validParts.length > 0 ? validParts : null;
+			// If we have valid parts, render them
+			if (validParts.length > 0) {
+				return validParts;
+			}
 		}
 
-		// If only has regular content
-		return <Markdown content={message.content as string} />;
+		// If only has regular content, or if parts are empty during streaming
+		const content = message.content as string;
+		if (content && content.trim().length > 0) {
+			return <Markdown content={content} />;
+		}
+
+		// If we're loading and there's no content yet, show a loading indicator
+		if (isLoading && !isUser) {
+			return (
+				<div className="flex items-center gap-2 text-muted-foreground">
+					<Spinner className="h-4 w-4" />
+					<span>Thinking...</span>
+				</div>
+			);
+		}
+
+		return null;
 	};
 
 	// Render attachments if present
