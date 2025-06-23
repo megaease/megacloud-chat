@@ -474,7 +474,6 @@ export function MCPToggle({
 					onSuccess={() => {
 						refetch();
 						queryClient.invalidateQueries({ queryKey: ["getMcpServers"] });
-						toast.success("Server added successfully");
 					}}
 					customTrigger
 				/>
