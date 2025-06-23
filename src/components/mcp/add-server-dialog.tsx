@@ -155,7 +155,29 @@ export function AddServerDialog({
 				onOpenChange(false);
 				if (onSuccess) onSuccess();
 			} else {
-				toast.error(result.error || t("serverAddFailed"));
+				// 处理多行错误信息的显示
+				const errorMessage = result.error || t("serverAddFailed");
+				const lines = errorMessage.split('\n');
+				
+				if (lines.length > 1) {
+					// 多行错误信息，显示详细错误
+					toast.error(
+						<div className="space-y-1">
+							<div className="font-medium">{lines[0]}</div>
+							{lines.slice(1).map((line: string) => (
+								<div key={`error-${Date.now()}-${line.slice(0, 20)}`} className="text-xs text-gray-600 dark:text-gray-400 font-mono whitespace-pre-wrap">
+									{line}
+								</div>
+							))}
+						</div>,
+						{
+							duration: 8000, // 延长显示时间以便用户阅读详细错误
+						}
+					);
+				} else {
+					// 单行错误信息，正常显示
+					toast.error(errorMessage);
+				}
 			}
 		} catch (error) {
 			console.error("Failed to add server:", error);

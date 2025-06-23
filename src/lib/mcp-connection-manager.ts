@@ -31,6 +31,98 @@ class MCPConnectionManager {
 	>();
 
 	/**
+	 * 验证 STDIO 命令是否可执行
+	 */
+	private async validateStdioCommand(
+		command: string,
+		args: string[] = [],
+		env: Record<string, string> = {},
+	): Promise<{ success: boolean; error?: string }> {
+		return new Promise((resolve) => {
+			// 动态导入 spawn 以避免在客户端使用
+			const { spawn } = require("node:child_process");
+			
+			let errorOutput = "";
+			let hasResolved = false;
+
+			const childProcess = spawn(command, args, {
+				env: { ...process.env, ...env },
+				stdio: ["pipe", "pipe", "pipe"],
+			});
+
+			// 设置超时
+			const timeout = setTimeout(() => {
+				if (!hasResolved) {
+					hasResolved = true;
+					childProcess.kill();
+					resolve({
+						success: false,
+						error: `Command execution timeout (10s): ${command} ${args.join(" ")}`,
+					});
+				}
+			}, 10000);
+
+			// 捕获 stderr 输出
+			childProcess.stderr?.on("data", (data: Buffer) => {
+				errorOutput += data.toString();
+			});
+
+			// 处理进程退出
+			childProcess.on("exit", (code: number | null, signal: string | null) => {
+				clearTimeout(timeout);
+				if (!hasResolved) {
+					hasResolved = true;
+					
+					if (code === 0) {
+						resolve({ success: true });
+					} else {
+						let errorMessage = `Command failed with exit code ${code}`;
+						if (signal) {
+							errorMessage += ` (signal: ${signal})`;
+						}
+						if (errorOutput.trim()) {
+							errorMessage += `\nError output: ${errorOutput.trim()}`;
+						}
+						resolve({
+							success: false,
+							error: errorMessage,
+						});
+					}
+				}
+			});
+
+			// 处理 spawn 错误（如命令不存在）
+			childProcess.on("error", (error: Error) => {
+				clearTimeout(timeout);
+				if (!hasResolved) {
+					hasResolved = true;
+					let errorMessage = `Failed to execute command: ${command}`;
+					
+					if (error.message.includes("ENOENT")) {
+						errorMessage += " (command not found)";
+					} else if (error.message.includes("EACCES")) {
+						errorMessage += " (permission denied)";
+					}
+					
+					errorMessage += `\nDetails: ${error.message}`;
+					
+					resolve({
+						success: false,
+						error: errorMessage,
+					});
+				}
+			});
+
+			// 立即关闭子进程，我们只是测试它是否能启动
+			setTimeout(() => {
+				if (!hasResolved) {
+					childProcess.kill();
+				}
+			}, 1000);
+		});
+	}
+
+	/**
 	 * 启动 MCP 服务器连接
 	 */
 	async startServer(
@@ -63,6 +155,17 @@ class MCPConnectionManager {
 			if (server.type === TypeEnum.STDIO) {
 				if (!server.command) {
 					throw new Error("STDIO server missing command");
+				}
+
+				// 首先验证命令是否可执行
+				const validationResult = await this.validateStdioCommand(
+					server.command,
+					server.args as string[],
+					server.env as Record<string, string>,
+				);
+
+				if (!validationResult.success) {
+					throw new Error(validationResult.error || "Command validation failed");
 				}
 
 				const transport = new Experimental_StdioMCPTransport({
