@@ -279,7 +279,8 @@ export function ProviderManagementModal() {
 								</p>
 								<Button
 									onClick={() => {
-										setProviderModalOpen(true);
+										setEditingProvider(null);
+										setIsFormOpen(true);
 									}}
 									variant="outline"
 									className="gap-2"
