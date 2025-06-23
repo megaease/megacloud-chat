@@ -1,11 +1,12 @@
 "use client";
 
+import { useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { IconArrowDown } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "./chat-message";
-import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom-mutation";
+import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { Message } from "@ai-sdk/react";
 import { ChatInput } from "./chat-input";
 import { Thinking } from "./thinking";
@@ -46,8 +47,11 @@ export function ChatView({
 	isUploading = false,
 }: ChatViewProps) {
 	const tCommon = useTranslations("Common");
+
+	// Use the enhanced scroll-to-bottom hook
 	const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
 		useScrollToBottom({
+			behavior: "smooth",
 			bottomThreshold: 100,
 			scrollOnMount: true,
 			forceScrollOnNewContent: false,
@@ -80,15 +84,15 @@ export function ChatView({
 								/>
 							);
 						})}
-
-						<div ref={endRef} />
 					</div>
+					{/* Invisible element to mark the bottom for scrolling */}
+					<div ref={endRef} />
 				</div>
 			)}
 
 			{!isAtBottom && (
 				<Button
-					onClick={scrollToBottom}
+					onClick={() => scrollToBottom()}
 					className="fixed bottom-24 right-6 rounded-full shadow-md z-10"
 					size="icon"
 					variant="secondary"

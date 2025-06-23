@@ -41,7 +41,7 @@ class MCPConnectionManager {
 		return new Promise((resolve) => {
 			// 动态导入 spawn 以避免在客户端使用
 			const { spawn } = require("node:child_process");
-			
+
 			let errorOutput = "";
 			let hasResolved = false;
 
@@ -72,7 +72,7 @@ class MCPConnectionManager {
 				clearTimeout(timeout);
 				if (!hasResolved) {
 					hasResolved = true;
-					
+
 					if (code === 0) {
 						resolve({ success: true });
 					} else {
@@ -97,15 +97,15 @@ class MCPConnectionManager {
 				if (!hasResolved) {
 					hasResolved = true;
 					let errorMessage = `Failed to execute command: ${command}`;
-					
+
 					if (error.message.includes("ENOENT")) {
 						errorMessage += " (command not found)";
 					} else if (error.message.includes("EACCES")) {
 						errorMessage += " (permission denied)";
 					}
-					
+
 					errorMessage += `\nDetails: ${error.message}`;
-					
+
 					resolve({
 						success: false,
 						error: errorMessage,
@@ -165,7 +165,9 @@ class MCPConnectionManager {
 				);
 
 				if (!validationResult.success) {
-					throw new Error(validationResult.error || "Command validation failed");
+					throw new Error(
+						validationResult.error || "Command validation failed",
+					);
 				}
 
 				const transport = new Experimental_StdioMCPTransport({

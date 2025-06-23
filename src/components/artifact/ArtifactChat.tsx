@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { ChatInput } from "../chat/chat-input";
 import { ArtifactMessage } from "./ArtifactMessage";
 import { Thinking } from "../chat/thinking";
-import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom-mutation";
+import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 
 interface ArtifactChatProps {
 	chatId: string;
