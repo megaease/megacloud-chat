@@ -15,6 +15,16 @@ import {
 import { X, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { ArtifactChat } from "./ArtifactChat";
 import type { Message } from "@ai-sdk/react";
+import type { ArtifactKind } from "@/lib/artifact-types";
+
+interface ArtifactVersion {
+	id: string;
+	version: number;
+	title: string;
+	content: string;
+	kind: ArtifactKind;
+	updatedAt: string;
+}
 
 interface ArtifactProps {
 	chatId: string;
@@ -59,6 +69,8 @@ export function Artifact({
 	const [isMobile, setIsMobile] = useState(false);
 	const [showChat, setShowChat] = useState(false); // Mobile chat display state
 	const [viewMode, setViewMode] = useState<"code" | "preview">("code"); // View mode state
+	const [versions, setVersions] = useState<ArtifactVersion[]>([]);
+	const [selectedVersion, setSelectedVersion] = useState<number | undefined>();
 
 	// 检测是否支持预览
 	const canPreview = useMemo(() => {
@@ -96,7 +108,25 @@ export function Artifact({
 		onClose?.();
 	};
 
+	const handleVersionsLoaded = (loadedVersions: ArtifactVersion[]) => {
+		console.log("handleVersionsLoaded called with:", loadedVersions);
+		setVersions(loadedVersions);
+		// Set current version if not already set
+		if (!selectedVersion && loadedVersions.length > 0 && loadedVersions[0]) {
+			console.log("Setting default version to:", loadedVersions[0].version);
+			setSelectedVersion(loadedVersions[0].version);
+		}
+	};
+
+	const handleVersionChange = (version: number) => {
+		setSelectedVersion(version);
+	};
+
 	if (!artifact.isVisible) return null;
+
+	console.log("Artifact component - artifact:", artifact);
+	console.log("Artifact component - documentId:", artifact.documentId);
+	console.log("Artifact component - versions:", versions);
 
 	return (
 		<AnimatePresence>
@@ -248,13 +278,21 @@ export function Artifact({
 									viewMode={viewMode}
 									onViewModeChange={setViewMode}
 									canPreview={canPreview}
+									versions={versions}
+									currentVersion={selectedVersion}
+									onVersionChange={handleVersionChange}
+									documentId={artifact.documentId}
 								/>
 
 								{/* Artifact 内容区域 */}
 								<div className="flex-1 overflow-hidden">
 									<ArtifactContent
-										{...(artifact.documentId && artifact.content === ""
-											? { documentId: artifact.documentId }
+										{...(artifact.documentId
+											? {
+													documentId: artifact.documentId,
+													onVersionsLoaded: handleVersionsLoaded,
+													selectedVersion: selectedVersion,
+												}
 											: {
 													kind: artifact.kind,
 													content: artifact.content,
@@ -317,13 +355,21 @@ export function Artifact({
 							viewMode={viewMode}
 							onViewModeChange={setViewMode}
 							canPreview={canPreview}
+							versions={versions}
+							currentVersion={selectedVersion}
+							onVersionChange={handleVersionChange}
+							documentId={artifact.documentId}
 						/>
 
 						{/* Artifact 内容区域 */}
 						<div className="flex-1 overflow-hidden">
 							<ArtifactContent
-								{...(artifact.documentId && artifact.content === ""
-									? { documentId: artifact.documentId }
+								{...(artifact.documentId
+									? {
+											documentId: artifact.documentId,
+											onVersionsLoaded: handleVersionsLoaded,
+											selectedVersion: selectedVersion,
+										}
 									: {
 											kind: artifact.kind,
 											content: artifact.content,

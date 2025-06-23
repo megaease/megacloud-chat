@@ -65,10 +65,9 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 						};
 
 					case "finish":
-						// When streaming finishes, fetch the final content from database
-						if (currentDocumentId.current) {
-							fetchFinalArtifactContent(currentDocumentId.current);
-						}
+						// When streaming finishes, just mark as idle
+						// Note: Don't fetch from database here as content is already updated via stream
+						// If user opens artifact from tool result, ArtifactContent will handle data fetching
 						return {
 							...prev,
 							status: "idle",
@@ -80,31 +79,6 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 			});
 		}
 	}, [dataStream, setArtifact]);
-
-	// Fetch final artifact content from database
-	const fetchFinalArtifactContent = async (documentId: string) => {
-		try {
-			const response = await fetch(
-				`/api/artifacts/${documentId}?userId=user-id`,
-			);
-			if (response.ok) {
-				const { artifact: dbArtifact } = await response.json();
-				setArtifact((prev) => ({
-					...prev,
-					content: dbArtifact.content,
-					title: dbArtifact.title,
-					kind: dbArtifact.kind,
-					status: "idle",
-				}));
-			}
-		} catch (error) {
-			console.error("Error fetching final artifact content:", error);
-			setArtifact((prev) => ({
-				...prev,
-				status: "error",
-			}));
-		}
-	};
 
 	return null; // This component doesn't render any UI
 }

@@ -293,7 +293,7 @@ export function ChatMessage({
 	// Check if there's any actual content to render
 	const content = renderContent();
 	const hasContent = content !== null && content !== undefined;
-	console.log("ChatMessage content:", isLoading && !isUser);
+
 	return hasContent ? (
 		<>
 			<ChatItem isUser={isUser} isCompact={isCompact}>

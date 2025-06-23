@@ -86,12 +86,12 @@ export function ToolInvocationPart({
 			height: 200,
 		};
 
-		// Set artifact with documentId only, let ArtifactContent handle data fetching
+		// Only set documentId and UI state, ArtifactContent will handle data fetching automatically
 		setArtifact({
 			documentId: documentId,
-			title: "Loading...", // Placeholder title
-			kind: "text", // Placeholder kind
-			content: "", // Empty content to trigger database mode
+			title: "Loading...", // Placeholder title will be replaced by ArtifactContent
+			kind: "text", // Placeholder kind will be replaced by ArtifactContent
+			content: "", // Empty content triggers database mode in ArtifactContent
 			isVisible: true,
 			status: "idle",
 			boundingBox,

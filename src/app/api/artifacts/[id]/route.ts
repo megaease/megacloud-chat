@@ -31,24 +31,28 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 		const includeVersions = searchParams.get("versions") === "true";
 
 		const { id } = await params;
-		const artifact = await getArtifactById(id, userId || undefined);
 
+		if (includeVersions && userId) {
+			// Return all versions (which includes all data needed)
+			const versions = await getArtifactVersions(id, userId);
+			if (!versions || versions.length === 0) {
+				return NextResponse.json(
+					{ error: "Artifact not found" },
+					{ status: 404 },
+				);
+			}
+			return NextResponse.json({ versions });
+		}
+
+		// Return latest version only
+		const artifact = await getArtifactById(id, userId || undefined);
 		if (!artifact) {
 			return NextResponse.json(
 				{ error: "Artifact not found" },
 				{ status: 404 },
 			);
 		}
-
-		let versions = null;
-		if (includeVersions && userId) {
-			versions = await getArtifactVersions(id, userId);
-		}
-
-		return NextResponse.json({
-			artifact,
-			...(versions && { versions }),
-		});
+		return NextResponse.json({ artifact });
 	} catch (error) {
 		console.error("Error fetching artifact:", error);
 		return NextResponse.json(

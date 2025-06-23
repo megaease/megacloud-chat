@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { ArtifactKind } from "@/lib/artifact-types";
 import { TextArtifact } from "./TextArtifact";
 import { CodePreview } from "./CodePreview";
@@ -17,6 +18,9 @@ interface ArtifactContentProps {
 
 	// For database mode (used when opening from ToolInvocationPart)
 	documentId?: string;
+	// Version control props
+	onVersionsLoaded?: (versions: ArtifactVersion[]) => void;
+	selectedVersion?: number;
 }
 
 interface ArtifactData {
@@ -24,7 +28,46 @@ interface ArtifactData {
 	title: string;
 	kind: ArtifactKind;
 	content: string;
+	version?: number;
 }
+
+interface ArtifactVersion {
+	id: string;
+	version: number;
+	title: string;
+	content: string;
+	kind: ArtifactKind;
+	updatedAt: string;
+}
+
+// Fetch all artifact versions (includes complete data for all versions)
+const fetchArtifactVersions = async (
+	documentId: string,
+): Promise<ArtifactVersion[]> => {
+	console.log("Fetching versions for documentId:", documentId);
+
+	const apiUrl = `/api/artifacts/${documentId}?versions=true&userId=user-id`;
+	console.log("API URL:", apiUrl);
+
+	const response = await fetch(apiUrl);
+	console.log("Response status:", response.status);
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		console.error("API Error Response:", errorText);
+		throw new Error(
+			`Failed to fetch artifact versions: ${response.status} - ${errorText}`,
+		);
+	}
+
+	const responseData = await response.json();
+	console.log("API Response Data:", responseData);
+
+	const versions = responseData.versions || [];
+	console.log("Parsed versions:", versions);
+
+	return versions;
+};
 
 export function ArtifactContent({
 	// Streaming mode props
@@ -35,69 +78,67 @@ export function ArtifactContent({
 	viewMode = "code",
 	// Database mode props
 	documentId,
+	// Version control props
+	onVersionsLoaded,
+	selectedVersion,
 }: ArtifactContentProps) {
 	const { setArtifact } = useArtifact();
-	const [artifactData, setArtifactData] = useState<ArtifactData | null>(null);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const [currentVersionData, setCurrentVersionData] =
+		useState<ArtifactVersion | null>(null);
 
-	// Fetch artifact data when documentId is provided
+	console.log("ArtifactContent - documentId:", documentId);
+	console.log("ArtifactContent - enabled query:", !!documentId);
+
+	// Fetch all versions when documentId is provided
+	const {
+		data: versions,
+		isLoading: loading,
+		error,
+	} = useQuery({
+		queryKey: ["artifact-versions", documentId],
+		queryFn: () => fetchArtifactVersions(documentId as string),
+		enabled: !!documentId,
+		staleTime: 1000 * 60 * 5,
+		gcTime: 1000 * 60 * 10,
+		retry: 3,
+	});
+
+	console.log("ArtifactContent - versions data:", versions);
+	console.log("ArtifactContent - loading:", loading);
+	console.log("ArtifactContent - error:", error);
+
+	// Notify parent component when versions are loaded
 	useEffect(() => {
-		if (!documentId) return;
+		if (versions && onVersionsLoaded) {
+			onVersionsLoaded(versions);
+		}
+	}, [versions, onVersionsLoaded]);
 
-		const fetchArtifact = async () => {
-			setLoading(true);
-			setError(null);
+	// Update current version data when selectedVersion changes
+	useEffect(() => {
+		if (versions && selectedVersion) {
+			const versionData = versions.find((v) => v.version === selectedVersion);
+			setCurrentVersionData(versionData || null);
+		} else if (versions && versions.length > 0 && versions[0]) {
+			// Default to latest version (first in array since it's ordered by desc)
+			setCurrentVersionData(versions[0]);
+		}
+	}, [versions, selectedVersion]);
 
-			console.log("Fetching artifact with documentId:", documentId);
-
-			try {
-				const apiUrl = `/api/artifacts/${documentId}`; // 移除 userId 参数
-				console.log("API URL:", apiUrl);
-
-				const response = await fetch(apiUrl);
-				console.log("Response status:", response.status);
-
-				if (!response.ok) {
-					const errorText = await response.text();
-					console.error("API Error Response:", errorText);
-					throw new Error(
-						`Failed to fetch artifact: ${response.status} - ${errorText}`,
-					);
-				}
-
-				const responseData = await response.json();
-				console.log("API Response Data:", responseData);
-
-				if (!responseData.artifact) {
-					throw new Error("No artifact data in response");
-				}
-
-				const fetchedArtifact = responseData.artifact;
-				setArtifactData(fetchedArtifact);
-
-				// Update global artifact state with the fetched data
-				setArtifact((prev) => ({
-					...prev,
-					title: fetchedArtifact.title,
-					content: fetchedArtifact.content,
-					kind: fetchedArtifact.kind,
-				}));
-			} catch (err) {
-				console.error("Error fetching artifact:", err);
-				setError(
-					err instanceof Error ? err.message : "Failed to load artifact",
-				);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		fetchArtifact();
-	}, [documentId, setArtifact]);
+	// Update global artifact state when current version changes
+	useEffect(() => {
+		if (currentVersionData) {
+			setArtifact((prev) => ({
+				...prev,
+				title: currentVersionData.title,
+				content: currentVersionData.content,
+				kind: currentVersionData.kind,
+			}));
+		}
+	}, [currentVersionData, setArtifact]);
 
 	// Determine which data to use
-	const displayData = artifactData || {
+	const displayData = currentVersionData || {
 		kind: kind || "text",
 		content: content || "",
 		title: title || "Untitled",
@@ -118,7 +159,7 @@ export function ArtifactContent({
 	if (error) {
 		return (
 			<div className="h-full flex items-center justify-center">
-				<div className="text-destructive">Error: {error}</div>
+				<div className="text-destructive">Error: {error.message}</div>
 			</div>
 		);
 	}

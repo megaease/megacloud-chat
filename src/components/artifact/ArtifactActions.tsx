@@ -5,6 +5,12 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
 	X,
 	MessageSquare,
 	Download,
@@ -16,13 +22,23 @@ import {
 	Minimize2,
 	Code2,
 	Eye,
+	ChevronDown,
 } from "lucide-react";
 import { CopyButton } from "../copy-button";
 import type { ArtifactKind } from "@/lib/artifact-types";
 
+interface ArtifactVersion {
+	id: string;
+	version: number;
+	title: string;
+	content: string;
+	kind: ArtifactKind;
+	updatedAt: string;
+}
+
 interface ArtifactActionsProps {
 	title: string;
-	status: "streaming" | "idle";
+	status: "streaming" | "idle" | "error";
 	kind: ArtifactKind;
 	content: string;
 	onClose: () => void;
@@ -36,6 +52,11 @@ interface ArtifactActionsProps {
 	viewMode?: "code" | "preview";
 	onViewModeChange?: (mode: "code" | "preview") => void;
 	canPreview?: boolean;
+	// 新增版本相关的 props
+	versions?: ArtifactVersion[];
+	currentVersion?: number;
+	onVersionChange?: (version: number) => void;
+	documentId?: string;
 }
 
 export function ArtifactActions({
@@ -53,9 +74,14 @@ export function ArtifactActions({
 	viewMode = "code",
 	onViewModeChange,
 	canPreview = false,
+	versions,
+	currentVersion,
+	onVersionChange,
+	documentId,
 }: ArtifactActionsProps) {
 	const tCommon = useTranslations("Common");
 	const tArtifact = useTranslations("Artifact");
+
 	const handleDownload = () => {
 		const fileExtension = getFileExtension(kind);
 		const filename = `${title || "artifact"}.${fileExtension}`;
@@ -99,7 +125,6 @@ export function ArtifactActions({
 				>
 					<X className="h-3.5 w-3.5" />
 				</Button>
-
 				{/* 移动端聊天切换按钮 */}
 				{showChatButton && onChatToggle && (
 					<Button
@@ -114,9 +139,49 @@ export function ArtifactActions({
 				)}
 
 				<div className="flex items-center gap-3">
-					<h3 className="font-semibold text-base truncate max-w-[200px] md:max-w-[300px]">
-						{title}
-					</h3>
+					{/* 版本下拉菜单 */}
+					{versions && versions.length > 0 && onVersionChange ? (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button
+									variant="ghost"
+									className="h-auto font-semibold text-base hover:bg-muted"
+								>
+									<span className="truncate max-w-[200px] md:max-w-[300px]">
+										{title} (v{currentVersion || versions[0]?.version || 1})
+									</span>
+									<ChevronDown className="ml-1 h-3 w-3" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="start" className="min-w-[250px]">
+								{versions.map((version) => (
+									<DropdownMenuItem
+										key={version.version}
+										onClick={() => onVersionChange(version.version)}
+										className={`flex items-center justify-between ${
+											currentVersion === version.version ? "bg-accent" : ""
+										}`}
+									>
+										<div className="flex flex-col">
+											<span className="font-medium">
+												v{version.version} - {version.title}
+											</span>
+											<span className="text-xs text-muted-foreground">
+												{new Date(version.updatedAt).toLocaleString()}
+											</span>
+										</div>
+										{currentVersion === version.version && (
+											<span className="text-xs text-primary">Current</span>
+										)}
+									</DropdownMenuItem>
+								))}
+							</DropdownMenuContent>
+						</DropdownMenu>
+					) : (
+						<h3 className="font-semibold text-base truncate max-w-[200px] md:max-w-[300px]">
+							{title}
+						</h3>
+					)}
 					<div className="flex items-center gap-2">
 						<p className="text-xs text-muted-foreground">
 							{status === "streaming"
