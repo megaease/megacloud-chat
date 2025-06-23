@@ -139,8 +139,11 @@ export function ArtifactActions({
 				)}
 
 				<div className="flex items-center gap-3">
-					{/* 版本下拉菜单 */}
-					{versions && versions.length > 0 && onVersionChange ? (
+					{/* 版本下拉菜单 - 只在非流式状态下显示 */}
+					{versions &&
+					versions.length > 0 &&
+					onVersionChange &&
+					status !== "streaming" ? (
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button

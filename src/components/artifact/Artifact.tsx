@@ -109,11 +109,9 @@ export function Artifact({
 	};
 
 	const handleVersionsLoaded = (loadedVersions: ArtifactVersion[]) => {
-		console.log("handleVersionsLoaded called with:", loadedVersions);
 		setVersions(loadedVersions);
 		// Set current version if not already set
 		if (!selectedVersion && loadedVersions.length > 0 && loadedVersions[0]) {
-			console.log("Setting default version to:", loadedVersions[0].version);
 			setSelectedVersion(loadedVersions[0].version);
 		}
 	};
@@ -123,10 +121,6 @@ export function Artifact({
 	};
 
 	if (!artifact.isVisible) return null;
-
-	console.log("Artifact component - artifact:", artifact);
-	console.log("Artifact component - documentId:", artifact.documentId);
-	console.log("Artifact component - versions:", versions);
 
 	return (
 		<AnimatePresence>
@@ -287,19 +281,18 @@ export function Artifact({
 								{/* Artifact 内容区域 */}
 								<div className="flex-1 overflow-hidden">
 									<ArtifactContent
-										{...(artifact.documentId
-											? {
-													documentId: artifact.documentId,
-													onVersionsLoaded: handleVersionsLoaded,
-													selectedVersion: selectedVersion,
-												}
-											: {
-													kind: artifact.kind,
-													content: artifact.content,
-													status: artifact.status,
-													title: artifact.title,
-												})}
+										// Always pass streaming props for real-time updates
+										kind={artifact.kind}
+										content={artifact.content}
+										status={artifact.status}
+										title={artifact.title}
 										viewMode={viewMode}
+										// Database mode props (for version control)
+										{...(artifact.documentId && {
+											documentId: artifact.documentId,
+											onVersionsLoaded: handleVersionsLoaded,
+											selectedVersion: selectedVersion,
+										})}
 									/>
 								</div>
 							</motion.div>
@@ -364,19 +357,18 @@ export function Artifact({
 						{/* Artifact 内容区域 */}
 						<div className="flex-1 overflow-hidden">
 							<ArtifactContent
-								{...(artifact.documentId
-									? {
-											documentId: artifact.documentId,
-											onVersionsLoaded: handleVersionsLoaded,
-											selectedVersion: selectedVersion,
-										}
-									: {
-											kind: artifact.kind,
-											content: artifact.content,
-											status: artifact.status,
-											title: artifact.title,
-										})}
+								// Always pass streaming props for real-time updates
+								kind={artifact.kind}
+								content={artifact.content}
+								status={artifact.status}
+								title={artifact.title}
 								viewMode={viewMode}
+								// Database mode props (for version control)
+								{...(artifact.documentId && {
+									documentId: artifact.documentId,
+									onVersionsLoaded: handleVersionsLoaded,
+									selectedVersion: selectedVersion,
+								})}
 							/>
 						</div>
 					</motion.div>

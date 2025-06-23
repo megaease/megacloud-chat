@@ -44,27 +44,18 @@ interface ArtifactVersion {
 const fetchArtifactVersions = async (
 	documentId: string,
 ): Promise<ArtifactVersion[]> => {
-	console.log("Fetching versions for documentId:", documentId);
-
 	const apiUrl = `/api/artifacts/${documentId}?versions=true&userId=user-id`;
-	console.log("API URL:", apiUrl);
-
 	const response = await fetch(apiUrl);
-	console.log("Response status:", response.status);
 
 	if (!response.ok) {
 		const errorText = await response.text();
-		console.error("API Error Response:", errorText);
 		throw new Error(
 			`Failed to fetch artifact versions: ${response.status} - ${errorText}`,
 		);
 	}
 
 	const responseData = await response.json();
-	console.log("API Response Data:", responseData);
-
 	const versions = responseData.versions || [];
-	console.log("Parsed versions:", versions);
 
 	return versions;
 };
@@ -86,9 +77,6 @@ export function ArtifactContent({
 	const [currentVersionData, setCurrentVersionData] =
 		useState<ArtifactVersion | null>(null);
 
-	console.log("ArtifactContent - documentId:", documentId);
-	console.log("ArtifactContent - enabled query:", !!documentId);
-
 	// Fetch all versions when documentId is provided
 	const {
 		data: versions,
@@ -102,10 +90,6 @@ export function ArtifactContent({
 		gcTime: 1000 * 60 * 10,
 		retry: 3,
 	});
-
-	console.log("ArtifactContent - versions data:", versions);
-	console.log("ArtifactContent - loading:", loading);
-	console.log("ArtifactContent - error:", error);
 
 	// Notify parent component when versions are loaded
 	useEffect(() => {
@@ -137,12 +121,19 @@ export function ArtifactContent({
 		}
 	}, [currentVersionData, setArtifact]);
 
-	// Determine which data to use
-	const displayData = currentVersionData || {
-		kind: kind || "text",
-		content: content || "",
-		title: title || "Untitled",
-	};
+	// Determine which data to use - prioritize streaming content over database content
+	const isStreaming = status === "streaming";
+	const displayData = isStreaming
+		? {
+				kind: kind || "text",
+				content: content || "",
+				title: title || "Untitled",
+			}
+		: currentVersionData || {
+				kind: kind || "text",
+				content: content || "",
+				title: title || "Untitled",
+			};
 
 	const displayStatus = status || "idle";
 
