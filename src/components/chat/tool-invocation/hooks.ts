@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { ToolInvocationPart as ToolInvocationPartType } from "@/types/tool-invocation";
 import type { ToolState, ToolStatus } from "./types";
 
@@ -6,6 +6,7 @@ export function useToolInvocationState(part: ToolInvocationPartType) {
 	const { toolInvocation } = part;
 	const { toolName, state, args } = toolInvocation;
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [hasAutoExpanded, setHasAutoExpanded] = useState(false);
 
 	const toolState: ToolState = useMemo(() => {
 		const hasError = toolInvocation.result?.isError || false;
@@ -39,10 +40,13 @@ export function useToolInvocationState(part: ToolInvocationPartType) {
 		return "idle";
 	}, [toolState.hasError, state]);
 
-	// Auto-expand on error
-	if (toolState.hasError && !isExpanded) {
-		setIsExpanded(true);
-	}
+	// Auto-expand on error (only once)
+	useEffect(() => {
+		if (toolState.hasError && !hasAutoExpanded) {
+			setIsExpanded(true);
+			setHasAutoExpanded(true);
+		}
+	}, [toolState.hasError, hasAutoExpanded]);
 
 	return {
 		toolState,

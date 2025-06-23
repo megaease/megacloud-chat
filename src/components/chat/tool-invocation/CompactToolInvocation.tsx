@@ -159,8 +159,6 @@ export function CompactToolInvocation({
 						onOpenArtifact?.();
 					}
 				}}
-				role="button"
-				tabIndex={0}
 				aria-label={`Open document: ${title}`}
 			>
 				{/* Compact document header */}
@@ -213,8 +211,6 @@ export function CompactToolInvocation({
 						onToggleExpanded();
 					}
 				}}
-				role="button"
-				tabIndex={0}
 			>
 				{/* Tool icon */}
 				<div

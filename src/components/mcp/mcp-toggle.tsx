@@ -101,7 +101,6 @@ export function MCPToggle({
 				if (result.success) {
 					toast.success(result.message || "Server stopped successfully");
 					await refetch();
-					queryClient.invalidateQueries({ queryKey: ["getMcpServers"] });
 				} else {
 					toast.error(result.error || "Failed to stop server");
 				}

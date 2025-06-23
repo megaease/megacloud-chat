@@ -104,15 +104,30 @@ export function AddServerDialog({
 				formArgs.map((value) => ({
 					id: generateId(),
 					value,
-				}))
+				})),
 			);
 		}
 	}, [argItems.length, form]);
 
+	// Reset form and state when dialog opens
+	useEffect(() => {
+		if (open) {
+			// Reset form to default values
+			form.reset(defaultSseValues);
+			// Reset argItems state
+			setArgItems([]);
+			// Reset submitting state
+			setIsSubmitting(false);
+		}
+	}, [open, form]);
+
 	// Update form when argItems change
 	const updateFormArgs = (newArgItems: ArgumentItem[]) => {
 		setArgItems(newArgItems);
-		form.setValue("args", newArgItems.map(item => item.value));
+		form.setValue(
+			"args",
+			newArgItems.map((item) => item.value),
+		);
 	};
 
 	// Handle form submission
@@ -135,7 +150,8 @@ export function AddServerDialog({
 
 			if (result.success) {
 				toast.success(t("serverAdded"));
-				form.reset();
+				form.reset(defaultSseValues);
+				setArgItems([]);
 				onOpenChange(false);
 				if (onSuccess) onSuccess();
 			} else {
@@ -342,7 +358,10 @@ export function AddServerDialog({
 																	value={item.value}
 																	onChange={(e) => {
 																		const newArgItems = [...argItems];
-																		newArgItems[i] = { ...item, value: e.target.value };
+																		newArgItems[i] = {
+																			...item,
+																			value: e.target.value,
+																		};
 																		updateFormArgs(newArgItems);
 																	}}
 																	placeholder={t("argumentPlaceholder", {
@@ -354,7 +373,9 @@ export function AddServerDialog({
 																	variant="outline"
 																	size="icon"
 																	onClick={() => {
-																		const newArgItems = argItems.filter((_, idx) => idx !== i);
+																		const newArgItems = argItems.filter(
+																			(_, idx) => idx !== i,
+																		);
 																		updateFormArgs(newArgItems);
 																	}}
 																>
@@ -366,7 +387,10 @@ export function AddServerDialog({
 															type="button"
 															variant="outline"
 															onClick={() => {
-																const newArgItems = [...argItems, { id: generateId(), value: "" }];
+																const newArgItems = [
+																	...argItems,
+																	{ id: generateId(), value: "" },
+																];
 																updateFormArgs(newArgItems);
 															}}
 														>

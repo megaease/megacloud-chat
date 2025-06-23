@@ -123,7 +123,7 @@ export function ToolInvocationPart({
 				status={status}
 				theme={theme}
 				onOpenArtifact={handleOpenArtifact}
-				isLoading={isLoading}
+				isLoading={isLoading || status === "executing"}
 			/>
 		);
 	}

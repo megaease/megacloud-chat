@@ -57,15 +57,21 @@ export function ChatItem({
 							: isUser
 								? "inline-block bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto"
 								: "inline-block bg-transparent text-card-foreground w-full",
+						// 添加链接样式修复
+						"[&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-2",
+						// 为用户消息中的链接使用对比色
+						isUser
+							? "[&_a]:text-primary-foreground/90 [&_a:hover]:text-primary-foreground"
+							: "[&_a]:text-blue-600 [&_a:hover]:text-blue-800 dark:[&_a]:text-blue-400 dark:[&_a:hover]:text-blue-300",
 					)}
 				>
 					{children}
 				</div>
 				{/* {message.createdAt && (
-				<div className="text-xs text-muted-foreground px-2 mt-2">
-					{new Date(message.createdAt).toLocaleTimeString()}
-				</div>
-			)} */}
+                <div className="text-xs text-muted-foreground px-2 mt-2">
+                    {new Date(message.createdAt).toLocaleTimeString()}
+                </div>
+            )} */}
 			</div>
 		</div>
 	);
