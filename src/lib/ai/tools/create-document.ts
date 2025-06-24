@@ -33,7 +33,9 @@ export function createDocumentTool(
 						tags: [],
 						isPublic: false,
 					});
-					realDocumentId = artifact.id;
+					realDocumentId =
+						artifact.id ||
+						`artifact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 					console.log("Artifact saved to database:", artifact.id);
 				} catch (error) {
 					console.error("Failed to save artifact to database:", error);
