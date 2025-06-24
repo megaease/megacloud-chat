@@ -113,32 +113,42 @@ export function ArtifactActions({
 	};
 
 	return (
-		<div className="flex items-center justify-between px-4 py-2 border-b bg-background min-h-[60px]">
+		<div className="relative flex items-center justify-between px-6 py-3 border-b border-gray-200/60 border-solid dark:border-white/10 bg-gradient-to-r from-gray-50/90 via-white/95 to-gray-50/90 dark:from-gray-900/90 dark:via-gray-900/95 dark:to-gray-900/90 backdrop-blur-2xl min-h-[68px]">
+			{/* 顶部装饰线 */}
+			<div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+
+			{/* 底部装饰线 */}
+			<div className="absolute bottom-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-gray-300/40 dark:via-white/20 to-transparent" />
 			{/* 左侧：关闭按钮和标题信息 */}
-			<div className="flex items-center space-x-3">
+			<div className="flex items-center space-x-4">
+				{/* 现代化关闭按钮 */}
 				<Button
 					variant="ghost"
 					size="sm"
 					onClick={onClose}
-					className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
+					className="relative h-8 w-8 p-0 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-red-50 dark:hover:bg-red-950/50 hover:border-red-200 dark:hover:border-red-800/50 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 group"
 					title={tArtifact("close")}
 				>
-					<X className="h-3.5 w-3.5" />
+					<X className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+					{/* 微妙的光晕效果 */}
+					<div className="absolute -inset-1 bg-gradient-to-r from-red-500/20 to-pink-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
 				</Button>
+
 				{/* 移动端聊天切换按钮 */}
 				{showChatButton && onChatToggle && (
 					<Button
 						variant="ghost"
 						size="sm"
 						onClick={onChatToggle}
-						className="h-7 w-7 p-0"
+						className="relative h-8 w-8 p-0 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:border-blue-200 dark:hover:border-blue-800/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 group"
 						title={tArtifact("toggleChat")}
 					>
-						<MessageSquare className="h-3.5 w-3.5" />
+						<MessageSquare className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+						<div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
 					</Button>
 				)}
 
-				<div className="flex items-center gap-3">
+				<div className="flex items-center gap-4">
 					{/* 版本下拉菜单 - 只在非流式状态下显示 */}
 					{versions &&
 					versions.length > 0 &&
@@ -146,65 +156,221 @@ export function ArtifactActions({
 					status !== "streaming" ? (
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button
-									variant="ghost"
-									className="h-auto font-semibold text-base hover:bg-muted"
-								>
-									<span className="truncate max-w-[200px] md:max-w-[300px]">
-										{title} (v{currentVersion || versions[0]?.version || 1})
-									</span>
-									<ChevronDown className="ml-1 h-3 w-3" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="start" className="min-w-[250px]">
-								{versions.map((version) => (
-									<DropdownMenuItem
-										key={version.version}
-										onClick={() => onVersionChange(version.version)}
-										className={`flex items-center justify-between ${
-											currentVersion === version.version ? "bg-accent" : ""
-										}`}
+								<div className="group relative">
+									{/* 简洁版本下拉触发器 */}
+									<Button
+										variant="ghost"
+										size="sm"
+										className="relative h-9 px-4 font-medium rounded-xl bg-white/80 dark:bg-black/40 backdrop-blur border border-gray-200 border-solid dark:border-white/20 hover:bg-white dark:hover:bg-black/50 hover:border-gray-300 dark:hover:border-white/30 transition-all duration-200"
 									>
-										<div className="flex flex-col">
-											<span className="font-medium">
-												v{version.version} - {version.title}
+										{/* 内容区域 */}
+										<div className="flex items-center gap-3">
+											<span className="text-sm font-medium text-foreground truncate max-w-[160px] md:max-w-[220px]">
+												{title}
 											</span>
-											<span className="text-xs text-muted-foreground">
-												{new Date(version.updatedAt).toLocaleString()}
-											</span>
+
+											{/* 分隔线 */}
+											<div className="w-px h-4 bg-gray-300 dark:bg-white/20" />
+
+											{/* 简洁版本徽章 */}
+											<div className="flex items-center gap-2">
+												<div className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
+													v{currentVersion || versions[0]?.version || 1}
+												</div>
+												<ChevronDown className="w-4 h-4 text-muted-foreground" />
+											</div>
 										</div>
-										{currentVersion === version.version && (
-											<span className="text-xs text-primary">Current</span>
-										)}
-									</DropdownMenuItem>
-								))}
+									</Button>
+								</div>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent
+								align="start"
+								className="w-[400px] p-0 rounded-2xl overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-gray-200/60 border-solid dark:border-white/15"
+								sideOffset={12}
+							>
+								{/* 现代渐变边框效果 */}
+								<div className="absolute inset-0 bg-gradient-to-br from-blue-500/12 via-purple-500/8 to-pink-500/12 rounded-2xl" />
+
+								{/* 内容区域 */}
+								<div className="relative">
+									{/* 精致头部 */}
+									<div className="px-6 py-5 border-b border-gray-200/60 border-solid dark:border-white/10">
+										<div className="flex items-center justify-between">
+											<div className="flex items-center gap-3">
+												<div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
+													<span className="text-white text-sm font-bold">
+														V
+													</span>
+												</div>
+												<div>
+													<h4 className="text-base font-semibold text-gray-900 dark:text-white">
+														{tArtifact("versionHistory")}
+													</h4>
+													<p className="text-sm text-gray-500 dark:text-gray-400">
+														{tArtifact("selectVersionToView")}
+													</p>
+												</div>
+											</div>
+											<div className="px-3 py-1.5 bg-gray-50/80 dark:bg-white/[0.06] rounded-md border border-gray-100/60 border-solid dark:border-white/[0.08">
+												<span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+													{tArtifact("versionsCount", {
+														count: versions.length,
+													})}
+												</span>
+											</div>
+										</div>
+									</div>
+
+									{/* 现代版本列表 */}
+									<div className="p-5 max-h-80 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300/50">
+										<div className="space-y-2">
+											{versions.map((version, index) => {
+												const isCurrentVersion =
+													currentVersion === version.version;
+												const isLatestVersion = index === 0;
+
+												return (
+													<DropdownMenuItem
+														key={version.version}
+														onClick={() => onVersionChange(version.version)}
+														className="p-0 focus:bg-transparent"
+													>
+														<div
+															className={`group/item w-full flex items-center gap-4 p-4 rounded-xl transition-all duration-200 cursor-pointer relative border backdrop-blur-sm overflow-hidden
+																${
+																	isCurrentVersion
+																		? "bg-gradient-to-r from-blue-50/90 via-purple-50/70 to-pink-50/90 dark:from-blue-950/60 dark:via-purple-950/50 dark:to-pink-950/60 border-blue-200/70 dark:border-blue-700/70"
+																		: "bg-white/70 dark:bg-white/10 hover:bg-white/90 dark:hover:bg-white/15 border-gray-200/60 border-[1px] border-solid dark:border-white/15 hover:border-gray-300/70 dark:hover:border-white/25"
+																}
+															`}
+														>
+															{/* 背景渐变装饰 */}
+															{isCurrentVersion && (
+																<div className="absolute inset-0 bg-gradient-to-br from-blue-500/8 via-purple-500/5 to-pink-500/8 opacity-80" />
+															)}
+
+															{/* 小巧版本号徽章 */}
+															<div className="relative z-10">
+																<div className="relative">
+																	<div
+																		className={`w-6 h-6 flex items-center justify-center rounded text-xs font-medium transition-all duration-200
+																			${
+																				isCurrentVersion
+																					? "bg-blue-500 text-white"
+																					: isLatestVersion
+																						? "bg-emerald-500 text-white"
+																						: "bg-gray-400 text-white"
+																			}
+																		`}
+																	>
+																		{version.version}
+																	</div>
+																</div>
+															</div>
+
+															{/* 版本信息 */}
+															<div className="flex-1 min-w-0 relative z-10">
+																<div className="flex items-center gap-2 mb-1.5">
+																	<span className="font-semibold text-sm text-foreground/90 truncate">
+																		{version.title}
+																	</span>
+																	{isCurrentVersion && (
+																		<div className="flex items-center gap-1.5">
+																			<div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+																			<span className="text-xs font-medium text-blue-600 dark:text-blue-400 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
+																				{tArtifact("current")}
+																			</span>
+																		</div>
+																	)}
+																	{isLatestVersion && !isCurrentVersion && (
+																		<div className="px-2 py-0.5 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-md border border-emerald-200 border-solid dark:border-emerald-700/50">
+																			<span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
+																				{tArtifact("latest")}
+																			</span>
+																		</div>
+																	)}
+																</div>
+																<div className="text-xs text-muted-foreground/80">
+																	{new Date(
+																		version.updatedAt,
+																	).toLocaleDateString("zh-CN", {
+																		month: "short",
+																		day: "numeric",
+																		hour: "2-digit",
+																		minute: "2-digit",
+																	})}
+																</div>
+															</div>
+
+															{/* 精致指示器 */}
+															<div className="opacity-0 group-hover/item:opacity-100 transition-all duration-200 relative z-10">
+																<div className="relative">
+																	{/* 主指示器 */}
+																	<div className="w-2.5 h-2.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full animate-pulse" />
+																	{/* 外层光环 */}
+																	<div className="absolute inset-0 w-2.5 h-2.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full opacity-30 scale-150 animate-ping" />
+																</div>
+															</div>
+
+															{/* 悬浮渐变 */}
+															{!isCurrentVersion && (
+																<div className="absolute inset-0 bg-gradient-to-r from-blue-500/8 via-purple-500/6 to-pink-500/8 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 rounded-xl" />
+															)}
+														</div>
+													</DropdownMenuItem>
+												);
+											})}
+										</div>
+									</div>
+								</div>
 							</DropdownMenuContent>
 						</DropdownMenu>
 					) : (
-						<h3 className="font-semibold text-base truncate max-w-[200px] md:max-w-[300px]">
+						<h3 className="font-semibold text-lg truncate max-w-[200px] md:max-w-[300px] text-foreground/90">
 							{title}
 						</h3>
 					)}
-					<div className="flex items-center gap-2">
-						<p className="text-xs text-muted-foreground">
-							{status === "streaming"
-								? tArtifact("generating")
-								: tArtifact("completed")}
-						</p>
-						{status === "streaming" && (
-							<div className="flex items-center gap-1">
-								<div className="animate-pulse w-1 h-1 bg-primary rounded-full" />
-								<div className="animate-pulse w-1 h-1 bg-primary rounded-full animation-delay-100" />
-								<div className="animate-pulse w-1 h-1 bg-primary rounded-full animation-delay-200" />
+
+					{/* 精致状态指示器 */}
+					<div className="flex items-center gap-3">
+						<div className="relative group">
+							<div className="flex items-center gap-2.5 px-4 py-2 bg-white/70 dark:bg-black/30 backdrop-blur-xl rounded-2xl border border-gray-200/60 border-solid dark:border-white/15 transition-all duration-300 hover:bg-white/80 dark:hover:bg-black/40 hover:border-gray-300/60 dark:hover:border-white/25">
+								{/* 状态图标 */}
+								<div
+									className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+										status === "streaming"
+											? "bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse"
+											: "bg-gradient-to-r from-emerald-500 to-teal-500"
+									}`}
+								/>
+
+								{/* 状态文本 */}
+								<p className="text-xs font-medium text-foreground/80 whitespace-nowrap">
+									{status === "streaming"
+										? tArtifact("generating")
+										: tArtifact("completed")}
+								</p>
+
+								{/* 流式生成动画点 */}
+								{status === "streaming" && (
+									<div className="flex items-center gap-1 ml-1">
+										<div className="animate-pulse w-1.5 h-1.5 bg-blue-500 rounded-full" />
+										<div className="animate-pulse w-1.5 h-1.5 bg-purple-500 rounded-full animation-delay-100" />
+										<div className="animate-pulse w-1.5 h-1.5 bg-pink-500 rounded-full animation-delay-200" />
+									</div>
+								)}
 							</div>
-						)}
+
+							{/* 微妙光晕 */}
+							<div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md -z-10" />
+						</div>
 					</div>
 				</div>
 			</div>
 
-			{/* 右侧：操作按钮组 */}
-			<div className="flex items-center gap-2">
-				{/* 代码预览切换 Tabs */}
+			{/* 右侧：精致操作按钮组 */}
+			<div className="flex items-center gap-3">
+				{/* 极简 code/preview 切换 */}
 				{kind === "code" && onViewModeChange && (
 					<Tabs
 						value={viewMode}
@@ -213,13 +379,20 @@ export function ArtifactActions({
 						}
 						className="mr-2"
 					>
-						<TabsList className="h-8">
-							<TabsTrigger value="code" className="h-6 px-2 text-xs">
-								<Code2 className="w-3 h-3 mr-1" />
+						<TabsList className="h-8 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+							<TabsTrigger
+								value="code"
+								className="h-7 px-3 text-xs rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400 transition-colors"
+							>
+								<Code2 className="w-3 h-3 mr-1.5" />
 								{tArtifact("code")}
 							</TabsTrigger>
-							<TabsTrigger value="preview" disabled={!canPreview}>
-								<Eye className="w-3 h-3 mr-1" />
+							<TabsTrigger
+								value="preview"
+								disabled={!canPreview}
+								className="h-7 px-3 text-xs rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400 disabled:opacity-50 transition-colors"
+							>
+								<Eye className="w-3 h-3 mr-1.5" />
 								{canPreview
 									? tArtifact("preview")
 									: tArtifact("previewUnavailable")}
@@ -227,85 +400,106 @@ export function ArtifactActions({
 						</TabsList>
 					</Tabs>
 				)}
-				{onRefresh ? (
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={onRefresh}
-						disabled={status === "streaming"}
-						className="h-7 px-2"
-						title={tArtifact("regenerate")}
-					>
-						<RefreshCw
-							className={`h-3 w-3 ${status === "streaming" ? "animate-spin" : ""}`}
-						/>
-						{!isMobile && (
-							<span className="ml-1 text-xs">{tArtifact("regenerate")}</span>
-						)}
-					</Button>
-				) : null}
 
-				{/* 复制按钮 */}
-				<CopyButton
-					text={content}
-					className="h-7 px-2"
-					size="sm"
-					showText={false}
-				/>
-
-				{/* 下载按钮 */}
-				<Button
-					variant="ghost"
-					size="sm"
-					onClick={handleDownload}
-					className="h-7 px-2"
-					title={tCommon("download")}
-				>
-					<Download className="h-3 w-3" />
-					{!isMobile && (
-						<span className="ml-1 text-xs">{tCommon("download")}</span>
+				{/* 精致操作按钮组 */}
+				<div className="flex items-center gap-2">
+					{onRefresh && (
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={onRefresh}
+							disabled={status === "streaming"}
+							className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-green-50 dark:hover:bg-green-950/50 hover:border-green-200 dark:hover:border-green-800/50 hover:text-green-600 dark:hover:text-green-400 transition-all duration-200 group disabled:opacity-50 disabled:hover:bg-white/60 dark:disabled:hover:bg-black/20"
+							title={tArtifact("regenerate")}
+						>
+							<RefreshCw
+								className={`h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110 ${status === "streaming" ? "animate-spin" : ""}`}
+							/>
+							{!isMobile && (
+								<span className="ml-2 text-xs font-medium">
+									{tArtifact("regenerate")}
+								</span>
+							)}
+							<div className="absolute -inset-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
+						</Button>
 					)}
-				</Button>
 
-				{/* 分享按钮（支持 Web Share API 的浏览器） */}
-				{typeof window !== "undefined" && "share" in navigator && (
+					{/* 现代化复制按钮 */}
+					<div className="relative group">
+						<CopyButton
+							text={content}
+							className="h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:border-blue-200 dark:hover:border-blue-800/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200"
+							size="sm"
+							showText={!isMobile}
+						/>
+						<div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
+					</div>
+
+					{/* 现代化下载按钮 */}
 					<Button
 						variant="ghost"
 						size="sm"
-						onClick={handleShare}
-						className="h-7 px-2"
-						title={tArtifact("share")}
+						onClick={handleDownload}
+						className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-purple-50 dark:hover:bg-purple-950/50 hover:border-purple-200 dark:hover:border-purple-800/50 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200 group"
+						title={tCommon("download")}
 					>
-						<Share className="h-3 w-3" />
-						{!isMobile && <span className="ml-1 text-xs">分享</span>}
-					</Button>
-				)}
-
-				{/* 全屏切换按钮 */}
-				{onFullscreen && (
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={onFullscreen}
-						className="h-7 px-2"
-						title={
-							isFullscreen
-								? tArtifact("exitFullscreen")
-								: tArtifact("fullscreen")
-						}
-					>
-						{isFullscreen ? (
-							<Minimize2 className="h-3 w-3" />
-						) : (
-							<Maximize2 className="h-3 w-3" />
-						)}
+						<Download className="h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110" />
 						{!isMobile && (
-							<span className="ml-1 text-xs">
-								{isFullscreen ? "退出全屏" : "全屏"}
+							<span className="ml-2 text-xs font-medium">
+								{tCommon("download")}
 							</span>
 						)}
+						<div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
 					</Button>
-				)}
+
+					{/* 现代化分享按钮（支持 Web Share API 的浏览器） */}
+					{typeof window !== "undefined" && "share" in navigator && (
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={handleShare}
+							className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-orange-50 dark:hover:bg-orange-950/50 hover:border-orange-200 dark:hover:border-orange-800/50 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-200 group"
+							title={tArtifact("share")}
+						>
+							<Share className="h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110" />
+							{!isMobile && (
+								<span className="ml-2 text-xs font-medium">
+									{tArtifact("share")}
+								</span>
+							)}
+							<div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
+						</Button>
+					)}
+
+					{/* 现代化全屏切换按钮 */}
+					{onFullscreen && (
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={onFullscreen}
+							className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:border-indigo-200 dark:hover:border-indigo-800/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200 group"
+							title={
+								isFullscreen
+									? tArtifact("exitFullscreen")
+									: tArtifact("fullscreen")
+							}
+						>
+							{isFullscreen ? (
+								<Minimize2 className="h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110" />
+							) : (
+								<Maximize2 className="h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110" />
+							)}
+							{!isMobile && (
+								<span className="ml-2 text-xs font-medium">
+									{isFullscreen
+										? tArtifact("exitFullscreenMode")
+										: tArtifact("fullscreenMode")}
+								</span>
+							)}
+							<div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
+						</Button>
+					)}
+				</div>
 			</div>
 		</div>
 	);

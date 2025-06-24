@@ -191,7 +191,14 @@
     "clickRunToExecute": "Click \"Run\" button to execute JavaScript code",
     "noOutput": "(No output)",
     "executionError": "Execution error",
-    "returnValue": "Return value: {value}"
+    "returnValue": "Return value: {value}",
+    "versionHistory": "Version History",
+    "selectVersionToView": "Select a version to view",
+    "versionsCount": "{count} versions",
+    "current": "Current",
+    "latest": "Latest",
+    "fullscreenMode": "Fullscreen",
+    "exitFullscreenMode": "Exit Fullscreen"
   },
   "Error": {
     "notFound": "Page not found",

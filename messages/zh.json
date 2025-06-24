@@ -191,7 +191,14 @@
     "clickRunToExecute": "点击\"运行\"按钮执行 JavaScript 代码",
     "noOutput": "(没有输出)",
     "executionError": "执行错误",
-    "returnValue": "返回值：{value}"
+    "returnValue": "返回值：{value}",
+    "versionHistory": "版本历史",
+    "selectVersionToView": "选择要查看的版本",
+    "versionsCount": "{count} 个版本",
+    "current": "当前",
+    "latest": "最新",
+    "fullscreenMode": "全屏",
+    "exitFullscreenMode": "退出全屏"
   },
   "Error": {
     "notFound": "页面未找到",
