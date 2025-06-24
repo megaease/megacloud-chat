@@ -129,7 +129,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					<Button
 						onClick={() => router.push("/")}
 						title={t("newChat")}
-						className="w-full"
+						className="w-full rounded-xl"
 					>
 						<IconPlus className="mr-2 h-4 w-4" />
 						{t("newChat")}
