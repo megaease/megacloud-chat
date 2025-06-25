@@ -19,9 +19,38 @@ export function createDocumentTool(
 				.describe("Type of document"),
 		}),
 		execute: async ({ title, content, kind }) => {
-			// 先保存到数据库获取真实的 ID（如果提供了必要的参数）
-			let realDocumentId: string;
+			// 生成临时 ID，立即开始流式传输
+			const tempDocumentId = `temp_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
+			// 立即发送基础信息
+			dataStream.writeData({ type: "kind", content: kind } as {
+				type: string;
+				content: string;
+			});
+			dataStream.writeData({ type: "id", content: tempDocumentId } as {
+				type: string;
+				content: string;
+			});
+			dataStream.writeData({ type: "title", content: title } as {
+				type: string;
+				content: string;
+			});
+			dataStream.writeData({ type: "clear", content: "" } as {
+				type: string;
+				content: string;
+			});
+
+			// 流式发送内容，添加延迟模拟真实生成
+			await generateContentStream(content, kind, dataStream);
+
+			// 结束流式传输
+			dataStream.writeData({ type: "finish", content: "" } as {
+				type: string;
+				content: string;
+			});
+
+			// 流式传输完成后再保存到数据库
+			let realDocumentId = tempDocumentId;
 			if (userId && chatId) {
 				try {
 					const artifact = await createArtifact({
@@ -33,34 +62,18 @@ export function createDocumentTool(
 						tags: [],
 						isPublic: false,
 					});
-					realDocumentId =
-						artifact.id ||
-						`artifact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+					realDocumentId = artifact.id || tempDocumentId;
 					console.log("Artifact saved to database:", artifact.id);
+
+					// 发送真实 ID 更新
+					dataStream.writeData({
+						type: "id-update",
+						content: realDocumentId,
+					} as { type: string; content: string });
 				} catch (error) {
 					console.error("Failed to save artifact to database:", error);
-					// 如果保存失败，使用临时 ID
-					realDocumentId = `artifact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+					// 保持临时 ID
 				}
-			} else {
-				// 如果没有提供 userId 和 chatId，使用临时 ID
-				realDocumentId = `artifact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-			}
-
-			// 发送流式数据片段，按照正确的顺序发送
-			// 顺序很重要：kind -> id -> title -> clear -> content -> finish
-			const streamParts: DataStreamDelta[] = [
-				{ type: "kind", content: kind },
-				{ type: "id", content: realDocumentId },
-				{ type: "title", content: title },
-				{ type: "clear", content: "" },
-				...splitContentToDeltas(content, kind),
-				{ type: "finish", content: "" },
-			];
-
-			// 直接发送数据片段，不使用延迟
-			for (const part of streamParts) {
-				dataStream.writeData(part as { type: string; content: string });
 			}
 
 			return {
@@ -71,6 +84,31 @@ export function createDocumentTool(
 			};
 		},
 	});
+}
+
+// 真正的流式内容生成函数
+async function generateContentStream(
+	content: string,
+	kind: string,
+	dataStream: DataStreamWriter,
+) {
+	const deltaType = `${kind}-delta` as DataStreamDelta["type"];
+
+	// 模拟真正的流式生成：逐行发送内容
+	const lines = content.split("\n");
+
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+		const lineContent = i === 0 ? line : `\n${line}`;
+
+		// 添加小延迟模拟真实的流式生成
+		await new Promise((resolve) => setTimeout(resolve, 20));
+
+		dataStream.writeData({
+			type: deltaType,
+			content: lineContent,
+		} as { type: string; content: string });
+	}
 }
 
 function splitContentToDeltas(

@@ -12,6 +12,10 @@ export interface UIArtifact {
 		width: number;
 		height: number;
 	};
+	// 新增字段用于数据来源控制
+	dataSource: "stream" | "database" | "version";
+	isStreaming: boolean;
+	streamingProgress?: number;
 }
 
 export type ArtifactKind = "text" | "code" | "sheet" | "image";
@@ -26,7 +30,8 @@ export interface DataStreamDelta {
 		| "id"
 		| "kind"
 		| "clear"
-		| "finish";
+		| "finish"
+		| "id-update"; // 新增：ID 更新事件
 	content: string;
 }
 

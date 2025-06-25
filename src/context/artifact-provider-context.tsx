@@ -18,6 +18,9 @@ const initialArtifact: UIArtifact = {
 	isVisible: false,
 	status: "idle",
 	boundingBox: { top: 0, left: 0, width: 0, height: 0 },
+	dataSource: "stream",
+	isStreaming: false,
+	streamingProgress: 0,
 };
 
 const ArtifactContext = createContext<ArtifactContextType | undefined>(

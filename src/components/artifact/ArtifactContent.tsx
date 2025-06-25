@@ -112,12 +112,22 @@ export function ArtifactContent({
 	// Update global artifact state when current version changes
 	useEffect(() => {
 		if (currentVersionData) {
-			setArtifact((prev) => ({
-				...prev,
-				title: currentVersionData.title,
-				content: currentVersionData.content,
-				kind: currentVersionData.kind,
-			}));
+			setArtifact((prev) => {
+				// 如果正在流式生成，不要用版本数据覆盖
+				if (prev.isStreaming && prev.dataSource === "stream") {
+					console.log("Skipping version update during streaming");
+					return prev;
+				}
+
+				return {
+					...prev,
+					title: currentVersionData.title,
+					content: currentVersionData.content,
+					kind: currentVersionData.kind,
+					dataSource: "version",
+					isStreaming: false,
+				};
+			});
 		}
 	}, [currentVersionData, setArtifact]);
 

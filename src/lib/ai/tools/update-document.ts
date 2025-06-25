@@ -38,24 +38,40 @@ export function updateDocumentTool(
 				}
 			}
 
-			// 发送流式数据片段
-			const streamParts: DataStreamDelta[] = [
-				{ type: "id", content: documentId },
-				...(title
-					? [{ type: "title", content: title } as DataStreamDelta]
-					: []),
-				...(kind ? [{ type: "kind", content: kind } as DataStreamDelta] : []),
-				{ type: "clear", content: "" },
-				...(content ? splitContentToDeltas(content, kind || "text") : []),
-				{ type: "finish", content: "" },
-			];
+			// 立即发送基础信息
+			dataStream.writeData({ type: "id", content: documentId } as {
+				type: string;
+				content: string;
+			});
 
-			// 逐个发送数据片段，模拟流式效果
-			for (const part of streamParts) {
-				dataStream.writeData(part as any);
-				// 添加小延迟模拟真实的流式体验
-				await new Promise((resolve) => setTimeout(resolve, 50));
+			if (title) {
+				dataStream.writeData({ type: "title", content: title } as {
+					type: string;
+					content: string;
+				});
 			}
+
+			if (kind) {
+				dataStream.writeData({ type: "kind", content: kind } as {
+					type: string;
+					content: string;
+				});
+			}
+
+			dataStream.writeData({ type: "clear", content: "" } as {
+				type: string;
+				content: string;
+			});
+
+			// 如果有内容更新，流式发送
+			if (content) {
+				await generateContentStream(content, kind || "text", dataStream);
+			}
+
+			dataStream.writeData({ type: "finish", content: "" } as {
+				type: string;
+				content: string;
+			});
 
 			// 更新数据库（如果提供了userId）
 			if (userId) {
@@ -81,6 +97,31 @@ export function updateDocumentTool(
 			return { success: true, documentId };
 		},
 	});
+}
+
+// 真正的流式内容生成函数
+async function generateContentStream(
+	content: string,
+	kind: string,
+	dataStream: DataStreamWriter,
+) {
+	const deltaType = `${kind}-delta` as DataStreamDelta["type"];
+
+	// 模拟真正的流式生成：逐行发送内容
+	const lines = content.split("\n");
+
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+		const lineContent = i === 0 ? line : `\n${line}`;
+
+		// 添加小延迟模拟真实的流式生成
+		await new Promise((resolve) => setTimeout(resolve, 20));
+
+		dataStream.writeData({
+			type: deltaType,
+			content: lineContent,
+		} as { type: string; content: string });
+	}
 }
 
 function splitContentToDeltas(
