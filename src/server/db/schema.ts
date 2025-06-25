@@ -87,13 +87,12 @@ export const artifacts = createTable(
 		tags: json("tags").$type<string[]>().default([]),
 		changeDescription: text("change_description"), // Description of what changed in this version
 	},
-	(table) => ({
-		pk: primaryKey({ columns: [table.id, table.version] }),
-		// Add index for common queries
-		userIdIdx: index("artifacts_user_id_idx").on(table.userId),
-		chatIdIdx: index("artifacts_chat_id_idx").on(table.chatId),
-		idIdx: index("artifacts_id_idx").on(table.id),
-	}),
+	(table) => [
+		primaryKey({ columns: [table.id, table.version] }),
+		index("idx_artifact_user_id").on(table.userId),
+		index("idx_artifact_chat_id").on(table.chatId),
+		index("idx_artifact_kind").on(table.kind),
+	],
 );
 
 export const chatsSchema = createSelectSchema(chats);
