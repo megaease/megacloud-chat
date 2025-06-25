@@ -1,0 +1,1 @@
+ALTER TABLE "t_artifacts" ALTER COLUMN "id" SET NOT NULL;

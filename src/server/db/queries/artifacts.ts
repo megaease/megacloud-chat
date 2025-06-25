@@ -5,6 +5,7 @@ import { desc, eq, and, max } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export interface CreateArtifactParams {
+	id?: string; // 允许传入预生成的 ID
 	title: string;
 	content: string;
 	kind: "text" | "code" | "sheet" | "image";
@@ -29,7 +30,7 @@ export interface UpdateArtifactParams {
 export async function createArtifact(
 	params: CreateArtifactParams,
 ): Promise<Artifact> {
-	const artifactId = `artifact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+	const artifactId = params.id || nanoid(16);
 
 	const [artifact] = await db
 		.insert(artifacts)

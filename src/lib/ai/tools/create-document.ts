@@ -24,22 +24,38 @@ export function createDocumentTool(
 			const tempDocumentId = nanoid(16);
 
 			// 立即发送基础信息
-			dataStream.writeData({ type: "kind", content: kind } as { type: string; content: string });
-			dataStream.writeData({ type: "id", content: tempDocumentId } as { type: string; content: string });
-			dataStream.writeData({ type: "title", content: title } as { type: string; content: string });
-			dataStream.writeData({ type: "clear", content: "" } as { type: string; content: string });
+			dataStream.writeData({ type: "kind", content: kind } as {
+				type: string;
+				content: string;
+			});
+			dataStream.writeData({ type: "id", content: tempDocumentId } as {
+				type: string;
+				content: string;
+			});
+			dataStream.writeData({ type: "title", content: title } as {
+				type: string;
+				content: string;
+			});
+			dataStream.writeData({ type: "clear", content: "" } as {
+				type: string;
+				content: string;
+			});
 
 			// 流式发送内容，添加延迟模拟真实生成
 			await generateContentStream(content, kind, dataStream);
 
 			// 结束流式传输
-			dataStream.writeData({ type: "finish", content: "" } as { type: string; content: string });
+			dataStream.writeData({ type: "finish", content: "" } as {
+				type: string;
+				content: string;
+			});
 
 			// 流式传输完成后再保存到数据库
 			let realDocumentId = tempDocumentId;
 			if (userId && chatId) {
 				try {
 					const artifact = await createArtifact({
+						id: tempDocumentId, // 使用相同的 ID
 						title,
 						content,
 						kind,
@@ -50,12 +66,8 @@ export function createDocumentTool(
 					});
 					realDocumentId = artifact.id || tempDocumentId;
 					console.log("Artifact saved to database:", artifact.id);
-					
-					// 发送真实 ID 更新
-					dataStream.writeData({ 
-						type: "id-update", 
-						content: realDocumentId 
-					} as { type: string; content: string });
+
+					// 不需要发送 ID 更新，因为 ID 保持一致
 				} catch (error) {
 					console.error("Failed to save artifact to database:", error);
 					// 保持临时 ID

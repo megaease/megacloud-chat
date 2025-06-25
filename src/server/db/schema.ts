@@ -72,7 +72,7 @@ export const apiProviders = createTable("api_providers", {
 export const artifacts = createTable(
 	"artifacts",
 	{
-		id: text("id").$defaultFn(() => nanoid(16)),
+		id: text("id").notNull(),
 		version: integer("version").notNull().default(1),
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at").notNull().defaultNow(),
