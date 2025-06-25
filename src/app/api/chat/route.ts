@@ -194,12 +194,50 @@ export async function POST(req: Request) {
 									lastMessage.experimental_attachments ?? [],
 							},
 						]);
-
-						await closeAllMcpClients();
 					},
 					onError: async (error) => {
 						console.error("Stream error:", error);
-						await closeAllMcpClients();
+
+						// 检查是否是类型验证错误
+						const errorObj =
+							error instanceof Error
+								? error
+								: error && typeof error === "object" && "error" in error
+									? (error as { error: Error }).error
+									: null;
+
+						if (
+							errorObj?.name === "AI_TypeValidationError" ||
+							errorObj?.message?.includes("Type validation failed")
+						) {
+							console.warn(
+								"Type validation error - continuing with stream:",
+								errorObj.message,
+							);
+							return;
+						}
+
+						// 检查是否是 API 调用错误
+						if (errorObj?.name === "AI_APICallError") {
+							const apiError = errorObj as Error & {
+								statusCode?: number;
+								responseBody?: string;
+							};
+							if (apiError.statusCode === 403) {
+								console.error(
+									"API access forbidden - check API key and region:",
+									apiError.responseBody,
+								);
+							} else if (apiError.statusCode === 401) {
+								console.error("API authentication failed - check API key");
+							} else {
+								console.error(
+									"API call failed:",
+									apiError.statusCode,
+									apiError.responseBody,
+								);
+							}
+						}
 					},
 				});
 

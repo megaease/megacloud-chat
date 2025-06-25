@@ -54,6 +54,7 @@ export function createDocumentTool(
 			let realDocumentId = tempDocumentId;
 			if (userId && chatId) {
 				try {
+					console.log("Attempting to save artifact to database...");
 					const artifact = await createArtifact({
 						id: tempDocumentId, // 使用相同的 ID
 						title,
@@ -65,13 +66,19 @@ export function createDocumentTool(
 						isPublic: false,
 					});
 					realDocumentId = artifact.id || tempDocumentId;
-					console.log("Artifact saved to database:", artifact.id);
+					console.log(
+						"✅ Artifact saved to database successfully:",
+						artifact.id,
+					);
 
 					// 不需要发送 ID 更新，因为 ID 保持一致
 				} catch (error) {
-					console.error("Failed to save artifact to database:", error);
-					// 保持临时 ID
+					console.error("❌ Failed to save artifact to database:", error);
+					// 即使保存失败，也保持临时 ID，确保前端能正常显示
+					// 可能的原因：数据库连接问题、权限问题等
 				}
+			} else {
+				console.log("⚠️ Skipping database save - missing userId or chatId");
 			}
 
 			return {

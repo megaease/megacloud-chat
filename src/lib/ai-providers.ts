@@ -38,6 +38,16 @@ export function createAIModelConfig(
 		}
 
 		case "deepseek": {
+			// 如果 baseUrl 不是官方 DeepSeek API，使用 OpenAI 兼容模式
+			if (baseUrl && !baseUrl.includes("api.deepseek.com")) {
+				const compatibleAI = createOpenAI({
+					baseURL: baseUrl,
+					apiKey: apiKey || "",
+					compatibility: "compatible",
+				});
+				return compatibleAI(modelName);
+			}
+
 			const deepseek = createDeepSeek({
 				apiKey: apiKey || "",
 				baseURL: baseUrl || "https://api.deepseek.com",
@@ -55,14 +65,14 @@ export function createAIModelConfig(
 					},
 				},
 			});
-			return openRouter(modelName || "openai/gpt-4o-mini");
+			return openRouter(modelName || "openai/gpt-4o-mini"); // 修正模型名称
 		}
 
 		case "custom": {
 			const compatibleAI = createOpenAI({
 				baseURL: baseUrl || "https://api.openai.com/v1",
 				apiKey: apiKey || "",
-				compatibility: "compatible",
+				compatibility: "compatible", // 使用 compatible 模式处理不严格的响应格式
 			});
 			return compatibleAI(modelName);
 		}

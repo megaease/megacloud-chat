@@ -38,37 +38,8 @@ export function ToolInvocationPart({
 		let documentId: string | undefined;
 
 		// Case 1: documentId is directly in result
-		if (toolResult && "documentId" in toolResult) {
-			documentId = (toolResult as Record<string, unknown>).documentId as string;
-		}
-
-		// Case 2: documentId is in result.content
-		if (!documentId && toolResult?.content) {
-			if (typeof toolResult.content === "string") {
-				try {
-					const parsed = JSON.parse(toolResult.content);
-					if (parsed && typeof parsed === "object" && "documentId" in parsed) {
-						documentId = parsed.documentId as string;
-					}
-				} catch {
-					// content is not JSON
-				}
-			} else if (Array.isArray(toolResult.content)) {
-				// Check if any content item has documentId
-				for (const item of toolResult.content) {
-					if (typeof item === "object" && item && "documentId" in item) {
-						documentId = (item as Record<string, unknown>).documentId as string;
-						break;
-					}
-				}
-			} else if (
-				typeof toolResult.content === "object" &&
-				toolResult.content &&
-				"documentId" in toolResult.content
-			) {
-				documentId = (toolResult.content as Record<string, unknown>)
-					.documentId as string;
-			}
+		if (toolResult && "id" in toolResult) {
+			documentId = (toolResult as Record<string, unknown>).id as string;
 		}
 
 		console.log("Extracted documentId:", documentId);
@@ -95,6 +66,8 @@ export function ToolInvocationPart({
 			isVisible: true,
 			status: "idle",
 			boundingBox,
+			dataSource: "database", // Use 'database' to indicate fetching from database
+			isStreaming: false, // Not streaming since we are fetching from database
 		});
 	};
 
