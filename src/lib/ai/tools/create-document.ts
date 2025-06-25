@@ -1,6 +1,7 @@
 // lib/ai/tools/create-document.ts
 import { tool, type DataStreamWriter } from "ai";
 import { z } from "zod";
+import { nanoid } from "nanoid";
 import type { DataStreamDelta } from "@/lib/artifact-types";
 import { createArtifact } from "@/server/db/queries/artifacts";
 
@@ -20,34 +21,19 @@ export function createDocumentTool(
 		}),
 		execute: async ({ title, content, kind }) => {
 			// 生成临时 ID，立即开始流式传输
-			const tempDocumentId = `temp_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+			const tempDocumentId = nanoid(16);
 
 			// 立即发送基础信息
-			dataStream.writeData({ type: "kind", content: kind } as {
-				type: string;
-				content: string;
-			});
-			dataStream.writeData({ type: "id", content: tempDocumentId } as {
-				type: string;
-				content: string;
-			});
-			dataStream.writeData({ type: "title", content: title } as {
-				type: string;
-				content: string;
-			});
-			dataStream.writeData({ type: "clear", content: "" } as {
-				type: string;
-				content: string;
-			});
+			dataStream.writeData({ type: "kind", content: kind } as { type: string; content: string });
+			dataStream.writeData({ type: "id", content: tempDocumentId } as { type: string; content: string });
+			dataStream.writeData({ type: "title", content: title } as { type: string; content: string });
+			dataStream.writeData({ type: "clear", content: "" } as { type: string; content: string });
 
 			// 流式发送内容，添加延迟模拟真实生成
 			await generateContentStream(content, kind, dataStream);
 
 			// 结束流式传输
-			dataStream.writeData({ type: "finish", content: "" } as {
-				type: string;
-				content: string;
-			});
+			dataStream.writeData({ type: "finish", content: "" } as { type: string; content: string });
 
 			// 流式传输完成后再保存到数据库
 			let realDocumentId = tempDocumentId;
@@ -64,11 +50,11 @@ export function createDocumentTool(
 					});
 					realDocumentId = artifact.id || tempDocumentId;
 					console.log("Artifact saved to database:", artifact.id);
-
+					
 					// 发送真实 ID 更新
-					dataStream.writeData({
-						type: "id-update",
-						content: realDocumentId,
+					dataStream.writeData({ 
+						type: "id-update", 
+						content: realDocumentId 
 					} as { type: string; content: string });
 				} catch (error) {
 					console.error("Failed to save artifact to database:", error);
@@ -109,17 +95,4 @@ async function generateContentStream(
 			content: lineContent,
 		} as { type: string; content: string });
 	}
-}
-
-function splitContentToDeltas(
-	content: string,
-	kind: string,
-): DataStreamDelta[] {
-	const deltaType = `${kind}-delta` as DataStreamDelta["type"];
-	const lines = content.split("\n");
-
-	return lines.map((line, index) => ({
-		type: deltaType,
-		content: index === 0 ? line : `\n${line}`,
-	}));
 }
