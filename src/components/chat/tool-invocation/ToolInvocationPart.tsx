@@ -25,7 +25,46 @@ export function ToolInvocationPart({
 
 	// Handle opening Artifact
 	const handleOpenArtifact = async () => {
-		if (!toolState.isDocumentTool || !toolState.isSuccessful) return;
+		if (!toolState.isDocumentTool) return;
+
+		// For creating documents, we can open them even before completion
+		// For completed documents, we need a result with documentId
+		const isCreating =
+			status === "executing" ||
+			toolState.state === "call" ||
+			toolState.state === "partial-call";
+
+		let documentId: string | undefined;
+
+		if (isCreating) {
+			// For creating documents, try to get documentId from args or generate a temp one
+			const args = toolState.args as {
+				title?: string;
+				content?: string;
+				kind?: string;
+			};
+			// We'll use streaming mode - the DataStreamHandler will provide the real documentId
+			setArtifact({
+				documentId: `temp_${Date.now()}`, // Temporary ID, will be updated by DataStreamHandler
+				title: args.title || "Creating Document...",
+				kind: (args.kind as "text" | "code" | "sheet" | "image") || "text",
+				content: "", // Start with empty content, will be populated by streaming
+				isVisible: true,
+				status: "streaming", // Use streaming status
+				boundingBox: {
+					top: window.innerHeight / 2 - 100,
+					left: window.innerWidth / 2 - 200,
+					width: 400,
+					height: 200,
+				},
+				dataSource: "stream", // Use stream mode to show live updates
+				isStreaming: true,
+			});
+			return;
+		}
+
+		// For completed documents, use the existing logic
+		if (!toolState.isSuccessful) return;
 
 		// Debug: Log the full tool invocation result
 		console.log("Full toolInvocation.result:", part.toolInvocation.result);
@@ -35,8 +74,6 @@ export function ToolInvocationPart({
 		const toolResult = part.toolInvocation.result;
 
 		// Try different ways to extract documentId
-		let documentId: string | undefined;
-
 		// Case 1: documentId is directly in result
 		if (toolResult && "id" in toolResult) {
 			documentId = (toolResult as Record<string, unknown>).id as string;

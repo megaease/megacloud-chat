@@ -157,20 +157,31 @@ export function DocumentToolInvocation({
 				</div>
 
 				{/* Action Button */}
-				{status === "success" && (
+				{(status === "success" || (isCreating && args.title)) && (
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<Button
 								onClick={onOpenArtifact}
 								size="sm"
-								className="bg-blue-500 hover:bg-blue-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
+								className={cn(
+									"shadow-lg transition-all duration-200 hover:scale-105",
+									isCreating
+										? "bg-amber-500 hover:bg-amber-600 text-white"
+										: "bg-blue-500 hover:bg-blue-600 text-white",
+								)}
 							>
 								<IconExternalLink size={16} />
-								<span className="ml-2">Open Document</span>
+								<span className="ml-2">
+									{isCreating ? "View Live" : "Open Document"}
+								</span>
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>
-							<p>Open document content</p>
+							<p>
+								{isCreating
+									? "Watch document being created in real-time"
+									: "Open document content"}
+							</p>
 						</TooltipContent>
 					</Tooltip>
 				)}
