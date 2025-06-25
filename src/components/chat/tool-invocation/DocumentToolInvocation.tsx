@@ -50,6 +50,19 @@ const getDocumentTypeLabel = (kind?: string) => {
 	}
 };
 
+const getCreationStatusText = (state: string) => {
+	switch (state) {
+		case "call":
+			return "Initializing tool...";
+		case "partial-call":
+			return "Preparing document...";
+		case "processing":
+			return "Creating document...";
+		default:
+			return "Creating document...";
+	}
+};
+
 export function DocumentToolInvocation({
 	toolState,
 	status,
@@ -57,24 +70,31 @@ export function DocumentToolInvocation({
 	onOpenArtifact,
 	isLoading = false,
 }: DocumentToolInvocationProps) {
-	const args = toolState.args as {
+	const args = (toolState.args || {}) as {
 		title?: string;
 		content?: string;
 		kind?: string;
 	};
 
-	const title = args.title || "Untitled Document";
 	const content = args.content || "";
 	const kind = args.kind || "text";
 	const IconComponent = getDocumentIcon(kind);
 	const typeLabel = getDocumentTypeLabel(kind);
 
+	// Determine if we're in a creating state
+	// 包含更多状态判断，确保能捕获到工具执行的各个阶段
+	const isCreating =
+		status === "executing" ||
+		isLoading ||
+		toolState.state === "call" ||
+		toolState.state === "partial-call";
+
+	const title =
+		args.title || (isCreating ? "Creating Document..." : "Untitled Document");
+
 	// Get content preview (first 100 characters)
 	const contentPreview =
 		content.length > 100 ? `${content.substring(0, 100)}...` : content;
-
-	// Determine if we're in a creating state
-	const isCreating = status === "executing" || isLoading;
 
 	return (
 		<motion.div
@@ -82,14 +102,22 @@ export function DocumentToolInvocation({
 			animate={{ opacity: 1, y: 0, scale: 1 }}
 			transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
 			className={cn(
-				"group relative rounded-lg border my-6 overflow-hidden transition-all duration-300 hover:shadow-lg",
-				"bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-950/40 dark:to-indigo-950/30",
-				"border-blue-200/60 dark:border-blue-800/40",
-				"hover:shadow-blue-200/25 dark:hover:shadow-blue-900/25",
+				"group relative rounded-lg border my-6 overflow-hidden transition-all duration-300",
+				isCreating
+					? "bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/30 border-amber-200/60 dark:border-amber-800/40 hover:shadow-amber-200/25 dark:hover:shadow-amber-900/25"
+					: "bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-950/40 dark:to-indigo-950/30 border-blue-200/60 dark:border-blue-800/40 hover:shadow-blue-200/25 dark:hover:shadow-blue-900/25",
+				"hover:shadow-lg",
 			)}
 		>
 			{/* Document Header */}
-			<div className="flex items-center gap-4 p-5 bg-white/60 dark:bg-gray-900/40 backdrop-blur-sm border-b border-blue-200/30 dark:border-blue-800/30">
+			<div
+				className={cn(
+					"flex items-center gap-4 p-5 backdrop-blur-sm border-b",
+					isCreating
+						? "bg-white/60 dark:bg-gray-900/40 border-amber-200/30 dark:border-amber-800/30"
+						: "bg-white/60 dark:bg-gray-900/40 border-blue-200/30 dark:border-blue-800/30",
+				)}
+			>
 				{/* Document Icon */}
 				<div
 					className={cn(
@@ -123,7 +151,7 @@ export function DocumentToolInvocation({
 					</div>
 					<p className="text-sm text-gray-600 dark:text-gray-400 truncate">
 						{isCreating
-							? "Creating document..."
+							? getCreationStatusText(toolState.state)
 							: `Created by ${toolState.toolName}`}
 					</p>
 				</div>
@@ -149,22 +177,36 @@ export function DocumentToolInvocation({
 			</div>
 
 			{/* Content Preview */}
-			{contentPreview && (
+			{(contentPreview || isCreating) && (
 				<div className="p-5 bg-white/40 dark:bg-gray-900/20">
 					<div className="mb-3">
 						<span className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide flex items-center gap-2">
-							<div className="w-2 h-2 rounded-full bg-blue-500" />
-							Content Preview
+							<div
+								className={cn(
+									"w-2 h-2 rounded-full",
+									isCreating ? "bg-amber-500 animate-pulse" : "bg-blue-500",
+								)}
+							/>
+							{isCreating ? "Generating Content" : "Content Preview"}
 						</span>
 					</div>
 					<div className="bg-white/80 dark:bg-gray-900/40 rounded-lg p-4 border border-blue-200/40 dark:border-blue-800/30">
-						<pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words font-mono leading-relaxed overflow-hidden">
-							{contentPreview}
-						</pre>
-						{content.length > 100 && (
-							<div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
-								Click "Open Document" to view full content...
+						{isCreating ? (
+							<div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
+								<IconLoader2 size={16} className="animate-spin" />
+								<span className="text-sm">Generating document content...</span>
 							</div>
+						) : (
+							<>
+								<pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words font-mono leading-relaxed overflow-hidden">
+									{contentPreview}
+								</pre>
+								{content.length > 100 && (
+									<div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
+										Click "Open Document" to view full content...
+									</div>
+								)}
+							</>
 						)}
 					</div>
 				</div>

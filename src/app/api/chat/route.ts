@@ -161,6 +161,7 @@ export async function POST(req: Request) {
 							reasoningSummary: "detailed",
 						},
 					},
+					toolCallStreaming: true,
 					onFinish: async (result) => {
 						const responseMessages = result.response.messages;
 

@@ -19,7 +19,7 @@ export function createDocumentTool(
 				.describe("Type of document"),
 		}),
 		execute: async ({ title, content, kind }) => {
-			// 先保存到数据库获取真实的ID（如果提供了必要的参数）
+			// 先保存到数据库获取真实的 ID（如果提供了必要的参数）
 			let realDocumentId: string;
 
 			if (userId && chatId) {
@@ -39,32 +39,36 @@ export function createDocumentTool(
 					console.log("Artifact saved to database:", artifact.id);
 				} catch (error) {
 					console.error("Failed to save artifact to database:", error);
-					// 如果保存失败，使用临时ID
+					// 如果保存失败，使用临时 ID
 					realDocumentId = `artifact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 				}
 			} else {
-				// 如果没有提供userId和chatId，使用临时ID
+				// 如果没有提供 userId 和 chatId，使用临时 ID
 				realDocumentId = `artifact_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 			}
 
-			// 发送流式数据片段，使用真实的document ID
+			// 发送流式数据片段，按照正确的顺序发送
+			// 顺序很重要：kind -> id -> title -> clear -> content -> finish
 			const streamParts: DataStreamDelta[] = [
+				{ type: "kind", content: kind },
 				{ type: "id", content: realDocumentId },
 				{ type: "title", content: title },
-				{ type: "kind", content: kind },
 				{ type: "clear", content: "" },
 				...splitContentToDeltas(content, kind),
 				{ type: "finish", content: "" },
 			];
 
-			// 逐个发送数据片段，模拟流式效果
+			// 直接发送数据片段，不使用延迟
 			for (const part of streamParts) {
-				dataStream.writeData(part as any);
-				// 添加小延迟模拟真实的流式体验
-				await new Promise((resolve) => setTimeout(resolve, 50));
+				dataStream.writeData(part as { type: string; content: string });
 			}
 
-			return { success: true, documentId: realDocumentId };
+			return {
+				id: realDocumentId,
+				title,
+				kind,
+				content: "A document was created and is now visible to the user.",
+			};
 		},
 	});
 }

@@ -34,19 +34,30 @@ export function useToolInvocationState(part: ToolInvocationPartType) {
 	}, [toolInvocation, toolName, state, args]);
 
 	const status: ToolStatus = useMemo(() => {
+		// 更详细的状态判断，确保能正确识别执行状态
 		if (toolState.hasError) return "error";
-		if (state === "call" || state === "partial-call") return "executing";
+		if (state === "call" || state === "partial-call" || state === "processing")
+			return "executing";
 		if (state === "result") return "success";
 		return "idle";
 	}, [toolState.hasError, state]);
 
-	// Auto-expand on error (only once)
+	// 为文档工具自动展开执行状态 (仅一次)
 	useEffect(() => {
+		if (
+			toolState.isDocumentTool &&
+			status === "executing" &&
+			!hasAutoExpanded
+		) {
+			setIsExpanded(true);
+			setHasAutoExpanded(true);
+		}
+		// Auto-expand on error (only once)
 		if (toolState.hasError && !hasAutoExpanded) {
 			setIsExpanded(true);
 			setHasAutoExpanded(true);
 		}
-	}, [toolState.hasError, hasAutoExpanded]);
+	}, [toolState.isDocumentTool, toolState.hasError, status, hasAutoExpanded]);
 
 	return {
 		toolState,
