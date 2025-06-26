@@ -21,12 +21,24 @@ export function TextArtifact({
 }: TextArtifactProps) {
 	const [viewMode, setViewMode] = useState<"rendered" | "raw">("rendered");
 
+	// Debug logging for streaming
+	console.log("TextArtifact render:", {
+		contentLength: content.length,
+		status,
+		contentPreview: content.substring(0, 50),
+	});
+
 	const renderContent = () => {
 		if (viewMode === "rendered") {
 			return (
 				<div className="p-6 md:px-20">
 					<div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-muted prose-pre:border prose-pre:rounded-md">
-						<Markdown content={content} />
+						{/* Force re-render by using key with content length */}
+						<Markdown key={content.length} content={content} />
+						{/* Add typing cursor when streaming */}
+						{status === "streaming" && (
+							<span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1" />
+						)}
 						{status === "streaming" && (
 							<div className="flex items-center gap-2 text-muted-foreground mt-4 pb-4">
 								<Loader2 className="h-4 w-4 animate-spin" />

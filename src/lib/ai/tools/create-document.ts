@@ -99,19 +99,18 @@ async function generateContentStream(
 ) {
 	const deltaType = `${kind}-delta` as DataStreamDelta["type"];
 
-	// 模拟真正的流式生成：逐行发送内容
-	const lines = content.split("\n");
+	// 模拟真正的流式生成：按小块发送内容（类似Claude Artifacts）
+	const chunkSize = 3; // 每次发送3个字符
 
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
-		const lineContent = i === 0 ? line : `\n${line}`;
+	for (let i = 0; i < content.length; i += chunkSize) {
+		const chunk = content.slice(i, i + chunkSize);
 
-		// 添加小延迟模拟真实的流式生成
-		await new Promise((resolve) => setTimeout(resolve, 20));
+		// 添加延迟模拟真实的流式生成（更快的速度）
+		await new Promise((resolve) => setTimeout(resolve, 50));
 
 		dataStream.writeData({
 			type: deltaType,
-			content: lineContent,
+			content: chunk,
 		} as { type: string; content: string });
 	}
 }

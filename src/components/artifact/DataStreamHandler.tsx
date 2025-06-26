@@ -31,6 +31,12 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 				}
 
 				setArtifact((prev) => {
+					console.log(
+						"DataStreamHandler processing delta:",
+						delta.type,
+						delta.content?.substring(0, 50),
+					);
+
 					switch (delta.type) {
 						case "id":
 							currentDocumentId.current = delta.content;
@@ -40,24 +46,38 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 								status: "streaming",
 								dataSource: "stream",
 								isStreaming: true,
+								// Keep isVisible if user has already opened the artifact
+								isVisible: prev.isVisible || false,
 							};
 
 						case "title":
 							return {
 								...prev,
 								title: delta.content,
+								isVisible: prev.isVisible,
+								status: "streaming",
+								dataSource: "stream",
+								isStreaming: true,
 							};
 
 						case "kind":
 							return {
 								...prev,
 								kind: delta.content as ArtifactKind,
+								isVisible: prev.isVisible,
+								status: "streaming",
+								dataSource: "stream",
+								isStreaming: true,
 							};
 
 						case "clear":
 							return {
 								...prev,
 								content: "",
+								isVisible: prev.isVisible,
+								status: "streaming",
+								dataSource: "stream",
+								isStreaming: true,
 							};
 
 						case "text-delta":
@@ -87,6 +107,10 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 								status: "idle",
 								isStreaming: false,
 								streamingProgress: 100,
+								isVisible: prev.isVisible,
+								documentId: currentDocumentId.current, // 确保使用最新的 documentId
+								dataSource: "stream",
+								content: prev.content.trim(), // 确保内容没有多余的空格
 							};
 
 						default:

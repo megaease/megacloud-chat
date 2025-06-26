@@ -34,32 +34,33 @@ export function ToolInvocationPart({
 			toolState.state === "call" ||
 			toolState.state === "partial-call";
 
-		let documentId: string | undefined;
-
 		if (isCreating) {
-			// For creating documents, try to get documentId from args or generate a temp one
+			// For creating documents, we set the artifact to be visible with basic info
+			// DataStreamHandler will update the content and documentId as they stream in
 			const args = toolState.args as {
 				title?: string;
 				content?: string;
 				kind?: string;
 			};
-			// We'll use streaming mode - the DataStreamHandler will provide the real documentId
-			setArtifact({
-				documentId: `temp_${Date.now()}`, // Temporary ID, will be updated by DataStreamHandler
-				title: args.title || "Creating Document...",
-				kind: (args.kind as "text" | "code" | "sheet" | "image") || "text",
-				content: "", // Start with empty content, will be populated by streaming
-				isVisible: true,
-				status: "streaming", // Use streaming status
+
+			setArtifact((prev) => ({
+				...prev, // Preserve any existing streaming data
+				title: args.title || prev.title || "Creating Document...",
+				kind:
+					(args.kind as "text" | "code" | "sheet" | "image") ||
+					prev.kind ||
+					"text",
+				isVisible: true, // Make it visible
+				status: "streaming",
 				boundingBox: {
 					top: window.innerHeight / 2 - 100,
 					left: window.innerWidth / 2 - 200,
 					width: 400,
 					height: 200,
 				},
-				dataSource: "stream", // Use stream mode to show live updates
+				dataSource: "stream",
 				isStreaming: true,
-			});
+			}));
 			return;
 		}
 
@@ -74,6 +75,8 @@ export function ToolInvocationPart({
 		const toolResult = part.toolInvocation.result;
 
 		// Try different ways to extract documentId
+		let documentId: string | undefined;
+
 		// Case 1: documentId is directly in result
 		if (toolResult && "id" in toolResult) {
 			documentId = (toolResult as Record<string, unknown>).id as string;

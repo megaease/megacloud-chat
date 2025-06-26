@@ -77,7 +77,7 @@ export function ArtifactContent({
 	const [currentVersionData, setCurrentVersionData] =
 		useState<ArtifactVersion | null>(null);
 
-	// Fetch all versions when documentId is provided
+	// Fetch all versions when documentId is provided AND we're not in streaming mode
 	const {
 		data: versions,
 		isLoading: loading,
@@ -85,7 +85,7 @@ export function ArtifactContent({
 	} = useQuery({
 		queryKey: ["artifact-versions", documentId],
 		queryFn: () => fetchArtifactVersions(documentId as string),
-		enabled: !!documentId,
+		enabled: !!documentId && status !== "streaming" && !content, // Don't fetch if we're streaming or have content already
 		staleTime: 1000 * 60 * 5,
 		gcTime: 1000 * 60 * 10,
 		retry: 3,
@@ -133,7 +133,18 @@ export function ArtifactContent({
 
 	// Determine which data to use - prioritize streaming content over database content
 	const isStreaming = status === "streaming";
-	const displayData = isStreaming
+	const hasStreamingContent = isStreaming && (content || title);
+
+	console.log("ArtifactContent render:", {
+		status,
+		isStreaming,
+		hasStreamingContent,
+		content: content?.substring(0, 50),
+		title,
+		currentVersionData: currentVersionData?.title,
+	});
+
+	const displayData = hasStreamingContent
 		? {
 				kind: kind || "text",
 				content: content || "",
