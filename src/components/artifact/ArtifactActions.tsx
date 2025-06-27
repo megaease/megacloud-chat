@@ -25,7 +25,7 @@ import {
 	ChevronDown,
 } from "lucide-react";
 import { CopyButton } from "../copy-button";
-import type { ArtifactKind } from "@/lib/artifact-types";
+import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
 
 interface ArtifactVersion {
 	id: string;
@@ -33,6 +33,7 @@ interface ArtifactVersion {
 	title: string;
 	content: string;
 	kind: ArtifactKind;
+	language?: ArtifactLanguage;
 	updatedAt: string;
 }
 

@@ -3,8 +3,13 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useArtifact } from "@/context/artifact-provider-context";
-import type { DataStreamDelta, ArtifactKind } from "@/lib/artifact-types";
+import type {
+	DataStreamDelta,
+	ArtifactKind,
+	ArtifactLanguage,
+} from "@/lib/artifact-types";
 
 interface DataStreamHandlerProps {
 	chatId: string;
@@ -23,8 +28,10 @@ function isValidDataStreamDelta(data: unknown): data is DataStreamDelta {
 export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 	const { data: dataStream } = useChat({ id: chatId });
 	const { setArtifact } = useArtifact();
+	const queryClient = useQueryClient();
 	const lastProcessedIndex = useRef(-1);
 	const currentDocumentId = useRef<string>("");
+	const wasUpdatingDocument = useRef<boolean>(false);
 
 	// 使用 useCallback 优化 delta 处理函数
 	const processDelta = useCallback(
@@ -39,6 +46,17 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 				switch (delta.type) {
 					case "id":
 						currentDocumentId.current = delta.content;
+						// Check if this is an update to an existing document
+						// If the previous artifact already had the same documentId, it's an update
+						wasUpdatingDocument.current =
+							prev.documentId === delta.content && !!prev.documentId;
+
+						console.log("DataStreamHandler: Document ID received", {
+							documentId: delta.content,
+							previousDocumentId: prev.documentId,
+							isUpdate: wasUpdatingDocument.current,
+						});
+
 						return {
 							...prev,
 							documentId: delta.content,
@@ -63,6 +81,16 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 						return {
 							...prev,
 							kind: delta.content as ArtifactKind,
+							isVisible: prev.isVisible,
+							status: "streaming",
+							dataSource: "stream",
+							isStreaming: true,
+						};
+
+					case "language":
+						return {
+							...prev,
+							language: delta.content as ArtifactLanguage,
 							isVisible: prev.isVisible,
 							status: "streaming",
 							dataSource: "stream",
@@ -99,18 +127,45 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 							documentId: delta.content,
 						};
 
-					case "finish":
+					case "finish": {
 						// 流式传输完成
+						const finalDocumentId = currentDocumentId.current;
+
+						// If this was an update to an existing document, refresh the versions
+						if (wasUpdatingDocument.current && finalDocumentId) {
+							console.log(
+								"Document update completed, refreshing versions for:",
+								finalDocumentId,
+							);
+
+							// Invalidate the versions query to trigger a refetch
+							setTimeout(() => {
+								console.log("Invalidating queries for:", finalDocumentId);
+								queryClient.invalidateQueries({
+									queryKey: ["artifact-versions", finalDocumentId],
+								});
+							}, 500); // Small delay to ensure database has been updated
+						} else {
+							console.log("Not refreshing versions:", {
+								wasUpdating: wasUpdatingDocument.current,
+								documentId: finalDocumentId,
+							});
+						}
+
+						// Reset the flag
+						wasUpdatingDocument.current = false;
+
 						return {
 							...prev,
 							status: "idle",
 							isStreaming: false,
 							streamingProgress: 100,
 							isVisible: prev.isVisible,
-							documentId: currentDocumentId.current, // 确保使用最新的 documentId
+							documentId: finalDocumentId, // 确保使用最新的 documentId
 							dataSource: "stream",
 							content: prev.content.trim(), // 确保内容没有多余的空格
 						};
+					}
 
 					default:
 						console.warn("Unknown delta type:", delta.type);
@@ -118,7 +173,7 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 				}
 			});
 		},
-		[setArtifact],
+		[setArtifact, queryClient],
 	);
 
 	// 处理错误的函数

@@ -61,13 +61,13 @@ export const detectLanguage = (content: string): ArtifactLanguage => {
  */
 export const getLanguage = (
 	explicitLanguage: ArtifactLanguage | undefined,
-	content: string
+	content: string,
 ): ArtifactLanguage => {
 	// 优先使用明确指定的语言
 	if (explicitLanguage) {
 		return explicitLanguage;
 	}
-	
+
 	// 回退到内容检测
 	return detectLanguage(content);
 };

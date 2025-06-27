@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { ArtifactKind } from "@/lib/artifact-types";
+import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
 import { TextArtifact } from "./TextArtifact";
 import { CodePreview } from "./CodePreview";
 import { useArtifact } from "@/context/artifact-provider-context";
@@ -15,6 +15,7 @@ interface ArtifactContentProps {
 	status?: "streaming" | "idle" | "error";
 	title?: string;
 	viewMode?: "code" | "preview";
+	language?: ArtifactLanguage; // Add language for streaming mode
 
 	// For database mode (used when opening from ToolInvocationPart)
 	documentId?: string;
@@ -37,6 +38,7 @@ interface ArtifactVersion {
 	title: string;
 	content: string;
 	kind: ArtifactKind;
+	language?: ArtifactLanguage;
 	updatedAt: string;
 }
 
@@ -67,6 +69,7 @@ export function ArtifactContent({
 	status,
 	title,
 	viewMode = "code",
+	language,
 	// Database mode props
 	documentId,
 	// Version control props
@@ -77,7 +80,12 @@ export function ArtifactContent({
 	const [currentVersionData, setCurrentVersionData] =
 		useState<ArtifactVersion | null>(null);
 
-	// Fetch all versions when documentId is provided AND we're not in streaming mode
+	// Determine which data to use - prioritize streaming content over database content
+	const isStreaming = status === "streaming";
+	const hasStreamingContent = isStreaming && (content || title);
+
+	// Fetch all versions when documentId is provided
+	// Only disable during active streaming to avoid conflicts
 	const {
 		data: versions,
 		isLoading: loading,
@@ -85,7 +93,7 @@ export function ArtifactContent({
 	} = useQuery({
 		queryKey: ["artifact-versions", documentId],
 		queryFn: () => fetchArtifactVersions(documentId as string),
-		enabled: !!documentId && status !== "streaming" && !content, // Don't fetch if we're streaming or have content already
+		enabled: !!documentId && status !== "streaming", // Only disable during active streaming
 		staleTime: 1000 * 60 * 5,
 		gcTime: 1000 * 60 * 10,
 		retry: 3,
@@ -94,9 +102,14 @@ export function ArtifactContent({
 	// Notify parent component when versions are loaded
 	useEffect(() => {
 		if (versions && onVersionsLoaded) {
+			console.log("ArtifactContent: Versions loaded/updated", {
+				count: versions.length,
+				latestVersion: versions[0]?.version,
+				documentId,
+			});
 			onVersionsLoaded(versions);
 		}
-	}, [versions, onVersionsLoaded]);
+	}, [versions, onVersionsLoaded, documentId]);
 
 	// Update current version data when selectedVersion changes
 	useEffect(() => {
@@ -109,31 +122,8 @@ export function ArtifactContent({
 		}
 	}, [versions, selectedVersion]);
 
-	// Update global artifact state when current version changes
-	useEffect(() => {
-		if (currentVersionData) {
-			setArtifact((prev) => {
-				// 如果正在流式生成，不要用版本数据覆盖
-				if (prev.isStreaming && prev.dataSource === "stream") {
-					console.log("Skipping version update during streaming");
-					return prev;
-				}
-
-				return {
-					...prev,
-					title: currentVersionData.title,
-					content: currentVersionData.content,
-					kind: currentVersionData.kind,
-					dataSource: "version",
-					isStreaming: false,
-				};
-			});
-		}
-	}, [currentVersionData, setArtifact]);
-
-	// Determine which data to use - prioritize streaming content over database content
-	const isStreaming = status === "streaming";
-	const hasStreamingContent = isStreaming && (content || title);
+	// 版本切换不应该修改全局 artifact 状态
+	// 版本数据仅用于在当前组件中展示选中的版本内容
 
 	console.log("ArtifactContent render:", {
 		status,
@@ -142,18 +132,25 @@ export function ArtifactContent({
 		content: content?.substring(0, 50),
 		title,
 		currentVersionData: currentVersionData?.title,
+		selectedVersion,
 	});
 
+	// 数据优先级：
+	// 1. 流式内容（正在更新时）
+	// 2. 选中的版本数据（用户切换版本时）
+	// 3. 传入的 props 数据（后备方案）
 	const displayData = hasStreamingContent
 		? {
 				kind: kind || "text",
 				content: content || "",
 				title: title || "Untitled",
+				language: language, // Use language from streaming props
 			}
 		: currentVersionData || {
 				kind: kind || "text",
 				content: content || "",
 				title: title || "Untitled",
+				language: language,
 			};
 
 	const displayStatus = status || "idle";
@@ -183,6 +180,7 @@ export function ArtifactContent({
 				<div className="h-full">
 					<CodePreview
 						content={displayData.content}
+						language={displayData.language}
 						className="h-full"
 						mode={viewMode}
 					/>

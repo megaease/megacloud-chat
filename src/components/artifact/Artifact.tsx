@@ -1,7 +1,7 @@
 // components/artifact/Artifact.tsx
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { ArtifactContent } from "./ArtifactContent";
@@ -15,7 +15,7 @@ import {
 import { X, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { ArtifactChat } from "./ArtifactChat";
 import type { Message } from "@ai-sdk/react";
-import type { ArtifactKind } from "@/lib/artifact-types";
+import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
 
 interface ArtifactVersion {
 	id: string;
@@ -23,6 +23,7 @@ interface ArtifactVersion {
 	title: string;
 	content: string;
 	kind: ArtifactKind;
+	language?: ArtifactLanguage;
 	updatedAt: string;
 }
 
@@ -119,6 +120,18 @@ export function Artifact({
 	const handleVersionChange = (version: number) => {
 		setSelectedVersion(version);
 	};
+
+	// Auto-switch to latest version when versions are loaded/refreshed
+	useEffect(() => {
+		if (versions.length > 0 && versions[0]) {
+			const latestVersion = versions[0].version;
+			// Only switch if we don't have a selected version or if the latest version is newer
+			if (!selectedVersion || latestVersion > selectedVersion) {
+				console.log(`Switching to latest version: ${latestVersion}`);
+				setSelectedVersion(latestVersion);
+			}
+		}
+	}, [versions, selectedVersion]);
 
 	if (!artifact.isVisible) return null;
 
@@ -286,6 +299,7 @@ export function Artifact({
 										content={artifact.content}
 										status={artifact.status}
 										title={artifact.title}
+										language={artifact.language}
 										viewMode={viewMode}
 										// Database mode props (for version control)
 										{...(artifact.documentId && {
@@ -362,6 +376,7 @@ export function Artifact({
 								content={artifact.content}
 								status={artifact.status}
 								title={artifact.title}
+								language={artifact.language}
 								viewMode={viewMode}
 								// Database mode props (for version control)
 								{...(artifact.documentId && {
