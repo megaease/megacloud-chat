@@ -233,7 +233,11 @@ export function ArtifactActions({
 												return (
 													<DropdownMenuItem
 														key={version.version}
-														onClick={() => onVersionChange(version.version)}
+														onClick={() => {
+															if (onVersionChange) {
+																onVersionChange(version.version);
+															}
+														}}
 														className="p-0 focus:bg-transparent"
 													>
 														<div

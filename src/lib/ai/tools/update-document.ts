@@ -35,9 +35,10 @@ export function updateDocumentTool(
 			language,
 			changeDescription,
 		}) => {
-			// 验证文档是否存在且用户有权限
+			// 验证文档是否存在且用户有权限，同时获取现有信息
+			let existingArtifact = null;
 			if (userId) {
-				const existingArtifact = await getArtifactById(documentId, userId);
+				existingArtifact = await getArtifactById(documentId, userId);
 				if (!existingArtifact) {
 					throw new Error("Document not found or access denied");
 				}
@@ -86,9 +87,10 @@ export function updateDocumentTool(
 			});
 
 			// 更新数据库（如果提供了 userId）
+			let updatedArtifact = null;
 			if (userId) {
 				try {
-					const updatedArtifact = await updateArtifact({
+					updatedArtifact = await updateArtifact({
 						artifactId: documentId,
 						title,
 						content,
@@ -107,7 +109,19 @@ export function updateDocumentTool(
 				}
 			}
 
-			return { success: true, documentId };
+			// 统一返回值格式，与 createDocumentTool 保持一致
+			return {
+				documentId,
+				title:
+					title ||
+					updatedArtifact?.title ||
+					existingArtifact?.title ||
+					"Untitled",
+				kind: kind || updatedArtifact?.kind || existingArtifact?.kind || "text",
+				language:
+					language || updatedArtifact?.language || existingArtifact?.language,
+				success: true,
+			};
 		},
 	});
 }

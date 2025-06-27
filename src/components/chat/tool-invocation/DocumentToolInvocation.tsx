@@ -15,6 +15,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { ToolState, ToolStatus, ToolTheme } from "./types";
+import type { ToolInvocationPart } from "@/types/tool-invocation";
 
 interface DocumentToolInvocationProps {
 	toolState: ToolState;
@@ -22,6 +23,7 @@ interface DocumentToolInvocationProps {
 	theme: ToolTheme;
 	onOpenArtifact: () => void;
 	isLoading?: boolean;
+	part?: ToolInvocationPart; // 添加 part 参数以访问工具调用结果
 }
 
 const getDocumentIcon = (kind?: string) => {
@@ -50,18 +52,16 @@ const getDocumentTypeLabel = (kind?: string) => {
 	}
 };
 
-const getCreationStatusText = (state: string, toolName: string) => {
-	const isUpdateTool = toolName === "updateDocument";
-
+const getCreationStatusText = (state: string, isUpdate: boolean) => {
 	switch (state) {
 		case "call":
-			return isUpdateTool ? "Initializing update..." : "Initializing tool...";
+			return isUpdate ? "Initializing update..." : "Initializing tool...";
 		case "partial-call":
-			return isUpdateTool ? "Preparing update..." : "Preparing document...";
+			return isUpdate ? "Preparing update..." : "Preparing document...";
 		case "processing":
-			return isUpdateTool ? "Updating document..." : "Creating document...";
+			return isUpdate ? "Updating document..." : "Creating document...";
 		default:
-			return isUpdateTool ? "Updating document..." : "Creating document...";
+			return isUpdate ? "Updating document..." : "Creating document...";
 	}
 };
 
@@ -71,11 +71,13 @@ export function DocumentToolInvocation({
 	theme,
 	onOpenArtifact,
 	isLoading = false,
+	part,
 }: DocumentToolInvocationProps) {
 	const args = (toolState.args || {}) as {
 		title?: string;
 		content?: string;
 		kind?: string;
+		documentId?: string;
 	};
 
 	const content = args.content || "";
@@ -84,23 +86,35 @@ export function DocumentToolInvocation({
 	const typeLabel = getDocumentTypeLabel(kind);
 
 	// Determine if we're in a creating/updating state
-	// 包含更多状态判断，确保能捕获到工具执行的各个阶段
+	// 只基于 status 和 toolState.state 来判断，不依赖 isLoading
 	const isCreating =
 		status === "executing" ||
-		isLoading ||
 		toolState.state === "call" ||
 		toolState.state === "partial-call";
 
-	// 区分创建和更新操作
-	const isUpdateOperation = toolState.toolName === "updateDocument";
+	// 区分创建和更新操作 - 基于 documentId 而不是 toolName
+	const isUpdateOperation = !!args.documentId;
 
+	// 从工具结果中获取标题（如果可用）
+	const getResultTitle = () => {
+		if (part?.toolInvocation?.result) {
+			const toolResult = part.toolInvocation.result;
+			// 工具返回的结果格式：{ documentId, title, kind, language, success }
+			if (typeof toolResult === "object" && "title" in toolResult) {
+				return (toolResult as Record<string, unknown>).title as string;
+			}
+		}
+		return null;
+	};
+
+	const resultTitle = getResultTitle();
+	const actualTitle = args.title || resultTitle;
+
+	// 简化显示逻辑：第一行始终显示标题，第二行始终显示工具名称
 	const title =
-		args.title ||
-		(isCreating
-			? isUpdateOperation
-				? "Updating Document..."
-				: "Creating Document..."
-			: "Untitled Document");
+		actualTitle ||
+		(isUpdateOperation ? "Updating Document" : "Creating Document");
+	const subtitle = toolState.toolName;
 
 	// Get content preview (first 100 characters)
 	const contentPreview =
@@ -160,9 +174,7 @@ export function DocumentToolInvocation({
 						</span>
 					</div>
 					<p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-						{isCreating
-							? getCreationStatusText(toolState.state, toolState.toolName)
-							: `Created by ${toolState.toolName}`}
+						{subtitle}
 					</p>
 				</div>
 

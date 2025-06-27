@@ -41,11 +41,18 @@ export function ToolInvocationPart({
 				title?: string;
 				content?: string;
 				kind?: string;
+				documentId?: string; // For updates
 			};
+
+			// Determine if this is an update or create based on documentId
+			const isUpdate = !!args.documentId;
+			const defaultTitle = isUpdate
+				? "Updating Document..."
+				: "Creating Document...";
 
 			setArtifact((prev) => ({
 				...prev, // Preserve any existing streaming data
-				title: args.title || prev.title || "Creating Document...",
+				title: args.title || prev.title || defaultTitle,
 				kind:
 					(args.kind as "text" | "code" | "sheet" | "image") ||
 					prev.kind ||
@@ -124,6 +131,7 @@ export function ToolInvocationPart({
 					toolState.isDocumentTool ? handleOpenArtifact : undefined
 				}
 				isCompact={true}
+				part={part}
 			/>
 		);
 	}
@@ -137,6 +145,7 @@ export function ToolInvocationPart({
 				theme={theme}
 				onOpenArtifact={handleOpenArtifact}
 				isLoading={isLoading || status === "executing"}
+				part={part}
 			/>
 		);
 	}
@@ -151,6 +160,7 @@ export function ToolInvocationPart({
 			onToggleExpanded={toggleExpanded}
 			onOpenArtifact={toolState.isDocumentTool ? handleOpenArtifact : undefined}
 			isCompact={false}
+			part={part}
 		/>
 	);
 }

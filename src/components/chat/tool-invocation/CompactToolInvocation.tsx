@@ -9,7 +9,10 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import type { ToolState, ToolStatus, ToolTheme } from "./types";
-import type { ResultContent } from "@/types/tool-invocation";
+import type {
+	ResultContent,
+	ToolInvocationPart,
+} from "@/types/tool-invocation";
 
 interface CompactToolInvocationProps {
 	toolState: ToolState;
@@ -19,6 +22,7 @@ interface CompactToolInvocationProps {
 	onToggleExpanded: () => void;
 	onOpenArtifact?: () => void;
 	isCompact?: boolean; // 新增：是否为紧凑模式
+	part?: ToolInvocationPart; // 添加 part 参数以访问工具调用结果
 }
 
 const getDocumentIcon = (kind?: string) => {
@@ -135,11 +139,13 @@ export function CompactToolInvocation({
 	onToggleExpanded,
 	onOpenArtifact,
 	isCompact = false,
+	part,
 }: CompactToolInvocationProps) {
 	const args = (toolState.args || {}) as {
 		title?: string;
 		content?: string;
 		kind?: string;
+		documentId?: string;
 	};
 
 	// For document tools, display a more compact card style
@@ -148,9 +154,43 @@ export function CompactToolInvocation({
 		(status === "success" || status === "executing")
 	) {
 		const IconComponent = getDocumentIcon(args.kind);
+
+		// Determine if this is an update or create based on documentId
+		const isUpdate = !!args.documentId;
+		const executingTitle = isUpdate
+			? "Updating Document..."
+			: "Creating Document...";
+
+		// Debug logging
+		console.log("CompactToolInvocation Debug:", {
+			toolName: toolState.toolName,
+			status,
+			state: toolState.state,
+			args,
+			isUpdate,
+			executingTitle,
+			argsTitle: args.title,
+		});
+
+		// 从工具结果中获取标题（如果可用）
+		const getResultTitle = () => {
+			if (part?.toolInvocation?.result) {
+				const toolResult = part.toolInvocation.result;
+				// 工具返回的结果格式：{ documentId, title, kind, language, success }
+				if (typeof toolResult === "object" && "title" in toolResult) {
+					return (toolResult as Record<string, unknown>).title as string;
+				}
+			}
+			return null;
+		};
+
+		const resultTitle = getResultTitle();
+		const actualTitle = args.title || resultTitle;
+
+		// 简化显示逻辑：第一行始终显示标题，第二行始终显示工具名称
 		const title =
-			args.title ||
-			(status === "executing" ? "Creating Document..." : "Untitled Document");
+			actualTitle || (isUpdate ? "Updating Document" : "Creating Document");
+		const subtitle = toolState.toolName;
 
 		return (
 			<motion.div
@@ -199,9 +239,7 @@ export function CompactToolInvocation({
 									: "text-gray-600 dark:text-gray-400",
 							)}
 						>
-							{status === "executing"
-								? "Creating document..."
-								: toolState.toolName}
+							{subtitle}
 						</div>
 					</div>
 					{/* Small icon indicator in top right */}
