@@ -79,6 +79,7 @@ export const artifacts = createTable(
 		title: text("title").notNull(),
 		content: text("content").notNull(),
 		kind: text("kind").notNull(), // 'text', 'code', 'sheet', 'image'
+		language: text("language"), // For code artifacts: 'html', 'react', 'javascript', 'python', 'css', etc.
 		userId: text("user_id").notNull(),
 		chatId: text("chat_id")
 			.references(() => chats.id, { onDelete: "cascade" })
@@ -92,6 +93,7 @@ export const artifacts = createTable(
 		index("idx_artifact_user_id").on(table.userId),
 		index("idx_artifact_chat_id").on(table.chatId),
 		index("idx_artifact_kind").on(table.kind),
+		index("idx_artifact_language").on(table.language),
 	],
 );
 
@@ -101,9 +103,17 @@ export const artifactsSchema = createSelectSchema(artifacts);
 
 export const ChatRoleEnum = z.enum(["user", "assistant", "system"]);
 export const ArtifactKindEnum = z.enum(["text", "code", "sheet", "image"]);
+export const ArtifactLanguageEnum = z.enum([
+	"html",
+	"react",
+	"javascript",
+	"python",
+	"css",
+]);
 
 export type ChatRole = z.infer<typeof ChatRoleEnum>;
 export type ArtifactKind = z.infer<typeof ArtifactKindEnum>;
+export type ArtifactLanguage = z.infer<typeof ArtifactLanguageEnum>;
 export type Chat = z.infer<typeof chatsSchema>;
 export type DBMessage = InferSelectModel<typeof chatMessages>;
 export type Artifact = InferSelectModel<typeof artifacts>;

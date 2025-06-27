@@ -50,6 +50,13 @@
       "when": 1750841609622,
       "tag": "0006_nice_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1750995611616,
+      "tag": "0007_military_machine_man",
+      "breakpoints": true
     }
   ]
 }

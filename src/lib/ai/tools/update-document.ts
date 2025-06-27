@@ -18,6 +18,10 @@ export function updateDocumentTool(
 				.enum(["text", "code", "sheet", "image"])
 				.optional()
 				.describe("New type of document"),
+			language: z
+				.enum(["html", "react", "javascript", "python", "css"])
+				.optional()
+				.describe("Programming language for code documents"),
 			changeDescription: z
 				.string()
 				.optional()
@@ -28,6 +32,7 @@ export function updateDocumentTool(
 			title,
 			content,
 			kind,
+			language,
 			changeDescription,
 		}) => {
 			// 验证文档是否存在且用户有权限
@@ -58,6 +63,13 @@ export function updateDocumentTool(
 				});
 			}
 
+			if (language) {
+				dataStream.writeData({ type: "language", content: language } as {
+					type: string;
+					content: string;
+				});
+			}
+
 			dataStream.writeData({ type: "clear", content: "" } as {
 				type: string;
 				content: string;
@@ -81,6 +93,7 @@ export function updateDocumentTool(
 						title,
 						content,
 						kind,
+						language,
 						userId,
 						changeDescription: changeDescription || "Updated via AI assistant",
 					});

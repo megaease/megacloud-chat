@@ -18,8 +18,12 @@ export function createDocumentTool(
 			kind: z
 				.enum(["text", "code", "sheet", "image"])
 				.describe("Type of document"),
+			language: z
+				.enum(["html", "react", "javascript", "python", "css"])
+				.optional()
+				.describe("Programming language for code documents"),
 		}),
-		execute: async ({ title, content, kind }) => {
+		execute: async ({ title, content, kind, language }) => {
 			// 生成临时 ID，立即开始流式传输
 			const tempDocumentId = nanoid(16);
 
@@ -36,6 +40,13 @@ export function createDocumentTool(
 				type: string;
 				content: string;
 			});
+			// 发送语言信息（如果有的话）
+			if (language) {
+				dataStream.writeData({ type: "language", content: language } as {
+					type: string;
+					content: string;
+				});
+			}
 			dataStream.writeData({ type: "clear", content: "" } as {
 				type: string;
 				content: string;
@@ -60,6 +71,7 @@ export function createDocumentTool(
 						title,
 						content,
 						kind,
+						language,
 						userId,
 						chatId,
 						tags: [],
@@ -99,8 +111,8 @@ async function generateContentStream(
 ) {
 	const deltaType = `${kind}-delta` as DataStreamDelta["type"];
 
-	// 模拟真正的流式生成：按小块发送内容（类似Claude Artifacts）
-	const chunkSize = 3; // 每次发送3个字符
+	// 模拟真正的流式生成：按小块发送内容（类似 Claude Artifacts）
+	const chunkSize = 3; // 每次发送 3 个字符
 
 	for (let i = 0; i < content.length; i += chunkSize) {
 		const chunk = content.slice(i, i + chunkSize);

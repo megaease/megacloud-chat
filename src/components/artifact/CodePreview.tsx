@@ -4,12 +4,18 @@ import { useTranslations } from "next-intl";
 import { CodeEditor } from "@/components/code-editor";
 import { Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { detectLanguage } from "./utils/language-detector";
+import {
+	detectLanguage,
+	getPreviewType,
+	getLanguageDisplayName,
+	isPreviewSupported,
+} from "./utils/language-detector";
 import { HtmlPreview, ReactPreview, JavaScriptPreview } from "./previews";
+import type { ArtifactLanguage } from "@/lib/artifact-types";
 
 interface CodePreviewProps {
 	content: string;
-	language?: string;
+	language?: ArtifactLanguage;
 	className?: string;
 	mode?: "code" | "preview";
 }
@@ -22,17 +28,15 @@ export function CodePreview({
 }: CodePreviewProps) {
 	const tArtifact = useTranslations("Artifact");
 	const detectedLanguage = language || detectLanguage(content);
+	const previewType = getPreviewType(detectedLanguage);
 
 	const renderPreview = () => {
-		switch (detectedLanguage.toLowerCase()) {
+		switch (previewType) {
 			case "html":
 				return <HtmlPreview content={content} />;
 			case "react":
-			case "jsx":
-			case "tsx":
 				return <ReactPreview content={content} />;
 			case "javascript":
-			case "js":
 				return <JavaScriptPreview content={content} />;
 			default:
 				return (
@@ -45,7 +49,7 @@ export function CodePreview({
 								</p>
 								<p className="text-xs text-muted-foreground/60">
 									{tArtifact("languageNotSupported", {
-										language: detectedLanguage.toUpperCase(),
+										language: getLanguageDisplayName(detectedLanguage),
 									})}
 								</p>
 							</div>

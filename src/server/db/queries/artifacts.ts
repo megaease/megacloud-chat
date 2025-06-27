@@ -9,6 +9,7 @@ export interface CreateArtifactParams {
 	title: string;
 	content: string;
 	kind: "text" | "code" | "sheet" | "image";
+	language?: string; // Language for code artifacts
 	userId: string;
 	chatId: string;
 	tags?: string[];
@@ -20,6 +21,7 @@ export interface UpdateArtifactParams {
 	title?: string;
 	content?: string;
 	kind?: "text" | "code" | "sheet" | "image";
+	language?: string; // Language for code artifacts
 	userId: string;
 	changeDescription?: string;
 	tags?: string[];
@@ -40,6 +42,7 @@ export async function createArtifact(
 			title: params.title,
 			content: params.content,
 			kind: params.kind,
+			language: params.language,
 			userId: params.userId,
 			chatId: params.chatId,
 			tags: params.tags || [],
@@ -99,6 +102,10 @@ export async function updateArtifact(
 			title: params.title || latestArtifact.title,
 			content: params.content || latestArtifact.content,
 			kind: params.kind || latestArtifact.kind,
+			language:
+				params.language !== undefined
+					? params.language
+					: latestArtifact.language,
 			userId: params.userId,
 			chatId: latestArtifact.chatId,
 			tags: params.tags !== undefined ? params.tags : latestArtifact.tags,
