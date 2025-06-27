@@ -73,7 +73,7 @@ export function updateDocumentTool(
 				content: string;
 			});
 
-			// 更新数据库（如果提供了userId）
+			// 更新数据库（如果提供了 userId）
 			if (userId) {
 				try {
 					const updatedArtifact = await updateArtifact({
@@ -107,8 +107,8 @@ async function generateContentStream(
 ) {
 	const deltaType = `${kind}-delta` as DataStreamDelta["type"];
 
-	// 模拟真正的流式生成：按小块发送内容（类似Claude Artifacts）
-	const chunkSize = 3; // 每次发送3个字符
+	// 模拟真正的流式生成：按小块发送内容（类似 Claude Artifacts）
+	const chunkSize = 3; // 每次发送 3 个字符
 
 	for (let i = 0; i < content.length; i += chunkSize) {
 		const chunk = content.slice(i, i + chunkSize);
@@ -121,17 +121,4 @@ async function generateContentStream(
 			content: chunk,
 		} as { type: string; content: string });
 	}
-}
-
-function splitContentToDeltas(
-	content: string,
-	kind: string,
-): DataStreamDelta[] {
-	const deltaType = `${kind}-delta` as DataStreamDelta["type"];
-	const lines = content.split("\n");
-
-	return lines.map((line, index) => ({
-		type: deltaType,
-		content: index === 0 ? line : `\n${line}`,
-	}));
 }
