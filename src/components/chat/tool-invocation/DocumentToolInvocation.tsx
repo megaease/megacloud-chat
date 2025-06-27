@@ -50,16 +50,18 @@ const getDocumentTypeLabel = (kind?: string) => {
 	}
 };
 
-const getCreationStatusText = (state: string) => {
+const getCreationStatusText = (state: string, toolName: string) => {
+	const isUpdateTool = toolName === "updateDocument";
+
 	switch (state) {
 		case "call":
-			return "Initializing tool...";
+			return isUpdateTool ? "Initializing update..." : "Initializing tool...";
 		case "partial-call":
-			return "Preparing document...";
+			return isUpdateTool ? "Preparing update..." : "Preparing document...";
 		case "processing":
-			return "Creating document...";
+			return isUpdateTool ? "Updating document..." : "Creating document...";
 		default:
-			return "Creating document...";
+			return isUpdateTool ? "Updating document..." : "Creating document...";
 	}
 };
 
@@ -81,7 +83,7 @@ export function DocumentToolInvocation({
 	const IconComponent = getDocumentIcon(kind);
 	const typeLabel = getDocumentTypeLabel(kind);
 
-	// Determine if we're in a creating state
+	// Determine if we're in a creating/updating state
 	// 包含更多状态判断，确保能捕获到工具执行的各个阶段
 	const isCreating =
 		status === "executing" ||
@@ -89,8 +91,16 @@ export function DocumentToolInvocation({
 		toolState.state === "call" ||
 		toolState.state === "partial-call";
 
+	// 区分创建和更新操作
+	const isUpdateOperation = toolState.toolName === "updateDocument";
+
 	const title =
-		args.title || (isCreating ? "Creating Document..." : "Untitled Document");
+		args.title ||
+		(isCreating
+			? isUpdateOperation
+				? "Updating Document..."
+				: "Creating Document..."
+			: "Untitled Document");
 
 	// Get content preview (first 100 characters)
 	const contentPreview =
@@ -151,7 +161,7 @@ export function DocumentToolInvocation({
 					</div>
 					<p className="text-sm text-gray-600 dark:text-gray-400 truncate">
 						{isCreating
-							? getCreationStatusText(toolState.state)
+							? getCreationStatusText(toolState.state, toolState.toolName)
 							: `Created by ${toolState.toolName}`}
 					</p>
 				</div>
@@ -172,14 +182,20 @@ export function DocumentToolInvocation({
 							>
 								<IconExternalLink size={16} />
 								<span className="ml-2">
-									{isCreating ? "View Live" : "Open Document"}
+									{isCreating
+										? isUpdateOperation
+											? "View Update"
+											: "View Live"
+										: "Open Document"}
 								</span>
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>
 							<p>
 								{isCreating
-									? "Watch document being created in real-time"
+									? isUpdateOperation
+										? "Watch document being updated in real-time"
+										: "Watch document being created in real-time"
 									: "Open document content"}
 							</p>
 						</TooltipContent>
@@ -198,14 +214,22 @@ export function DocumentToolInvocation({
 									isCreating ? "bg-amber-500 animate-pulse" : "bg-blue-500",
 								)}
 							/>
-							{isCreating ? "Generating Content" : "Content Preview"}
+							{isCreating
+								? isUpdateOperation
+									? "Updating Content"
+									: "Generating Content"
+								: "Content Preview"}
 						</span>
 					</div>
 					<div className="bg-white/80 dark:bg-gray-900/40 rounded-lg p-4 border border-blue-200/40 dark:border-blue-800/30">
 						{isCreating ? (
 							<div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
 								<IconLoader2 size={16} className="animate-spin" />
-								<span className="text-sm">Generating document content...</span>
+								<span className="text-sm">
+									{isUpdateOperation
+										? "Updating document content..."
+										: "Generating document content..."}
+								</span>
 							</div>
 						) : (
 							<>

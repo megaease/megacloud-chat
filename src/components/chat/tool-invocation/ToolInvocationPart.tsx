@@ -77,9 +77,9 @@ export function ToolInvocationPart({
 		// Try different ways to extract documentId
 		let documentId: string | undefined;
 
-		// Case 1: documentId is directly in result
-		if (toolResult && "id" in toolResult) {
-			documentId = (toolResult as Record<string, unknown>).id as string;
+		// Extract documentId from tool result (unified field name)
+		if (toolResult && "documentId" in toolResult) {
+			documentId = (toolResult as Record<string, unknown>).documentId as string;
 		}
 
 		console.log("Extracted documentId:", documentId);

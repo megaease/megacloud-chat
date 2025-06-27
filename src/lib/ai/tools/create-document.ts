@@ -82,7 +82,7 @@ export function createDocumentTool(
 			}
 
 			return {
-				id: realDocumentId,
+				documentId: realDocumentId,
 				title,
 				kind,
 				content: "A document was created and is now visible to the user.",
