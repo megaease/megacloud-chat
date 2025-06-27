@@ -5,7 +5,7 @@ import { CodeEditor } from "@/components/code-editor";
 import { Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-	detectLanguage,
+	getLanguage,
 	getPreviewType,
 	getLanguageDisplayName,
 	isPreviewSupported,
@@ -27,8 +27,8 @@ export function CodePreview({
 	mode = "code",
 }: CodePreviewProps) {
 	const tArtifact = useTranslations("Artifact");
-	const detectedLanguage = language || detectLanguage(content);
-	const previewType = getPreviewType(detectedLanguage);
+	const finalLanguage = getLanguage(language, content);
+	const previewType = getPreviewType(finalLanguage);
 
 	const renderPreview = () => {
 		switch (previewType) {
@@ -49,7 +49,7 @@ export function CodePreview({
 								</p>
 								<p className="text-xs text-muted-foreground/60">
 									{tArtifact("languageNotSupported", {
-										language: getLanguageDisplayName(detectedLanguage),
+										language: getLanguageDisplayName(finalLanguage),
 									})}
 								</p>
 							</div>
@@ -65,7 +65,7 @@ export function CodePreview({
 				<div className="h-full">
 					<CodeEditor
 						value={content}
-						language={detectedLanguage}
+						language={finalLanguage}
 						showHeader={false}
 						showCopyButton={false}
 						height="100%"
