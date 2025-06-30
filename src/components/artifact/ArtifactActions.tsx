@@ -458,7 +458,7 @@ export function ArtifactActions({
 					</Button>
 
 					{/* 现代化分享按钮（支持 Web Share API 的浏览器） */}
-					{typeof window !== "undefined" && "share" in navigator && (
+					{/* {typeof window !== "undefined" && "share" in navigator && (
 						<Button
 							variant="ghost"
 							size="sm"
@@ -474,7 +474,7 @@ export function ArtifactActions({
 							)}
 							<div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
 						</Button>
-					)}
+					)} */}
 
 					{/* 现代化全屏切换按钮 */}
 					{onFullscreen && (

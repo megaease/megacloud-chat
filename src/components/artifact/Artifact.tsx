@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { ArtifactContent } from "./ArtifactContent";
 import { ArtifactActions } from "./ArtifactActions";
+import { ArtifactSkeleton } from "./ArtifactSkeleton";
 import { Button } from "@/components/ui/button";
 import {
 	ResizablePanelGroup,
@@ -69,7 +70,7 @@ export function Artifact({
 	});
 	const [isMobile, setIsMobile] = useState(false);
 	const [showChat, setShowChat] = useState(false); // Mobile chat display state
-	const [viewMode, setViewMode] = useState<"code" | "preview">("code"); // View mode state
+	const [viewMode, setViewMode] = useState<"code" | "preview">("preview"); // 默认展示预览
 	const [versions, setVersions] = useState<ArtifactVersion[]>([]);
 	const [selectedVersion, setSelectedVersion] = useState<number | undefined>();
 	const [isUserSelectedVersion, setIsUserSelectedVersion] = useState(false); // Track if user manually selected a version
@@ -77,9 +78,14 @@ export function Artifact({
 	// 检测是否支持预览：基于类型和流式状态
 	const canPreview = useMemo(() => {
 		if (artifact.kind !== "code") return false;
-		// 只有在非流式状态下才能预览
+		// 只有在非流式状态下才能预览（使用 artifact 的状态）
 		return artifact.status !== "streaming";
 	}, [artifact.kind, artifact.status]);
+
+	// 检测是否正在流式传输（综合判断）
+	const isStreaming = useMemo(() => {
+		return artifact.status === "streaming" || status === "streaming";
+	}, [artifact.status, status]);
 
 	useEffect(() => {
 		const updateDimensions = () => {
@@ -132,31 +138,48 @@ export function Artifact({
 		}
 	}, [versions, selectedVersion, isUserSelectedVersion]);
 
+	// Auto-switch to latest version when status becomes ready
+	useEffect(() => {
+		if (
+			status === "ready" &&
+			versions.length > 0 &&
+			versions[0] &&
+			!isUserSelectedVersion
+		) {
+			const latestVersion = versions[0].version;
+			// 当状态变为 ready 时，如果用户没有手动选择版本，则切换到最新版本
+			if (selectedVersion !== latestVersion) {
+				setSelectedVersion(latestVersion);
+			}
+		}
+	}, [status, versions, selectedVersion, isUserSelectedVersion]);
+
 	// Reset version selection state when artifact changes
+	const documentId = artifact.documentId;
+	const prevDocumentIdRef = useRef(documentId);
+
 	useEffect(() => {
 		// When documentId changes, reset user selection state to allow auto-switching
-		setIsUserSelectedVersion(false);
-		setSelectedVersion(undefined);
-	}, [artifact.documentId]);
+		if (prevDocumentIdRef.current !== documentId) {
+			setIsUserSelectedVersion(false);
+			setSelectedVersion(undefined);
+			prevDocumentIdRef.current = documentId;
+		}
+	});
 
-	// 重新设计的逻辑：更清晰的状态判断
-	const isStreaming = artifact.status === "streaming";
-	const hasVersions = versions.length > 0;
-	const hasDocumentId = !!artifact.documentId;
-
-	// 版本切换功能的启用条件：非流式状态 && 有文档 ID（有版本数据是自然结果）
-	const canSwitchVersions = !isStreaming && hasDocumentId;
+	// 版本切换功能的启用条件：只有 ready 状态且有文档 ID
+	const canSwitchVersions = status === "ready" && !!documentId;
 
 	// 获取选中版本的数据
 	const selectedVersionData = useMemo(() => {
-		if (!selectedVersion || !hasVersions) return null;
+		if (!selectedVersion || versions.length === 0) return null;
 		return versions.find((v) => v.version === selectedVersion) || null;
-	}, [selectedVersion, versions, hasVersions]);
+	}, [selectedVersion, versions]);
 
-	// 数据来源选择：简化逻辑
+	// 数据来源选择：基于聊天状态的严格控制
 	const displayData = useMemo(() => {
-		// 1. 如果正在流式传输，优先使用流式数据
-		if (isStreaming) {
+		// 1. streaming 状态：显示流式数据
+		if (status === "streaming") {
 			return {
 				title: artifact.title,
 				status: artifact.status,
@@ -166,26 +189,53 @@ export function Artifact({
 			};
 		}
 
-		// 2. 如果有选中的版本数据，使用版本数据
-		if (selectedVersionData) {
+		// 2. ready 状态：显示版本内容
+		if (status === "ready") {
+			// 优先显示选中的版本数据
+			if (selectedVersionData) {
+				return {
+					title: selectedVersionData.title,
+					status: "idle" as const,
+					kind: selectedVersionData.kind,
+					content: selectedVersionData.content,
+					language: selectedVersionData.language,
+				};
+			}
+			// 后备方案：使用 artifact 数据
 			return {
-				title: selectedVersionData.title,
+				title: artifact.title,
 				status: "idle" as const,
-				kind: selectedVersionData.kind,
-				content: selectedVersionData.content,
-				language: selectedVersionData.language,
+				kind: artifact.kind,
+				content: artifact.content,
+				language: artifact.language,
 			};
 		}
 
-		// 3. 后备方案：使用 artifact 数据
+		// 3. 其他状态（submitted, error）显示加载状态
 		return {
-			title: artifact.title,
-			status: "idle" as const, // 非流式状态下显示为 idle
+			title: artifact.title || "Loading...",
+			status: "idle" as const,
 			kind: artifact.kind,
-			content: artifact.content,
+			content: "", // 不显示内容，由骨架屏处理
 			language: artifact.language,
 		};
-	}, [isStreaming, artifact, selectedVersionData]);
+	}, [status, selectedVersionData, artifact]);
+
+	// 判断是否应该显示骨架屏
+	const shouldShowSkeleton = useMemo(() => {
+		// submitted 状态显示骨架屏
+		return status === "submitted";
+	}, [status]);
+
+	// 根据状态确定实际的视图模式
+	const effectiveViewMode = useMemo(() => {
+		// streaming 状态强制使用代码视图以显示实时内容
+		if (status === "streaming") {
+			return "code";
+		}
+		// 其他状态使用用户选择的视图模式
+		return viewMode;
+	}, [status, viewMode]);
 
 	if (!artifact.isVisible) return null;
 
@@ -336,35 +386,42 @@ export function Artifact({
 									content={displayData.content}
 									onClose={handleClose}
 									isMobile={false}
-									viewMode={viewMode}
-									onViewModeChange={setViewMode}
-									canPreview={canPreview}
-									// 版本控制props：根据canSwitchVersions决定是否传递
+									viewMode={viewMode} // 传递用户选择的视图模式
+									onViewModeChange={
+										status === "ready" ? setViewMode : undefined
+									} // 只有 ready 状态才能切换视图
+									canPreview={canPreview && status === "ready"} // 只有 ready 状态才能预览
+									// 版本控制props：只有 ready 状态才传递
 									versions={canSwitchVersions ? versions : undefined}
 									currentVersion={
 										canSwitchVersions ? selectedVersion : undefined
 									}
 									onVersionChange={handleVersionChange}
-									documentId={artifact.documentId}
+									documentId={documentId}
 								/>
 
 								{/* Artifact 内容区域 */}
 								<div className="flex-1 overflow-hidden">
-									<ArtifactContent
-										// Always pass streaming props for real-time updates
-										kind={artifact.kind}
-										content={artifact.content}
-										status={artifact.status}
-										title={artifact.title}
-										language={artifact.language}
-										viewMode={viewMode}
-										// Database mode props (for version control)
-										{...(artifact.documentId && {
-											documentId: artifact.documentId,
-											onVersionsLoaded: handleVersionsLoaded,
-											selectedVersion: selectedVersion,
-										})}
-									/>
+									{shouldShowSkeleton ? (
+										<ArtifactSkeleton />
+									) : (
+										<ArtifactContent
+											// 根据状态传递不同的数据
+											kind={displayData.kind}
+											content={displayData.content}
+											status={displayData.status}
+											title={displayData.title}
+											language={displayData.language}
+											viewMode={effectiveViewMode} // 使用根据状态调整的视图模式
+											// Database mode props (只有 ready 状态才启用版本控制)
+											{...(status === "ready" &&
+												documentId && {
+													documentId: documentId,
+													onVersionsLoaded: handleVersionsLoaded,
+													selectedVersion: selectedVersion,
+												})}
+										/>
+									)}
 								</div>
 							</motion.div>
 						</ResizablePanel>
@@ -417,32 +474,37 @@ export function Artifact({
 							showChatButton={true}
 							isMobile={true}
 							viewMode={viewMode}
-							onViewModeChange={setViewMode}
-							canPreview={canPreview}
-							// 版本控制 props：根据 canSwitchVersions 决定是否传递
+							onViewModeChange={status === "ready" ? setViewMode : undefined} // 只有 ready 状态才能切换视图
+							canPreview={canPreview && status === "ready"} // 只有 ready 状态才能预览
+							// 版本控制 props：只有 ready 状态才传递
 							versions={canSwitchVersions ? versions : undefined}
 							currentVersion={canSwitchVersions ? selectedVersion : undefined}
 							onVersionChange={handleVersionChange}
-							documentId={artifact.documentId}
+							documentId={documentId}
 						/>
 
 						{/* Artifact 内容区域 */}
 						<div className="flex-1 overflow-hidden">
-							<ArtifactContent
-								// Always pass streaming props for real-time updates
-								kind={artifact.kind}
-								content={artifact.content}
-								status={artifact.status}
-								title={artifact.title}
-								language={artifact.language}
-								viewMode={viewMode}
-								// Database mode props (for version control)
-								{...(artifact.documentId && {
-									documentId: artifact.documentId,
-									onVersionsLoaded: handleVersionsLoaded,
-									selectedVersion: selectedVersion,
-								})}
-							/>
+							{shouldShowSkeleton ? (
+								<ArtifactSkeleton />
+							) : (
+								<ArtifactContent
+									// 根据状态传递不同的数据
+									kind={displayData.kind}
+									content={displayData.content}
+									status={displayData.status}
+									title={displayData.title}
+									language={displayData.language}
+									viewMode={effectiveViewMode} // 使用根据状态调整的视图模式
+									// Database mode props (只有 ready 状态才启用版本控制)
+									{...(status === "ready" &&
+										documentId && {
+											documentId: documentId,
+											onVersionsLoaded: handleVersionsLoaded,
+											selectedVersion: selectedVersion,
+										})}
+								/>
+							)}
 						</div>
 					</motion.div>
 				)}
