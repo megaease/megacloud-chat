@@ -198,7 +198,10 @@
     "current": "当前",
     "latest": "最新",
     "fullscreenMode": "全屏",
-    "exitFullscreenMode": "退出全屏"
+    "exitFullscreenMode": "退出全屏",
+    "singleDocumentPolicy": "此聊天采用单文档策略",
+    "documentUpdated": "文档已更新到新版本",
+    "documentCreated": "文档已创建"
   },
   "Error": {
     "notFound": "页面未找到",

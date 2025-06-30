@@ -198,7 +198,10 @@
     "current": "Current",
     "latest": "Latest",
     "fullscreenMode": "Fullscreen",
-    "exitFullscreenMode": "Exit Fullscreen"
+    "exitFullscreenMode": "Exit Fullscreen",
+    "singleDocumentPolicy": "This chat uses single document policy",
+    "documentUpdated": "Document has been updated to new version",
+    "documentCreated": "Document has been created"
   },
   "Error": {
     "notFound": "Page not found",
