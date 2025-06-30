@@ -21,13 +21,6 @@ export function TextArtifact({
 }: TextArtifactProps) {
 	const [viewMode, setViewMode] = useState<"rendered" | "raw">("rendered");
 
-	// Debug logging for streaming
-	console.log("TextArtifact render:", {
-		contentLength: content.length,
-		status,
-		contentPreview: content.substring(0, 50),
-	});
-
 	const renderContent = () => {
 		if (viewMode === "rendered") {
 			return (

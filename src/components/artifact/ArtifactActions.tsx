@@ -82,7 +82,7 @@ export function ArtifactActions({
 }: ArtifactActionsProps) {
 	const tCommon = useTranslations("Common");
 	const tArtifact = useTranslations("Artifact");
-
+	console.log("ArtifactActions rendered with:", currentVersion);
 	const handleDownload = () => {
 		const fileExtension = getFileExtension(kind);
 		const filename = `${title || "artifact"}.${fileExtension}`;

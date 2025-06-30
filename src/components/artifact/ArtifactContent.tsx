@@ -80,20 +80,22 @@ export function ArtifactContent({
 	const [currentVersionData, setCurrentVersionData] =
 		useState<ArtifactVersion | null>(null);
 
-	// Determine which data to use - prioritize streaming content over database content
-	const isStreaming = status === "streaming";
-	const hasStreamingContent = isStreaming && (content || title);
+	// 严格的数据源判断逻辑：
+	// - streaming/loading 状态：使用 artifact 流式内容
+	// - success 状态：使用数据库最新版本
+	const isStreamingOrLoading = status === "streaming";
+	const shouldUseStreamingContent = isStreamingOrLoading;
 
 	// Fetch all versions when documentId is provided
-	// Only disable during active streaming to avoid conflicts
+	// 只有在非 streaming 状态下才启用数据库查询
 	const {
 		data: versions,
-		isLoading: loading,
-		error,
+		isLoading: versionsLoading,
+		error: versionsError,
 	} = useQuery({
 		queryKey: ["artifact-versions", documentId],
 		queryFn: () => fetchArtifactVersions(documentId as string),
-		enabled: !!documentId && status !== "streaming", // Only disable during active streaming
+		enabled: !!documentId && !isStreamingOrLoading, // 只有在非 streaming 状态下才查询
 		staleTime: 1000 * 60 * 5,
 		gcTime: 1000 * 60 * 10,
 		retry: 3,
@@ -102,14 +104,9 @@ export function ArtifactContent({
 	// Notify parent component when versions are loaded
 	useEffect(() => {
 		if (versions && onVersionsLoaded) {
-			console.log("ArtifactContent: Versions loaded/updated", {
-				count: versions.length,
-				latestVersion: versions[0]?.version,
-				documentId,
-			});
 			onVersionsLoaded(versions);
 		}
-	}, [versions, onVersionsLoaded, documentId]);
+	}, [versions, onVersionsLoaded]);
 
 	// Update current version data when selectedVersion changes
 	useEffect(() => {
@@ -125,38 +122,35 @@ export function ArtifactContent({
 	// 版本切换不应该修改全局 artifact 状态
 	// 版本数据仅用于在当前组件中展示选中的版本内容
 
-	console.log("ArtifactContent render:", {
-		status,
-		isStreaming,
-		hasStreamingContent,
-		content: content?.substring(0, 50),
-		title,
-		currentVersionData: currentVersionData?.title,
-		selectedVersion,
-	});
-
-	// 数据优先级：
-	// 1. 流式内容（正在更新时）
-	// 2. 选中的版本数据（用户切换版本时）
-	// 3. 传入的 props 数据（后备方案）
-	const displayData = hasStreamingContent
+	// 数据优先级逻辑：
+	// 1. 如果是 streaming/loading 状态：使用传入的 artifact props（流式内容）
+	// 2. 如果是 success 状态：使用数据库版本内容（选中版本或最新版本）
+	const displayData = shouldUseStreamingContent
 		? {
 				kind: kind || "text",
 				content: content || "",
 				title: title || "Untitled",
-				language: language, // Use language from streaming props
+				language: language, // 使用流式 props 中的 language
 			}
-		: currentVersionData || {
-				kind: kind || "text",
-				content: content || "",
-				title: title || "Untitled",
-				language: language,
-			};
+		: currentVersionData
+			? {
+					kind: currentVersionData.kind,
+					content: currentVersionData.content,
+					title: currentVersionData.title,
+					language: currentVersionData.language, // 使用版本数据中的 language
+				}
+			: {
+					// 后备方案：使用传入的 props
+					kind: kind || "text",
+					content: content || "",
+					title: title || "Untitled",
+					language: language,
+				};
 
 	const displayStatus = status || "idle";
 
-	// Loading state
-	if (loading) {
+	// Loading state - 只有在查询版本数据时才显示加载状态
+	if (versionsLoading && !shouldUseStreamingContent) {
 		return (
 			<div className="h-full flex items-center justify-center">
 				<div className="text-muted-foreground">Loading artifact...</div>
@@ -164,11 +158,11 @@ export function ArtifactContent({
 		);
 	}
 
-	// Error state
-	if (error) {
+	// Error state - 只有在查询版本数据失败时才显示错误状态
+	if (versionsError && !shouldUseStreamingContent) {
 		return (
 			<div className="h-full flex items-center justify-center">
-				<div className="text-destructive">Error: {error.message}</div>
+				<div className="text-destructive">Error: {versionsError.message}</div>
 			</div>
 		);
 	}

@@ -61,7 +61,6 @@ function renderMessagePart(
 			return <Markdown key={key} content={part.text} />;
 
 		case "tool-invocation":
-			console.log("Rendering tool-invocation part:", part);
 			return (
 				<ToolInvocationPart
 					key={key}
@@ -145,7 +144,6 @@ export function ChatMessage({
 	const renderContent = () => {
 		// If message has parts array
 		if (message.parts && Array.isArray(message.parts)) {
-			console.log("Message parts:", message.parts);
 			// Filter out parts that would render as null (like step-start)
 			const validParts = message.parts.map((part, index) => {
 				const convertedPart = part as MessagePart;

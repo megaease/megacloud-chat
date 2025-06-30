@@ -72,6 +72,7 @@ export function Artifact({
 	const [viewMode, setViewMode] = useState<"code" | "preview">("code"); // View mode state
 	const [versions, setVersions] = useState<ArtifactVersion[]>([]);
 	const [selectedVersion, setSelectedVersion] = useState<number | undefined>();
+	const [isUserSelectedVersion, setIsUserSelectedVersion] = useState(false); // Track if user manually selected a version
 
 	// 检测是否支持预览：基于类型和流式状态
 	const canPreview = useMemo(() => {
@@ -101,27 +102,42 @@ export function Artifact({
 
 	const handleVersionsLoaded = (loadedVersions: ArtifactVersion[]) => {
 		setVersions(loadedVersions);
-		// Set current version if not already set
-		if (!selectedVersion && loadedVersions.length > 0 && loadedVersions[0]) {
+		// Set current version only if not already set AND user hasn't manually selected a version
+		if (
+			!selectedVersion &&
+			!isUserSelectedVersion &&
+			loadedVersions.length > 0 &&
+			loadedVersions[0]
+		) {
 			setSelectedVersion(loadedVersions[0].version);
 		}
 	};
 
 	const handleVersionChange = (version: number) => {
 		setSelectedVersion(version);
+		setIsUserSelectedVersion(true); // Mark as user-selected
 	};
 
 	// Auto-switch to latest version when versions are loaded/refreshed
+	// Only auto-switch if no version has been manually selected by user
 	useEffect(() => {
 		if (versions.length > 0 && versions[0]) {
 			const latestVersion = versions[0].version;
-			// Only switch if we don't have a selected version or if the latest version is newer
-			if (!selectedVersion || latestVersion > selectedVersion) {
-				console.log(`Switching to latest version: ${latestVersion}`);
+			// Only switch if:
+			// 1. We don't have a selected version yet (initial load)
+			// 2. User has NOT manually selected a version
+			if (!selectedVersion && !isUserSelectedVersion) {
 				setSelectedVersion(latestVersion);
 			}
 		}
-	}, [versions, selectedVersion]);
+	}, [versions, selectedVersion, isUserSelectedVersion]);
+
+	// Reset version selection state when artifact changes
+	useEffect(() => {
+		// When documentId changes, reset user selection state to allow auto-switching
+		setIsUserSelectedVersion(false);
+		setSelectedVersion(undefined);
+	}, [artifact.documentId]);
 
 	// 重新设计的逻辑：更清晰的状态判断
 	const isStreaming = artifact.status === "streaming";
@@ -328,9 +344,7 @@ export function Artifact({
 									currentVersion={
 										canSwitchVersions ? selectedVersion : undefined
 									}
-									onVersionChange={
-										canSwitchVersions ? handleVersionChange : undefined
-									}
+									onVersionChange={handleVersionChange}
 									documentId={artifact.documentId}
 								/>
 
@@ -408,9 +422,7 @@ export function Artifact({
 							// 版本控制 props：根据 canSwitchVersions 决定是否传递
 							versions={canSwitchVersions ? versions : undefined}
 							currentVersion={canSwitchVersions ? selectedVersion : undefined}
-							onVersionChange={
-								canSwitchVersions ? handleVersionChange : undefined
-							}
+							onVersionChange={handleVersionChange}
 							documentId={artifact.documentId}
 						/>
 

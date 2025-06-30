@@ -161,17 +161,6 @@ export function CompactToolInvocation({
 			? "Updating Document..."
 			: "Creating Document...";
 
-		// Debug logging
-		console.log("CompactToolInvocation Debug:", {
-			toolName: toolState.toolName,
-			status,
-			state: toolState.state,
-			args,
-			isUpdate,
-			executingTitle,
-			argsTitle: args.title,
-		});
-
 		// 从工具结果中获取标题（如果可用）
 		const getResultTitle = () => {
 			if (part?.toolInvocation?.result) {
