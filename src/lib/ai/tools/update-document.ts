@@ -9,7 +9,7 @@ export function updateDocumentTool(
 	userId?: string,
 ) {
 	return tool({
-		description: "Update an existing document artifact",
+		description: "Update an existing document artifact when user explicitly requests changes to an existing document. Only use when user clearly wants to modify, edit, or update specific content in an existing artifact.",
 		parameters: z.object({
 			documentId: z.string().describe("ID of the document to update"),
 			title: z.string().optional().describe("New title of the document"),

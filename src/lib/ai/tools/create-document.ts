@@ -16,10 +16,10 @@ export function createDocumentTool(
 ) {
 	return tool({
 		description:
-			"Create a new document artifact or update existing one in the current chat",
+			"Create a new document artifact when user explicitly requests substantial content creation (code, HTML, documents, etc.). Only use when user clearly wants to create, write, build, or generate specific content that is substantial and reusable. Do not use for simple conversations, single words, or brief responses.",
 		parameters: z.object({
-			title: z.string().describe("Title of the document"),
-			content: z.string().describe("Content of the document"),
+			title: z.string().min(3).describe("Descriptive title of the document (minimum 3 characters)"),
+			content: z.string().min(10).describe("Substantial content of the document (minimum 10 characters)"),
 			kind: z
 				.enum(["text", "code", "sheet", "image"])
 				.describe("Type of document"),
@@ -34,6 +34,27 @@ export function createDocumentTool(
 				.describe("Force create new document even if one exists in this chat"),
 		}),
 		execute: async ({ title, content, kind, language, forceNew }) => {
+			// Additional validation to prevent accidental triggers
+			if (!title || title.trim().length < 3) {
+				throw new Error("Title must be at least 3 characters long");
+			}
+			if (!content || content.trim().length < 10) {
+				throw new Error("Content must be at least 10 characters long");
+			}
+			
+			// Check for obvious non-content patterns
+			const trimmedContent = content.trim();
+			const trimmedTitle = title.trim();
+			
+			// Prevent creation for single words/numbers/characters
+			if (/^[0-9]+$/.test(trimmedContent) || /^[a-zA-Z]+$/.test(trimmedContent) && trimmedContent.length < 5) {
+				throw new Error("Content appears to be too simple for document creation");
+			}
+			
+			if (/^[0-9]+$/.test(trimmedTitle) || /^[a-zA-Z]+$/.test(trimmedTitle) && trimmedTitle.length < 5) {
+				throw new Error("Title appears to be too simple for document creation");
+			}
+
 			let shouldCreateNew = true;
 			let existingDocumentId: string | null = null;
 
