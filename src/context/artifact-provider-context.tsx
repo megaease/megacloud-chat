@@ -8,6 +8,7 @@ import {
 	useCallback,
 	type ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type {
 	UIArtifact,
 	ArtifactKind,
@@ -23,7 +24,6 @@ interface ArtifactContextType {
 	) => void;
 
 	// 版本管理
-	loadVersions: (documentId: string) => Promise<ArtifactVersion[]>;
 	switchToVersion: (version: ArtifactVersion) => void;
 	loadAndShowArtifact: (
 		documentId: string,
@@ -69,38 +69,48 @@ const defaultArtifact: UIArtifact = {
 
 export function ArtifactProvider({ children }: { children: ReactNode }) {
 	const [artifact, setArtifact] = useState<UIArtifact>(defaultArtifact);
+	const queryClient = useQueryClient();
 
-	// 加载版本列表
-	const loadVersions = useCallback(
-		async (
-			documentId: string,
-			forceRefresh = false,
-		): Promise<ArtifactVersion[]> => {
+	// 获取版本数据的辅助函数，使用 React Query 的缓存
+	const getVersionsFromCache = useCallback(
+		async (documentId: string, forceRefresh = false): Promise<ArtifactVersion[]> => {
 			try {
-				// 添加时间戳或其他参数来强制刷新
-				const url = new URL(
-					`/api/artifacts/${documentId}`,
-					window.location.origin,
-				);
-				url.searchParams.set("versions", "true");
-				url.searchParams.set("userId", "user-id");
-
+				// 如果需要强制刷新，先清除缓存
 				if (forceRefresh) {
-					url.searchParams.set("_t", Date.now().toString()); // 防止缓存
+					await queryClient.invalidateQueries({
+						queryKey: ["artifact-versions", documentId],
+					});
 				}
 
-				const response = await fetch(url.toString());
-				if (!response.ok) {
-					throw new Error(`Failed to fetch versions: ${response.status}`);
-				}
-				const data = await response.json();
-				return data.versions || [];
+				// 尝试从缓存获取，如果没有则发起请求
+				const versions = await queryClient.fetchQuery({
+					queryKey: ["artifact-versions", documentId],
+					queryFn: async () => {
+						const url = new URL(
+							`/api/artifacts/${documentId}`,
+							window.location.origin,
+						);
+						url.searchParams.set("versions", "true");
+						url.searchParams.set("userId", "user-id");
+
+						const response = await fetch(url.toString());
+						if (!response.ok) {
+							throw new Error(`Failed to fetch versions: ${response.status}`);
+						}
+						const data = await response.json();
+						return data.versions || [];
+					},
+					staleTime: 5 * 60 * 1000, // 5 minutes
+					gcTime: 10 * 60 * 1000, // 10 minutes
+				});
+
+				return versions;
 			} catch (error) {
 				console.error("❌ Failed to load versions:", error);
 				return [];
 			}
 		},
-		[],
+		[queryClient],
 	);
 
 	// 加载版本并显示指定版本（可选）
@@ -130,14 +140,14 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 
 				// 加载版本数据，如果没有指定版本则强制刷新获取最新数据
 				const forceRefresh = versionNumber === undefined;
-				const versions = await loadVersions(documentId, forceRefresh);
+				const versions = await getVersionsFromCache(documentId, forceRefresh);
 
 				let targetVersion = versions[0]; // 默认使用最新版本
 
 				// 如果指定了版本号，尝试找到对应版本
 				if (versionNumber !== undefined) {
 					const foundVersion = versions.find(
-						(v) => v.version === versionNumber,
+						(v: ArtifactVersion) => v.version === versionNumber,
 					);
 					if (foundVersion) {
 						targetVersion = foundVersion;
@@ -169,7 +179,7 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 				}));
 			}
 		},
-		[loadVersions],
+		[getVersionsFromCache],
 	);
 
 	// 切换到指定版本
@@ -261,7 +271,6 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 		artifact,
 		setArtifact,
 		loadAndShowArtifact,
-		loadVersions,
 		switchToVersion,
 		updateStreamingContent,
 		clearStreamingContent,
