@@ -202,7 +202,13 @@
     "exitFullscreenMode": "Exit Fullscreen",
     "singleDocumentPolicy": "This chat uses single document policy",
     "documentUpdated": "Document has been updated to new version",
-    "documentCreated": "Document has been created"
+    "documentCreated": "Document has been created",
+    "documentType": "Document",
+    "codeType": "Code",
+    "sheetType": "Sheet",
+    "imageType": "Image",
+    "generatingType": "Generating {type}...",
+    "newType": "New {type}"
   },
   "Error": {
     "notFound": "Page not found",

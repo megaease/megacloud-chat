@@ -331,9 +331,11 @@ export function ArtifactActions({
 							</DropdownMenuContent>
 						</DropdownMenu>
 					) : (
-						<h3 className="font-semibold text-lg truncate max-w-[200px] md:max-w-[300px] text-foreground/90">
-							{title}
-						</h3>
+						<div className="relative h-9 px-4 font-medium rounded-xl bg-white/80 dark:bg-black/40 backdrop-blur border border-gray-200 border-solid dark:border-white/20 flex items-center">
+							<span className="text-sm font-medium text-foreground truncate max-w-[160px] md:max-w-[220px]">
+								{title}
+							</span>
+						</div>
 					)}
 
 					{/* 精致状态指示器 */}

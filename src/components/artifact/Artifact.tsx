@@ -17,6 +17,7 @@ import { X, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { ArtifactChat } from "./ArtifactChat";
 import type { Message } from "@ai-sdk/react";
 import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
+import { useTranslations } from "next-intl";
 
 interface ArtifactVersion {
 	id: string;
@@ -26,6 +27,21 @@ interface ArtifactVersion {
 	kind: ArtifactKind;
 	language?: ArtifactLanguage;
 	updatedAt: string;
+}
+
+// 根据文档类型生成简洁的默认标题（不包含状态信息）
+function getDefaultTitle(kind: ArtifactKind, t: any): string {
+	const kindTitles = {
+		text: t("documentType"),
+		code: t("codeType"),
+		sheet: t("sheetType"),
+		image: t("imageType"),
+	};
+
+	const baseTitle = kindTitles[kind] || t("documentType");
+
+	// 不再在标题中包含状态信息，状态由右边的指示器显示
+	return t("newType", { type: baseTitle });
 }
 
 interface ArtifactProps {
@@ -64,6 +80,7 @@ export function Artifact({
 	toggleMcpEnabled,
 }: ArtifactProps) {
 	const { artifact, setArtifact } = useArtifact();
+	const tArtifact = useTranslations("Artifact");
 	const [windowDimensions, setWindowDimensions] = useState({
 		width: 0,
 		height: 0,
@@ -174,7 +191,7 @@ export function Artifact({
 		// 1. streaming 状态：显示流式数据
 		if (status === "streaming") {
 			return {
-				title: artifact.title,
+				title: artifact.title || getDefaultTitle(artifact.kind, tArtifact),
 				status: "streaming" as const, // 使用外部传入的状态
 				kind: artifact.kind,
 				content: artifact.content,
@@ -197,7 +214,7 @@ export function Artifact({
 			// 后备方案：如果版本数据还没准备好，继续使用流式数据避免闪烁
 			// 但标记状态为 idle，这样不会显示流式指示器
 			return {
-				title: artifact.title,
+				title: artifact.title || getDefaultTitle(artifact.kind, tArtifact),
 				status: "idle" as const,
 				kind: artifact.kind,
 				content: artifact.content,
@@ -206,14 +223,21 @@ export function Artifact({
 		}
 
 		// 3. 其他状态（submitted, error）显示准备状态
+		// 对于 update 场景，优先使用已有的版本标题，避免显示默认标题
+		const fallbackTitle =
+			selectedVersionData?.title ||
+			(versions.length > 0 ? versions[0]?.title : undefined) ||
+			artifact.title ||
+			getDefaultTitle(artifact.kind, tArtifact);
+
 		return {
-			title: artifact.title || "New Artifact",
+			title: fallbackTitle,
 			status: status as "submitted" | "error", // 使用外部传入的状态
 			kind: artifact.kind,
 			content: "", // 不显示内容，由骨架屏处理
 			language: artifact.language,
 		};
-	}, [status, selectedVersionData, artifact]);
+	}, [status, selectedVersionData, artifact, tArtifact, versions]);
 
 	// 检测是否支持预览：基于当前显示数据的类型和状态
 	const canPreview = useMemo(() => {

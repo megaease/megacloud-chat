@@ -202,7 +202,13 @@
     "exitFullscreenMode": "退出全屏",
     "singleDocumentPolicy": "此聊天采用单文档策略",
     "documentUpdated": "文档已更新到新版本",
-    "documentCreated": "文档已创建"
+    "documentCreated": "文档已创建",
+    "documentType": "文档",
+    "codeType": "代码",
+    "sheetType": "表格",
+    "imageType": "图片",
+    "generatingType": "正在生成{type}...",
+    "newType": "新{type}"
   },
   "Error": {
     "notFound": "页面未找到",
