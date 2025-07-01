@@ -26,20 +26,12 @@ import {
 } from "lucide-react";
 import { CopyButton } from "../copy-button";
 import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
-
-interface ArtifactVersion {
-	id: string;
-	version: number;
-	title: string;
-	content: string;
-	kind: ArtifactKind;
-	language?: ArtifactLanguage;
-	updatedAt: string;
-}
+import { useArtifact } from "@/context/artifact-provider-context";
+import { useArtifactVersions } from "@/hooks/use-artifact-versions";
 
 interface ArtifactActionsProps {
 	title: string;
-	status: "streaming" | "idle" | "error" | "submitted";
+	status: "streaming" | "idle" | "error" | "submitted" | "loading";
 	kind: ArtifactKind;
 	content: string;
 	onClose: () => void;
@@ -49,15 +41,10 @@ interface ArtifactActionsProps {
 	showChatButton?: boolean;
 	isFullscreen?: boolean;
 	isMobile?: boolean;
-	// 新增预览相关的 props
+	// 预览相关的 props
 	viewMode?: "code" | "preview";
 	onViewModeChange?: (mode: "code" | "preview") => void;
 	canPreview?: boolean;
-	// 新增版本相关的 props
-	versions?: ArtifactVersion[];
-	currentVersion?: number;
-	onVersionChange?: (version: number) => void;
-	documentId?: string;
 }
 
 export function ArtifactActions({
@@ -75,14 +62,38 @@ export function ArtifactActions({
 	viewMode = "code",
 	onViewModeChange,
 	canPreview = false,
-	versions,
-	currentVersion,
-	onVersionChange,
-	documentId,
 }: ArtifactActionsProps) {
+	const { artifact, switchToVersion } = useArtifact();
 	const tCommon = useTranslations("Common");
 	const tArtifact = useTranslations("Artifact");
-	console.log("ArtifactActions rendered with:", currentVersion);
+	
+	// 获取版本数据，hook 内部已经处理了 documentId 的有效性检查
+	const {
+		data: versions = [],
+		isLoading: versionsLoading,
+		error: versionsError,
+	} = useArtifactVersions(artifact.documentId);
+	
+	// 通过内容匹配找到当前显示的版本
+	const currentVersion = versions.find(v => 
+		v.content === artifact.content && v.title === artifact.title
+	);
+	
+	// 显示的当前版本号
+	const displayCurrentVersion = currentVersion?.version ?? versions?.[0]?.version;
+	// 使用 context 中的 title，如果为空则回退到 props 中的 title
+	const displayTitle = artifact.title || title;
+	
+	// 版本切换处理
+	const handleVersionChange = (version: number) => {
+		const versionData = versions.find((v) => v.version === version);
+		if (versionData) {
+			switchToVersion(versionData);
+		}
+	};
+	
+	// 版本切换功能的启用条件：检查 artifact 状态而不是 props 状态
+	const canSwitchVersions = artifact.status !== "streaming" && !!artifact.documentId;
 	const handleDownload = () => {
 		const fileExtension = getFileExtension(kind);
 		const filename = `${title || "artifact"}.${fileExtension}`;
@@ -151,10 +162,9 @@ export function ArtifactActions({
 
 				<div className="flex items-center gap-4">
 					{/* 版本下拉菜单 - 只在非流式状态下显示 */}
-					{versions &&
-					versions.length > 0 &&
-					onVersionChange &&
-					status !== "streaming" ? (
+					{canSwitchVersions &&
+					versions &&
+					versions.length > 0 ? (
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<div className="group relative">
@@ -167,7 +177,7 @@ export function ArtifactActions({
 										{/* 内容区域 */}
 										<div className="flex items-center gap-3">
 											<span className="text-sm font-medium text-foreground truncate max-w-[160px] md:max-w-[220px]">
-												{title}
+												{displayTitle}
 											</span>
 
 											{/* 分隔线 */}
@@ -176,7 +186,7 @@ export function ArtifactActions({
 											{/* 简洁版本徽章 */}
 											<div className="flex items-center gap-2">
 												<div className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
-													v{currentVersion || versions[0]?.version || 1}
+													v{displayCurrentVersion ?? 'N/A'}
 												</div>
 												<ChevronDown className="w-4 h-4 text-muted-foreground" />
 											</div>
@@ -226,17 +236,14 @@ export function ArtifactActions({
 									<div className="p-5 max-h-80 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300/50">
 										<div className="space-y-2">
 											{versions.map((version, index) => {
-												const isCurrentVersion =
-													currentVersion === version.version;
+												const isCurrentVersion = currentVersion?.version === version.version;
 												const isLatestVersion = index === 0;
 
 												return (
 													<DropdownMenuItem
 														key={version.version}
 														onClick={() => {
-															if (onVersionChange) {
-																onVersionChange(version.version);
-															}
+															handleVersionChange(version.version);
 														}}
 														className="p-0 focus:bg-transparent"
 													>
@@ -347,7 +354,9 @@ export function ArtifactActions({
 									className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
 										status === "streaming" || status === "submitted"
 											? "bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse"
-											: "bg-gradient-to-r from-emerald-500 to-teal-500"
+											: status === "loading"
+												? "bg-gradient-to-r from-orange-500 to-yellow-500 animate-pulse"
+												: "bg-gradient-to-r from-emerald-500 to-teal-500"
 									}`}
 								/>
 
@@ -357,15 +366,19 @@ export function ArtifactActions({
 										? tArtifact("preparing")
 										: status === "streaming"
 											? tArtifact("generating")
-											: status === "idle"
-												? tArtifact("completed")
-												: status === "error"
-													? tArtifact("error")
-													: tArtifact("completed")}
+											: status === "loading"
+												? tArtifact("loading")
+												: status === "idle"
+													? tArtifact("completed")
+													: status === "error"
+														? tArtifact("error")
+														: tArtifact("completed")}
 								</p>
 
 								{/* 流式生成动画点 */}
-								{(status === "streaming" || status === "submitted") && (
+								{(status === "streaming" ||
+									status === "submitted" ||
+									status === "loading") && (
 									<div className="flex items-center gap-1 ml-1">
 										<div className="animate-pulse w-1.5 h-1.5 bg-blue-500 rounded-full" />
 										<div className="animate-pulse w-1.5 h-1.5 bg-purple-500 rounded-full animation-delay-100" />
@@ -421,12 +434,12 @@ export function ArtifactActions({
 							variant="ghost"
 							size="sm"
 							onClick={onRefresh}
-							disabled={status === "streaming"}
+							disabled={status === "streaming" || status === "loading"}
 							className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-green-50 dark:hover:bg-green-950/50 hover:border-green-200 dark:hover:border-green-800/50 hover:text-green-600 dark:hover:text-green-400 transition-all duration-200 group disabled:opacity-50 disabled:hover:bg-white/60 dark:disabled:hover:bg-black/20"
 							title={tArtifact("regenerate")}
 						>
 							<RefreshCw
-								className={`h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110 ${status === "streaming" ? "animate-spin" : ""}`}
+								className={`h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110 ${status === "streaming" || status === "loading" ? "animate-spin" : ""}`}
 							/>
 							{!isMobile && (
 								<span className="ml-2 text-xs font-medium">

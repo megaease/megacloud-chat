@@ -6,17 +6,13 @@ export interface UIArtifact {
 	language?: ArtifactLanguage; // Language for code artifacts
 	content: string;
 	isVisible: boolean;
-	status: "streaming" | "idle" | "error";
+	status: "streaming" | "idle" | "error" | "loading";
 	boundingBox: {
 		top: number;
 		left: number;
 		width: number;
 		height: number;
 	};
-	// 新增字段用于数据来源控制
-	dataSource: "stream" | "database" | "version";
-	isStreaming: boolean;
-	streamingProgress?: number;
 }
 
 export type ArtifactKind = "text" | "code" | "sheet" | "image";

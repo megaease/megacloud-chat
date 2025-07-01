@@ -1,7 +1,7 @@
 // components/artifact/Artifact.tsx
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { ArtifactContent } from "./ArtifactContent";
@@ -19,18 +19,11 @@ import type { Message } from "@ai-sdk/react";
 import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
 import { useTranslations } from "next-intl";
 
-interface ArtifactVersion {
-	id: string;
-	version: number;
-	title: string;
-	content: string;
-	kind: ArtifactKind;
-	language?: ArtifactLanguage;
-	updatedAt: string;
-}
-
 // 根据文档类型生成简洁的默认标题（不包含状态信息）
-function getDefaultTitle(kind: ArtifactKind, t: any): string {
+function getDefaultTitle(
+	kind: ArtifactKind,
+	t: ReturnType<typeof useTranslations>,
+): string {
 	const kindTitles = {
 		text: t("documentType"),
 		code: t("codeType"),
@@ -79,23 +72,16 @@ export function Artifact({
 	mcpEnabled,
 	toggleMcpEnabled,
 }: ArtifactProps) {
-	const { artifact, setArtifact } = useArtifact();
+	const { artifact, hideArtifact } = useArtifact();
 	const tArtifact = useTranslations("Artifact");
+	
 	const [windowDimensions, setWindowDimensions] = useState({
 		width: 0,
 		height: 0,
 	});
 	const [isMobile, setIsMobile] = useState(false);
-	const [showChat, setShowChat] = useState(false); // Mobile chat display state
-	const [viewMode, setViewMode] = useState<"code" | "preview">("preview"); // 默认展示预览
-	const [versions, setVersions] = useState<ArtifactVersion[]>([]);
-	const [selectedVersion, setSelectedVersion] = useState<number | undefined>();
-	const [isUserSelectedVersion, setIsUserSelectedVersion] = useState(false); // Track if user manually selected a version
-
-	// 检测是否正在流式传输（综合判断）
-	const isStreaming = useMemo(() => {
-		return artifact.status === "streaming" || status === "streaming";
-	}, [artifact.status, status]);
+	const [showChat, setShowChat] = useState(false);
+	const [viewMode, setViewMode] = useState<"code" | "preview">("preview");
 
 	useEffect(() => {
 		const updateDimensions = () => {
@@ -112,166 +98,64 @@ export function Artifact({
 	}, []);
 
 	const handleClose = () => {
-		setArtifact((prev) => ({ ...prev, isVisible: false }));
+		hideArtifact();
 		onClose?.();
 	};
 
-	const handleVersionsLoaded = (loadedVersions: ArtifactVersion[]) => {
-		setVersions(loadedVersions);
-		// Set current version only if not already set AND user hasn't manually selected a version
-		if (
-			!selectedVersion &&
-			!isUserSelectedVersion &&
-			loadedVersions.length > 0 &&
-			loadedVersions[0]
-		) {
-			setSelectedVersion(loadedVersions[0].version);
-		}
+	// 简化的显示数据：直接使用 artifact context 中的数据
+	const displayData = {
+		title: artifact.title || getDefaultTitle(artifact.kind, tArtifact),
+		status: artifact.status,
+		kind: artifact.kind,
+		content: artifact.content,
+		language: artifact.language,
 	};
 
-	const handleVersionChange = (version: number) => {
-		setSelectedVersion(version);
-		setIsUserSelectedVersion(true); // Mark as user-selected
-	};
-
-	// Auto-switch to latest version when versions are loaded/refreshed
-	// Only auto-switch if no version has been manually selected by user
-	useEffect(() => {
-		if (versions.length > 0 && versions[0]) {
-			const latestVersion = versions[0].version;
-			// Only switch if:
-			// 1. We don't have a selected version yet (initial load)
-			// 2. User has NOT manually selected a version
-			if (!selectedVersion && !isUserSelectedVersion) {
-				setSelectedVersion(latestVersion);
-			}
-		}
-	}, [versions, selectedVersion, isUserSelectedVersion]);
-
-	// Auto-switch to latest version when status becomes ready
-	useEffect(() => {
-		if (
-			status === "ready" &&
-			versions.length > 0 &&
-			versions[0] &&
-			!isUserSelectedVersion
-		) {
-			const latestVersion = versions[0].version;
-			// 当状态变为 ready 时，如果用户没有手动选择版本，则切换到最新版本
-			if (selectedVersion !== latestVersion) {
-				setSelectedVersion(latestVersion);
-			}
-		}
-	}, [status, versions, selectedVersion, isUserSelectedVersion]);
-
-	// Reset version selection state when artifact changes
-	const documentId = artifact.documentId;
-	const prevDocumentIdRef = useRef(documentId);
-
-	useEffect(() => {
-		// When documentId changes, reset user selection state to allow auto-switching
-		if (prevDocumentIdRef.current !== documentId) {
-			setIsUserSelectedVersion(false);
-			setSelectedVersion(undefined);
-			prevDocumentIdRef.current = documentId;
-		}
-	});
-
-	// 版本切换功能的启用条件：只有 ready 状态且有文档 ID
-	const canSwitchVersions = status === "ready" && !!documentId;
-
-	// 获取选中版本的数据
-	const selectedVersionData = useMemo(() => {
-		if (!selectedVersion || versions.length === 0) return null;
-		return versions.find((v) => v.version === selectedVersion) || null;
-	}, [selectedVersion, versions]);
-
-	// 数据来源选择：基于聊天状态的严格控制
-	const displayData = useMemo(() => {
-		// 1. streaming 状态：显示流式数据
-		if (status === "streaming") {
-			return {
-				title: artifact.title || getDefaultTitle(artifact.kind, tArtifact),
-				status: "streaming" as const, // 使用外部传入的状态
-				kind: artifact.kind,
-				content: artifact.content,
-				language: artifact.language,
-			};
-		}
-
-		// 2. ready 状态：显示版本内容
-		if (status === "ready") {
-			// 优先显示选中的版本数据
-			if (selectedVersionData) {
-				return {
-					title: selectedVersionData.title,
-					status: "idle" as const,
-					kind: selectedVersionData.kind,
-					content: selectedVersionData.content,
-					language: selectedVersionData.language,
-				};
-			}
-			// 后备方案：如果版本数据还没准备好，继续使用流式数据避免闪烁
-			// 但标记状态为 idle，这样不会显示流式指示器
-			return {
-				title: artifact.title || getDefaultTitle(artifact.kind, tArtifact),
-				status: "idle" as const,
-				kind: artifact.kind,
-				content: artifact.content,
-				language: artifact.language,
-			};
-		}
-
-		// 3. 其他状态（submitted, error）显示准备状态
-		// 对于 update 场景，优先使用已有的版本标题，避免显示默认标题
-		const fallbackTitle =
-			selectedVersionData?.title ||
-			(versions.length > 0 ? versions[0]?.title : undefined) ||
-			artifact.title ||
-			getDefaultTitle(artifact.kind, tArtifact);
-
-		return {
-			title: fallbackTitle,
-			status: status as "submitted" | "error", // 使用外部传入的状态
-			kind: artifact.kind,
-			content: "", // 不显示内容，由骨架屏处理
-			language: artifact.language,
-		};
-	}, [status, selectedVersionData, artifact, tArtifact, versions]);
-
-	// 检测是否支持预览：基于当前显示数据的类型和状态
+	// 检测是否支持预览：基于 artifact 状态
 	const canPreview = useMemo(() => {
 		// 只有 code 类型才支持预览
 		if (displayData.kind !== "code") return false;
 		// 只有在非流式状态下才能预览
-		return status !== "streaming";
-	}, [displayData.kind, status]);
+		return displayData.status !== "streaming";
+	}, [displayData.kind, displayData.status]);
 
-	// 判断是否应该显示骨架屏
+	// 判断是否应该显示骨架屏：优先使用 artifact 状态
 	const shouldShowSkeleton = useMemo(() => {
-		// submitted 状态显示骨架屏
-		if (status === "submitted") return true;
+		// 如果 artifact 有内容且状态为 idle，直接显示内容（版本切换的情况）
+		if (displayData.status === "idle" && displayData.content && displayData.content.trim() !== "") {
+			return false;
+		}
 
-		// streaming 状态但没有内容时也显示骨架屏
-		if (
-			status === "streaming" &&
-			(!displayData.content || displayData.content.trim() === "")
-		) {
+		// 如果是 loading 状态但已有内容，继续显示现有内容而不是骨架屏
+		if (displayData.status === "loading" && displayData.content && displayData.content.trim() !== "") {
+			return false;
+		}
+
+		// artifact 为流式状态但没有内容时显示骨架屏
+		if (displayData.status === "streaming" && (!displayData.content || displayData.content.trim() === "")) {
 			return true;
 		}
 
-		return false;
-	}, [status, displayData.content]);
+		// loading 状态且没有内容时显示骨架屏
+		if (displayData.status === "loading" && (!displayData.content || displayData.content.trim() === "")) {
+			return true;
+		}
 
-	// 根据状态确定实际的视图模式
+		// 聊天系统刚提交请求，但 artifact 还未开始更新时显示骨架屏
+		if (status === "submitted") return true;
+
+		return false;
+	}, [displayData.status, displayData.content, status]);
+
+	// 根据状态确定实际的视图模式：主要基于 artifact 状态
 	const effectiveViewMode = useMemo(() => {
 		// streaming 状态强制使用代码视图以显示实时内容
-		if (status === "streaming") {
+		if (displayData.status === "streaming") {
 			return "code";
 		}
 		// 其他状态使用用户选择的视图模式
 		return viewMode;
-	}, [status, viewMode]);
+	}, [displayData.status, viewMode]);
 
 	if (!artifact.isVisible) return null;
 
@@ -422,18 +306,11 @@ export function Artifact({
 									content={displayData.content}
 									onClose={handleClose}
 									isMobile={false}
-									viewMode={viewMode} // 传递用户选择的视图模式
+									viewMode={viewMode}
 									onViewModeChange={
-										status === "ready" ? setViewMode : undefined
-									} // 只有 ready 状态才能切换视图
-									canPreview={canPreview && status === "ready"} // 只有 ready 状态才能预览
-									// 版本控制props：只有 ready 状态才传递
-									versions={canSwitchVersions ? versions : undefined}
-									currentVersion={
-										canSwitchVersions ? selectedVersion : undefined
+										displayData.status === "idle" ? setViewMode : undefined
 									}
-									onVersionChange={handleVersionChange}
-									documentId={documentId}
+									canPreview={canPreview}
 								/>
 
 								{/* Artifact 内容区域 */}
@@ -447,22 +324,7 @@ export function Artifact({
 											}
 										/>
 									) : (
-										<ArtifactContent
-											// 根据状态传递不同的数据
-											kind={displayData.kind}
-											content={displayData.content}
-											status={displayData.status}
-											title={displayData.title}
-											language={displayData.language}
-											viewMode={effectiveViewMode} // 使用根据状态调整的视图模式
-											// Database mode props (只有 ready 状态才启用版本控制)
-											{...(status === "ready" &&
-												documentId && {
-													documentId: documentId,
-													onVersionsLoaded: handleVersionsLoaded,
-													selectedVersion: selectedVersion,
-												})}
-										/>
+										<ArtifactContent viewMode={effectiveViewMode} />
 									)}
 								</div>
 							</motion.div>
@@ -516,13 +378,8 @@ export function Artifact({
 							showChatButton={true}
 							isMobile={true}
 							viewMode={viewMode}
-							onViewModeChange={status === "ready" ? setViewMode : undefined} // 只有 ready 状态才能切换视图
-							canPreview={canPreview && status === "ready"} // 只有 ready 状态才能预览
-							// 版本控制 props：只有 ready 状态才传递
-							versions={canSwitchVersions ? versions : undefined}
-							currentVersion={canSwitchVersions ? selectedVersion : undefined}
-							onVersionChange={handleVersionChange}
-							documentId={documentId}
+							onViewModeChange={displayData.status === "idle" ? setViewMode : undefined}
+							canPreview={canPreview}
 						/>
 
 						{/* Artifact 内容区域 */}
@@ -535,22 +392,7 @@ export function Artifact({
 									}
 								/>
 							) : (
-								<ArtifactContent
-									// 根据状态传递不同的数据
-									kind={displayData.kind}
-									content={displayData.content}
-									status={displayData.status}
-									title={displayData.title}
-									language={displayData.language}
-									viewMode={effectiveViewMode} // 使用根据状态调整的视图模式
-									// Database mode props (只有 ready 状态才启用版本控制)
-									{...(status === "ready" &&
-										documentId && {
-											documentId: documentId,
-											onVersionsLoaded: handleVersionsLoaded,
-											selectedVersion: selectedVersion,
-										})}
-								/>
+								<ArtifactContent viewMode={effectiveViewMode} />
 							)}
 						</div>
 					</motion.div>

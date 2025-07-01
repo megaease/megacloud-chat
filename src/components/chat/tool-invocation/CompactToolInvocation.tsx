@@ -141,6 +141,21 @@ export function CompactToolInvocation({
 	isCompact = false,
 	part,
 }: CompactToolInvocationProps) {
+	// 从工具结果中获取版本信息（如果可用）
+	const getVersionFromResult = (): number | undefined => {
+		if (
+			part?.toolInvocation?.result &&
+			typeof part.toolInvocation.result === "object"
+		) {
+			const toolResult = part.toolInvocation.result as Record<string, unknown>;
+			if ("version" in toolResult) {
+				return toolResult.version as number;
+			}
+		}
+		return undefined;
+	};
+
+	const resultVersion = getVersionFromResult();
 	const args = (toolState.args || {}) as {
 		title?: string;
 		content?: string;
@@ -217,8 +232,16 @@ export function CompactToolInvocation({
 						)}
 					</div>
 					<div className="flex-1 min-w-0">
-						<div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-							{title}
+						<div className="flex items-center gap-2">
+							<div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+								{title}
+							</div>
+							{/* 显示版本号（如果可用） */}
+							{resultVersion && (
+								<span className="text-xs px-1.5 py-0.5 rounded-full font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 flex-shrink-0">
+									v{resultVersion}
+								</span>
+							)}
 						</div>
 						<div
 							className={cn(

@@ -17,6 +17,22 @@ import {
 import type { ToolState, ToolStatus, ToolTheme } from "./types";
 import type { ToolInvocationPart } from "@/types/tool-invocation";
 
+/**
+ * DocumentToolInvocation - 专门用于文档工具的展示组件
+ *
+ * 特点：
+ * 1. 美观的卡片式设计，突出文档创建/更新的重要性
+ * 2. 实时显示工具执行状态（创建中、更新中、已完成）
+ * 3. 显示文档类型、版本号等详细信息
+ * 4. 支持点击打开 Artifact 进行实时预览
+ * 5. 内容预览功能，让用户快速了解文档内容
+ *
+ * 状态管理：
+ * - isCreating: 正在创建/更新文档时的流式状态
+ * - success: 文档创建/更新完成，显示最终结果
+ * - 自动检测创建 vs 更新操作（基于 args.documentId）
+ */
+
 interface DocumentToolInvocationProps {
 	toolState: ToolState;
 	status: ToolStatus;
@@ -95,19 +111,29 @@ export function DocumentToolInvocation({
 	// 区分创建和更新操作 - 基于 documentId 而不是 toolName
 	const isUpdateOperation = !!args.documentId;
 
-	// 从工具结果中获取标题（如果可用）
-	const getResultTitle = () => {
+	// 从工具结果中获取标题和版本信息（如果可用）
+	const getResultInfo = () => {
 		if (part?.toolInvocation?.result) {
 			const toolResult = part.toolInvocation.result;
-			// 工具返回的结果格式：{ documentId, title, kind, language, success }
-			if (typeof toolResult === "object" && "title" in toolResult) {
-				return (toolResult as Record<string, unknown>).title as string;
+			// 工具返回的结果格式：{ documentId, title, kind, language, version, success }
+			const info: { title?: string; version?: number } = {};
+
+			if (typeof toolResult === "object") {
+				if ("title" in toolResult) {
+					info.title = (toolResult as Record<string, unknown>).title as string;
+				}
+				if ("version" in toolResult) {
+					info.version = (toolResult as Record<string, unknown>)
+						.version as number;
+				}
 			}
+
+			return info;
 		}
-		return null;
+		return {};
 	};
 
-	const resultTitle = getResultTitle();
+	const { title: resultTitle, version: resultVersion } = getResultInfo();
 	const actualTitle = args.title || resultTitle;
 
 	// 简化显示逻辑：第一行始终显示标题，第二行始终显示工具名称
@@ -172,6 +198,12 @@ export function DocumentToolInvocation({
 						>
 							{typeLabel}
 						</span>
+						{/* 显示版本号（如果可用） */}
+						{resultVersion && (
+							<span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+								v{resultVersion}
+							</span>
+						)}
 					</div>
 					<p className="text-sm text-gray-600 dark:text-gray-400 truncate">
 						{subtitle}

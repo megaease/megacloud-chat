@@ -3,7 +3,11 @@ import { tool, type DataStreamWriter } from "ai";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import type { DataStreamDelta } from "@/lib/artifact-types";
-import { createArtifact, getArtifactsByChatId, updateArtifact } from "@/server/db/queries/artifacts";
+import {
+	createArtifact,
+	getArtifactsByChatId,
+	updateArtifact,
+} from "@/server/db/queries/artifacts";
 
 export function createDocumentTool(
 	dataStream: DataStreamWriter,
@@ -11,7 +15,8 @@ export function createDocumentTool(
 	chatId?: string,
 ) {
 	return tool({
-		description: "Create a new document artifact or update existing one in the current chat",
+		description:
+			"Create a new document artifact or update existing one in the current chat",
 		parameters: z.object({
 			title: z.string().describe("Title of the document"),
 			content: z.string().describe("Content of the document"),
@@ -40,17 +45,26 @@ export function createDocumentTool(
 						// If artifact exists, convert to update operation
 						shouldCreateNew = false;
 						existingDocumentId = existingArtifacts[0].id;
-						console.log("Found existing artifact in chat, converting to update operation:", existingDocumentId);
+						console.log(
+							"Found existing artifact in chat, converting to update operation:",
+							existingDocumentId,
+						);
 					}
 				} catch (error) {
-					console.warn("Failed to check existing artifacts, proceeding with create:", error);
+					console.warn(
+						"Failed to check existing artifacts, proceeding with create:",
+						error,
+					);
 				}
 			}
 
 			if (!shouldCreateNew && existingDocumentId) {
 				// Convert to update operation
-				console.log("Converting createDocument to updateDocument for:", existingDocumentId);
-				
+				console.log(
+					"Converting createDocument to updateDocument for:",
+					existingDocumentId,
+				);
+
 				// Send update process data
 				dataStream.writeData({ type: "id", content: existingDocumentId } as {
 					type: string;
@@ -80,6 +94,7 @@ export function createDocumentTool(
 				});
 
 				// Update database
+				let updatedVersion = 1; // 默认版本号
 				if (userId) {
 					try {
 						const updatedArtifact = await updateArtifact({
@@ -91,9 +106,17 @@ export function createDocumentTool(
 							userId,
 							changeDescription: "Updated via AI assistant",
 						});
-						console.log("Artifact updated successfully:", updatedArtifact?.id);
+						if (updatedArtifact) {
+							updatedVersion = updatedArtifact.version; // 使用数据库返回的版本号
+							console.log(
+								"✅ Artifact updated successfully:",
+								updatedArtifact.id,
+								"version:",
+								updatedArtifact.version,
+							);
+						}
 					} catch (error) {
-						console.error("Failed to update artifact in database:", error);
+						console.error("❌ Failed to update artifact in database:", error);
 					}
 				}
 
@@ -104,6 +127,7 @@ export function createDocumentTool(
 					language,
 					success: true,
 					operation: "updated",
+					version: updatedVersion, // 从数据库返回的版本号
 					content: "Document was updated and is now visible to the user.",
 				};
 			}
@@ -147,10 +171,11 @@ export function createDocumentTool(
 
 			// Save to database after streaming completes
 			let realDocumentId = tempDocumentId;
+			let createdArtifactVersion = 1; // 默认版本号
 			if (userId && chatId) {
 				try {
 					console.log("Attempting to save artifact to database...");
-					const artifact = await createArtifact({
+					const createdArtifact = await createArtifact({
 						id: tempDocumentId, // Use same ID
 						title,
 						content,
@@ -161,10 +186,13 @@ export function createDocumentTool(
 						tags: [],
 						isPublic: false,
 					});
-					realDocumentId = artifact.id || tempDocumentId;
+					realDocumentId = createdArtifact.id;
+					createdArtifactVersion = createdArtifact.version; // 使用数据库返回的版本号
 					console.log(
 						"✅ Artifact saved to database successfully:",
-						artifact.id,
+						createdArtifact.id,
+						"version:",
+						createdArtifact.version,
 					);
 
 					// No need to send ID update as ID remains consistent
@@ -184,6 +212,7 @@ export function createDocumentTool(
 				language,
 				success: true,
 				operation: "created",
+				version: createdArtifactVersion, // 从数据库返回的版本号
 				content: "A document was created and is now visible to the user.",
 			};
 		},

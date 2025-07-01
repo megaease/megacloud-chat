@@ -87,10 +87,11 @@ export function updateDocumentTool(
 			});
 
 			// 更新数据库（如果提供了 userId）
-			let updatedArtifact = null;
+			// Save updated artifact to database after streaming completes
+			let updatedArtifactVersion = existingArtifact?.version || 1; // 默认使用现有版本号
 			if (userId) {
 				try {
-					updatedArtifact = await updateArtifact({
+					const updatedArtifact = await updateArtifact({
 						artifactId: documentId,
 						title,
 						content,
@@ -101,10 +102,16 @@ export function updateDocumentTool(
 					});
 
 					if (updatedArtifact) {
-						console.log("Artifact updated in database:", updatedArtifact.id);
+						updatedArtifactVersion = updatedArtifact.version; // 使用数据库返回的新版本号
+						console.log(
+							"✅ Artifact updated in database:",
+							updatedArtifact.id,
+							"version:",
+							updatedArtifact.version,
+						);
 					}
 				} catch (error) {
-					console.error("Failed to update artifact in database:", error);
+					console.error("❌ Failed to update artifact in database:", error);
 					// 不抛出错误，因为流式传输已经成功
 				}
 			}
@@ -112,14 +119,10 @@ export function updateDocumentTool(
 			// 统一返回值格式，与 createDocumentTool 保持一致
 			return {
 				documentId,
-				title:
-					title ||
-					updatedArtifact?.title ||
-					existingArtifact?.title ||
-					"Untitled",
-				kind: kind || updatedArtifact?.kind || existingArtifact?.kind || "text",
-				language:
-					language || updatedArtifact?.language || existingArtifact?.language,
+				title: title || existingArtifact?.title || "Untitled",
+				kind: kind || existingArtifact?.kind || "text",
+				language: language || existingArtifact?.language,
+				version: updatedArtifactVersion, // 从数据库返回的版本号
 				success: true,
 			};
 		},

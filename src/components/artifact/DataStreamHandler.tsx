@@ -27,11 +27,16 @@ function isValidDataStreamDelta(data: unknown): data is DataStreamDelta {
 
 export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 	const { data: dataStream } = useChat({ id: chatId });
-	const { setArtifact } = useArtifact();
+	const {
+		updateStreamingContent,
+		clearStreamingContent,
+		setStreamingMeta,
+		finishStreaming,
+		showArtifact,
+	} = useArtifact();
 	const queryClient = useQueryClient();
 	const lastProcessedIndex = useRef(-1);
 	const currentDocumentId = useRef<string>("");
-	const wasUpdatingDocument = useRef<boolean>(false);
 
 	// 使用 useCallback 优化 delta 处理函数
 	const processDelta = useCallback(
@@ -42,181 +47,100 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 				delta.content?.substring(0, 50),
 			);
 
-			setArtifact((prev) => {
-				switch (delta.type) {
-					case "id":
-						currentDocumentId.current = delta.content;
-						// Check if this is an update to an existing document
-						// If the previous artifact already had the same documentId, it's an update
-						wasUpdatingDocument.current =
-							prev.documentId === delta.content && !!prev.documentId;
+			switch (delta.type) {
+				case "id":
+					currentDocumentId.current = delta.content;
+					break;
 
-						console.log("DataStreamHandler: Document ID received", {
-							documentId: delta.content,
-							previousDocumentId: prev.documentId,
-							isUpdate: wasUpdatingDocument.current,
+				case "title":
+					setStreamingMeta({ title: delta.content });
+					break;
+
+				case "kind":
+					setStreamingMeta({ kind: delta.content as ArtifactKind });
+					break;
+
+				case "language":
+					setStreamingMeta({ language: delta.content as ArtifactLanguage });
+					break;
+
+				case "clear":
+					// 清空内容，开始新的流式传输
+					clearStreamingContent();
+					// 显示 artifact（如果尚未显示）
+					showArtifact();
+					break;
+
+				case "text-delta":
+				case "code-delta":
+				case "sheet-delta":
+					// 追加流式内容
+					updateStreamingContent(delta.content);
+					break;
+
+				case "finish":
+					// 完成流式传输
+					finishStreaming(currentDocumentId.current);
+					// 清理查询缓存，确保下次获取最新数据
+					if (currentDocumentId.current) {
+						queryClient.invalidateQueries({
+							queryKey: ["artifact-versions", currentDocumentId.current],
 						});
-
-						return {
-							...prev,
-							documentId: delta.content,
-							status: "streaming",
-							dataSource: "stream",
-							isStreaming: true,
-							// Keep isVisible if user has already opened the artifact
-							isVisible: prev.isVisible || false,
-						};
-
-					case "title":
-						return {
-							...prev,
-							title: delta.content,
-							isVisible: prev.isVisible,
-							status: "streaming",
-							dataSource: "stream",
-							isStreaming: true,
-						};
-
-					case "kind":
-						return {
-							...prev,
-							kind: delta.content as ArtifactKind,
-							isVisible: prev.isVisible,
-							status: "streaming",
-							dataSource: "stream",
-							isStreaming: true,
-						};
-
-					case "language":
-						return {
-							...prev,
-							language: delta.content as ArtifactLanguage,
-							isVisible: prev.isVisible,
-							status: "streaming",
-							dataSource: "stream",
-							isStreaming: true,
-						};
-
-					case "clear":
-						return {
-							...prev,
-							content: "",
-							isVisible: prev.isVisible,
-							status: "streaming",
-							dataSource: "stream",
-							isStreaming: true,
-						};
-
-					case "text-delta":
-					case "code-delta":
-					case "sheet-delta":
-						return {
-							...prev,
-							content: prev.content + delta.content,
-							isVisible: true,
-							status: "streaming",
-							dataSource: "stream",
-							isStreaming: true,
-						};
-
-					case "id-update":
-						// 更新真实的文档 ID
-						currentDocumentId.current = delta.content;
-						return {
-							...prev,
-							documentId: delta.content,
-						};
-
-					case "finish": {
-						// 流式传输完成
-						const finalDocumentId = currentDocumentId.current;
-
-						// If this was an update to an existing document, refresh the versions
-						if (wasUpdatingDocument.current && finalDocumentId) {
-							console.log(
-								"Document update completed, refreshing versions for:",
-								finalDocumentId,
-							);
-
-							// Invalidate the versions query to trigger a refetch
-							setTimeout(() => {
-								console.log("Invalidating queries for:", finalDocumentId);
-								queryClient.invalidateQueries({
-									queryKey: ["artifact-versions", finalDocumentId],
-								});
-							}, 500); // Small delay to ensure database has been updated
-						} else {
-							console.log("Not refreshing versions:", {
-								wasUpdating: wasUpdatingDocument.current,
-								documentId: finalDocumentId,
-							});
-						}
-
-						// Reset the flag
-						wasUpdatingDocument.current = false;
-
-						return {
-							...prev,
-							status: "idle",
-							isStreaming: false,
-							streamingProgress: 100,
-							isVisible: prev.isVisible,
-							documentId: finalDocumentId, // 确保使用最新的 documentId
-							dataSource: "stream",
-							content: prev.content.trim(), // 确保内容没有多余的空格
-						};
 					}
+					break;
 
-					default:
-						console.warn("Unknown delta type:", delta.type);
-						return prev;
+				case "id-update": {
+					// 更新文档 ID（用于从临时 ID 到真实 ID 的映射）
+					const newDocumentId = delta.content;
+					if (newDocumentId && newDocumentId !== currentDocumentId.current) {
+						currentDocumentId.current = newDocumentId;
+						finishStreaming(newDocumentId);
+					}
+					break;
 				}
-			});
+
+				default:
+					console.warn("Unknown delta type:", delta.type);
+			}
 		},
-		[setArtifact, queryClient],
+		[
+			updateStreamingContent,
+			clearStreamingContent,
+			setStreamingMeta,
+			finishStreaming,
+			showArtifact,
+			queryClient,
+		],
 	);
 
-	// 处理错误的函数
-	const handleError = useCallback(
-		(error: unknown, deltaData: unknown) => {
-			console.error("Error processing delta:", error, deltaData);
-			setArtifact((prev) => ({
-				...prev,
-				status: "error",
-				isStreaming: false,
-			}));
-		},
-		[setArtifact],
-	);
-
+	// 处理数据流
 	useEffect(() => {
-		if (!dataStream?.length) return;
+		if (!dataStream || dataStream.length === 0) return;
 
+		// 只处理新的 delta 数据
 		const newDeltas = dataStream.slice(lastProcessedIndex.current + 1);
+		if (newDeltas.length === 0) return;
+
+		// 更新已处理的索引
 		lastProcessedIndex.current = dataStream.length - 1;
 
-		for (const deltaData of newDeltas) {
-			try {
-				// 使用类型守卫进行安全的类型检查
-				if (!isValidDataStreamDelta(deltaData)) {
-					console.warn("Invalid delta data:", deltaData);
-					continue;
-				}
-
-				processDelta(deltaData);
-			} catch (error) {
-				handleError(error, deltaData);
+		// 处理所有新的 delta
+		for (const item of newDeltas) {
+			if (isValidDataStreamDelta(item)) {
+				processDelta(item);
 			}
 		}
-	}, [dataStream, processDelta, handleError]);
+	}, [dataStream, processDelta]);
 
-	// 组件卸载时的清理
+	// 清理函数
 	useEffect(() => {
 		return () => {
+			// 组件卸载时重置状态
 			lastProcessedIndex.current = -1;
 			currentDocumentId.current = "";
 		};
 	}, []);
 
-	return null; // This component doesn't render any UI
+	// 这个组件不渲染任何 UI
+	return null;
 }

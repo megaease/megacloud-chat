@@ -11,7 +11,7 @@ import { CopyButton } from "../copy-button";
 interface TextArtifactProps {
 	content: string;
 	title: string;
-	status?: "streaming" | "idle" | "error" | "submitted";
+	status?: "streaming" | "idle" | "error" | "submitted" | "loading";
 }
 
 export function TextArtifact({
