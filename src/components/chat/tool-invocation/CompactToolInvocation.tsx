@@ -201,7 +201,7 @@ export function CompactToolInvocation({
 				initial={{ opacity: 0, y: 4 }}
 				animate={{ opacity: 1, y: 0 }}
 				className={cn(
-					"mb-3 rounded-lg border overflow-hidden transition-colors",
+					"my-3 rounded-lg border overflow-hidden transition-colors",
 					status === "executing"
 						? "border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/30"
 						: "border-blue-200/60 dark:border-blue-800/40 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-950/40 dark:to-indigo-950/30 cursor-pointer hover:border-blue-300/80 dark:hover:border-blue-700/60",
@@ -236,16 +236,16 @@ export function CompactToolInvocation({
 							<div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
 								{title}
 							</div>
-							{/* 显示版本号（如果可用） */}
+							{/* 简洁明显的版本号显示 */}
 							{resultVersion && (
-								<span className="text-xs px-1.5 py-0.5 rounded-full font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 flex-shrink-0">
+								<span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-700/50 flex-shrink-0">
 									v{resultVersion}
 								</span>
 							)}
 						</div>
 						<div
 							className={cn(
-								"text-xs",
+								"text-xs mt-0.5",
 								status === "executing"
 									? "text-amber-600 dark:text-amber-400"
 									: "text-gray-600 dark:text-gray-400",

@@ -198,9 +198,9 @@ export function DocumentToolInvocation({
 						>
 							{typeLabel}
 						</span>
-						{/* 显示版本号（如果可用） */}
+						{/* 简洁明显的版本号显示 */}
 						{resultVersion && (
-							<span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+							<span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-700/50 flex-shrink-0">
 								v{resultVersion}
 							</span>
 						)}
