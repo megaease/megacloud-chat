@@ -75,13 +75,6 @@ export function Artifact({
 	const [selectedVersion, setSelectedVersion] = useState<number | undefined>();
 	const [isUserSelectedVersion, setIsUserSelectedVersion] = useState(false); // Track if user manually selected a version
 
-	// 检测是否支持预览：基于类型和流式状态
-	const canPreview = useMemo(() => {
-		if (artifact.kind !== "code") return false;
-		// 只有在非流式状态下才能预览（使用 artifact 的状态）
-		return artifact.status !== "streaming";
-	}, [artifact.kind, artifact.status]);
-
 	// 检测是否正在流式传输（综合判断）
 	const isStreaming = useMemo(() => {
 		return artifact.status === "streaming" || status === "streaming";
@@ -182,7 +175,7 @@ export function Artifact({
 		if (status === "streaming") {
 			return {
 				title: artifact.title,
-				status: artifact.status,
+				status: "streaming" as const, // 使用外部传入的状态
 				kind: artifact.kind,
 				content: artifact.content,
 				language: artifact.language,
@@ -201,7 +194,8 @@ export function Artifact({
 					language: selectedVersionData.language,
 				};
 			}
-			// 后备方案：使用 artifact 数据
+			// 后备方案：如果版本数据还没准备好，继续使用流式数据避免闪烁
+			// 但标记状态为 idle，这样不会显示流式指示器
 			return {
 				title: artifact.title,
 				status: "idle" as const,
@@ -211,21 +205,39 @@ export function Artifact({
 			};
 		}
 
-		// 3. 其他状态（submitted, error）显示加载状态
+		// 3. 其他状态（submitted, error）显示准备状态
 		return {
-			title: artifact.title || "Loading...",
-			status: "idle" as const,
+			title: artifact.title || "New Artifact",
+			status: status as "submitted" | "error", // 使用外部传入的状态
 			kind: artifact.kind,
 			content: "", // 不显示内容，由骨架屏处理
 			language: artifact.language,
 		};
 	}, [status, selectedVersionData, artifact]);
 
+	// 检测是否支持预览：基于当前显示数据的类型和状态
+	const canPreview = useMemo(() => {
+		// 只有 code 类型才支持预览
+		if (displayData.kind !== "code") return false;
+		// 只有在非流式状态下才能预览
+		return status !== "streaming";
+	}, [displayData.kind, status]);
+
 	// 判断是否应该显示骨架屏
 	const shouldShowSkeleton = useMemo(() => {
 		// submitted 状态显示骨架屏
-		return status === "submitted";
-	}, [status]);
+		if (status === "submitted") return true;
+
+		// streaming 状态但没有内容时也显示骨架屏
+		if (
+			status === "streaming" &&
+			(!displayData.content || displayData.content.trim() === "")
+		) {
+			return true;
+		}
+
+		return false;
+	}, [status, displayData.content]);
 
 	// 根据状态确定实际的视图模式
 	const effectiveViewMode = useMemo(() => {
@@ -403,7 +415,13 @@ export function Artifact({
 								{/* Artifact 内容区域 */}
 								<div className="flex-1 overflow-hidden">
 									{shouldShowSkeleton ? (
-										<ArtifactSkeleton />
+										<ArtifactSkeleton
+											title={displayData.title}
+											showTitle={
+												!!displayData.title &&
+												displayData.title !== "Loading..."
+											}
+										/>
 									) : (
 										<ArtifactContent
 											// 根据状态传递不同的数据
@@ -486,7 +504,12 @@ export function Artifact({
 						{/* Artifact 内容区域 */}
 						<div className="flex-1 overflow-hidden">
 							{shouldShowSkeleton ? (
-								<ArtifactSkeleton />
+								<ArtifactSkeleton
+									title={displayData.title}
+									showTitle={
+										!!displayData.title && displayData.title !== "Loading..."
+									}
+								/>
 							) : (
 								<ArtifactContent
 									// 根据状态传递不同的数据

@@ -39,7 +39,7 @@ interface ArtifactVersion {
 
 interface ArtifactActionsProps {
 	title: string;
-	status: "streaming" | "idle" | "error";
+	status: "streaming" | "idle" | "error" | "submitted";
 	kind: ArtifactKind;
 	content: string;
 	onClose: () => void;
@@ -343,7 +343,7 @@ export function ArtifactActions({
 								{/* 状态图标 */}
 								<div
 									className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-										status === "streaming"
+										status === "streaming" || status === "submitted"
 											? "bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse"
 											: "bg-gradient-to-r from-emerald-500 to-teal-500"
 									}`}
@@ -351,13 +351,19 @@ export function ArtifactActions({
 
 								{/* 状态文本 */}
 								<p className="text-xs font-medium text-foreground/80 whitespace-nowrap">
-									{status === "streaming"
-										? tArtifact("generating")
-										: tArtifact("completed")}
+									{status === "submitted"
+										? tArtifact("preparing")
+										: status === "streaming"
+											? tArtifact("generating")
+											: status === "idle"
+												? tArtifact("completed")
+												: status === "error"
+													? tArtifact("error")
+													: tArtifact("completed")}
 								</p>
 
 								{/* 流式生成动画点 */}
-								{status === "streaming" && (
+								{(status === "streaming" || status === "submitted") && (
 									<div className="flex items-center gap-1 ml-1">
 										<div className="animate-pulse w-1.5 h-1.5 bg-blue-500 rounded-full" />
 										<div className="animate-pulse w-1.5 h-1.5 bg-purple-500 rounded-full animation-delay-100" />
@@ -386,13 +392,6 @@ export function ArtifactActions({
 					>
 						<TabsList className="h-8 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
 							<TabsTrigger
-								value="code"
-								className="h-7 px-3 text-xs rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400 transition-colors"
-							>
-								<Code2 className="w-3 h-3 mr-1.5" />
-								{tArtifact("code")}
-							</TabsTrigger>
-							<TabsTrigger
 								value="preview"
 								disabled={!canPreview}
 								className="h-7 px-3 text-xs rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400 disabled:opacity-50 transition-colors"
@@ -401,6 +400,13 @@ export function ArtifactActions({
 								{canPreview
 									? tArtifact("preview")
 									: tArtifact("previewUnavailable")}
+							</TabsTrigger>
+							<TabsTrigger
+								value="code"
+								className="h-7 px-3 text-xs rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400 transition-colors"
+							>
+								<Code2 className="w-3 h-3 mr-1.5" />
+								{tArtifact("code")}
 							</TabsTrigger>
 						</TabsList>
 					</Tabs>

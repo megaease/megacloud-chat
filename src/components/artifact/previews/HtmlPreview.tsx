@@ -28,60 +28,61 @@ export const HtmlPreview = ({ content }: HtmlPreviewProps) => {
 	};
 
 	return (
-		<div className="flex flex-col h-full">
+		<div className="flex flex-col h-full bg-background">
 			{/* 工具栏 */}
-			<div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 flex-shrink-0">
-				<div className="flex items-center gap-1.5">
-					<Monitor className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-					<span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+			<div className="flex items-center justify-between px-4 py-3 border-b bg-muted/20 backdrop-blur-sm flex-shrink-0">
+				<div className="flex items-center gap-2">
+					<div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+					<Monitor className="w-4 h-4 text-primary" />
+					<span className="text-sm font-medium text-foreground">
 						{tArtifact("htmlPreview")}
 					</span>
 				</div>
-				<div className="flex items-center gap-1">
+				<div className="flex items-center gap-1 p-1 bg-background/50 rounded-md border">
 					<Button
 						variant={viewMode === "desktop" ? "default" : "ghost"}
 						size="sm"
 						onClick={() => setViewMode("desktop")}
-						className="h-6 w-6 p-0"
+						className="h-7 w-7 p-0 transition-all duration-200 hover:scale-105"
 						title={tArtifact("desktopView")}
 					>
-						<Monitor className="w-3 h-3" />
+						<Monitor className="w-3.5 h-3.5" />
 					</Button>
 					<Button
 						variant={viewMode === "tablet" ? "default" : "ghost"}
 						size="sm"
 						onClick={() => setViewMode("tablet")}
-						className="h-6 w-6 p-0"
+						className="h-7 w-7 p-0 transition-all duration-200 hover:scale-105"
 						title={tArtifact("tabletView")}
 					>
-						<Tablet className="w-3 h-3" />
+						<Tablet className="w-3.5 h-3.5" />
 					</Button>
 					<Button
 						variant={viewMode === "mobile" ? "default" : "ghost"}
 						size="sm"
 						onClick={() => setViewMode("mobile")}
-						className="h-6 w-6 p-0"
+						className="h-7 w-7 p-0 transition-all duration-200 hover:scale-105"
 						title={tArtifact("mobileView")}
 					>
-						<Smartphone className="w-3 h-3" />
+						<Smartphone className="w-3.5 h-3.5" />
 					</Button>
 				</div>
 			</div>
 
 			{/* 预览区域 */}
-			<div className="flex-1 bg-muted/20">
+			<div className="flex-1 bg-gradient-to-br from-muted/10 to-muted/30 relative">
 				{viewMode === "desktop" ? (
 					<iframe
 						srcDoc={content}
-						className="w-full h-full border-0"
+						className="w-full h-full border-0 bg-white dark:bg-gray-900"
 						sandbox="allow-scripts allow-same-origin"
 						title="HTML Preview"
 					/>
 				) : (
-					<div className="flex items-center justify-center h-full p-4">
+					<div className="flex items-center justify-center h-full p-6">
 						<div
 							className={cn(
-								"bg-background border overflow-hidden",
+								"bg-white dark:bg-gray-900 border-2 border-border/30 shadow-lg rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl",
 								getViewportClass(),
 							)}
 						>

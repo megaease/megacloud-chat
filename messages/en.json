@@ -160,6 +160,7 @@
   "Artifact": {
     "close": "Close",
     "toggleChat": "Toggle Chat",
+    "preparing": "Preparing...",
     "generating": "Generating...",
     "completed": "Completed",
     "code": "Code",

@@ -40,14 +40,17 @@ export function CodePreview({
 				return <JavaScriptPreview content={content} />;
 			default:
 				return (
-					<div className="flex items-center justify-center h-full text-muted-foreground">
-						<div className="text-center space-y-3">
-							<Code2 className="w-12 h-12 mx-auto opacity-30" />
-							<div>
-								<p className="text-sm font-medium">
+					<div className="flex items-center justify-center h-full text-muted-foreground bg-gradient-to-br from-muted/10 to-muted/30">
+						<div className="text-center space-y-4 p-8">
+							<div className="relative">
+								<Code2 className="w-16 h-16 mx-auto opacity-20" />
+								<div className="absolute inset-0 w-16 h-16 mx-auto border-2 border-dashed border-muted-foreground/20 rounded-lg" />
+							</div>
+							<div className="space-y-2">
+								<p className="text-sm font-medium text-foreground">
 									{tArtifact("previewNotSupported")}
 								</p>
-								<p className="text-xs text-muted-foreground/60">
+								<p className="text-xs text-muted-foreground/70 max-w-xs mx-auto leading-relaxed">
 									{tArtifact("languageNotSupported", {
 										language: getLanguageDisplayName(finalLanguage),
 									})}

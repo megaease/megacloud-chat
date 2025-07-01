@@ -127,14 +127,27 @@ export function ArtifactChat({
 				)}
 			</div>
 
-			{status === "submitted" && (
+			{/* {status === "submitted" && (
 				<div className="relative">
 					<Thinking />
 				</div>
-			)}
+			)} */}
 
 			{/* Chat input area */}
 			<div className="p-2">
+				{/* Error display */}
+				{error && (
+					<div className="px-3 py-2 bg-destructive/10 border-t border-destructive/20">
+						<p className="text-xs text-destructive">Error: {error.message}</p>
+						<button
+							type="button"
+							onClick={() => reload()}
+							className="text-xs text-destructive underline mt-1"
+						>
+							Retry
+						</button>
+					</div>
+				)}
 				<ChatInput
 					input={input}
 					handleInputChange={handleInputChange}
@@ -147,20 +160,6 @@ export function ArtifactChat({
 					className="max-w-none"
 				/>
 			</div>
-
-			{/* Error display */}
-			{error && (
-				<div className="px-3 py-2 bg-destructive/10 border-t border-destructive/20">
-					<p className="text-xs text-destructive">Error: {error.message}</p>
-					<button
-						type="button"
-						onClick={() => reload()}
-						className="text-xs text-destructive underline mt-1"
-					>
-						Retry
-					</button>
-				</div>
-			)}
 		</div>
 	);
 }

@@ -11,7 +11,7 @@ import { CopyButton } from "../copy-button";
 interface TextArtifactProps {
 	content: string;
 	title: string;
-	status?: "streaming" | "idle" | "error";
+	status?: "streaming" | "idle" | "error" | "submitted";
 }
 
 export function TextArtifact({
@@ -24,18 +24,22 @@ export function TextArtifact({
 	const renderContent = () => {
 		if (viewMode === "rendered") {
 			return (
-				<div className="p-6 md:px-20">
-					<div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-muted prose-pre:border prose-pre:rounded-md">
-						{/* Force re-render by using key with content length */}
-						<Markdown key={content.length} content={content} />
-						{/* Add typing cursor when streaming */}
+				<div className="h-full">
+					<div className="p-6 md:px-12 lg:px-20 max-w-4xl mx-auto">
+						<div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-muted prose-pre:border prose-pre:rounded-md prose-headings:scroll-m-20 prose-h1:text-2xl prose-h1:font-bold prose-h2:text-xl prose-h2:font-semibold prose-h3:text-lg prose-h3:font-medium prose-p:leading-7 prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-6 prose-blockquote:italic prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-ul:my-6 prose-ol:my-6 prose-li:my-2">
+							{/* Force re-render by using key with content length */}
+							<Markdown key={content.length} content={content} />
+							{/* Add typing cursor when streaming */}
+							{status === "streaming" && (
+								<span className="inline-block w-0.5 h-5 bg-primary animate-pulse ml-1 rounded-sm" />
+							)}
+						</div>
 						{status === "streaming" && (
-							<span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1" />
-						)}
-						{status === "streaming" && (
-							<div className="flex items-center gap-2 text-muted-foreground mt-4 pb-4">
-								<Loader2 className="h-4 w-4 animate-spin" />
-								<span className="text-sm">Generating content...</span>
+							<div className="flex items-center gap-3 text-muted-foreground mt-8 p-4 bg-muted/30 rounded-lg border border-border/50">
+								<Loader2 className="h-4 w-4 animate-spin text-primary" />
+								<span className="text-sm font-medium">
+									Generating content...
+								</span>
 							</div>
 						)}
 					</div>
@@ -44,18 +48,22 @@ export function TextArtifact({
 		}
 
 		return (
-			<div className="p-4">
-				<Card className="p-4 relative">
-					<pre className="whitespace-pre-wrap font-mono text-sm text-foreground leading-relaxed">
-						{content}
-					</pre>
-					{status === "streaming" && (
-						<div className="flex items-center gap-2 text-muted-foreground mt-4 pt-4 border-t">
-							<Loader2 className="h-4 w-4 animate-spin" />
-							<span className="text-sm">Generating content...</span>
-						</div>
-					)}
-				</Card>
+			<div className="h-full">
+				<div className="p-6 md:px-12 lg:px-20 max-w-4xl mx-auto">
+					<Card className="p-6 relative bg-card/50 backdrop-blur-sm border shadow-sm">
+						<pre className="whitespace-pre-wrap font-mono text-sm text-foreground leading-relaxed overflow-auto max-h-[calc(100vh-12rem)]">
+							{content}
+						</pre>
+						{status === "streaming" && (
+							<div className="flex items-center gap-3 text-muted-foreground mt-6 pt-4 border-t border-border-/50">
+								<Loader2 className="h-4 w-4 animate-spin text-primary" />
+								<span className="text-sm font-medium">
+									Generating content...
+								</span>
+							</div>
+						)}
+					</Card>
+				</div>
 			</div>
 		);
 	};
