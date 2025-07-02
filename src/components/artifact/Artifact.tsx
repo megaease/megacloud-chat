@@ -119,14 +119,14 @@ export function Artifact({
 		return displayData.status !== "streaming";
 	}, [displayData.kind, displayData.status]);
 
-	// 判断是否应该显示骨架屏：确保 CREATE 和 UPDATE 都有一致的体验
+	// 判断是否应该显示骨架屏：基于状态驱动的显示逻辑
 	const shouldShowSkeleton = useMemo(() => {
-		// 如果 artifact 有内容且状态为 idle，直接显示内容（版本切换的情况）
-		if (displayData.status === "idle" && displayData.content && displayData.content.trim() !== "") {
-			return false;
+		// 创建或更新状态：只显示骨架屏
+		if (displayData.status === "creating" || displayData.status === "updating") {
+			return true;
 		}
 
-		// 流式状态且没有内容时显示骨架屏（CREATE 和 UPDATE 的主要场景）
+		// 流式状态且没有内容时显示骨架屏
 		if (displayData.status === "streaming" && (!displayData.content || displayData.content.trim() === "")) {
 			return true;
 		}
@@ -137,7 +137,9 @@ export function Artifact({
 		}
 
 		// 聊天系统刚提交请求，但 artifact 还未开始更新时显示骨架屏
-		if (status === "submitted") return true;
+		if (status === "submitted" && displayData.status === "idle") {
+			return true;
+		}
 
 		return false;
 	}, [displayData.status, displayData.content, status]);
@@ -309,7 +311,7 @@ export function Artifact({
 								/>
 
 								{/* Artifact 内容区域 */}
-								<div className="flex-1 overflow-hidden">
+								<div className="flex-1 overflow-hidden relative">
 									{shouldShowSkeleton ? (
 										<ArtifactSkeleton
 											title={displayData.title}
@@ -318,6 +320,17 @@ export function Artifact({
 												displayData.title !== "Loading..."
 											}
 										/>
+									) : displayData.status === "streaming" && displayData.content ? (
+										/* 流式状态下有部分内容时：显示内容 + 加载指示器 */
+										<>
+											<ArtifactContent viewMode={effectiveViewMode} />
+											<div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-lg border">
+												<div className="flex items-center gap-2 text-sm text-muted-foreground">
+													<div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
+													<span>Generating...</span>
+												</div>
+											</div>
+										</>
 									) : (
 										<ArtifactContent viewMode={effectiveViewMode} />
 									)}
@@ -378,7 +391,7 @@ export function Artifact({
 						/>
 
 						{/* Artifact 内容区域 */}
-						<div className="flex-1 overflow-hidden">
+						<div className="flex-1 overflow-hidden relative">
 							{shouldShowSkeleton ? (
 								<ArtifactSkeleton
 									title={displayData.title}
@@ -386,6 +399,17 @@ export function Artifact({
 										!!displayData.title && displayData.title !== "Loading..."
 									}
 								/>
+							) : displayData.status === "streaming" && displayData.content ? (
+								/* 流式状态下有部分内容时：显示内容 + 加载指示器 */
+								<>
+									<ArtifactContent viewMode={effectiveViewMode} />
+									<div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-lg border">
+										<div className="flex items-center gap-2 text-sm text-muted-foreground">
+											<div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
+											<span>Generating...</span>
+										</div>
+									</div>
+								</>
 							) : (
 								<ArtifactContent viewMode={effectiveViewMode} />
 							)}

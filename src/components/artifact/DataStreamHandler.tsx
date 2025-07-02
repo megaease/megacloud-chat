@@ -33,6 +33,7 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 		setStreamingMeta,
 		finishStreaming,
 		showArtifact,
+		setArtifact,
 	} = useArtifact();
 	const queryClient = useQueryClient();
 	const lastProcessedIndex = useRef(-1);
@@ -64,11 +65,23 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 					setStreamingMeta({ language: delta.content as ArtifactLanguage });
 					break;
 
+				case "status":
+					// 处理状态变更：creating, updating, streaming
+					console.log("� Processing status signal:", delta.content);
+					if (delta.content === "creating" || delta.content === "updating") {
+						// 设置为 creating/updating 状态并显示 artifact
+						setArtifact((prev) => ({
+							...prev,
+							status: delta.content as "creating" | "updating",
+							isVisible: true,
+						}));
+					}
+					break;
+
 				case "clear":
 					// 清空内容，开始新的流式传输
+					console.log("📝 Processing clear signal - starting streaming");
 					clearStreamingContent();
-					// 显示 artifact（如果尚未显示）
-					showArtifact();
 					break;
 
 				case "text-delta":
@@ -109,6 +122,7 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 			setStreamingMeta,
 			finishStreaming,
 			showArtifact,
+			setArtifact,
 			queryClient,
 		],
 	);

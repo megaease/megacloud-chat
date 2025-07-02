@@ -86,6 +86,12 @@ export function createDocumentTool(
 					existingDocumentId,
 				);
 
+				// Send updating status first
+				dataStream.writeData({ type: "status", content: "updating" } as {
+					type: string;
+					content: string;
+				});
+
 				// Send update process data
 				dataStream.writeData({ type: "id", content: existingDocumentId } as {
 					type: string;
@@ -160,6 +166,12 @@ export function createDocumentTool(
 
 			// Original create logic
 			const tempDocumentId = nanoid(16);
+
+			// Send creating status first
+			dataStream.writeData({ type: "status", content: "creating" } as {
+				type: string;
+				content: string;
+			});
 
 			// Send basic info immediately
 			dataStream.writeData({ type: "kind", content: kind } as {
@@ -252,6 +264,15 @@ async function generateContentStream(
 	dataStream: DataStreamWriter,
 ) {
 	const deltaType = `${kind}-delta` as DataStreamDelta["type"];
+
+	// 发送 streaming 状态信号，表示开始流式传输内容
+	dataStream.writeData({ type: "status", content: "streaming" } as {
+		type: string;
+		content: string;
+	});
+
+	// 适度延迟让状态切换有时间生效
+	await new Promise((resolve) => setTimeout(resolve, 200));
 
 	// Split content into smaller chunks for streaming effect
 	const chunkSize = Math.max(1, Math.floor(content.length / 20));

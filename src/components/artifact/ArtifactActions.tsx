@@ -31,7 +31,7 @@ import { useArtifactVersions } from "@/hooks/use-artifact-versions";
 
 interface ArtifactActionsProps {
 	title: string;
-	status: "streaming" | "idle" | "error" | "submitted" | "loading";
+	status: "streaming" | "idle" | "error" | "submitted" | "loading" | "creating" | "updating";
 	kind: ArtifactKind;
 	content: string;
 	onClose: () => void;

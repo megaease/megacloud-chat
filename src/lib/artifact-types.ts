@@ -6,7 +6,7 @@ export interface UIArtifact {
 	language?: ArtifactLanguage; // Language for code artifacts
 	content: string;
 	isVisible: boolean;
-	status: "streaming" | "idle" | "error" | "loading";
+	status: "idle" | "creating" | "updating" | "streaming" | "error" | "loading";
 	boundingBox: {
 		top: number;
 		left: number;
@@ -33,10 +33,11 @@ export interface DataStreamDelta {
 		| "title"
 		| "id"
 		| "kind"
-		| "language" // 新增：语言类型事件
+		| "language" // 语言类型事件
+		| "status" // 状态事件：creating, updating, streaming
 		| "clear"
 		| "finish"
-		| "id-update"; // 新增：ID 更新事件
+		| "id-update"; // ID 更新事件
 	content: string;
 }
 

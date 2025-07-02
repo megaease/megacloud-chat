@@ -45,6 +45,12 @@ export function updateDocumentTool(
 			}
 
 			// 立即发送基础信息
+			if (kind) {
+				dataStream.writeData({ type: "kind", content: kind } as {
+					type: string;
+					content: string;
+				});
+			}
 			dataStream.writeData({ type: "id", content: documentId } as {
 				type: string;
 				content: string;
@@ -57,12 +63,6 @@ export function updateDocumentTool(
 				});
 			}
 
-			if (kind) {
-				dataStream.writeData({ type: "kind", content: kind } as {
-					type: string;
-					content: string;
-				});
-			}
 
 			if (language) {
 				dataStream.writeData({ type: "language", content: language } as {

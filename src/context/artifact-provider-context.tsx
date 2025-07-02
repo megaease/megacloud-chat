@@ -208,8 +208,9 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 	const clearStreamingContent = useCallback(() => {
 		setArtifact((prev) => ({
 			...prev,
-			content: "",
-			status: "streaming",
+			content: "", // 确保内容完全清空
+			status: "streaming" as const,
+			isVisible: true, // 确保在清空内容时显示 artifact
 		}));
 	}, []);
 
@@ -220,10 +221,23 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 			kind?: ArtifactKind;
 			language?: ArtifactLanguage;
 		}) => {
-			setArtifact((prev) => ({
-				...prev,
-				...meta,
-			}));
+			setArtifact((prev) => {
+				// 如果是设置 kind（通常是第一个元数据），检查是否需要重置内容
+				const shouldResetContent = meta.kind && prev.status === "idle" && prev.content.trim() !== "";
+				
+				if (shouldResetContent) {
+					console.log("🔄 Resetting content due to new kind being set");
+				}
+				
+				return {
+					...prev,
+					...meta,
+					// 如果需要重置内容，清空之前的内容
+					content: shouldResetContent ? "" : prev.content,
+					// 不要在这里强制设置 isVisible，因为这会在元数据设置时就显示 artifact
+					// isVisible 应该在 clear 或 showArtifact 中设置
+				};
+			});
 		},
 		[],
 	);
