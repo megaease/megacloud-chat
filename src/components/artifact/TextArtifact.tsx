@@ -3,15 +3,14 @@
 
 import { Markdown } from "@/components/markdown";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Copy, Download, Eye, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { CopyButton } from "../copy-button";
+import { motion, AnimatePresence } from "framer-motion";
+import type { UIArtifact } from "@/lib/artifact-types";
 
 interface TextArtifactProps {
 	content: string;
 	title: string;
-	status?: "streaming" | "idle" | "error" | "submitted" | "loading";
+	status?: UIArtifact["status"];
 }
 
 export function TextArtifact({
@@ -24,47 +23,56 @@ export function TextArtifact({
 	const renderContent = () => {
 		if (viewMode === "rendered") {
 			return (
-				<div className="h-full">
+				<motion.div 
+					className="h-full"
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					transition={{ duration: 0.3, ease: "easeInOut" }}
+				>
 					<div className="p-6 md:px-12 lg:px-20 max-w-4xl mx-auto">
-						<div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-muted prose-pre:border prose-pre:rounded-md prose-headings:scroll-m-20 prose-h1:text-2xl prose-h1:font-bold prose-h2:text-xl prose-h2:font-semibold prose-h3:text-lg prose-h3:font-medium prose-p:leading-7 prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-6 prose-blockquote:italic prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-ul:my-6 prose-ol:my-6 prose-li:my-2">
+						<motion.div 
+							className="prose prose-sm max-w-none dark:prose-invert 
+							prose-headings:scroll-m-20 prose-h1:text-xl prose-h1:font-semibold prose-h1:mb-4
+							prose-h2:text-lg prose-h2:font-medium prose-h2:mb-3 prose-h3:text-base prose-h3:font-medium prose-h3:mb-2
+							prose-p:leading-6 prose-p:mb-3 prose-p:text-sm
+							prose-blockquote:border-l-2 prose-blockquote:border-primary/50 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground
+							prose-code:bg-muted/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono
+							prose-pre:bg-muted/30 prose-pre:border prose-pre:rounded-lg prose-pre:p-4 prose-pre:text-xs prose-pre:leading-5
+							prose-ul:my-4 prose-ol:my-4 prose-li:my-1 prose-li:text-sm
+							prose-strong:font-medium prose-em:italic"
+							initial={{ y: 10, opacity: 0 }}
+							animate={{ y: 0, opacity: 1 }}
+							transition={{ delay: 0.1, duration: 0.3, ease: "easeOut" }}
+						>
 							{/* Force re-render by using key with content length */}
 							<Markdown key={content.length} content={content} />
-							{/* Add typing cursor when streaming */}
-							{status === "streaming" && (
-								<span className="inline-block w-0.5 h-5 bg-primary animate-pulse ml-1 rounded-sm" />
-							)}
-						</div>
-						{status === "streaming" && (
-							<div className="flex items-center gap-3 text-muted-foreground mt-8 p-4 bg-muted/30 rounded-lg border border-border/50">
-								<Loader2 className="h-4 w-4 animate-spin text-primary" />
-								<span className="text-sm font-medium">
-									Generating content...
-								</span>
-							</div>
-						)}
+						</motion.div>
 					</div>
-				</div>
+				</motion.div>
 			);
 		}
 
 		return (
-			<div className="h-full">
+			<motion.div 
+				className="h-full"
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
+				transition={{ duration: 0.3, ease: "easeInOut" }}
+			>
 				<div className="p-6 md:px-12 lg:px-20 max-w-4xl mx-auto">
-					<Card className="p-6 relative bg-card/50 backdrop-blur-sm border shadow-sm">
-						<pre className="whitespace-pre-wrap font-mono text-sm text-foreground leading-relaxed overflow-auto max-h-[calc(100vh-12rem)]">
-							{content}
-						</pre>
-						{status === "streaming" && (
-							<div className="flex items-center gap-3 text-muted-foreground mt-6 pt-4 border-t border-border-/50">
-								<Loader2 className="h-4 w-4 animate-spin text-primary" />
-								<span className="text-sm font-medium">
-									Generating content...
-								</span>
-							</div>
-						)}
-					</Card>
+					<motion.div
+						initial={{ scale: 0.98, opacity: 0 }}
+						animate={{ scale: 1, opacity: 1 }}
+						transition={{ delay: 0.1, duration: 0.3, ease: "easeOut" }}
+					>
+						<Card className="p-6 relative bg-card/50 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all duration-300">
+							<pre className="whitespace-pre-wrap font-mono text-xs text-foreground/90 leading-6 overflow-auto max-h-[calc(100vh-12rem)]">
+								{content}
+							</pre>
+						</Card>
+					</motion.div>
 				</div>
-			</div>
+			</motion.div>
 		);
 	};
 

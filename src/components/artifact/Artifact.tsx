@@ -18,6 +18,7 @@ import { ArtifactChat } from "./ArtifactChat";
 import type { Message } from "@ai-sdk/react";
 import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
 import { useTranslations } from "next-intl";
+import { d } from "node_modules/drizzle-kit/index-BAUrj6Ib.mjs";
 
 // 根据文档类型生成简洁的默认标题（不包含状态信息）
 function getDefaultTitle(
@@ -113,31 +114,23 @@ export function Artifact({
 
 	// 检测是否支持预览：基于 artifact 状态
 	const canPreview = useMemo(() => {
-		// 只有 code 类型才支持预览
+
 		if (displayData.kind !== "code") return false;
-		// 只有在非流式状态下才能预览
-		return displayData.status !== "streaming";
+			return displayData.status === "idle";
 	}, [displayData.kind, displayData.status]);
 
-	// 判断是否应该显示骨架屏：基于状态驱动的显示逻辑
+
 	const shouldShowSkeleton = useMemo(() => {
-		// 创建或更新状态：只显示骨架屏
-		if (displayData.status === "creating" || displayData.status === "updating") {
+		const noContent = !displayData.content || displayData.content.trim() === "";		
+		if (status === "submitted" ) {
 			return true;
 		}
-
-		// 流式状态且没有内容时显示骨架屏
-		if (displayData.status === "streaming" && (!displayData.content || displayData.content.trim() === "")) {
-			return true;
-		}
-
-		// loading 状态且没有内容时显示骨架屏
-		if (displayData.status === "loading" && (!displayData.content || displayData.content.trim() === "")) {
-			return true;
-		}
-
-		// 聊天系统刚提交请求，但 artifact 还未开始更新时显示骨架屏
-		if (status === "submitted" && displayData.status === "idle") {
+		if ( displayData.status === "idle" && status === 'streaming') {
+			return true
+		 }
+		if ((displayData.status === "loading" ||  
+			displayData.status === "streaming"
+		) && noContent) {
 			return true;
 		}
 
@@ -146,8 +139,9 @@ export function Artifact({
 
 	// 根据状态确定实际的视图模式：主要基于 artifact 状态
 	const effectiveViewMode = useMemo(() => {
-		// streaming 状态强制使用代码视图以显示实时内容
-		if (displayData.status === "streaming") {
+
+		if (displayData.status === "loading" || 
+			displayData.status === "streaming") {
 			return "code";
 		}
 		// 其他状态使用用户选择的视图模式
@@ -320,17 +314,6 @@ export function Artifact({
 												displayData.title !== "Loading..."
 											}
 										/>
-									) : displayData.status === "streaming" && displayData.content ? (
-										/* 流式状态下有部分内容时：显示内容 + 加载指示器 */
-										<>
-											<ArtifactContent viewMode={effectiveViewMode} />
-											<div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-lg border">
-												<div className="flex items-center gap-2 text-sm text-muted-foreground">
-													<div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
-													<span>Generating...</span>
-												</div>
-											</div>
-										</>
 									) : (
 										<ArtifactContent viewMode={effectiveViewMode} />
 									)}
@@ -391,28 +374,17 @@ export function Artifact({
 						/>
 
 						{/* Artifact 内容区域 */}
-						<div className="flex-1 overflow-hidden relative">
+							<div className="flex-1 overflow-hidden relative">
+								
 							{shouldShowSkeleton ? (
 								<ArtifactSkeleton
 									title={displayData.title}
 									showTitle={
 										!!displayData.title && displayData.title !== "Loading..."
 									}
-								/>
-							) : displayData.status === "streaming" && displayData.content ? (
-								/* 流式状态下有部分内容时：显示内容 + 加载指示器 */
-								<>
+									/>) :
 									<ArtifactContent viewMode={effectiveViewMode} />
-									<div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-lg border">
-										<div className="flex items-center gap-2 text-sm text-muted-foreground">
-											<div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
-											<span>Generating...</span>
-										</div>
-									</div>
-								</>
-							) : (
-								<ArtifactContent viewMode={effectiveViewMode} />
-							)}
+							}
 						</div>
 					</motion.div>
 				)}

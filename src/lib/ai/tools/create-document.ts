@@ -80,49 +80,38 @@ export function createDocumentTool(
 			}
 
 			if (!shouldCreateNew && existingDocumentId) {
-				// Convert to update operation
-				console.log(
-					"Converting createDocument to updateDocument for:",
-					existingDocumentId,
-				);
-
-				// Send updating status first
-				dataStream.writeData({ type: "status", content: "updating" } as {
-					type: string;
-					content: string;
-				});
-
+	
 				// Send update process data
-				dataStream.writeData({ type: "id", content: existingDocumentId } as {
-					type: string;
-					content: string;
+				dataStream.writeData({ 
+					type: "id", 
+					content: existingDocumentId 
 				});
-				dataStream.writeData({ type: "title", content: title } as {
-					type: string;
-					content: string;
+				dataStream.writeData({ 
+					type: "title", 
+					content: title 
 				});
 				// 重要：发送 kind 信息确保类型一致性
-				dataStream.writeData({ type: "kind", content: kind } as {
-					type: string;
-					content: string;
+				dataStream.writeData({ 
+					type: "kind", 
+					content: kind 
 				});
 				if (language) {
-					dataStream.writeData({ type: "language", content: language } as {
-						type: string;
-						content: string;
+					dataStream.writeData({ 
+						type: "language", 
+						content: language 
 					});
 				}
-				dataStream.writeData({ type: "clear", content: "" } as {
-					type: string;
-					content: string;
+				dataStream.writeData({ 
+					type: "clear", 
+					content: "" 
 				});
 
 				// Stream content
 				await generateContentStream(content, kind, dataStream);
 
-				dataStream.writeData({ type: "finish", content: "" } as {
-					type: string;
-					content: string;
+				dataStream.writeData({ 
+					type: "finish", 
+					content: "" 
 				});
 
 				// Update database
@@ -167,44 +156,38 @@ export function createDocumentTool(
 			// Original create logic
 			const tempDocumentId = nanoid(16);
 
-			// Send creating status first
-			dataStream.writeData({ type: "status", content: "creating" } as {
-				type: string;
-				content: string;
-			});
-
 			// Send basic info immediately
-			dataStream.writeData({ type: "kind", content: kind } as {
-				type: string;
-				content: string;
+			dataStream.writeData({ 
+				type: "kind", 
+				content: kind 
 			});
-			dataStream.writeData({ type: "id", content: tempDocumentId } as {
-				type: string;
-				content: string;
+			dataStream.writeData({ 
+				type: "id", 
+				content: tempDocumentId 
 			});
-			dataStream.writeData({ type: "title", content: title } as {
-				type: string;
-				content: string;
+			dataStream.writeData({ 
+				type: "title", 
+				content: title 
 			});
 			// Send language info (if available)
 			if (language) {
-				dataStream.writeData({ type: "language", content: language } as {
-					type: string;
-					content: string;
+				dataStream.writeData({ 
+					type: "language", 
+					content: language 
 				});
 			}
-			dataStream.writeData({ type: "clear", content: "" } as {
-				type: string;
-				content: string;
+			dataStream.writeData({ 
+				type: "clear", 
+				content: "" 
 			});
 
 			// Stream content with delay to simulate real generation
 			await generateContentStream(content, kind, dataStream);
 
 			// End streaming
-			dataStream.writeData({ type: "finish", content: "" } as {
-				type: string;
-				content: string;
+			dataStream.writeData({ 
+				type: "finish", 
+				content: "" 
 			});
 
 			// Save to database after streaming completes
@@ -265,24 +248,18 @@ async function generateContentStream(
 ) {
 	const deltaType = `${kind}-delta` as DataStreamDelta["type"];
 
-	// 发送 streaming 状态信号，表示开始流式传输内容
-	dataStream.writeData({ type: "status", content: "streaming" } as {
-		type: string;
-		content: string;
-	});
+	// 模拟真正的流式生成：按小块发送内容（类似 Claude Artifacts）
+	const chunkSize = 3; // 每次发送 3 个字符
 
-	// 适度延迟让状态切换有时间生效
-	await new Promise((resolve) => setTimeout(resolve, 200));
-
-	// Split content into smaller chunks for streaming effect
-	const chunkSize = Math.max(1, Math.floor(content.length / 20));
 	for (let i = 0; i < content.length; i += chunkSize) {
 		const chunk = content.slice(i, i + chunkSize);
-		dataStream.writeData({ type: deltaType, content: chunk } as {
-			type: string;
-			content: string;
-		});
-		// Add small delay to simulate real generation
+
+		// 添加延迟模拟真实的流式生成（更快的速度）
 		await new Promise((resolve) => setTimeout(resolve, 50));
+
+		dataStream.writeData({
+			type: deltaType,
+			content: chunk,
+		} as { type: string; content: string });
 	}
 }

@@ -22,156 +22,204 @@ export function ArtifactContent({
 
 	const displayStatus = artifact.status;
 
-	// 创建一个唯一的 key 来触发动画，当内容真正变化时
-	const contentKey = `${displayData.kind}-${displayStatus}-${displayData.content?.slice(0, 50)}`;
+	// 创建一个更稳定的 key，只在内容真正变化时才触发动画
+	// 不包含 status，避免状态切换时重新挂载组件
+	const contentKey = `${displayData.kind}-${displayData.content?.slice(0, 100) || ''}`;
 
 	// Render content based on kind
 	const renderContent = () => {
-		// 如果是 loading 状态，显示加载界面
-		if (displayStatus === "loading") {
-			return (
-				<div className="h-full flex items-center justify-center bg-gradient-to-br from-muted/5 to-muted/15">
-					<div className="text-center space-y-4 p-8">
-						<div className="relative">
-							<div className="w-12 h-12 mx-auto bg-muted/10 rounded-lg flex items-center justify-center animate-pulse">
-								<span className="text-2xl">📄</span>
-							</div>
-						</div>
-						<div className="space-y-2">
-							<p className="text-sm font-medium text-foreground/80">
-								Loading content...
-							</p>
-							<p className="text-xs text-muted-foreground/70 max-w-xs mx-auto">
-								Please wait while we fetch your document
-							</p>
-						</div>
-					</div>
-				</div>
-			);
-		}
-
 		// 如果是 error 状态，显示错误信息
 		if (displayStatus === "error") {
 			return (
-				<div className="h-full flex items-center justify-center bg-gradient-to-br from-red-50/50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/20">
-					<div className="text-center space-y-4 p-8">
-						<div className="relative">
-							<div className="w-12 h-12 mx-auto bg-red-100/50 dark:bg-red-900/50 rounded-lg flex items-center justify-center">
-								<span className="text-2xl">⚠️</span>
-							</div>
-						</div>
-						<div className="space-y-2">
-							<p className="text-sm font-medium text-red-800 dark:text-red-200">
-								Failed to load content
-							</p>
-							<p className="text-xs text-red-600/70 dark:text-red-400/70 max-w-xs mx-auto">
-								{displayData.content ||
-									"An error occurred while loading the document"}
-							</p>
+				<motion.div 
+					className="h-full flex items-center justify-center"
+					initial={{ opacity: 0, scale: 0.95 }}
+					animate={{ opacity: 1, scale: 1 }}
+					transition={{ duration: 0.3, ease: "easeOut" }}
+				>
+					<div className="bg-gradient-to-br from-red-50/50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/20 rounded-xl border border-red-200/50 dark:border-red-800/50 backdrop-blur-sm w-full h-full flex items-center justify-center">
+						<div className="text-center space-y-6 p-8">
+							<motion.div 
+								className="relative"
+								initial={{ scale: 0 }}
+								animate={{ scale: 1 }}
+								transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+							>
+								<div className="w-16 h-16 mx-auto bg-red-100/80 dark:bg-red-900/80 rounded-2xl flex items-center justify-center shadow-lg">
+									<span className="text-3xl">⚠️</span>
+								</div>
+							</motion.div>
+							<motion.div 
+								className="space-y-3"
+								initial={{ opacity: 0, y: 10 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ delay: 0.2, duration: 0.3 }}
+							>
+								<p className="text-sm font-semibold text-red-800 dark:text-red-200">
+									Failed to load content
+								</p>
+								<p className="text-xs text-red-600/80 dark:text-red-400/80 max-w-xs mx-auto leading-relaxed">
+									{displayData.content ||
+										"An error occurred while loading the document"}
+								</p>
+							</motion.div>
 						</div>
 					</div>
-				</div>
+				</motion.div>
 			);
 		}
 
-		// 如果是 streaming 状态但没有内容，显示一个简单的准备状态
-		if (
-			displayStatus === "streaming" &&
-			(!displayData.content || displayData.content.trim() === "")
-		) {
-			return (
-				<div className="h-full flex items-center justify-center bg-gradient-to-br from-muted/5 to-muted/15">
-					<div className="text-center space-y-4 p-8">
-						<div className="relative">
-							<div className="w-12 h-12 mx-auto bg-muted/10 rounded-lg flex items-center justify-center">
-								<span className="text-2xl">⚡</span>
-							</div>
-						</div>
-						<div className="space-y-2">
-							<p className="text-sm font-medium text-foreground/80">
-								Content is being generated...
-							</p>
-							<p className="text-xs text-muted-foreground/70 max-w-xs mx-auto">
-								Please wait while we create your content
-							</p>
-						</div>
-					</div>
-				</div>
-			);
-		}
+
 
 		switch (displayData.kind) {
 			case "code":
 				return (
-					<CodePreview
-						content={displayData.content}
-						language={displayData.language}
+					<motion.div
 						className="h-full"
-						mode={viewMode}
-					/>
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						transition={{ duration: 0.3, ease: "easeInOut" }}
+					>
+						<CodePreview
+							content={displayData.content}
+							language={displayData.language}
+							className="h-full"
+							mode={viewMode}
+						/>
+					</motion.div>
 				);
 
 			case "text":
 				return (
-					<TextArtifact
-						content={displayData.content}
-						title={displayData.title}
-						status={displayStatus}
-					/>
+					<motion.div
+						className="h-full"
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						transition={{ duration: 0.3, ease: "easeInOut" }}
+					>
+						<TextArtifact
+							content={displayData.content}
+							title={displayData.title}
+							status={displayStatus}
+						/>
+					</motion.div>
 				);
 
 			case "sheet":
 				return (
-					<div className="h-full flex flex-col bg-background">
-						<div className="flex-1 p-6 md:px-12 lg:px-20 overflow-auto">
+					<motion.div className="h-full flex flex-col bg-background">
+						<motion.div 
+							className="flex-1 p-6 md:px-12 lg:px-20 overflow-auto"
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.4, ease: "easeOut" }}
+						>
 							<div className="max-w-4xl mx-auto">
-								<div className="bg-card/50 backdrop-blur-sm border rounded-lg shadow-sm p-6">
+								<motion.div 
+									className="bg-card/60 backdrop-blur-sm border rounded-xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl hover:bg-card/80"
+									initial={{ scale: 0.98 }}
+									animate={{ scale: 1 }}
+									transition={{ delay: 0.1, duration: 0.3, ease: "easeOut" }}
+								>
 									<pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground">
 										{displayData.content}
 									</pre>
-								</div>
+								</motion.div>
 							</div>
-						</div>
-					</div>
+						</motion.div>
+					</motion.div>
 				);
 
 			default:
 				return (
-					<div className="h-full flex items-center justify-center bg-gradient-to-br from-muted/10 to-muted/30">
-						<div className="text-center space-y-4 p-8">
-							<div className="relative">
-								<div className="w-16 h-16 mx-auto bg-muted/20 rounded-lg flex items-center justify-center">
-									<span className="text-2xl">📄</span>
-								</div>
-								<div className="absolute inset-0 w-16 h-16 mx-auto border-2 border-dashed border-muted-foreground/20 rounded-lg" />
-							</div>
-							<div className="space-y-2">
-								<p className="text-sm font-medium text-foreground">
-									Unsupported Content Type
-								</p>
-								<p className="text-xs text-muted-foreground/70 max-w-xs mx-auto">
-									The content type "{displayData.kind}" is not currently
-									supported
-								</p>
+					<motion.div 
+						className="h-full flex items-center justify-center"
+						initial={{ opacity: 0, scale: 0.95 }}
+						animate={{ opacity: 1, scale: 1 }}
+						transition={{ duration: 0.3, ease: "easeOut" }}
+					>
+						<div className="bg-gradient-to-br from-muted/10 to-muted/30 rounded-xl border border-border/50 backdrop-blur-sm w-full h-full flex items-center justify-center">
+							<div className="text-center space-y-6 p-8">
+								<motion.div 
+									className="relative"
+									initial={{ scale: 0 }}
+									animate={{ scale: 1 }}
+									transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+								>
+									<div className="w-20 h-20 mx-auto bg-muted/30 rounded-2xl flex items-center justify-center shadow-lg">
+										<span className="text-3xl">📄</span>
+									</div>
+									<div className="absolute inset-0 w-20 h-20 mx-auto border-2 border-dashed border-muted-foreground/30 rounded-2xl" />
+								</motion.div>
+								<motion.div 
+									className="space-y-3"
+									initial={{ opacity: 0, y: 10 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ delay: 0.2, duration: 0.3 }}
+								>
+									<p className="text-sm font-semibold text-foreground">
+										Unsupported Content Type
+									</p>
+									<p className="text-xs text-muted-foreground/80 max-w-xs mx-auto leading-relaxed">
+										The content type "{displayData.kind}" is not currently
+										supported
+									</p>
+								</motion.div>
 							</div>
 						</div>
-					</div>
+					</motion.div>
 				);
 		}
 	};
 
 	return (
-		<AnimatePresence mode="wait">
-			<motion.div
-				key={contentKey}
-				initial={{ opacity: 0 }}
-				animate={{ opacity: 1 }}
-				exit={{ opacity: 0 }}
-				transition={{ duration: 0.15, ease: "easeInOut" }}
-				className="h-full"
-			>
-				{renderContent()}
-			</motion.div>
-		</AnimatePresence>
+		<div className="h-full relative">
+			<AnimatePresence mode="wait">
+				<motion.div
+					key={contentKey}
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					exit={{ opacity: 0 }}
+					transition={{ duration: 0.2, ease: "easeInOut" }}
+					className="h-full"
+				>
+					{renderContent()}
+				</motion.div>
+			</AnimatePresence>
+			
+			{/* 状态过渡指示器 - 包含骨架屏 */}
+			<AnimatePresence>
+				{(displayStatus === "creating" || displayStatus === "updating" || displayStatus === "loading") && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						transition={{ duration: 0.2 }}
+						className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10"
+					>
+						<motion.div
+							initial={{ scale: 0.8, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0.8, opacity: 0 }}
+							transition={{ duration: 0.3, ease: "easeOut" }}
+							className="bg-card/90 rounded-2xl p-6 shadow-2xl border border-border/50 backdrop-blur-md"
+						>
+							<div className="flex items-center gap-4">
+								<motion.div
+									animate={{ rotate: 360 }}
+									transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+									className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full"
+								/>
+								<span className="text-sm font-medium text-foreground">
+									{displayStatus === "creating" && "Creating content..."}
+									{displayStatus === "updating" && "Updating content..."}
+									{displayStatus === "loading" && "Loading content..."}
+								</span>
+							</div>
+						</motion.div>
+					</motion.div>
+				)}
+			</AnimatePresence>
+		</div>
 	);
 }

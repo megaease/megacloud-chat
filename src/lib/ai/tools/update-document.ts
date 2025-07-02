@@ -43,48 +43,47 @@ export function updateDocumentTool(
 					throw new Error("Document not found or access denied");
 				}
 			}
-
+			dataStream.writeData({ 
+				type: 'clear', 
+				content: title ? title : existingArtifact?.title || "Untitled" 
+			} as { type: string; content: string });
+			
+	
 			// 立即发送基础信息
 			if (kind) {
-				dataStream.writeData({ type: "kind", content: kind } as {
-					type: string;
-					content: string;
-				});
+				dataStream.writeData({ 
+					type: "kind", 
+					content: kind 
+				} as { type: string; content: string });
 			}
-			dataStream.writeData({ type: "id", content: documentId } as {
-				type: string;
-				content: string;
-			});
+			dataStream.writeData({ 
+				type: "id", 
+				content: documentId 
+			} as { type: string; content: string });
 
 			if (title) {
-				dataStream.writeData({ type: "title", content: title } as {
-					type: string;
-					content: string;
-				});
+				dataStream.writeData({ 
+					type: "title", 
+					content: title 
+				} as { type: string; content: string });
 			}
-
 
 			if (language) {
-				dataStream.writeData({ type: "language", content: language } as {
-					type: string;
-					content: string;
-				});
+				dataStream.writeData({ 
+					type: "language", 
+					content: language 
+				} as { type: string; content: string });
 			}
-
-			dataStream.writeData({ type: "clear", content: "" } as {
-				type: string;
-				content: string;
-			});
 
 			// 如果有内容更新，流式发送
 			if (content) {
 				await generateContentStream(content, kind || "text", dataStream);
 			}
 
-			dataStream.writeData({ type: "finish", content: "" } as {
-				type: string;
-				content: string;
-			});
+			dataStream.writeData({ 
+				type: "finish", 
+				content: "" 
+			} as { type: string; content: string });
 
 			// 更新数据库（如果提供了 userId）
 			// Save updated artifact to database after streaming completes

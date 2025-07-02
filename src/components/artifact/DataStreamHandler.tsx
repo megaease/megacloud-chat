@@ -1,7 +1,7 @@
 // components/artifact/DataStreamHandler.tsx
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useArtifact } from "@/context/artifact-provider-context";
@@ -21,7 +21,8 @@ function isValidDataStreamDelta(data: unknown): data is DataStreamDelta {
 
 	const candidate = data as Record<string, unknown>;
 	return (
-		typeof candidate.type === "string" && typeof candidate.content === "string"
+		typeof candidate.type === "string" && 
+		(typeof candidate.content === "string" || candidate.content === undefined)
 	);
 }
 
@@ -32,106 +33,9 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 	const lastProcessedIndex = useRef(-1);
 	const currentDocumentId = useRef<string>("");
 
-	// 使用 useCallback 优化 delta 处理函数
-	const processDelta = useCallback(
-		(delta: DataStreamDelta) => {
-			console.log(
-				"DataStreamHandler processing delta:",
-				delta.type,
-				delta.content?.substring(0, 50),
-			);
-
-			switch (delta.type) {
-				case "id":
-					currentDocumentId.current = delta.content;
-					break;
-
-				case "title":
-					setArtifact((prev) => ({ ...prev, title: delta.content }));
-					break;
-
-				case "kind":
-					setArtifact((prev) => ({ ...prev, kind: delta.content as ArtifactKind }));
-					break;
-
-				case "language":
-					setArtifact((prev) => ({ ...prev, language: delta.content as ArtifactLanguage }));
-					break;
-
-				case "status":
-					// 处理状态变更：creating, updating, streaming
-					console.log("� Processing status signal:", delta.content);
-					if (delta.content === "creating" || delta.content === "updating") {
-						// 设置为 creating/updating 状态并显示 artifact
-						setArtifact((prev) => ({
-							...prev,
-							status: delta.content as "creating" | "updating",
-							isVisible: true,
-						}));
-					}
-					break;
-
-				case "clear":
-					// 清空内容，开始新的流式传输
-					console.log("📝 Processing clear signal - starting streaming");
-					setArtifact((prev) => ({
-						...prev,
-						content: "",
-						status: "streaming" as const,
-						isVisible: true,
-					}));
-					break;
-
-				case "text-delta":
-				case "code-delta":
-				case "sheet-delta":
-					// 追加流式内容
-					setArtifact((prev) => ({
-						...prev,
-						content: prev.content + delta.content,
-						status: "streaming",
-					}));
-					break;
-
-				case "finish":
-					// 完成流式传输
-					setArtifact((prev) => ({
-						...prev,
-						documentId: currentDocumentId.current || prev.documentId,
-						status: "idle",
-					}));
-					// 清理查询缓存，确保下次获取最新数据
-					if (currentDocumentId.current) {
-						queryClient.invalidateQueries({
-							queryKey: ["artifact-versions", currentDocumentId.current],
-						});
-					}
-					break;
-
-				case "id-update": {
-					// 更新文档 ID（用于从临时 ID 到真实 ID 的映射）
-					const newDocumentId = delta.content;
-					if (newDocumentId && newDocumentId !== currentDocumentId.current) {
-						currentDocumentId.current = newDocumentId;
-						setArtifact((prev) => ({
-							...prev,
-							documentId: newDocumentId,
-							status: "idle",
-						}));
-					}
-					break;
-				}
-
-				default:
-					console.warn("Unknown delta type:", delta.type);
-			}
-		},
-		[setArtifact, queryClient],
-	);
-
 	// 处理数据流
 	useEffect(() => {
-		if (!dataStream || dataStream.length === 0) return;
+		if (!dataStream?.length) return;
 
 		// 只处理新的 delta 数据
 		const newDeltas = dataStream.slice(lastProcessedIndex.current + 1);
@@ -141,12 +45,97 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 		lastProcessedIndex.current = dataStream.length - 1;
 
 		// 处理所有新的 delta
-		for (const item of newDeltas) {
-			if (isValidDataStreamDelta(item)) {
-				processDelta(item);
+		newDeltas.forEach((item) => {
+			if (!isValidDataStreamDelta(item)) return;
+
+			const delta = item;
+
+			// 先处理需要保存到 ref 的数据
+			if (delta.type === "id" && delta.content) {
+				currentDocumentId.current = delta.content;
 			}
-		}
-	}, [dataStream, processDelta]);
+
+			// 然后统一更新 artifact 状态
+			setArtifact((prev) => {
+				switch (delta.type) {
+					case "id":
+						return {
+							...prev,
+							documentId: delta.content,
+							status: "streaming"
+						};
+
+					case "title":
+						return {
+							...prev,
+							title: delta.content,
+							status: "streaming",
+			
+						};
+
+					case "kind":
+						return {
+							...prev,
+							kind: delta.content as ArtifactKind,
+							status: "streaming",
+							isVisible: true,
+						};
+
+					case "language":
+						return {
+							...prev,
+							language: delta.content as ArtifactLanguage,
+							status: "streaming"
+						};
+
+			
+					case "clear":
+						return {
+							...prev,
+							content: "",
+							status: "streaming" as const,
+						};
+
+					case "text-delta":
+					case "code-delta":
+					case "sheet-delta":
+						return {
+							...prev,
+							content: prev.content + delta.content,
+							status: "streaming",
+						};
+
+					case "finish":
+						// 完成流式传输后清理查询缓存
+						if (currentDocumentId.current) {
+							queryClient.invalidateQueries({
+								queryKey: ["artifact-versions", currentDocumentId.current],
+							});
+						}
+						return {
+							...prev,
+							documentId: currentDocumentId.current || prev.documentId,
+							status: "idle",
+						};
+
+					case "id-update":
+						const newDocumentId = delta.content;
+						if (newDocumentId && newDocumentId !== currentDocumentId.current) {
+							currentDocumentId.current = newDocumentId;
+							return {
+								...prev,
+								documentId: newDocumentId,
+								status: "idle",
+							};
+						}
+						return prev;
+
+					default:
+						return prev;
+				}
+			});
+		});
+	}, [dataStream, setArtifact, queryClient]);
 
 	// 清理函数
 	useEffect(() => {

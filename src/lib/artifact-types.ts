@@ -6,7 +6,7 @@ export interface UIArtifact {
 	language?: ArtifactLanguage; // Language for code artifacts
 	content: string;
 	isVisible: boolean;
-	status: "idle" | "creating" | "updating" | "streaming" | "error" | "loading";
+	status: "idle"  | "streaming" | "error" | "loading";
 	boundingBox: {
 		top: number;
 		left: number;
