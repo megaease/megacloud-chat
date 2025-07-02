@@ -119,19 +119,14 @@ export function Artifact({
 		return displayData.status !== "streaming";
 	}, [displayData.kind, displayData.status]);
 
-	// 判断是否应该显示骨架屏：优先使用 artifact 状态
+	// 判断是否应该显示骨架屏：确保 CREATE 和 UPDATE 都有一致的体验
 	const shouldShowSkeleton = useMemo(() => {
 		// 如果 artifact 有内容且状态为 idle，直接显示内容（版本切换的情况）
 		if (displayData.status === "idle" && displayData.content && displayData.content.trim() !== "") {
 			return false;
 		}
 
-		// 如果是 loading 状态但已有内容，继续显示现有内容而不是骨架屏
-		if (displayData.status === "loading" && displayData.content && displayData.content.trim() !== "") {
-			return false;
-		}
-
-		// artifact 为流式状态但没有内容时显示骨架屏
+		// 流式状态且没有内容时显示骨架屏（CREATE 和 UPDATE 的主要场景）
 		if (displayData.status === "streaming" && (!displayData.content || displayData.content.trim() === "")) {
 			return true;
 		}

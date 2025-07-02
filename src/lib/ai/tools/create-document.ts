@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import type { DataStreamDelta } from "@/lib/artifact-types";
 import {
 	createArtifact,
-	getArtifactsByChatId,
+	getChatArtifact,
 	updateArtifact,
 } from "@/server/db/queries/artifacts";
 
@@ -61,11 +61,11 @@ export function createDocumentTool(
 			// Check if current chat already has artifact (only when userId and chatId are available)
 			if (userId && chatId && !forceNew) {
 				try {
-					const existingArtifacts = await getArtifactsByChatId(chatId, userId);
-					if (existingArtifacts.length > 0 && existingArtifacts[0]) {
+					const existingArtifact = await getChatArtifact(chatId, userId);
+					if (existingArtifact) {
 						// If artifact exists, convert to update operation
 						shouldCreateNew = false;
-						existingDocumentId = existingArtifacts[0].id;
+						existingDocumentId = existingArtifact.id;
 						console.log(
 							"Found existing artifact in chat, converting to update operation:",
 							existingDocumentId,
@@ -92,6 +92,11 @@ export function createDocumentTool(
 					content: string;
 				});
 				dataStream.writeData({ type: "title", content: title } as {
+					type: string;
+					content: string;
+				});
+				// 重要：发送 kind 信息确保类型一致性
+				dataStream.writeData({ type: "kind", content: kind } as {
 					type: string;
 					content: string;
 				});

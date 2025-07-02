@@ -166,14 +166,29 @@ export async function getArtifactsByUserId(
 	});
 }
 
-// Get artifacts by chat ID
+// Check if a chat already has an artifact (for "One Document Per Chat" policy)
+// Returns the latest version if exists
+export async function getChatArtifact(
+	chatId: string,
+	userId: string,
+): Promise<Artifact | null> {
+	const artifact = await db.query.artifacts.findFirst({
+		where: and(eq(artifacts.chatId, chatId), eq(artifacts.userId, userId)),
+		orderBy: [desc(artifacts.version)], // Get latest version
+	});
+	
+	return artifact || null;
+}
+
+// Get all versions of artifacts in a chat
+// One Document Per Chat policy: should only be one document ID with multiple versions
 export async function getArtifactsByChatId(
 	chatId: string,
 	userId: string,
 ): Promise<Artifact[]> {
 	return await db.query.artifacts.findMany({
 		where: and(eq(artifacts.chatId, chatId), eq(artifacts.userId, userId)),
-		orderBy: [desc(artifacts.createdAt)],
+		orderBy: [desc(artifacts.version)], // Newest version first
 	});
 }
 
