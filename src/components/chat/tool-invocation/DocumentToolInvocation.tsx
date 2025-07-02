@@ -211,7 +211,9 @@ export function DocumentToolInvocation({
 				</div>
 
 				{/* Action Button */}
-				{(status === "success" || (isCreating && args.title)) && (
+				{(status === "success" || 
+				  (isCreating && args.title) || 
+				  (isUpdateOperation && args.documentId)) && (
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<Button

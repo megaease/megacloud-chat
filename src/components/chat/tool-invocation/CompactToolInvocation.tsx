@@ -176,6 +176,11 @@ export function CompactToolInvocation({
 			? "Updating Document..."
 			: "Creating Document...";
 
+		// Determine if the artifact can be opened
+		const canOpenArtifact = status === "success" || 
+			(status === "executing" && args.title) ||
+			(isUpdate && args.documentId);
+
 		// 从工具结果中获取标题（如果可用）
 		const getResultTitle = () => {
 			if (part?.toolInvocation?.result) {
@@ -204,17 +209,18 @@ export function CompactToolInvocation({
 					"my-3 rounded-lg border overflow-hidden transition-colors",
 					status === "executing"
 						? "border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/30"
-						: "border-blue-200/60 dark:border-blue-800/40 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-950/40 dark:to-indigo-950/30 cursor-pointer hover:border-blue-300/80 dark:hover:border-blue-700/60",
+						: "border-blue-200/60 dark:border-blue-800/40 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-950/40 dark:to-indigo-950/30",
+					canOpenArtifact && "cursor-pointer hover:border-blue-300/80 dark:hover:border-blue-700/60"
 				)}
-				onClick={status === "success" ? onOpenArtifact : undefined}
+				onClick={canOpenArtifact ? onOpenArtifact : undefined}
 				onKeyDown={(e) => {
-					if (status === "success" && (e.key === "Enter" || e.key === " ")) {
+					if (canOpenArtifact && (e.key === "Enter" || e.key === " ")) {
 						e.preventDefault();
 						onOpenArtifact?.();
 					}
 				}}
 				aria-label={
-					status === "success" ? `Open document: ${title}` : undefined
+					canOpenArtifact ? `Open document: ${title}` : undefined
 				}
 			>
 				{/* Compact document header */}
@@ -255,7 +261,7 @@ export function CompactToolInvocation({
 						</div>
 					</div>
 					{/* Small icon indicator in top right */}
-					{status === "success" && onOpenArtifact && (
+					{canOpenArtifact && onOpenArtifact && (
 						<div className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex-shrink-0">
 							<IconExternalLink size={12} />
 						</div>
