@@ -27,14 +27,7 @@ function isValidDataStreamDelta(data: unknown): data is DataStreamDelta {
 
 export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 	const { data: dataStream } = useChat({ id: chatId });
-	const {
-		updateStreamingContent,
-		clearStreamingContent,
-		setStreamingMeta,
-		finishStreaming,
-		showArtifact,
-		setArtifact,
-	} = useArtifact();
+	const { setArtifact } = useArtifact();
 	const queryClient = useQueryClient();
 	const lastProcessedIndex = useRef(-1);
 	const currentDocumentId = useRef<string>("");
@@ -54,15 +47,15 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 					break;
 
 				case "title":
-					setStreamingMeta({ title: delta.content });
+					setArtifact((prev) => ({ ...prev, title: delta.content }));
 					break;
 
 				case "kind":
-					setStreamingMeta({ kind: delta.content as ArtifactKind });
+					setArtifact((prev) => ({ ...prev, kind: delta.content as ArtifactKind }));
 					break;
 
 				case "language":
-					setStreamingMeta({ language: delta.content as ArtifactLanguage });
+					setArtifact((prev) => ({ ...prev, language: delta.content as ArtifactLanguage }));
 					break;
 
 				case "status":
@@ -81,19 +74,32 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 				case "clear":
 					// 清空内容，开始新的流式传输
 					console.log("📝 Processing clear signal - starting streaming");
-					clearStreamingContent();
+					setArtifact((prev) => ({
+						...prev,
+						content: "",
+						status: "streaming" as const,
+						isVisible: true,
+					}));
 					break;
 
 				case "text-delta":
 				case "code-delta":
 				case "sheet-delta":
 					// 追加流式内容
-					updateStreamingContent(delta.content);
+					setArtifact((prev) => ({
+						...prev,
+						content: prev.content + delta.content,
+						status: "streaming",
+					}));
 					break;
 
 				case "finish":
 					// 完成流式传输
-					finishStreaming(currentDocumentId.current);
+					setArtifact((prev) => ({
+						...prev,
+						documentId: currentDocumentId.current || prev.documentId,
+						status: "idle",
+					}));
 					// 清理查询缓存，确保下次获取最新数据
 					if (currentDocumentId.current) {
 						queryClient.invalidateQueries({
@@ -107,7 +113,11 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 					const newDocumentId = delta.content;
 					if (newDocumentId && newDocumentId !== currentDocumentId.current) {
 						currentDocumentId.current = newDocumentId;
-						finishStreaming(newDocumentId);
+						setArtifact((prev) => ({
+							...prev,
+							documentId: newDocumentId,
+							status: "idle",
+						}));
 					}
 					break;
 				}
@@ -116,15 +126,7 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 					console.warn("Unknown delta type:", delta.type);
 			}
 		},
-		[
-			updateStreamingContent,
-			clearStreamingContent,
-			setStreamingMeta,
-			finishStreaming,
-			showArtifact,
-			setArtifact,
-			queryClient,
-		],
+		[setArtifact, queryClient],
 	);
 
 	// 处理数据流

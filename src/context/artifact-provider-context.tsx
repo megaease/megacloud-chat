@@ -23,7 +23,7 @@ interface ArtifactContextType {
 		artifact: UIArtifact | ((prev: UIArtifact) => UIArtifact),
 	) => void;
 
-	// 版本管理
+	// 版本管理 - 保留，因为其他组件需要切换版本
 	switchToVersion: (version: ArtifactVersion) => void;
 	loadAndShowArtifact: (
 		documentId: string,
@@ -31,17 +31,7 @@ interface ArtifactContextType {
 		versionNumber?: number,
 	) => Promise<void>;
 
-	// 流式更新
-	updateStreamingContent: (deltaContent: string) => void;
-	clearStreamingContent: () => void;
-	setStreamingMeta: (meta: {
-		title?: string;
-		kind?: ArtifactKind;
-		language?: ArtifactLanguage;
-	}) => void;
-	finishStreaming: (documentId?: string) => void;
-
-	// 显示控制
+	// 显示控制 - 保留，因为多个组件需要控制显示状态
 	showArtifact: (boundingBox?: {
 		top: number;
 		left: number;
@@ -50,7 +40,7 @@ interface ArtifactContextType {
 	}) => void;
 	hideArtifact: () => void;
 
-	// 重置
+	// 重置 - 保留，因为是全局状态清理
 	reset: () => void;
 }
 
@@ -195,62 +185,6 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 		}));
 	}, []);
 
-	// 更新流式内容（追加模式）
-	const updateStreamingContent = useCallback((deltaContent: string) => {
-		setArtifact((prev) => ({
-			...prev,
-			content: prev.content + deltaContent, // 追加新内容到现有内容后面
-			status: "streaming",
-		}));
-	}, []);
-
-	// 清空流式内容（重新开始）
-	const clearStreamingContent = useCallback(() => {
-		setArtifact((prev) => ({
-			...prev,
-			content: "", // 确保内容完全清空
-			status: "streaming" as const,
-			isVisible: true, // 确保在清空内容时显示 artifact
-		}));
-	}, []);
-
-	// 设置流式元数据
-	const setStreamingMeta = useCallback(
-		(meta: {
-			title?: string;
-			kind?: ArtifactKind;
-			language?: ArtifactLanguage;
-		}) => {
-			setArtifact((prev) => {
-				// 如果是设置 kind（通常是第一个元数据），检查是否需要重置内容
-				const shouldResetContent = meta.kind && prev.status === "idle" && prev.content.trim() !== "";
-				
-				if (shouldResetContent) {
-					console.log("🔄 Resetting content due to new kind being set");
-				}
-				
-				return {
-					...prev,
-					...meta,
-					// 如果需要重置内容，清空之前的内容
-					content: shouldResetContent ? "" : prev.content,
-					// 不要在这里强制设置 isVisible，因为这会在元数据设置时就显示 artifact
-					// isVisible 应该在 clear 或 showArtifact 中设置
-				};
-			});
-		},
-		[],
-	);
-
-	// 完成流式传输
-	const finishStreaming = useCallback((documentId?: string) => {
-		setArtifact((prev) => ({
-			...prev,
-			documentId: documentId || prev.documentId,
-			status: "idle",
-		}));
-	}, []);
-
 	// 显示 artifact
 	const showArtifact = useCallback(
 		(boundingBox?: {
@@ -286,10 +220,6 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 		setArtifact,
 		loadAndShowArtifact,
 		switchToVersion,
-		updateStreamingContent,
-		clearStreamingContent,
-		setStreamingMeta,
-		finishStreaming,
 		showArtifact,
 		hideArtifact,
 		reset,
