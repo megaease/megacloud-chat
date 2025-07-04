@@ -231,7 +231,8 @@
     "sheetType": "表格",
     "imageType": "图片",
     "generatingType": "正在生成{type}...",
-    "newType": "新{type}"
+    "newType": "新{type}",
+    "clickOpenToViewFull": "点击查看完整内容..."
   },
   "Error": {
     "notFound": "页面未找到",
