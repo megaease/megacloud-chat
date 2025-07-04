@@ -1,6 +1,7 @@
 // components/artifact/ArtifactActions.tsx
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +17,7 @@ import {
 	Download,
 	Share,
 	Copy,
+	Check,
 	ExternalLink,
 	RefreshCw,
 	Maximize2,
@@ -24,7 +26,6 @@ import {
 	Eye,
 	ChevronDown,
 } from "lucide-react";
-import { CopyButton } from "../copy-button";
 import { cn } from "@/lib/utils";
 import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
 import { useArtifact } from "@/context/artifact-provider-context";
@@ -68,6 +69,9 @@ export function ArtifactActions({
 	const tCommon = useTranslations("Common");
 	const tArtifact = useTranslations("Artifact");
 
+	// Copy status management
+	const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
+
 	// 获取版本数据，hook 内部已经处理了 documentId 的有效性检查
 	const {
 		data: versions = [],
@@ -97,6 +101,17 @@ export function ArtifactActions({
 	// 版本切换功能的启用条件：检查 artifact 状态而不是 props 状态
 	const canSwitchVersions =
 		artifact.status !== "streaming" && !!artifact.documentId;
+
+	// Copy handler function
+	const handleCopy = async () => {
+		try {
+			await navigator.clipboard.writeText(content);
+			setCopyStatus("copied");
+			setTimeout(() => setCopyStatus("idle"), 2000); // Reset after 2 seconds
+		} catch (error) {
+			console.error("Copy failed:", error);
+		}
+	};
 	const handleDownload = () => {
 		const fileExtension = getFileExtension(kind);
 		const filename = `${title || "artifact"}.${fileExtension}`;
@@ -142,11 +157,8 @@ export function ArtifactActions({
 					size="sm"
 					onClick={onClose}
 					className="relative h-8 w-8 p-0 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-red-50 dark:hover:bg-red-950/50 hover:border-red-200 dark:hover:border-red-800/50 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 group"
-					title={tArtifact("close")}
 				>
 					<X className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-					{/* 微妙的光晕效果 */}
-					<div className="absolute -inset-1 bg-gradient-to-r from-red-500/20 to-pink-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
 				</Button>
 
 				{/* 移动端聊天切换按钮 */}
@@ -156,10 +168,8 @@ export function ArtifactActions({
 						size="sm"
 						onClick={onChatToggle}
 						className="relative h-8 w-8 p-0 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:border-blue-200 dark:hover:border-blue-800/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 group"
-						title={tArtifact("toggleChat")}
 					>
 						<MessageSquare className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-						<div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
 					</Button>
 				)}
 
@@ -445,85 +455,56 @@ export function ArtifactActions({
 							size="sm"
 							onClick={onRefresh}
 							disabled={status === "streaming" || status === "loading"}
-							className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-green-50 dark:hover:bg-green-950/50 hover:border-green-200 dark:hover:border-green-800/50 hover:text-green-600 dark:hover:text-green-400 transition-all duration-200 group disabled:opacity-50 disabled:hover:bg-white/60 dark:disabled:hover:bg-black/20"
-							title={tArtifact("regenerate")}
+							className="relative h-8 w-8 p-0 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-green-50 dark:hover:bg-green-950/50 hover:border-green-200 dark:hover:border-green-800/50 hover:text-green-600 dark:hover:text-green-400 transition-all duration-200 group disabled:opacity-50 disabled:hover:bg-white/60 dark:disabled:hover:bg-black/20"
 						>
 							<RefreshCw
-								className={`h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110 ${status === "streaming" || status === "loading" ? "animate-spin" : ""}`}
+								className={`h-4 w-4 transition-all duration-200 group-hover:scale-110 ${status === "streaming" || status === "loading" ? "animate-spin" : ""}`}
 							/>
-							{!isMobile && (
-								<span className="ml-2 text-xs font-medium">
-									{tArtifact("regenerate")}
-								</span>
-							)}
-							<div className="absolute -inset-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
 						</Button>
 					)}
 
-					{/* 现代化复制按钮 */}
-					<div className="relative group">
-						<CopyButton
-							text={content}
-							className={cn(
-								"h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:border-blue-200 dark:hover:border-blue-800/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200",
-								(status === "streaming" || !content) &&
-									"opacity-50 pointer-events-none",
-							)}
-							size="sm"
-							showText={!isMobile}
-							tooltipLabel={
-								status === "streaming"
-									? tArtifact("waitForCompletion")
-									: !content
-										? tArtifact("noContentToCopy")
-										: tCommon("copy")
-							}
-						/>
-						<div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
-					</div>
-
-					{/* 现代化下载按钮 */}
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={handleDownload}
-						disabled={status === "streaming" || !content}
-						className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-purple-50 dark:hover:bg-purple-950/50 hover:border-purple-200 dark:hover:border-purple-800/50 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200 group disabled:opacity-50 disabled:hover:bg-white/60 dark:disabled:hover:bg-black/20 disabled:pointer-events-none"
-						title={
-							status === "streaming"
-								? tArtifact("waitForCompletion")
-								: !content
-									? tArtifact("noContentToDownload")
-									: tCommon("download")
-						}
-					>
-						<Download className="h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110" />
-						{!isMobile && (
-							<span className="ml-2 text-xs font-medium">
-								{tCommon("download")}
-							</span>
-						)}
-						<div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
-					</Button>
-
-					{/* 现代化分享按钮（支持 Web Share API 的浏览器） */}
-					{/* {typeof window !== "undefined" && "share" in navigator && (
+					{/* 合并的复制/下载按钮 */}
+					<div className="flex items-center rounded-xl overflow-hidden bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10">
+						{/* 复制按钮 */}
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={handleShare}
-							className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-orange-50 dark:hover:bg-orange-950/50 hover:border-orange-200 dark:hover:border-orange-800/50 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-200 group"
-							title={tArtifact("share")}
-						>
-							<Share className="h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110" />
-							{!isMobile && (
-								<span className="ml-2 text-xs font-medium">
-									{tArtifact("share")}
-								</span>
+							onClick={handleCopy}
+							disabled={status === "streaming" || !content}
+							className={cn(
+								"relative h-8 w-8 p-0 rounded-none bg-transparent border-0 transition-all duration-200",
+								copyStatus === "copied"
+									? "bg-green-50 dark:bg-green-950/50 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/60 hover:text-green-700 dark:hover:text-green-300"
+									: "hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:text-blue-600 dark:hover:text-blue-400",
+								(status === "streaming" || !content) &&
+									"opacity-50 pointer-events-none hover:bg-transparent hover:text-current",
 							)}
-							<div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
+						>
+							{copyStatus === "copied" ? (
+								<Check className="h-3.5 w-3.5 animate-in fade-in-0 zoom-in-95 duration-200" />
+							) : (
+								<Copy className="h-3.5 w-3.5" />
+							)}
 						</Button>
-					)} */}
+
+						{/* 分隔线 */}
+						<div className="w-px h-6 bg-gray-300/60 dark:bg-white/20" />
+
+						{/* 下载按钮 */}
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={handleDownload}
+							disabled={status === "streaming" || !content}
+							className={cn(
+								"relative h-8 w-8 p-0 rounded-none bg-transparent border-0 hover:bg-purple-50 dark:hover:bg-purple-950/50 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200",
+								(status === "streaming" || !content) &&
+									"opacity-50 pointer-events-none hover:bg-transparent hover:text-current",
+							)}
+						>
+							<Download className="h-3.5 w-3.5" />
+						</Button>
+					</div>
 
 					{/* 现代化全屏切换按钮 */}
 					{onFullscreen && (
@@ -531,26 +512,13 @@ export function ArtifactActions({
 							variant="ghost"
 							size="sm"
 							onClick={onFullscreen}
-							className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:border-indigo-200 dark:hover:border-indigo-800/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200 group"
-							title={
-								isFullscreen
-									? tArtifact("exitFullscreen")
-									: tArtifact("fullscreen")
-							}
+							className="relative h-8 w-8 p-0 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:border-indigo-200 dark:hover:border-indigo-800/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200 group"
 						>
 							{isFullscreen ? (
 								<Minimize2 className="h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110" />
 							) : (
 								<Maximize2 className="h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110" />
 							)}
-							{!isMobile && (
-								<span className="ml-2 text-xs font-medium">
-									{isFullscreen
-										? tArtifact("exitFullscreenMode")
-										: tArtifact("fullscreenMode")}
-								</span>
-							)}
-							<div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
 						</Button>
 					)}
 				</div>
