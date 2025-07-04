@@ -25,13 +25,14 @@ import {
 	ChevronDown,
 } from "lucide-react";
 import { CopyButton } from "../copy-button";
+import { cn } from "@/lib/utils";
 import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { useArtifactVersions } from "@/hooks/use-artifact-versions";
 
 interface ArtifactActionsProps {
 	title: string;
-	status: "streaming" | "idle" | "error" | "submitted" | "loading" | "creating" | "updating";
+	status: "streaming" | "idle" | "error" | "submitted" | "loading";
 	kind: ArtifactKind;
 	content: string;
 	onClose: () => void;
@@ -66,24 +67,25 @@ export function ArtifactActions({
 	const { artifact, switchToVersion } = useArtifact();
 	const tCommon = useTranslations("Common");
 	const tArtifact = useTranslations("Artifact");
-	
+
 	// 获取版本数据，hook 内部已经处理了 documentId 的有效性检查
 	const {
 		data: versions = [],
 		isLoading: versionsLoading,
 		error: versionsError,
 	} = useArtifactVersions(artifact.documentId);
-	
+
 	// 通过内容匹配找到当前显示的版本
-	const currentVersion = versions.find(v => 
-		v.content === artifact.content && v.title === artifact.title
+	const currentVersion = versions.find(
+		(v) => v.content === artifact.content && v.title === artifact.title,
 	);
-	
+
 	// 显示的当前版本号
-	const displayCurrentVersion = currentVersion?.version ?? versions?.[0]?.version;
+	const displayCurrentVersion =
+		currentVersion?.version ?? versions?.[0]?.version;
 	// 使用 context 中的 title，如果为空则回退到 props 中的 title
 	const displayTitle = artifact.title || title;
-	
+
 	// 版本切换处理
 	const handleVersionChange = (version: number) => {
 		const versionData = versions.find((v) => v.version === version);
@@ -91,9 +93,10 @@ export function ArtifactActions({
 			switchToVersion(versionData);
 		}
 	};
-	
+
 	// 版本切换功能的启用条件：检查 artifact 状态而不是 props 状态
-	const canSwitchVersions = artifact.status !== "streaming" && !!artifact.documentId;
+	const canSwitchVersions =
+		artifact.status !== "streaming" && !!artifact.documentId;
 	const handleDownload = () => {
 		const fileExtension = getFileExtension(kind);
 		const filename = `${title || "artifact"}.${fileExtension}`;
@@ -162,9 +165,7 @@ export function ArtifactActions({
 
 				<div className="flex items-center gap-4">
 					{/* 版本下拉菜单 - 只在非流式状态下显示 */}
-					{canSwitchVersions &&
-					versions &&
-					versions.length > 0 ? (
+					{canSwitchVersions && versions && versions.length > 0 ? (
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<div className="group relative">
@@ -172,7 +173,8 @@ export function ArtifactActions({
 									<Button
 										variant="ghost"
 										size="sm"
-										className="relative h-9 px-4 font-medium rounded-xl bg-white/80 dark:bg-black/40 backdrop-blur border border-gray-200 border-solid dark:border-white/20 hover:bg-white dark:hover:bg-black/50 hover:border-gray-300 dark:hover:border-white/30 transition-all duration-200"
+										disabled={status === "streaming" || status === "loading"}
+										className="relative h-9 px-4 font-medium rounded-xl bg-white/80 dark:bg-black/40 backdrop-blur border border-gray-200 border-solid dark:border-white/20 hover:bg-white dark:hover:bg-black/50 hover:border-gray-300 dark:hover:border-white/30 transition-all duration-200 disabled:opacity-50 disabled:hover:bg-white/80 dark:disabled:hover:bg-black/40"
 									>
 										{/* 内容区域 */}
 										<div className="flex items-center gap-3">
@@ -186,7 +188,7 @@ export function ArtifactActions({
 											{/* 简洁版本徽章 */}
 											<div className="flex items-center gap-2">
 												<div className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
-													v{displayCurrentVersion ?? 'N/A'}
+													v{displayCurrentVersion ?? "N/A"}
 												</div>
 												<ChevronDown className="w-4 h-4 text-muted-foreground" />
 											</div>
@@ -236,7 +238,8 @@ export function ArtifactActions({
 									<div className="p-5 max-h-80 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300/50">
 										<div className="space-y-2">
 											{versions.map((version, index) => {
-												const isCurrentVersion = currentVersion?.version === version.version;
+												const isCurrentVersion =
+													currentVersion?.version === version.version;
 												const isLatestVersion = index === 0;
 
 												return (
@@ -408,8 +411,15 @@ export function ArtifactActions({
 						<TabsList className="h-8 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
 							<TabsTrigger
 								value="preview"
-								disabled={!canPreview}
+								disabled={!canPreview || status === "streaming"}
 								className="h-7 px-3 text-xs rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400 disabled:opacity-50 transition-colors"
+								title={
+									!canPreview
+										? tArtifact("previewUnavailable")
+										: status === "streaming"
+											? tArtifact("waitForCompletion")
+											: ""
+								}
 							>
 								<Eye className="w-3 h-3 mr-1.5" />
 								{canPreview
@@ -454,9 +464,20 @@ export function ArtifactActions({
 					<div className="relative group">
 						<CopyButton
 							text={content}
-							className="h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:border-blue-200 dark:hover:border-blue-800/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200"
+							className={cn(
+								"h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:border-blue-200 dark:hover:border-blue-800/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200",
+								(status === "streaming" || !content) &&
+									"opacity-50 pointer-events-none",
+							)}
 							size="sm"
 							showText={!isMobile}
+							tooltipLabel={
+								status === "streaming"
+									? tArtifact("waitForCompletion")
+									: !content
+										? tArtifact("noContentToCopy")
+										: tCommon("copy")
+							}
 						/>
 						<div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" />
 					</div>
@@ -466,8 +487,15 @@ export function ArtifactActions({
 						variant="ghost"
 						size="sm"
 						onClick={handleDownload}
-						className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-purple-50 dark:hover:bg-purple-950/50 hover:border-purple-200 dark:hover:border-purple-800/50 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200 group"
-						title={tCommon("download")}
+						disabled={status === "streaming" || !content}
+						className="relative h-8 px-3 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-gray-200/50 border-solid dark:border-white/10 hover:bg-purple-50 dark:hover:bg-purple-950/50 hover:border-purple-200 dark:hover:border-purple-800/50 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200 group disabled:opacity-50 disabled:hover:bg-white/60 dark:disabled:hover:bg-black/20 disabled:pointer-events-none"
+						title={
+							status === "streaming"
+								? tArtifact("waitForCompletion")
+								: !content
+									? tArtifact("noContentToDownload")
+									: tCommon("download")
+						}
 					>
 						<Download className="h-3.5 w-3.5 transition-all duration-200 group-hover:scale-110" />
 						{!isMobile && (

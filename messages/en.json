@@ -200,6 +200,7 @@
     "versionsCount": "{count} versions",
     "current": "Current",
     "latest": "Latest",
+    "waitForCompletion": "Wait for generation to complete",
     "fullscreenMode": "Fullscreen",
     "exitFullscreenMode": "Exit Fullscreen",
     "singleDocumentPolicy": "This chat uses single document policy",

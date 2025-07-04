@@ -19,16 +19,19 @@ export function CopyButton({
 	size = "sm",
 	showText = false,
 	textLabel,
+	tooltipLabel,
 }: {
 	text: string;
 	className?: string;
 	size?: "default" | "sm" | "lg" | "icon";
 	showText?: boolean;
 	textLabel?: string;
+	tooltipLabel?: string;
 }) {
 	const t = useTranslations("Common");
 	const [copied, setCopied] = useState<boolean>(false);
 	const defaultTextLabel = textLabel || t("copy");
+	const defaultTooltipLabel = tooltipLabel || t("copy");
 
 	const handleCopy = async () => {
 		try {
@@ -74,7 +77,7 @@ export function CopyButton({
 					</Button>
 				</TooltipTrigger>
 				<TooltipContent side="top">
-					{copied ? t("copied") : t("copy")}
+					{copied ? t("copied") : defaultTooltipLabel}
 				</TooltipContent>
 			</Tooltip>
 		</TooltipProvider>
