@@ -150,7 +150,7 @@ export async function POST(req: Request) {
 					tools: {
 						...mcpTools,
 						createDocument: createDocumentTool(dataStream, userId, chatId),
-						updateDocument: updateDocumentTool(dataStream, userId),
+						updateDocument: updateDocumentTool(dataStream, userId, chatId),
 					} as ToolSet,
 
 					experimental_transform: smoothStream({ chunking: "word" }),

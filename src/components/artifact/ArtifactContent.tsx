@@ -24,14 +24,14 @@ export function ArtifactContent({
 
 	// 创建一个更稳定的 key，只在内容真正变化时才触发动画
 	// 不包含 status，避免状态切换时重新挂载组件
-	const contentKey = `${displayData.kind}-${displayData.content?.slice(0, 100) || ''}`;
+	const contentKey = `${displayData.kind}-${displayData.content?.slice(0, 100) || ""}`;
 
 	// Render content based on kind
 	const renderContent = () => {
 		// 如果是 error 状态，显示错误信息
 		if (displayStatus === "error") {
 			return (
-				<motion.div 
+				<motion.div
 					className="h-full flex items-center justify-center"
 					initial={{ opacity: 0, scale: 0.95 }}
 					animate={{ opacity: 1, scale: 1 }}
@@ -39,7 +39,7 @@ export function ArtifactContent({
 				>
 					<div className="bg-gradient-to-br from-red-50/50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/20 rounded-xl border border-red-200/50 dark:border-red-800/50 backdrop-blur-sm w-full h-full flex items-center justify-center">
 						<div className="text-center space-y-6 p-8">
-							<motion.div 
+							<motion.div
 								className="relative"
 								initial={{ scale: 0 }}
 								animate={{ scale: 1 }}
@@ -49,7 +49,7 @@ export function ArtifactContent({
 									<span className="text-3xl">⚠️</span>
 								</div>
 							</motion.div>
-							<motion.div 
+							<motion.div
 								className="space-y-3"
 								initial={{ opacity: 0, y: 10 }}
 								animate={{ opacity: 1, y: 0 }}
@@ -68,8 +68,6 @@ export function ArtifactContent({
 				</motion.div>
 			);
 		}
-
-
 
 		switch (displayData.kind) {
 			case "code":
@@ -108,14 +106,14 @@ export function ArtifactContent({
 			case "sheet":
 				return (
 					<motion.div className="h-full flex flex-col bg-background">
-						<motion.div 
+						<motion.div
 							className="flex-1 p-6 md:px-12 lg:px-20 overflow-auto"
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.4, ease: "easeOut" }}
 						>
 							<div className="max-w-4xl mx-auto">
-								<motion.div 
+								<motion.div
 									className="bg-card/60 backdrop-blur-sm border rounded-xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl hover:bg-card/80"
 									initial={{ scale: 0.98 }}
 									animate={{ scale: 1 }}
@@ -132,7 +130,7 @@ export function ArtifactContent({
 
 			default:
 				return (
-					<motion.div 
+					<motion.div
 						className="h-full flex items-center justify-center"
 						initial={{ opacity: 0, scale: 0.95 }}
 						animate={{ opacity: 1, scale: 1 }}
@@ -140,7 +138,7 @@ export function ArtifactContent({
 					>
 						<div className="bg-gradient-to-br from-muted/10 to-muted/30 rounded-xl border border-border/50 backdrop-blur-sm w-full h-full flex items-center justify-center">
 							<div className="text-center space-y-6 p-8">
-								<motion.div 
+								<motion.div
 									className="relative"
 									initial={{ scale: 0 }}
 									animate={{ scale: 1 }}
@@ -151,7 +149,7 @@ export function ArtifactContent({
 									</div>
 									<div className="absolute inset-0 w-20 h-20 mx-auto border-2 border-dashed border-muted-foreground/30 rounded-2xl" />
 								</motion.div>
-								<motion.div 
+								<motion.div
 									className="space-y-3"
 									initial={{ opacity: 0, y: 10 }}
 									animate={{ opacity: 1, y: 0 }}
@@ -173,53 +171,17 @@ export function ArtifactContent({
 	};
 
 	return (
-		<div className="h-full relative">
-			<AnimatePresence mode="wait">
-				<motion.div
-					key={contentKey}
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0 }}
-					transition={{ duration: 0.2, ease: "easeInOut" }}
-					className="h-full"
-				>
-					{renderContent()}
-				</motion.div>
-			</AnimatePresence>
-			
-			{/* 状态过渡指示器 - 包含骨架屏 */}
-			<AnimatePresence>
-				{(displayStatus === "creating" || displayStatus === "updating" || displayStatus === "loading") && (
-					<motion.div
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
-						transition={{ duration: 0.2 }}
-						className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10"
-					>
-						<motion.div
-							initial={{ scale: 0.8, opacity: 0 }}
-							animate={{ scale: 1, opacity: 1 }}
-							exit={{ scale: 0.8, opacity: 0 }}
-							transition={{ duration: 0.3, ease: "easeOut" }}
-							className="bg-card/90 rounded-2xl p-6 shadow-2xl border border-border/50 backdrop-blur-md"
-						>
-							<div className="flex items-center gap-4">
-								<motion.div
-									animate={{ rotate: 360 }}
-									transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-									className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full"
-								/>
-								<span className="text-sm font-medium text-foreground">
-									{displayStatus === "creating" && "Creating content..."}
-									{displayStatus === "updating" && "Updating content..."}
-									{displayStatus === "loading" && "Loading content..."}
-								</span>
-							</div>
-						</motion.div>
-					</motion.div>
-				)}
-			</AnimatePresence>
-		</div>
+		<AnimatePresence mode="wait">
+			<motion.div
+				key={contentKey}
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
+				exit={{ opacity: 0 }}
+				transition={{ duration: 0.2, ease: "easeInOut" }}
+				className="h-full relative z-10"
+			>
+				{renderContent()}
+			</motion.div>
+		</AnimatePresence>
 	);
 }

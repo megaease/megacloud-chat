@@ -2,22 +2,26 @@
 import { tool, type DataStreamWriter } from "ai";
 import { z } from "zod";
 import type { DataStreamDelta } from "@/lib/artifact-types";
-import { updateArtifact, getArtifactById } from "@/server/db/queries/artifacts";
+import { 
+	updateArtifact, 
+	getArtifactById, 
+	getChatArtifact 
+} from "@/server/db/queries/artifacts";
+import type { Artifact } from "@/server/db/schema";
 
 export function updateDocumentTool(
 	dataStream: DataStreamWriter,
 	userId?: string,
+	chatId?: string,
 ) {
 	return tool({
-		description: "Update an existing document artifact when user explicitly requests changes to an existing document. Only use when user clearly wants to modify, edit, or update specific content in an existing artifact.",
+		description: "Update or modify an EXISTING document in the current chat. Use this when the user wants to: modify existing content, convert format (e.g., text to HTML), enhance features, make changes, add elements, redesign, or transform existing documents. TRIGGER KEYWORDS: 'make it a webpage', 'convert to HTML', 'turn into', 'redesign', 'add styling', 'improve', 'enhance', 'modify', 'change', 'update', 'transform', 'adapt', 'convert this', 'make this into'. Do NOT use for initial creation - use createDocument instead.",
 		parameters: z.object({
-			documentId: z.string().describe("ID of the document to update"),
-			title: z.string().optional().describe("New title of the document"),
-			content: z.string().optional().describe("New content of the document"),
+			title: z.string().min(3).describe("New title for the document (minimum 3 characters)"),
+			content: z.string().min(10).describe("New content for the document (minimum 10 characters)"),
 			kind: z
 				.enum(["text", "code", "sheet", "image"])
-				.optional()
-				.describe("New type of document"),
+				.describe("Type of document"),
 			language: z
 				.enum(["html", "react", "javascript", "python", "css"])
 				.optional()
@@ -28,107 +32,116 @@ export function updateDocumentTool(
 				.describe("Description of changes made"),
 		}),
 		execute: async ({
-			documentId,
 			title,
 			content,
 			kind,
 			language,
 			changeDescription,
 		}) => {
-			// 验证文档是否存在且用户有权限，同时获取现有信息
-			let existingArtifact = null;
-			if (userId) {
-				existingArtifact = await getArtifactById(documentId, userId);
-				if (!existingArtifact) {
-					throw new Error("Document not found or access denied");
-				}
+			// Validation
+			if (!title || title.trim().length < 3) {
+				throw new Error("Title must be at least 3 characters long");
 			}
-			dataStream.writeData({ 
-				type: 'clear', 
-				content: title ? title : existingArtifact?.title || "Untitled" 
-			} as { type: string; content: string });
+			if (!content || content.trim().length < 10) {
+				throw new Error("Content must be at least 10 characters long");
+			}
 			
-	
-			// 立即发送基础信息
-			if (kind) {
-				dataStream.writeData({ 
-					type: "kind", 
-					content: kind 
-				} as { type: string; content: string });
+			if (!userId || !chatId) {
+				throw new Error("User ID and Chat ID are required for updating documents");
 			}
+
+			// Find existing document in this chat
+			let existingArtifact: Artifact | null;
+			try {
+				existingArtifact = await getChatArtifact(chatId, userId);
+				if (!existingArtifact) {
+					throw new Error("No existing document found in this chat. Please create a new document first.");
+				}
+			} catch (error) {
+				console.error("Failed to find existing artifact:", error);
+				throw new Error("Could not find existing document to update. Please create a new document first.");
+			}
+
+			const documentId = existingArtifact.id;
+
+			// Send basic info immediately
+			dataStream.writeData({ 
+				type: "kind", 
+				content: kind 
+			});
 			dataStream.writeData({ 
 				type: "id", 
 				content: documentId 
-			} as { type: string; content: string });
-
-			if (title) {
-				dataStream.writeData({ 
-					type: "title", 
-					content: title 
-				} as { type: string; content: string });
-			}
-
+			});
+			dataStream.writeData({ 
+				type: "title", 
+				content: title 
+			});
+			// Send language info (if available)
 			if (language) {
 				dataStream.writeData({ 
 					type: "language", 
 					content: language 
-				} as { type: string; content: string });
+				});
 			}
+			dataStream.writeData({ 
+				type: "clear", 
+				content: "" 
+			});
 
-			// 如果有内容更新，流式发送
-			if (content) {
-				await generateContentStream(content, kind || "text", dataStream);
-			}
+			// Stream content with delay to simulate real generation
+			await generateContentStream(content, kind, dataStream);
 
+			// End streaming
 			dataStream.writeData({ 
 				type: "finish", 
 				content: "" 
-			} as { type: string; content: string });
+			});
 
-			// 更新数据库（如果提供了 userId）
-			// Save updated artifact to database after streaming completes
-			let updatedArtifactVersion = existingArtifact?.version || 1; // 默认使用现有版本号
-			if (userId) {
-				try {
-					const updatedArtifact = await updateArtifact({
-						artifactId: documentId,
-						title,
-						content,
-						kind,
-						language,
-						userId,
-						changeDescription: changeDescription || "Updated via AI assistant",
-					});
-
-					if (updatedArtifact) {
-						updatedArtifactVersion = updatedArtifact.version; // 使用数据库返回的新版本号
-						console.log(
-							"✅ Artifact updated in database:",
-							updatedArtifact.id,
-							"version:",
-							updatedArtifact.version,
-						);
-					}
-				} catch (error) {
-					console.error("❌ Failed to update artifact in database:", error);
-					// 不抛出错误，因为流式传输已经成功
+			// Update document in database
+			let artifactVersion = existingArtifact.version + 1; // Default next version
+			
+			try {
+				console.log("Updating existing artifact with new version...");
+				const updatedArtifact = await updateArtifact({
+					artifactId: documentId,
+					title,
+					content,
+					kind,
+					language,
+					userId,
+					changeDescription: changeDescription || "Updated via AI assistant",
+				});
+				
+				if (updatedArtifact) {
+					artifactVersion = updatedArtifact.version;
+					console.log(
+						"✅ Artifact updated successfully:",
+						updatedArtifact.id,
+						"version:",
+						updatedArtifact.version,
+					);
 				}
+			} catch (error) {
+				console.error("❌ Failed to update artifact in database:", error);
+				throw new Error("Failed to update document in database");
 			}
 
-			// 统一返回值格式，与 createDocumentTool 保持一致
 			return {
 				documentId,
-				title: title || existingArtifact?.title || "Untitled",
-				kind: kind || existingArtifact?.kind || "text",
-				language: language || existingArtifact?.language,
-				version: updatedArtifactVersion, // 从数据库返回的版本号
+				title,
+				kind,
+				language,
 				success: true,
+				operation: "updated",
+				version: artifactVersion,
+				content: "The document was updated and is now visible to the user.",
 			};
 		},
 	});
 }
 
-// 真正的流式内容生成函数
+// Real streaming content generation function
 async function generateContentStream(
 	content: string,
 	kind: string,

@@ -28,6 +28,25 @@ export interface UpdateArtifactParams {
 	isPublic?: boolean;
 }
 
+/**
+ * 获取或创建聊天中的唯一文档 ID
+ * 确保每个聊天只有一个文档 ID，多个版本
+ */
+export async function getOrCreateChatDocumentId(
+	chatId: string,
+	userId: string,
+): Promise<string> {
+	// 首先检查是否已有文档
+	const existingArtifact = await getChatArtifact(chatId, userId);
+	
+	if (existingArtifact) {
+		return existingArtifact.id;
+	}
+	
+	// 如果没有，生成新的文档 ID
+	return nanoid(16);
+}
+
 // Create a new artifact
 export async function createArtifact(
 	params: CreateArtifactParams,

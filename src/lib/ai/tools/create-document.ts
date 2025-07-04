@@ -1,12 +1,10 @@
-// lib/ai/tools/create-document-smart.ts
+// lib/ai/tools/create-document.ts
 import { tool, type DataStreamWriter } from "ai";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import type { DataStreamDelta } from "@/lib/artifact-types";
 import {
 	createArtifact,
-	getChatArtifact,
-	updateArtifact,
 } from "@/server/db/queries/artifacts";
 
 export function createDocumentTool(
@@ -16,7 +14,7 @@ export function createDocumentTool(
 ) {
 	return tool({
 		description:
-			"Create a new document artifact when user explicitly requests substantial content creation (code, HTML, documents, etc.). Only use when user clearly wants to create, write, build, or generate specific content that is substantial and reusable. Do not use for simple conversations, single words, or brief responses.",
+			"Create a NEW document artifact for the FIRST TIME in this conversation. Use this ONLY for initial document creation when no document exists yet. TRIGGER KEYWORDS: 'write', 'create', 'build', 'generate', 'make', 'develop', 'code', 'script', 'article', 'document', 'webpage' (when creating from scratch). Examples: 'write an article about...', 'create a webpage for...', 'make a Python script that...', 'build a calculator app'. Do NOT use if the user wants to modify, enhance, convert, or update existing content - use updateDocument instead.",
 		parameters: z.object({
 			title: z.string().min(3).describe("Descriptive title of the document (minimum 3 characters)"),
 			content: z.string().min(10).describe("Substantial content of the document (minimum 10 characters)"),
@@ -27,13 +25,8 @@ export function createDocumentTool(
 				.enum(["html", "react", "javascript", "python", "css"])
 				.optional()
 				.describe("Programming language for code documents"),
-			forceNew: z
-				.boolean()
-				.optional()
-				.default(false)
-				.describe("Force create new document even if one exists in this chat"),
 		}),
-		execute: async ({ title, content, kind, language, forceNew }) => {
+		execute: async ({ title, content, kind, language }) => {
 			// Additional validation to prevent accidental triggers
 			if (!title || title.trim().length < 3) {
 				throw new Error("Title must be at least 3 characters long");
@@ -55,106 +48,8 @@ export function createDocumentTool(
 				throw new Error("Title appears to be too simple for document creation");
 			}
 
-			let shouldCreateNew = true;
-			let existingDocumentId: string | null = null;
-
-			// Check if current chat already has artifact (only when userId and chatId are available)
-			if (userId && chatId && !forceNew) {
-				try {
-					const existingArtifact = await getChatArtifact(chatId, userId);
-					if (existingArtifact) {
-						// If artifact exists, convert to update operation
-						shouldCreateNew = false;
-						existingDocumentId = existingArtifact.id;
-						console.log(
-							"Found existing artifact in chat, converting to update operation:",
-							existingDocumentId,
-						);
-					}
-				} catch (error) {
-					console.warn(
-						"Failed to check existing artifacts, proceeding with create:",
-						error,
-					);
-				}
-			}
-
-			if (!shouldCreateNew && existingDocumentId) {
-	
-				// Send update process data
-				dataStream.writeData({ 
-					type: "id", 
-					content: existingDocumentId 
-				});
-				dataStream.writeData({ 
-					type: "title", 
-					content: title 
-				});
-				// 重要：发送 kind 信息确保类型一致性
-				dataStream.writeData({ 
-					type: "kind", 
-					content: kind 
-				});
-				if (language) {
-					dataStream.writeData({ 
-						type: "language", 
-						content: language 
-					});
-				}
-				dataStream.writeData({ 
-					type: "clear", 
-					content: "" 
-				});
-
-				// Stream content
-				await generateContentStream(content, kind, dataStream);
-
-				dataStream.writeData({ 
-					type: "finish", 
-					content: "" 
-				});
-
-				// Update database
-				let updatedVersion = 1; // 默认版本号
-				if (userId) {
-					try {
-						const updatedArtifact = await updateArtifact({
-							artifactId: existingDocumentId,
-							title,
-							content,
-							kind,
-							language,
-							userId,
-							changeDescription: "Updated via AI assistant",
-						});
-						if (updatedArtifact) {
-							updatedVersion = updatedArtifact.version; // 使用数据库返回的版本号
-							console.log(
-								"✅ Artifact updated successfully:",
-								updatedArtifact.id,
-								"version:",
-								updatedArtifact.version,
-							);
-						}
-					} catch (error) {
-						console.error("❌ Failed to update artifact in database:", error);
-					}
-				}
-
-				return {
-					documentId: existingDocumentId,
-					title,
-					kind,
-					language,
-					success: true,
-					operation: "updated",
-					version: updatedVersion, // 从数据库返回的版本号
-					content: "Document was updated and is now visible to the user.",
-				};
-			}
-
-			// Original create logic
-			const tempDocumentId = nanoid(16);
+			// Generate unique document ID for new document
+			const documentId = nanoid(16);
 
 			// Send basic info immediately
 			dataStream.writeData({ 
@@ -163,7 +58,7 @@ export function createDocumentTool(
 			});
 			dataStream.writeData({ 
 				type: "id", 
-				content: tempDocumentId 
+				content: documentId 
 			});
 			dataStream.writeData({ 
 				type: "title", 
@@ -191,13 +86,13 @@ export function createDocumentTool(
 			});
 
 			// Save to database after streaming completes
-			let realDocumentId = tempDocumentId;
-			let createdArtifactVersion = 1; // 默认版本号
+			let artifactVersion = 1; // 新文档默认版本号
+			
 			if (userId && chatId) {
 				try {
-					console.log("Attempting to save artifact to database...");
+					console.log("Creating new artifact...");
 					const createdArtifact = await createArtifact({
-						id: tempDocumentId, // Use same ID
+						id: documentId,
 						title,
 						content,
 						kind,
@@ -207,34 +102,30 @@ export function createDocumentTool(
 						tags: [],
 						isPublic: false,
 					});
-					realDocumentId = createdArtifact.id;
-					createdArtifactVersion = createdArtifact.version; // 使用数据库返回的版本号
+					artifactVersion = createdArtifact.version;
 					console.log(
-						"✅ Artifact saved to database successfully:",
+						"✅ Artifact created successfully:",
 						createdArtifact.id,
 						"version:",
 						createdArtifact.version,
 					);
-
-					// No need to send ID update as ID remains consistent
 				} catch (error) {
 					console.error("❌ Failed to save artifact to database:", error);
-					// Keep temp ID even if save fails to ensure frontend works
-					// Possible reasons: DB connection issues, permission issues, etc.
+					// Keep working even if save fails to ensure frontend works
 				}
 			} else {
 				console.log("⚠️ Skipping database save - missing userId or chatId");
 			}
 
 			return {
-				documentId: realDocumentId,
+				documentId,
 				title,
 				kind,
 				language,
 				success: true,
 				operation: "created",
-				version: createdArtifactVersion, // 从数据库返回的版本号
-				content: "A document was created and is now visible to the user.",
+				version: artifactVersion,
+				content: "A new document was created and is now visible to the user.",
 			};
 		},
 	});

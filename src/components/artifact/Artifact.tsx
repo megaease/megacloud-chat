@@ -75,7 +75,7 @@ export function Artifact({
 }: ArtifactProps) {
 	const { artifact, hideArtifact } = useArtifact();
 	const tArtifact = useTranslations("Artifact");
-	
+
 	const [windowDimensions, setWindowDimensions] = useState({
 		width: 0,
 		height: 0,
@@ -114,34 +114,29 @@ export function Artifact({
 
 	// 检测是否支持预览：基于 artifact 状态
 	const canPreview = useMemo(() => {
-
 		if (displayData.kind !== "code") return false;
-			return displayData.status === "idle";
+		return displayData.status === "idle";
 	}, [displayData.kind, displayData.status]);
 
-
 	const shouldShowSkeleton = useMemo(() => {
-		const noContent = !displayData.content || displayData.content.trim() === "";		
-		if (status === "submitted" ) {
+		const noContent = !displayData.content || displayData.content.trim() === "";
+
+		if (displayData.status === "streaming" && noContent) {
 			return true;
 		}
-		if ( displayData.status === "idle" && status === 'streaming') {
-			return true
-		 }
-		if ((displayData.status === "loading" ||  
-			displayData.status === "streaming"
-		) && noContent) {
+
+		if (displayData.status === "idle" && status === "streaming" && noContent) {
 			return true;
 		}
 
 		return false;
 	}, [displayData.status, displayData.content, status]);
 
-	// 根据状态确定实际的视图模式：主要基于 artifact 状态
 	const effectiveViewMode = useMemo(() => {
-
-		if (displayData.status === "loading" || 
-			displayData.status === "streaming") {
+		if (
+			displayData.status === "loading" ||
+			displayData.status === "streaming"
+		) {
 			return "code";
 		}
 		// 其他状态使用用户选择的视图模式
@@ -204,7 +199,8 @@ export function Artifact({
 					</motion.div>
 				)}
 
-				{/* 桌面端：可调整大小的面板布局 */}
+				{/*  桌面端：可调整大小的 bg-card/90 rounded-2xl p-6 shadow-2xl border border-border-/50 backdrop-blur-mdmd
+				 */}
 				{!isMobile ? (
 					<ResizablePanelGroup direction="horizontal" className="h-full">
 						{/* 左侧聊天面板 */}
@@ -369,22 +365,24 @@ export function Artifact({
 							showChatButton={true}
 							isMobile={true}
 							viewMode={viewMode}
-							onViewModeChange={displayData.status === "idle" ? setViewMode : undefined}
+							onViewModeChange={
+								displayData.status === "idle" ? setViewMode : undefined
+							}
 							canPreview={canPreview}
 						/>
 
 						{/* Artifact 内容区域 */}
-							<div className="flex-1 overflow-hidden relative">
-								
+						<div className="flex-1 overflow-hidden relative">
 							{shouldShowSkeleton ? (
 								<ArtifactSkeleton
 									title={displayData.title}
 									showTitle={
 										!!displayData.title && displayData.title !== "Loading..."
 									}
-									/>) :
-									<ArtifactContent viewMode={effectiveViewMode} />
-							}
+								/>
+							) : (
+								<ArtifactContent viewMode={effectiveViewMode} />
+							)}
 						</div>
 					</motion.div>
 				)}

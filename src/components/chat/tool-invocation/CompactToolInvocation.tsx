@@ -20,6 +20,7 @@ interface CompactToolInvocationProps {
   theme: ToolTheme;
   isExpanded: boolean;
   onToggleExpanded: () => void;
+  onOpenArtifact?: (documentId: string, boundingBox: { top: number; left: number; width: number; height: number }) => void;
   isCompact?: boolean; // 新增：是否为紧凑模式
   part?: ToolInvocationPart; // 添加 part 参数以访问工具调用结果
 }
