@@ -129,19 +129,6 @@ export function ArtifactActions({
 		URL.revokeObjectURL(url);
 	};
 
-	const handleShare = async () => {
-		if (navigator.share) {
-			try {
-				await navigator.share({
-					title: title,
-					text: content,
-				});
-			} catch (error) {
-				console.log("Error sharing:", error);
-			}
-		}
-	};
-
 	return (
 		<div className="relative flex items-center justify-between px-6 py-3 border-b border-gray-200/60 border-solid dark:border-white/10 bg-gradient-to-r from-gray-50/90 via-white/95 to-gray-50/90 dark:from-gray-900/90 dark:via-gray-900/95 dark:to-gray-900/90 backdrop-blur-2xl min-h-[68px]">
 			{/* 顶部装饰线 */}

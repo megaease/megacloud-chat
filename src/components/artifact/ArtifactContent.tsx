@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { ArtifactLanguage } from "@/lib/artifact-types";
 import { TextArtifact } from "./TextArtifact";
 import { CodePreview } from "./CodePreview";
+import { TablePreview } from "./previews";
 import { useArtifact } from "@/context/artifact-provider-context";
 
 export function ArtifactContent({
@@ -105,26 +106,13 @@ export function ArtifactContent({
 
 			case "sheet":
 				return (
-					<motion.div className="h-full flex flex-col bg-background">
-						<motion.div
-							className="flex-1 p-6 md:px-12 lg:px-20 overflow-auto"
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.4, ease: "easeOut" }}
-						>
-							<div className="max-w-4xl mx-auto">
-								<motion.div
-									className="bg-card/60 backdrop-blur-sm border rounded-xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl hover:bg-card/80"
-									initial={{ scale: 0.98 }}
-									animate={{ scale: 1 }}
-									transition={{ delay: 0.1, duration: 0.3, ease: "easeOut" }}
-								>
-									<pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground">
-										{displayData.content}
-									</pre>
-								</motion.div>
-							</div>
-						</motion.div>
+					<motion.div
+						className="h-full"
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						transition={{ duration: 0.3, ease: "easeInOut" }}
+					>
+						<TablePreview content={displayData.content} />
 					</motion.div>
 				);
 
