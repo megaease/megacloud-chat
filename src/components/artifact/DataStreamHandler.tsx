@@ -57,82 +57,89 @@ export function DataStreamHandler({ chatId }: DataStreamHandlerProps) {
 
 			// 然后统一更新 artifact 状态
 			setArtifact((prev) => {
-				switch (delta.type) {
-					case "id":
-						return {
-							...prev,
-							documentId: delta.content,
-							status: "streaming"
-						};
-
-					case "title":
-						return {
-							...prev,
-							title: delta.content,
-							status: "streaming",
-			
-						};
-
-					case "kind":
-						return {
-							...prev,
-							kind: delta.content as ArtifactKind,
-							status: "streaming",
-							isVisible: true,
-						};
-
-					case "language":
-						return {
-							...prev,
-							language: delta.content as ArtifactLanguage,
-							status: "streaming"
-						};
-
-			
-					case "clear":
-						return {
-							...prev,
-							content: "",
-							status: "streaming" as const,
-						};
-
-					case "text-delta":
-					case "code-delta":
-					case "sheet-delta":
-						return {
-							...prev,
-							content: prev.content + delta.content,
-							status: "streaming",
-						};
-
-					case "finish":
-						// 完成流式传输后清理查询缓存
-						if (currentDocumentId.current) {
-							queryClient.invalidateQueries({
-								queryKey: ["artifact-versions", currentDocumentId.current],
-							});
-						}
-						return {
-							...prev,
-							documentId: currentDocumentId.current || prev.documentId,
-							status: "idle",
-						};
-
-					case "id-update":
-						const newDocumentId = delta.content;
-						if (newDocumentId && newDocumentId !== currentDocumentId.current) {
-							currentDocumentId.current = newDocumentId;
+				const result = (() => {
+					switch (delta.type) {
+						case "id":
 							return {
 								...prev,
-								documentId: newDocumentId,
-								status: "idle",
+								documentId: delta.content,
+								status: "streaming" as const
 							};
-						}
-						return prev;
 
-					default:
-						return prev;
-				}
+						case "title":
+							return {
+								...prev,
+								title: delta.content,
+								status: "streaming" as const,
+				
+							};
+
+						case "kind":
+							return {
+								...prev,
+								kind: delta.content as ArtifactKind,
+								status: "streaming" as const,
+								isVisible: true,
+							};
+
+						case "language":
+							return {
+								...prev,
+								language: delta.content as ArtifactLanguage,
+								status: "streaming" as const
+							};
+
+				
+						case "clear":
+							return {
+								...prev,
+								content: "",
+								status: "streaming" as const,
+							};
+
+						case "text-delta":
+						case "code-delta":
+						case "sheet-delta":
+						case "image-delta":
+							const newContent = prev.content + delta.content;
+							return {
+								...prev,
+								content: newContent,
+								status: "streaming" as const,
+							};
+
+						case "finish":
+							// 完成流式传输后清理查询缓存
+							if (currentDocumentId.current) {
+								queryClient.invalidateQueries({
+									queryKey: ["artifact-versions", currentDocumentId.current],
+								});
+							}
+							const finalState = {
+								...prev,
+								documentId: currentDocumentId.current || prev.documentId,
+								status: "idle" as const,
+							};
+							return finalState;
+
+						case "id-update":
+							const newDocumentId = delta.content;
+							if (newDocumentId && newDocumentId !== currentDocumentId.current) {
+								currentDocumentId.current = newDocumentId;
+								return {
+									...prev,
+									documentId: newDocumentId,
+									status: "idle" as const,
+								};
+							}
+							return prev;
+
+						default:
+							return prev;
+					}
+				})();
+				
+				return result;
 			});
 		});
 	}, [dataStream, setArtifact, queryClient]);

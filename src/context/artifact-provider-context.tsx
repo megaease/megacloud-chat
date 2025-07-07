@@ -58,8 +58,18 @@ const defaultArtifact: UIArtifact = {
 };
 
 export function ArtifactProvider({ children }: { children: ReactNode }) {
-	const [artifact, setArtifact] = useState<UIArtifact>(defaultArtifact);
+	const [artifact, setArtifactInternal] = useState<UIArtifact>(defaultArtifact);
 	const queryClient = useQueryClient();
+
+	// 包装 setArtifact 以添加调试信息
+	const setArtifact = useCallback((
+		artifact: UIArtifact | ((prev: UIArtifact) => UIArtifact),
+	) => {
+		setArtifactInternal((prev) => {
+			const newArtifact = typeof artifact === 'function' ? artifact(prev) : artifact;
+			return newArtifact;
+		});
+	}, []);
 
 	// 获取版本数据的辅助函数，使用 React Query 的缓存
 	const getVersionsFromCache = useCallback(

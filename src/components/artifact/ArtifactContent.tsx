@@ -6,6 +6,7 @@ import type { ArtifactLanguage } from "@/lib/artifact-types";
 import { TextArtifact } from "./TextArtifact";
 import { CodePreview } from "./CodePreview";
 import { TablePreview } from "./previews";
+import { VisualPreview } from "./previews/VisualPreview";
 import { useArtifact } from "@/context/artifact-provider-context";
 
 export function ArtifactContent({
@@ -20,12 +21,12 @@ export function ArtifactContent({
 		title: artifact.title,
 		language: artifact.language,
 	};
-
 	const displayStatus = artifact.status;
 
 	// 创建一个更稳定的 key，只在内容真正变化时才触发动画
 	// 不包含 status，避免状态切换时重新挂载组件
-	const contentKey = `${displayData.kind}-${displayData.content?.slice(0, 100) || ""}`;
+	// 使用内容的哈希值来确保内容变化时组件会重新渲染
+	const contentKey = `${displayData.kind}-${displayData.content?.length || 0}-${displayData.content ? displayData.content.slice(0, 50) + displayData.content.slice(-50) : ""}`;
 
 	// Render content based on kind
 	const renderContent = () => {
@@ -113,6 +114,22 @@ export function ArtifactContent({
 						transition={{ duration: 0.3, ease: "easeInOut" }}
 					>
 						<TablePreview content={displayData.content} />
+					</motion.div>
+				);
+
+			case "image":
+				return (
+					<motion.div
+						className="h-full"
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						transition={{ duration: 0.3, ease: "easeInOut" }}
+					>
+						<VisualPreview 
+							content={displayData.content} 
+							title={displayData.title}
+							className="h-full"
+						/>
 					</motion.div>
 				);
 
