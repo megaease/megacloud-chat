@@ -43,9 +43,11 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
+import { TableSkeleton } from "../TableSkeleton";
 
 interface TablePreviewProps {
 	content: string;
+	status?: "idle" | "streaming" | "error" | "loading";
 }
 
 interface TableData {
@@ -56,13 +58,18 @@ interface TableData {
 // Dynamic row type for TanStack Table
 type DynamicRow = Record<string, string | number> & { _index?: number };
 
-export const TablePreview = ({ content }: TablePreviewProps) => {
+export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 	const [globalFilter, setGlobalFilter] = useState("");
 	const [searchInput, setSearchInput] = useState("");
+
+	// 如果正在流式传输，显示骨架屏
+	if (status === "streaming") {
+		return <TableSkeleton />;
+	}
 
 	// Debounced search handler
 	const debouncedSetGlobalFilter = useCallback((value: string) => {
@@ -211,7 +218,8 @@ export const TablePreview = ({ content }: TablePreviewProps) => {
 
 	// Generate columns for TanStack Table
 	const columns = useMemo<ColumnDef<DynamicRow>[]>(() => {
-		return tableData.headers.map((header) => ({
+		return tableData.headers.map((header, index) => ({
+			id: `column-${index}`, // 添加明确的 id
 			accessorKey: header,
 			header: ({ column }) => {
 				return (

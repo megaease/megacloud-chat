@@ -12,6 +12,7 @@ import {
 	isPreviewSupported,
 } from "./utils/language-detector";
 import { HtmlPreview, ReactPreview, JavaScriptPreview } from "./previews";
+import { CodeSkeleton } from "./CodeSkeleton";
 import type { ArtifactLanguage } from "@/lib/artifact-types";
 
 interface CodePreviewProps {
@@ -19,6 +20,7 @@ interface CodePreviewProps {
 	language?: ArtifactLanguage;
 	className?: string;
 	mode?: "code" | "preview";
+	status?: "idle" | "streaming" | "error" | "loading";
 }
 
 export function CodePreview({
@@ -26,10 +28,16 @@ export function CodePreview({
 	language,
 	className,
 	mode = "code",
+	status = "idle",
 }: CodePreviewProps) {
 	const tArtifact = useTranslations("Artifact");
 	const finalLanguage = getLanguage(language, content);
 	const previewType = getPreviewType(finalLanguage);
+
+	// 如果正在流式传输，显示骨架屏
+	if (status === "streaming") {
+		return <CodeSkeleton className={className} mode={mode} />;
+	}
 
 	const renderPreview = () => {
 		switch (previewType) {

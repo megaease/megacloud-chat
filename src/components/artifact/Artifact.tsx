@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { ArtifactContent } from "./ArtifactContent";
 import { ArtifactActions } from "./ArtifactActions";
-import { ArtifactSkeleton } from "./ArtifactSkeleton";
 import { Button } from "@/components/ui/button";
 import {
 	ResizablePanelGroup,
@@ -18,7 +17,6 @@ import { ArtifactChat } from "./ArtifactChat";
 import type { Message } from "@ai-sdk/react";
 import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
 import { useTranslations } from "next-intl";
-import { d } from "node_modules/drizzle-kit/index-BAUrj6Ib.mjs";
 
 // 根据文档类型生成简洁的默认标题（不包含状态信息）
 function getDefaultTitle(
@@ -117,20 +115,6 @@ export function Artifact({
 		if (displayData.kind !== "code") return false;
 		return displayData.status === "idle";
 	}, [displayData.kind, displayData.status]);
-
-	const shouldShowSkeleton = useMemo(() => {
-		const noContent = !displayData.content || displayData.content.trim() === "";
-
-		if (displayData.status === "streaming" && noContent) {
-			return true;
-		}
-
-		if (displayData.status === "idle" && status === "streaming" && noContent) {
-			return true;
-		}
-
-		return false;
-	}, [displayData.status, displayData.content, status]);
 
 	const effectiveViewMode = useMemo(() => {
 		if (
@@ -302,17 +286,7 @@ export function Artifact({
 
 								{/* Artifact 内容区域 */}
 								<div className="flex-1 overflow-hidden relative">
-									{shouldShowSkeleton ? (
-										<ArtifactSkeleton
-											title={displayData.title}
-											showTitle={
-												!!displayData.title &&
-												displayData.title !== "Loading..."
-											}
-										/>
-									) : (
-										<ArtifactContent viewMode={effectiveViewMode} />
-									)}
+									<ArtifactContent viewMode={effectiveViewMode} />
 								</div>
 							</motion.div>
 						</ResizablePanel>
@@ -373,16 +347,7 @@ export function Artifact({
 
 						{/* Artifact 内容区域 */}
 						<div className="flex-1 overflow-hidden relative">
-							{shouldShowSkeleton ? (
-								<ArtifactSkeleton
-									title={displayData.title}
-									showTitle={
-										!!displayData.title && displayData.title !== "Loading..."
-									}
-								/>
-							) : (
-								<ArtifactContent viewMode={effectiveViewMode} />
-							)}
+							<ArtifactContent viewMode={effectiveViewMode} />
 						</div>
 					</motion.div>
 				)}

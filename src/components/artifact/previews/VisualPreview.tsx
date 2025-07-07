@@ -10,6 +10,7 @@ import { ImageRenderer } from "./visual";
 import { SvgRenderer } from "./visual";
 import { ChartRenderer } from "./visual";
 import { VisualContainer } from "./visual";
+import { VisualSkeleton } from "../VisualSkeleton";
 
 // 类型定义
 export type VisualContentType = "image" | "svg" | "chart" | "none" | "unknown";
@@ -18,6 +19,7 @@ export interface VisualPreviewProps {
 	content: string;
 	title?: string;
 	className?: string;
+	status?: "idle" | "streaming" | "error" | "loading";
 }
 
 export interface VisualState {
@@ -75,7 +77,7 @@ export function useContentTypeDetection(content: string): VisualContentType {
 	}, [content]);
 }
 
-export function VisualPreview({ content, title, className }: VisualPreviewProps) {
+export function VisualPreview({ content, title, className, status = "idle" }: VisualPreviewProps) {
 	// 状态管理
 	const [visualState, setVisualState] = useState<VisualState>({
 		zoom: 100,
@@ -140,6 +142,11 @@ export function VisualPreview({ content, title, className }: VisualPreviewProps)
 	}, [contentType, updateVisualState]);
 
 	const imageSrc = getImageSrc();
+
+	// 如果正在流式传输，显示骨架屏
+	if (status === "streaming") {
+		return <VisualSkeleton className={className} contentType={contentType} />;
+	}
 
 	// 如果真的没有任何内容
 	if (!content || content.trim() === "" || contentType === "none") {

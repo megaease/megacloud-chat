@@ -79,13 +79,13 @@ export function ArtifactContent({
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						transition={{ duration: 0.3, ease: "easeInOut" }}
-					>
-						<CodePreview
-							content={displayData.content}
-							language={displayData.language}
-							className="h-full"
-							mode={viewMode}
-						/>
+					>					<CodePreview
+						content={displayData.content}
+						language={displayData.language}
+						className="h-full"
+						mode={viewMode}
+						status={displayStatus}
+					/>
 					</motion.div>
 				);
 
@@ -113,7 +113,7 @@ export function ArtifactContent({
 						animate={{ opacity: 1 }}
 						transition={{ duration: 0.3, ease: "easeInOut" }}
 					>
-						<TablePreview content={displayData.content} />
+						<TablePreview content={displayData.content} status={displayStatus} />
 					</motion.div>
 				);
 
@@ -124,12 +124,12 @@ export function ArtifactContent({
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						transition={{ duration: 0.3, ease: "easeInOut" }}
-					>
-						<VisualPreview 
-							content={displayData.content} 
-							title={displayData.title}
-							className="h-full"
-						/>
+					>					<VisualPreview 
+						content={displayData.content} 
+						title={displayData.title}
+						className="h-full"
+						status={displayStatus}
+					/>
 					</motion.div>
 				);
 

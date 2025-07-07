@@ -5,6 +5,7 @@ import { Markdown } from "@/components/markdown";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { TextSkeleton } from "./TextSkeleton";
 import type { UIArtifact } from "@/lib/artifact-types";
 
 interface TextArtifactProps {
@@ -19,6 +20,11 @@ export function TextArtifact({
 	status = "idle",
 }: TextArtifactProps) {
 	const [viewMode, setViewMode] = useState<"rendered" | "raw">("rendered");
+
+	// 如果正在流式传输，显示骨架屏
+	if (status === "streaming") {
+		return <TextSkeleton />;
+	}
 
 	const renderContent = () => {
 		if (viewMode === "rendered") {
