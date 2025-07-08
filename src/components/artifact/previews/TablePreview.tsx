@@ -93,6 +93,13 @@ export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) =>
 			const lines = content.trim().split("\n");
 
 			if (lines.length === 0) return { headers: [], rows: [] };
+			
+			// Helper function to filter out Markdown table separator lines
+			const isMarkdownSeparator = (line: string): boolean => {
+				const trimmedLine = line.trim();
+				// 检查是否是 Markdown 分隔行：主要由 -, |，: 和空格组成
+				return /^[\s\|:-]+$/.test(trimmedLine);
+			};
 
 			// Enhanced CSV parser with better separator detection
 			const detectSeparator = (line: string): string => {
@@ -141,8 +148,9 @@ export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) =>
 			// Parse data rows
 			const rows = lines
 				.slice(1)
+				.filter((line) => !isMarkdownSeparator(line))
 				.map((line) => parseRow(line, separator))
-				.filter((row) => row.some((cell) => cell.length > 0)); // Filter empty rows
+				.filter((row) => row.some((cell) => cell && cell.trim().length > 0)); // 只保留非空行
 
 			// If we only got one column, try alternative parsing methods
 			if (headers.length === 1 && lines.length > 1) {
@@ -160,6 +168,7 @@ export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) =>
 					const spaceHeaders = firstLine.trim().split(/\s+/);
 					const spaceRows = lines
 						.slice(1)
+						.filter((line) => !isMarkdownSeparator(line))
 						.map((line) => line.trim().split(/\s+/));
 
 					if (
@@ -173,7 +182,10 @@ export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) =>
 				// Try comma with no spaces
 				if (firstLine?.includes(",")) {
 					const commaHeaders = firstLine.split(",");
-					const commaRows = lines.slice(1).map((line) => line.split(","));
+					const commaRows = lines
+						.slice(1)
+						.filter((line) => !isMarkdownSeparator(line))
+						.map((line) => line.split(","));
 
 					if (commaHeaders.length > 1) {
 						return { headers: commaHeaders, rows: commaRows };
@@ -183,31 +195,31 @@ export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) =>
 
 			return { headers, rows };
 		} catch (error) {
-			// If parsing fails, try to treat content as simple table format
-			const lines = content.trim().split("\n");
-			if (lines.length === 0) return { headers: [], rows: [] };
-
-			return {
-				headers: [tArtifact("data")],
-				rows: lines.map((line) => [line]),
-			};
+			// If parsing fails, return empty table data
+			console.warn("Table parsing failed:", error);
+			return { headers: [], rows: [] };
 		}
 	}, [content, tArtifact]);
 
 	// Convert to TanStack Table format
 	const data = useMemo((): DynamicRow[] => {
-		return tableData.rows.map((row, index) => {
+		// 过滤掉空行
+		const validRows = tableData.rows.filter(row => 
+			row && row.length > 0 && row.some(cell => cell && cell.trim() !== "")
+		);
+		
+		return validRows.map((row, index) => {
 			const rowObject: DynamicRow = { _index: index };
 			tableData.headers.forEach((header, colIndex) => {
 				// Ensure we don't have undefined values and handle different data types
 				const cellValue = row[colIndex];
-				if (cellValue !== undefined && cellValue !== null) {
+				if (cellValue !== undefined && cellValue !== null && cellValue.trim() !== "") {
 					// Try to detect if it's a number
 					const numValue = Number(cellValue);
 					rowObject[header] =
 						!Number.isNaN(numValue) && cellValue.trim() !== ""
 							? numValue
-							: String(cellValue);
+							: String(cellValue).trim();
 				} else {
 					rowObject[header] = "";
 				}
@@ -218,42 +230,51 @@ export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) =>
 
 	// Generate columns for TanStack Table
 	const columns = useMemo<ColumnDef<DynamicRow>[]>(() => {
-		return tableData.headers.map((header, index) => ({
-			id: `column-${index}`, // 添加明确的 id
-			accessorKey: header,
-			header: ({ column }) => {
-				return (
-					<Button
-						variant="ghost"
-						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-						className="h-8 px-2 lg:px-3 hover:bg-muted/80 font-semibold text-left justify-start"
-					>
-						<span className="truncate">{header}</span>
-						{column.getIsSorted() === "desc" ? (
-							<SortDesc className="ml-2 h-3.5 w-3.5 text-muted-foreground" />
-						) : column.getIsSorted() === "asc" ? (
-							<SortAsc className="ml-2 h-3.5 w-3.5 text-muted-foreground" />
-						) : (
-							<div className="ml-2 h-3.5 w-3.5" />
-						)}
-					</Button>
-				);
-			},
-			cell: ({ getValue }) => {
-				const value = getValue();
-				const displayValue =
-					value === null || value === undefined ? "" : String(value);
-				return (
-					<div className="px-2 py-1">
-						<span className="text-sm text-foreground/90 font-mono break-all">
-							{displayValue || (
-								<span className="text-muted-foreground italic">—</span>
+		// 过滤掉空的列头
+		const validHeaders = tableData.headers.filter(header => 
+			header && header.trim() !== ""
+		);
+		
+		return validHeaders.map((header, index) => {
+			// 使用 header 名称作为 id，如果有重复则添加索引
+			const columnId = header || `column-${index}`;
+			return {
+				id: columnId,
+				accessorKey: header,
+				header: ({ column }) => {
+					return (
+						<Button
+							variant="ghost"
+							onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+							className="h-8 px-2 lg:px-3 hover:bg-muted/80 font-semibold text-left justify-start"
+						>
+							<span className="truncate">{header}</span>
+							{column.getIsSorted() === "desc" ? (
+								<SortDesc className="ml-2 h-3.5 w-3.5 text-muted-foreground" />
+							) : column.getIsSorted() === "asc" ? (
+								<SortAsc className="ml-2 h-3.5 w-3.5 text-muted-foreground" />
+							) : (
+								<div className="ml-2 h-3.5 w-3.5" />
 							)}
-						</span>
-					</div>
-				);
-			},
-		}));
+						</Button>
+					);
+				},
+				cell: ({ getValue }) => {
+					const value = getValue();
+					const displayValue =
+						value === null || value === undefined ? "" : String(value);
+					return (
+						<div className="px-2 py-1">
+							<span className="text-sm text-foreground/90 font-mono break-all">
+								{displayValue || (
+									<span className="text-muted-foreground italic">—</span>
+								)}
+							</span>
+						</div>
+					);
+				},
+			};
+		});
 	}, [tableData.headers]);
 
 	const table = useReactTable({
