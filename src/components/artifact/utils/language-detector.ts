@@ -85,6 +85,8 @@ export const getPreviewType = (language: ArtifactLanguage): string => {
 			return "react";
 		case "javascript":
 			return "javascript";
+		case "python":
+			return "python";
 		default:
 			return "code";
 	}
@@ -112,5 +114,5 @@ export const getLanguageDisplayName = (language: ArtifactLanguage): string => {
  * @returns 是否支持预览
  */
 export const isPreviewSupported = (language: ArtifactLanguage): boolean => {
-	return ["html", "react", "javascript"].includes(language);
+	return ["html", "react", "javascript", "python"].includes(language);
 };

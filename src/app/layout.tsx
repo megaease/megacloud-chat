@@ -31,6 +31,24 @@ export default async function RootLayout({
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
+			<head>
+				{/* Pyodide 预加载 - 提升 Python 执行体验 */}
+				<link
+					rel="preload"
+					href="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"
+					as="script"
+				/>
+				<link
+					rel="preload"
+					href="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.asm.wasm"
+					as="fetch"
+					crossOrigin="anonymous"
+				/>
+				<script
+					src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"
+					async
+				/>
+			</head>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>

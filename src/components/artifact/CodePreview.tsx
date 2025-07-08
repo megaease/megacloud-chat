@@ -11,7 +11,12 @@ import {
 	getLanguageDisplayName,
 	isPreviewSupported,
 } from "./utils/language-detector";
-import { HtmlPreview, ReactPreview, JavaScriptPreview } from "./previews";
+import {
+	HtmlPreview,
+	ReactPreview,
+	JavaScriptPreview,
+	PythonPreview,
+} from "./previews";
 import { CodeSkeleton } from "./CodeSkeleton";
 import type { ArtifactLanguage } from "@/lib/artifact-types";
 
@@ -47,9 +52,11 @@ export function CodePreview({
 				return <ReactPreview content={content} />;
 			case "javascript":
 				return <JavaScriptPreview content={content} />;
+			case "python":
+				return <PythonPreview content={content} />;
 			default:
 				return (
-					<motion.div 
+					<motion.div
 						className="flex items-center justify-center h-full text-muted-foreground"
 						initial={{ opacity: 0, scale: 0.95 }}
 						animate={{ opacity: 1, scale: 1 }}
@@ -57,7 +64,7 @@ export function CodePreview({
 					>
 						<div className="bg-gradient-to-br from-muted/10 to-muted/30 rounded-xl border border-border/50 backdrop-blur-sm w-full h-full flex items-center justify-center">
 							<div className="text-center space-y-6 p-8">
-								<motion.div 
+								<motion.div
 									className="relative"
 									initial={{ scale: 0 }}
 									animate={{ scale: 1 }}
@@ -66,7 +73,7 @@ export function CodePreview({
 									<Code2 className="w-20 h-20 mx-auto opacity-30" />
 									<div className="absolute inset-0 w-20 h-20 mx-auto border-2 border-dashed border-muted-foreground/30 rounded-2xl" />
 								</motion.div>
-								<motion.div 
+								<motion.div
 									className="space-y-3"
 									initial={{ opacity: 0, y: 10 }}
 									animate={{ opacity: 1, y: 0 }}
@@ -91,7 +98,7 @@ export function CodePreview({
 	return (
 		<div className={cn("h-full", className)}>
 			{mode === "code" ? (
-				<motion.div 
+				<motion.div
 					className="h-full"
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
@@ -114,7 +121,7 @@ export function CodePreview({
 					</motion.div>
 				</motion.div>
 			) : (
-				<motion.div 
+				<motion.div
 					className="h-full overflow-hidden"
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
