@@ -32,7 +32,6 @@ import {
 	HtmlPreview,
 	ReactPreview,
 } from "./previews";
-import { CodeSkeleton } from "./CodeSkeleton";
 import type { ArtifactLanguage, ArtifactKind } from "@/lib/artifact-types";
 
 // Pyodide 类型定义
@@ -84,24 +83,8 @@ export function CodePreview({
 	const previewType = getPreviewType(finalLanguage);
 	const canPreview = isPreviewSupported(finalLanguage);
 	
-	// 在流式传输时，为内容添加光标动画效果
-	const [cursorVisible, setCursorVisible] = useState(true);
-	
-	// 光标闪烁效果
-	useEffect(() => {
-		if (status !== "streaming") {
-			setCursorVisible(false);
-			return;
-		}
-		
-		const interval = setInterval(() => {
-			setCursorVisible(prev => !prev);
-		}, 500);
-		
-		return () => clearInterval(interval);
-	}, [status]);
-	
-	const displayContent = status === "streaming" && cursorVisible ? `${content}█` : content;
+	// 修复滚动问题：直接使用原始内容，避免影响CodeMirror的滚动
+	const displayContent = content;
 
 	// Python Pyodide 懒加载 - 不自动预加载
 	useEffect(() => {
@@ -624,157 +607,17 @@ sys.stderr = _output_capture
 
 			{/* 内容区域 */}
 			<div className="flex-1 overflow-hidden flex flex-col">
-				<Tabs value={viewMode} className="flex-1">
-					<TabsContent value="code" className="h-full m-0">
-						<motion.div
-							className="h-full flex flex-col"
-							initial={{ opacity: 0 }}
-							animate={{ opacity: 1 }}
-							transition={{ duration: 0.3, ease: "easeInOut" }}
-						>
-							{/* 对于 Python/JavaScript 使用可调整大小的面板 */}
-							{(previewType === "python" || previewType === "javascript") ? (
-								<ResizablePanelGroup direction="vertical" className="h-full">
-									<ResizablePanel defaultSize={70} minSize={30}>
-										<CodeEditor
-											value={displayContent}
-											language={finalLanguage}
-											showHeader={false}
-											showCopyButton={true}
-											height="100%"
-											className="h-full"
-										/>
-									</ResizablePanel>
-									
-									<ResizableHandle withHandle />
-									
-									<ResizablePanel defaultSize={30} minSize={20}>
-										<div className="h-full bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-sm flex flex-col border-t border-slate-200 dark:border-slate-800">
-											{/* Console 头部 */}
-											<div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-950">
-												<div className="flex items-center gap-2">
-													<div className="flex items-center gap-2 px-2 py-1 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm">
-														<div className="w-2 h-2 rounded-full bg-blue-500" />
-														<span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-															控制台
-														</span>
-													</div>
-													{(consoleOutput || consoleError) && (
-														<div className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
-															<div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-															<span className="text-xs text-green-700 dark:text-green-400 font-medium">活跃</span>
-														</div>
-													)}
-													
-													{/* Python 特定状态 */}
-													{previewType === "python" && !pyodideReady && (
-														<div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-800">
-															<div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-															<span className="text-xs text-yellow-700 dark:text-yellow-400 font-medium">
-																{isInitializing ? `初始化中 ${preloadProgress}%` : "未就绪"}
-															</span>
-														</div>
-													)}
-												</div>
-												<div className="flex items-center gap-1">
-													{/* Python 包安装按钮 */}
-													{previewType === "python" && pyodideReady && (
-														<div className="flex items-center gap-1 mr-2">
-															{["numpy", "pandas", "matplotlib"].map((pkg) => (
-																<Button
-																	key={pkg}
-																	variant="outline"
-																	size="sm"
-																	onClick={() => installPackage(pkg)}
-																	disabled={isExecuting}
-																	className="h-6 px-2 text-xs border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-																	title={`安装 ${pkg}`}
-																>
-																	<Package className="w-2.5 h-2.5 mr-1" />
-																	{pkg}
-																</Button>
-															))}
-														</div>
-													)}
-													
-													<Button
-														variant="ghost"
-														size="sm"
-														onClick={() => {
-															setConsoleOutput("");
-															setConsoleError("");
-														}}
-														className="h-7 px-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
-														title="清空输出"
-													>
-														清空
-													</Button>
-												</div>
-											</div>
-											
-											{/* Console 内容 */}
-											<div className="flex-1 p-4 overflow-auto bg-gradient-to-br from-slate-50/50 to-white/50 dark:from-slate-950/50 dark:to-slate-900/50">
-												{consoleError && (
-													<div className="mb-3 p-3 bg-gradient-to-r from-red-50 to-red-25 dark:from-red-950/50 dark:to-red-900/30 border border-red-200 dark:border-red-800/50 rounded-lg text-red-700 dark:text-red-400 text-sm shadow-sm">
-														<div className="flex items-start gap-2">
-															<div className="w-4 h-4 rounded-full bg-red-500 flex-shrink-0 mt-0.5 flex items-center justify-center">
-																<span className="text-white text-xs font-bold">!</span>
-															</div>
-															<div className="flex-1">
-																<div className="text-xs font-semibold mb-1 text-red-800 dark:text-red-300">执行错误</div>
-																<pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{consoleError}</pre>
-															</div>
-														</div>
-													</div>
-												)}
-												{consoleOutput && (
-													<div className="p-3 bg-gray-900 text-green-400 rounded-lg shadow-lg border border-gray-700">
-														<div className="flex items-center gap-2 mb-2 border-b border-gray-700 pb-2">
-															<div className="w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
-																<div className="w-1 h-1 rounded-full bg-white" />
-															</div>
-															<span className="text-xs text-gray-400 font-mono font-semibold tracking-wide">OUTPUT</span>
-														</div>
-														<pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">{consoleOutput}</pre>
-													</div>
-												)}
-												{!consoleOutput && !consoleError && (
-													<div className="flex items-center justify-center h-full text-muted-foreground">
-														<div className="text-center p-8">
-															{previewType === "python" ? (
-																<>
-																	<div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center">
-																		<div className="text-2xl">🐍</div>
-																	</div>
-																	<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-																		{pyodideReady ? "Python 环境就绪" : "Python 环境"}
-																	</p>
-																	<p className="text-xs text-slate-500 dark:text-slate-500">
-																		{pyodideReady 
-																			? "点击执行按钮运行代码" 
-																			: isInitializing 
-																			? `正在初始化... ${preloadProgress}%`
-																			: "点击初始化按钮启动环境"}
-																	</p>
-																</>
-															) : (
-																<>
-																	<div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center">
-																		<div className="text-2xl">⚡</div>
-																	</div>
-																	<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">准备就绪</p>
-																	<p className="text-xs text-slate-500 dark:text-slate-500">点击执行按钮查看输出结果</p>
-																</>
-															)}
-														</div>
-													</div>
-												)}
-											</div>
-										</div>
-									</ResizablePanel>
-								</ResizablePanelGroup>
-							) : (
-								<div className="h-full">
+				{/* 对于 Python/JavaScript 直接显示代码，不使用 Tabs */}
+				{(previewType === "python" || previewType === "javascript") ? (
+					<motion.div
+						className="h-full flex flex-col"
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						transition={{ duration: 0.3, ease: "easeInOut" }}
+					>
+						<ResizablePanelGroup direction="vertical" className="h-full">
+							<ResizablePanel defaultSize={70} minSize={30}>
+								<div className="h-full overflow-hidden">
 									<CodeEditor
 										value={displayContent}
 										language={finalLanguage}
@@ -784,21 +627,169 @@ sys.stderr = _output_capture
 										className="h-full"
 									/>
 								</div>
-							)}
-						</motion.div>
-					</TabsContent>
+							</ResizablePanel>
+							
+							<ResizableHandle withHandle />
+							
+							<ResizablePanel defaultSize={30} minSize={20}>
+								<div className="h-full bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-sm flex flex-col border-t border-slate-200 dark:border-slate-800">
+									{/* Console 头部 */}
+									<div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-950">
+										<div className="flex items-center gap-2">
+											<div className="flex items-center gap-2 px-2 py-1 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm">
+												<div className="w-2 h-2 rounded-full bg-blue-500" />
+												<span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+													控制台
+												</span>
+											</div>
+											{(consoleOutput || consoleError) && (
+												<div className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
+													<div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+													<span className="text-xs text-green-700 dark:text-green-400 font-medium">活跃</span>
+												</div>
+											)}
+											
+											{/* Python 特定状态 */}
+											{previewType === "python" && !pyodideReady && (
+												<div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-800">
+													<div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+													<span className="text-xs text-yellow-700 dark:text-yellow-400 font-medium">
+														{isInitializing ? `初始化中 ${preloadProgress}%` : "未就绪"}
+													</span>
+												</div>
+											)}
+										</div>
+										<div className="flex items-center gap-1">
+											{/* Python 包安装按钮 */}
+											{previewType === "python" && pyodideReady && (
+												<div className="flex items-center gap-1 mr-2">
+													{["numpy", "pandas", "matplotlib"].map((pkg) => (
+														<Button
+															key={pkg}
+															variant="outline"
+															size="sm"
+															onClick={() => installPackage(pkg)}
+															disabled={isExecuting}
+															className="h-6 px-2 text-xs border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+															title={`安装 ${pkg}`}
+														>
+															<Package className="w-2.5 h-2.5 mr-1" />
+															{pkg}
+														</Button>
+													))}
+												</div>
+											)}
+											
+											<Button
+												variant="ghost"
+												size="sm"
+												onClick={() => {
+													setConsoleOutput("");
+													setConsoleError("");
+												}}
+												className="h-7 px-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+												title="清空输出"
+											>
+												清空
+											</Button>
+										</div>
+									</div>
+									
+									{/* Console 内容 */}
+									<div className="flex-1 p-4 overflow-auto bg-gradient-to-br from-slate-50/50 to-white/50 dark:from-slate-950/50 dark:to-slate-900/50">
+										{consoleError && (
+											<div className="mb-3 p-3 bg-gradient-to-r from-red-50 to-red-25 dark:from-red-950/50 dark:to-red-900/30 border border-red-200 dark:border-red-800/50 rounded-lg text-red-700 dark:text-red-400 text-sm shadow-sm">
+												<div className="flex items-start gap-2">
+													<div className="w-4 h-4 rounded-full bg-red-500 flex-shrink-0 mt-0.5 flex items-center justify-center">
+														<span className="text-white text-xs font-bold">!</span>
+													</div>
+													<div className="flex-1">
+														<div className="text-xs font-semibold mb-1 text-red-800 dark:text-red-300">执行错误</div>
+														<pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{consoleError}</pre>
+													</div>
+												</div>
+											</div>
+										)}
+										{consoleOutput && (
+											<div className="p-3 bg-gray-900 text-green-400 rounded-lg shadow-lg border border-gray-700">
+												<div className="flex items-center gap-2 mb-2 border-b border-gray-700 pb-2">
+													<div className="w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
+														<div className="w-1 h-1 rounded-full bg-white" />
+													</div>
+													<span className="text-xs text-gray-400 font-mono font-semibold tracking-wide">OUTPUT</span>
+												</div>
+												<pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">{consoleOutput}</pre>
+											</div>
+										)}
+										{!consoleOutput && !consoleError && (
+											<div className="flex items-center justify-center h-full text-muted-foreground">
+												<div className="text-center p-8">
+													{previewType === "python" ? (
+														<>
+															<div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center">
+																<div className="text-2xl">🐍</div>
+															</div>
+															<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+																{pyodideReady ? "Python 环境就绪" : "Python 环境"}
+															</p>
+															<p className="text-xs text-slate-500 dark:text-slate-500">
+																{pyodideReady 
+																	? "点击执行按钮运行代码" 
+																	: isInitializing 
+																	? `正在初始化... ${preloadProgress}%`
+																	: "点击初始化按钮启动环境"}
+															</p>
+														</>
+													) : (
+														<>
+															<div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center">
+																<div className="text-2xl">⚡</div>
+															</div>
+															<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">准备就绪</p>
+															<p className="text-xs text-slate-500 dark:text-slate-500">点击执行按钮查看输出结果</p>
+														</>
+													)}
+												</div>
+											</div>
+										)}
+									</div>
+								</div>
+							</ResizablePanel>
+						</ResizablePanelGroup>
+					</motion.div>
+				) : (
+					/* 对于其他类型使用 Tabs 组件 */
+					<Tabs value={viewMode} className="flex-1 h-full">
+						<TabsContent value="code" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+							<motion.div
+								className="flex-1 overflow-hidden"
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ duration: 0.3, ease: "easeInOut" }}
+							>
+								<CodeEditor
+									value={displayContent}
+									language={finalLanguage}
+									showHeader={false}
+									showCopyButton={true}
+									height="100%"
+									className="h-full"
+								/>
+							</motion.div>
+						</TabsContent>
 
-					<TabsContent value="preview" className="h-full m-0">
-						<motion.div
-							className="h-full overflow-hidden"
-							initial={{ opacity: 0 }}
-							animate={{ opacity: 1 }}
-							transition={{ duration: 0.3, ease: "easeInOut" }}
-						>
-							{renderPreview()}
-						</motion.div>
-					</TabsContent>
-				</Tabs>
+						<TabsContent value="preview" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+							<motion.div
+								className="flex-1 overflow-hidden"
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ duration: 0.3, ease: "easeInOut" }}
+							>
+								{renderPreview()}
+							</motion.div>
+						</TabsContent>
+					</Tabs>
+				)}
 			</div>
 		</div>
 	);

@@ -9,7 +9,7 @@ import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { githubLight, githubDark } from "@uiw/codemirror-theme-github";
+import { githubLight } from "@uiw/codemirror-theme-github";
 import { useTheme } from "next-themes";
 import type { Extension } from "@codemirror/state";
 import { cn } from "@/lib/utils";
@@ -93,7 +93,7 @@ export function CodeEditor({
 					{showCopyButton && <CopyButton text={value} />}
 				</div>
 			)}
-			<div className="flex-1 overflow-auto">
+			<div className="flex-1 overflow-hidden">
 				<CodeMirror
 					value={value}
 					height={height === "auto" ? "auto" : "100%"}
@@ -111,9 +111,11 @@ export function CodeEditor({
 						closeBrackets: true,
 						autocompletion: true,
 						highlightSelectionMatches: false,
+						searchKeymap: true,
 					}}
 					style={{
 						fontSize: "14px",
+						height: "100%",
 					}}
 				/>
 			</div>
