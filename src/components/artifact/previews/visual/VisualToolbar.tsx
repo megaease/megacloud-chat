@@ -10,10 +10,11 @@ import {
 	Maximize2,
 	Download,
 	Copy,
+	Check,
 	MoreHorizontal,
 	ImageIcon,
 	FileText,
-	BarChart3
+	BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +45,7 @@ export function VisualToolbar({
 	updateVisualState,
 	imageSrc,
 	imageRef,
-	content
+	content,
 }: VisualToolbarProps) {
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const { zoom, rotation, copyStatus } = visualState;
@@ -85,14 +86,14 @@ export function VisualToolbar({
 					const response = await fetch(imageSrc);
 					const blob = await response.blob();
 					await navigator.clipboard.write([
-						new ClipboardItem({ [blob.type]: blob })
+						new ClipboardItem({ [blob.type]: blob }),
 					]);
 				} else if (imageSrc.startsWith("blob:")) {
 					// SVG blob
 					const response = await fetch(imageSrc);
 					const blob = await response.blob();
 					await navigator.clipboard.write([
-						new ClipboardItem({ [blob.type]: blob })
+						new ClipboardItem({ [blob.type]: blob }),
 					]);
 				} else {
 					// URL 图片，复制链接
@@ -102,7 +103,7 @@ export function VisualToolbar({
 				// 其他内容复制文本
 				await navigator.clipboard.writeText(content);
 			}
-			
+
 			updateVisualState({ copyStatus: "copied" });
 			setTimeout(() => {
 				updateVisualState({ copyStatus: "idle" });
@@ -148,126 +149,212 @@ export function VisualToolbar({
 		}
 	};
 
-	// 获取内容类型图标和标签
-	const getContentTypeInfo = () => {
+	// 获取内容类型标签
+	const getContentTypeLabel = () => {
 		switch (contentType) {
 			case "image":
-				return { icon: ImageIcon, label: "Image", color: "bg-blue-500/10 text-blue-600" };
+				return "图像预览";
 			case "svg":
-				return { icon: FileText, label: "SVG", color: "bg-green-500/10 text-green-600" };
+				return "SVG 预览";
 			case "chart":
-				return { icon: BarChart3, label: "Chart", color: "bg-purple-500/10 text-purple-600" };
+				return "图表预览";
 			default:
-				return { icon: FileText, label: "Visual", color: "bg-gray-500/10 text-gray-600" };
+				return "视觉预览";
 		}
 	};
 
-	const contentInfo = getContentTypeInfo();
-	const ContentIcon = contentInfo.icon;
-
 	return (
-		<div className="flex items-center justify-between p-3 border-b bg-background/95 backdrop-blur">
-			{/* 左侧：标题和类型标签 */}
-			<div className="flex items-center gap-3 min-w-0">
-				<Badge variant="secondary" className={cn("gap-1", contentInfo.color)}>
-					<ContentIcon className="w-3 h-3" />
-					{contentInfo.label}
-				</Badge>
+		<div className="flex items-center justify-between px-3 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 min-h-[40px]">
+			{/* 左侧：图像类型标识和统计信息 */}
+			<div className="flex items-center gap-3 flex-shrink-0">
+				<div className="flex items-center gap-2 px-2.5 py-1 bg-muted/40 rounded-md border border-border/40">
+					{contentType === "image" && (
+						<ImageIcon className="w-4 h-4 text-blue-600" />
+					)}
+					{contentType === "svg" && (
+						<FileText className="w-4 h-4 text-green-600" />
+					)}
+					{contentType === "chart" && (
+						<BarChart3 className="w-4 h-4 text-purple-600" />
+					)}
+					<span className="text-sm font-medium text-foreground">
+						{getContentTypeLabel()}
+					</span>
+				</div>
+
 				{title && (
-					<h3 className="text-sm font-medium text-foreground truncate">
+					<span className="text-xs text-muted-foreground truncate max-w-[200px]">
 						{title}
-					</h3>
+					</span>
 				)}
 			</div>
 
-			{/* 右侧：工具按钮 */}
-			<div className="flex items-center gap-1">
-				{/* 缩放控制 - 仅对图片和 SVG 显示 */}
-				{contentType !== "chart" && (
-					<div className="flex items-center gap-1 px-2 py-1 bg-muted/50 rounded-md">
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={handleZoomOut}
-							disabled={zoom <= 25}
-							className="h-7 w-7 p-0"
-						>
-							<ZoomOut className="w-3 h-3" />
-						</Button>
-						
-						<button
-							onClick={handleResetZoom}
-							className="px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-w-[3rem] text-center"
-						>
-							{zoom}%
-						</button>
-						
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={handleZoomIn}
-							disabled={zoom >= 500}
-							className="h-7 w-7 p-0"
-						>
-							<ZoomIn className="w-3 h-3" />
-						</Button>
-					</div>
-				)}
+			{/* 中间：缩放控制 */}
+			{contentType !== "chart" && (
+				<div className="flex items-center gap-1 flex-1 justify-center">
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={handleZoomOut}
+						disabled={zoom <= 25}
+						className="h-7 px-2 text-xs rounded-md"
+						title="缩小"
+					>
+						<ZoomOut className="h-3.5 w-3.5" />
+					</Button>
 
-				{/* 旋转控制 - 仅对图片和 SVG 显示 */}
-				{contentType !== "chart" && (
-					<div className="flex items-center gap-1">
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={handleResetZoom}
+						className="h-7 px-3 text-xs rounded-md min-w-[60px]"
+						title="重置缩放"
+					>
+						{zoom}%
+					</Button>
+
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={handleZoomIn}
+						disabled={zoom >= 500}
+						className="h-7 px-2 text-xs rounded-md"
+						title="放大"
+					>
+						<ZoomIn className="h-3.5 w-3.5" />
+					</Button>
+				</div>
+			)}
+
+			{/* 右侧：操作按钮 */}
+			<div className="flex items-center gap-1 flex-shrink-0">
+				{/* 桌面端按钮组 */}
+				<div className="hidden md:flex items-center gap-1">
+					{/* 旋转按钮 */}
+					{contentType !== "chart" && (
+						<>
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={handleRotateLeft}
+								className="h-7 px-2 text-xs rounded-md"
+								title="向左旋转"
+							>
+								<RotateCcw className="h-3.5 w-3.5" />
+							</Button>
+
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={handleRotateRight}
+								className="h-7 px-2 text-xs rounded-md"
+								title="向右旋转"
+							>
+								<RotateCw className="h-3.5 w-3.5" />
+							</Button>
+						</>
+					)}
+
+					{/* 操作按钮组 */}
+					<div className="flex items-center rounded-md overflow-hidden bg-background border border-border/50">
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={handleRotateLeft}
-							className="h-8 w-8 p-0"
+							onClick={handleCopy}
+							className={cn(
+								"h-7 px-2 text-xs rounded-none border-0",
+								copyStatus === "copied"
+									? "text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
+									: "hover:bg-muted/50",
+							)}
+							title={copyStatus === "copied" ? "已复制" : "复制"}
 						>
-							<RotateCcw className="w-4 h-4" />
+							{copyStatus === "copied" ? (
+								<Check className="h-3.5 w-3.5 mr-1" />
+							) : (
+								<Copy className="h-3.5 w-3.5 mr-1" />
+							)}
+							{copyStatus === "copied" ? "已复制" : "复制"}
 						</Button>
+
+						<div className="w-px h-4 bg-border" />
+
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={handleRotateRight}
-							className="h-8 w-8 p-0"
+							onClick={handleDownload}
+							className="h-7 px-2 text-xs rounded-none border-0 hover:bg-muted/50"
+							title="下载"
 						>
-							<RotateCw className="w-4 h-4" />
-						</Button>
-					</div>
-				)}
-
-				{/* 全屏按钮 */}
-				<Button
-					variant="ghost"
-					size="sm"
-					onClick={handleFullscreen}
-					className="h-8 w-8 p-0"
-				>
-					<Maximize2 className="w-4 h-4" />
-				</Button>
-
-				{/* 更多操作 */}
-				<DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-							<MoreHorizontal className="w-4 h-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-40">
-						<DropdownMenuItem onClick={handleCopy}>
-							<Copy className="w-4 h-4 mr-2" />
-							{copyStatus === "copied" ? "已复制!" : "复制"}
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={handleDownload}>
-							<Download className="w-4 h-4 mr-2" />
+							<Download className="h-3.5 w-3.5 mr-1" />
 							下载
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={handleResetZoom}>
-							重置视图
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+						</Button>
+
+						<div className="w-px h-4 bg-border" />
+
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={handleFullscreen}
+							className="h-7 px-2 text-xs rounded-none border-0 hover:bg-muted/50"
+							title="全屏"
+						>
+							<Maximize2 className="h-3.5 w-3.5 mr-1" />
+							全屏
+						</Button>
+					</div>
+				</div>
+
+				{/* 移动端菜单 */}
+				<div className="md:hidden">
+					<DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+						<DropdownMenuTrigger asChild>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-7 px-2 text-xs rounded-md"
+								title="更多选项"
+							>
+								<MoreHorizontal className="h-3.5 w-3.5" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end" className="w-44">
+							{contentType !== "chart" && (
+								<>
+									<DropdownMenuItem onClick={handleRotateLeft}>
+										<RotateCcw className="h-4 w-4 mr-2" />
+										向左旋转
+									</DropdownMenuItem>
+									<DropdownMenuItem onClick={handleRotateRight}>
+										<RotateCw className="h-4 w-4 mr-2" />
+										向右旋转
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
+								</>
+							)}
+							<DropdownMenuItem onClick={handleCopy}>
+								{copyStatus === "copied" ? (
+									<Check className="h-4 w-4 mr-2" />
+								) : (
+									<Copy className="h-4 w-4 mr-2" />
+								)}
+								{copyStatus === "copied" ? "已复制" : "复制"}
+							</DropdownMenuItem>
+							<DropdownMenuItem onClick={handleDownload}>
+								<Download className="h-4 w-4 mr-2" />
+								下载
+							</DropdownMenuItem>
+							<DropdownMenuItem onClick={handleFullscreen}>
+								<Maximize2 className="h-4 w-4 mr-2" />
+								全屏
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem onClick={handleResetZoom}>
+								重置视图
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
 			</div>
 		</div>
 	);

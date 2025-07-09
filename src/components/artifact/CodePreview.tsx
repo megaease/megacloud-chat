@@ -257,12 +257,12 @@ export function CodePreview({
 	return (
 		<div className={cn("h-full flex flex-col", className)}>
 			{/* 统一工具栏 */}
-			<div className="flex items-center justify-between px-3 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 min-h-[36px]">
+			<div className="flex items-center justify-between px-3 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 min-h-[40px]">
 				{/* 左侧：语言标识和预览工具 */}
-				<div className="flex items-center gap-2 min-w-0 flex-1">
-					<div className="flex items-center gap-1.5 px-2 py-1 bg-muted/50 rounded-md border border-border/50">
-						<Code2 className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-						<span className="text-xs font-medium text-foreground">
+				<div className="flex items-center gap-3 min-w-0 flex-1">
+					<div className="flex items-center gap-2 px-2.5 py-1 bg-muted/40 rounded-md border border-border/40">
+						<Code2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+						<span className="text-sm font-medium text-foreground">
 							{getLanguageDisplayName(finalLanguage)}
 						</span>
 					</div>
@@ -277,14 +277,14 @@ export function CodePreview({
 						value={viewMode}
 						onValueChange={(v) => setViewMode(v as typeof viewMode)}
 					>
-						<TabsList className="h-6 bg-muted/30">
-							<TabsTrigger value="code" className="h-5 px-2.5 text-xs">
+						<TabsList className="h-7 bg-muted/30">
+							<TabsTrigger value="code" className="h-6 px-3 text-xs">
 								<Code2 className="w-3 h-3 mr-1" />
 								代码
 							</TabsTrigger>
 							<TabsTrigger
 								value="preview"
-								className="h-5 px-2.5 text-xs"
+								className="h-6 px-3 text-xs"
 								disabled={!canPreview}
 							>
 								<Eye className="w-3 h-3 mr-1" />
@@ -295,40 +295,44 @@ export function CodePreview({
 				</div>
 
 				{/* 右侧：工具按钮 */}
-				<div className="flex items-center gap-1.5 flex-shrink-0">
+				<div className="flex items-center gap-1 flex-shrink-0">
 					{/* 复制下载按钮组 */}
-					<div className="flex items-center rounded-md overflow-hidden bg-muted/30 border border-border/50">
+					<div className="flex items-center rounded-md overflow-hidden bg-background border border-border/50">
 						<Button
 							variant="ghost"
-							size="icon"
+							size="sm"
 							onClick={handleCopy}
 							disabled={!content}
 							className={cn(
-								"h-7 w-7 rounded-none border-0",
+								"h-7 px-2 text-xs rounded-none border-0",
 								copyStatus === "copied"
 									? "text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
-									: "hover:bg-muted",
+									: "hover:bg-muted/50",
 							)}
 							title={
 								copyStatus === "copied" ? tCommon("copied") : tCommon("copy")
 							}
 						>
 							{copyStatus === "copied" ? (
-								<Check className="h-3.5 w-3.5" />
+								<Check className="h-3.5 w-3.5 mr-1" />
 							) : (
-								<Copy className="h-3.5 w-3.5" />
+								<Copy className="h-3.5 w-3.5 mr-1" />
 							)}
+							{copyStatus === "copied" ? tCommon("copied") : tCommon("copy")}
 						</Button>
-						<div className="w-px h-4 bg-border/60" />
+
+						<div className="w-px h-4 bg-border" />
+
 						<Button
 							variant="ghost"
-							size="icon"
+							size="sm"
 							onClick={handleDownload}
 							disabled={!content}
-							className="h-7 w-7 rounded-none border-0 hover:bg-muted"
+							className="h-7 px-2 text-xs rounded-none border-0 hover:bg-muted/50"
 							title={tCommon("download")}
 						>
-							<Download className="h-3.5 w-3.5" />
+							<Download className="h-3.5 w-3.5 mr-1" />
+							{tCommon("download")}
 						</Button>
 					</div>
 				</div>

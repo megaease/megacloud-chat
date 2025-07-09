@@ -204,7 +204,7 @@ export const TablePreview = ({
 			console.warn("Table parsing failed:", error);
 			return { headers: [], rows: [] };
 		}
-	}, [content, tArtifact]);
+	}, [content]);
 
 	// Convert to TanStack Table format
 	const data = useMemo((): DynamicRow[] => {
@@ -359,42 +359,44 @@ export const TablePreview = ({
 
 	return (
 		<div className="flex flex-col h-full bg-background">
-			{/* Enhanced Toolbar */}
+			{/* 优化后的工具栏 */}
 			{showToolbar && (
-				<div className="flex items-center justify-between px-4 py-2 border-b bg-gradient-to-r from-muted/30 to-muted/10 backdrop-blur-sm flex-shrink-0">
-					<div className="flex items-center gap-2">
-						<div className="flex items-center gap-1.5">
-							<div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50" />
-							<Grid3X3 className="w-4 h-4 text-primary" />
-							<span className="text-xs font-semibold text-foreground">
+				<div className="flex items-center justify-between px-3 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 min-h-[40px]">
+					{/* 左侧：表格标识和统计信息 */}
+					<div className="flex items-center gap-3 flex-shrink-0">
+						<div className="flex items-center gap-2 px-2.5 py-1 bg-muted/40 rounded-md border border-border/40">
+							<Grid3X3 className="w-4 h-4 text-emerald-600" />
+							<span className="text-sm font-medium text-foreground">
 								{tArtifact("tablePreview")}
 							</span>
 						</div>
-						<div className="flex items-center gap-1.5">
+
+						<div className="flex items-center gap-2">
 							<Badge
 								variant="secondary"
-								className="text-xs font-medium px-1.5 py-0.5"
+								className="text-xs font-medium px-2 py-0.5"
 							>
 								{table.getFilteredRowModel().rows.length} {tArtifact("rows")}
 							</Badge>
 							<Badge
 								variant="outline"
-								className="text-xs font-medium px-1.5 py-0.5"
+								className="text-xs font-medium px-2 py-0.5"
 							>
 								{tableData.headers.length} {tArtifact("columns")}
 							</Badge>
 						</div>
 					</div>
 
-					<div className="flex items-center gap-2">
-						{/* Enhanced Global Search */}
+					{/* 右侧：搜索和操作按钮 */}
+					<div className="flex items-center gap-2 flex-shrink-0">
+						{/* 搜索框 */}
 						<div className="relative">
 							<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground" />
 							<Input
 								placeholder={tArtifact("searchAllColumns")}
 								value={searchInput}
 								onChange={(event) => handleSearchChange(event.target.value)}
-								className="h-6 w-[200px] pl-7 pr-7 text-xs bg-background/50 border-muted-foreground/20 focus:border-primary/50 focus:ring-primary/20"
+								className="h-7 w-[180px] pl-7 pr-7 text-xs bg-background/50 border-border/60 focus:border-primary/50 focus:ring-primary/20"
 							/>
 							{searchInput && (
 								<Button
@@ -411,47 +413,47 @@ export const TablePreview = ({
 							)}
 						</div>
 
-						{/* Enhanced Column visibility toggle */}
+						{/* 列显示设置 */}
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button
-									variant="outline"
+									variant="ghost"
 									size="sm"
-									className="h-6 px-2 text-xs font-medium border-muted-foreground/20 hover:bg-muted/80"
+									className="h-7 px-2 text-xs rounded-md"
+									title={tArtifact("toggleColumns")}
 								>
-									<Settings2 className="w-3 h-3 mr-1" />
+									<Settings2 className="h-3.5 w-3.5 mr-1" />
 									{tArtifact("columns")}
 								</Button>
 							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="w-[180px]">
+							<DropdownMenuContent align="end" className="w-48">
 								{table
 									.getAllColumns()
 									.filter((column) => column.getCanHide())
-									.map((column) => {
-										return (
-											<DropdownMenuCheckboxItem
-												key={column.id}
-												className="capitalize"
-												checked={column.getIsVisible()}
-												onCheckedChange={(value) =>
-													column.toggleVisibility(!!value)
-												}
-											>
-												{column.id}
-											</DropdownMenuCheckboxItem>
-										);
-									})}
+									.map((column) => (
+										<DropdownMenuCheckboxItem
+											key={column.id}
+											className="capitalize"
+											checked={column.getIsVisible()}
+											onCheckedChange={(value) =>
+												column.toggleVisibility(!!value)
+											}
+										>
+											{column.id}
+										</DropdownMenuCheckboxItem>
+									))}
 							</DropdownMenuContent>
 						</DropdownMenu>
 
-						{/* Export button */}
+						{/* 导出按钮 */}
 						<Button
-							variant="outline"
+							variant="ghost"
 							size="sm"
 							onClick={exportCSV}
-							className="h-6 px-2 text-xs"
+							className="h-7 px-2 text-xs rounded-md"
+							title={tArtifact("exportCSV")}
 						>
-							<Download className="w-3 h-3 mr-1" />
+							<Download className="h-3.5 w-3.5 mr-1" />
 							{tArtifact("export")}
 						</Button>
 					</div>
