@@ -205,6 +205,7 @@ export function ProviderForm({
 						<SelectItem value="openai">OpenAI</SelectItem>
 						<SelectItem value="deepseek">DeepSeek</SelectItem>
 						<SelectItem value="openrouter">OpenRouter</SelectItem>
+						<SelectItem value="anthropic">Anthropic</SelectItem>
 						<SelectItem value="custom">Custom</SelectItem>
 					</SelectContent>
 				</Select>

@@ -1,7 +1,8 @@
 import { openai, createOpenAI } from "@ai-sdk/openai";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-export type ProviderType = "openai" | "deepseek" | "openrouter" | "custom";
+import { createAnthropic } from "@ai-sdk/anthropic";
+export type ProviderType = "openai" | "deepseek" | "openrouter" | "anthropic" | "custom";
 
 interface ProviderConfig {
 	apiKey?: string;
@@ -35,6 +36,15 @@ export function createAIModelConfig(
 				compatibility: "strict",
 			});
 			return customOpenAI(modelName);
+		}
+
+		case "anthropic": {
+			console.log("Creating AI model for provider:", "anthropic");
+			const anthropic = createAnthropic({
+				apiKey: apiKey || "",
+				baseURL: baseUrl || "https://api.anthropic.com",
+			});
+			return anthropic(modelName || "claude-3-5-sonnet-20241022");
 		}
 
 		case "deepseek": {
@@ -114,6 +124,8 @@ export function detectAndCreateAIModel(config: {
 	if (baseUrl) {
 		if (baseUrl.includes("deepseek") || modelName?.includes("deepseek")) {
 			detectedProvider = "deepseek";
+		} else if (baseUrl.includes("anthropic") || modelName?.includes("claude")) {
+			detectedProvider = "anthropic";
 		} else if (!isOpenAI(baseUrl)) {
 			detectedProvider = "custom";
 		}
@@ -121,6 +133,8 @@ export function detectAndCreateAIModel(config: {
 		// 根据模型名称推断
 		if (modelName.includes("deepseek")) {
 			detectedProvider = "deepseek";
+		} else if (modelName.includes("claude")) {
+			detectedProvider = "anthropic";
 		}
 	}
 
@@ -138,6 +152,7 @@ const providerUrlMapping: Record<ProviderType, string> = {
 	openai: "https://api.openai.com/v1",
 	deepseek: "https://api.deepseek.com",
 	openrouter: "https://openrouter.ai/api/v1",
+	anthropic: "https://api.anthropic.com",
 	custom: "https://api.openai.com/v1",
 };
 
