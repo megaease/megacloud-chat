@@ -14,15 +14,17 @@ interface HtmlPreviewProps {
 	onViewModeChange?: (mode: "desktop" | "tablet" | "mobile") => void;
 }
 
-export const HtmlPreview = ({ 
-	content, 
-	showToolbar = true, 
+export const HtmlPreview = ({
+	content,
+	showToolbar = true,
 	viewMode: externalViewMode,
-	onViewModeChange 
+	onViewModeChange,
 }: HtmlPreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
-	const [internalViewMode, setInternalViewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
-	
+	const [internalViewMode, setInternalViewMode] = useState<
+		"desktop" | "tablet" | "mobile"
+	>("desktop");
+
 	// 使用外部控制的 viewMode 或内部状态
 	const viewMode = externalViewMode || internalViewMode;
 	const setViewMode = onViewModeChange || setInternalViewMode;

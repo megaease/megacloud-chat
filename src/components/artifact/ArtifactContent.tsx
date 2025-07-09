@@ -115,7 +115,7 @@ export function ArtifactContent() {
 						<TablePreview
 							content={displayData.content}
 							status={displayStatus}
-							showToolbar={false}
+							showToolbar={true}
 						/>
 					</motion.div>
 				);
@@ -134,7 +134,7 @@ export function ArtifactContent() {
 							title={displayData.title}
 							className="h-full"
 							status={displayStatus}
-							showToolbar={false}
+							showToolbar={true}
 						/>
 					</motion.div>
 				);

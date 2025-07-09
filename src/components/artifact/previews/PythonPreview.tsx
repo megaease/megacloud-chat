@@ -25,7 +25,10 @@ declare global {
 	}
 }
 
-export const PythonPreview = ({ content, showToolbar = true }: PythonPreviewProps) => {
+export const PythonPreview = ({
+	content,
+	showToolbar = true,
+}: PythonPreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
 	const [output, setOutput] = useState<string>("");
 	const [error, setError] = useState<string>("");
@@ -214,7 +217,9 @@ sys.stderr = _output_capture
 					mimeType="text/x-python"
 				>
 					<Code2 className="w-3.5 h-3.5 text-blue-600" />
-					<span className="text-sm font-medium text-blue-700">Python 执行器</span>
+					<span className="text-sm font-medium text-blue-700">
+						Python 执行器
+					</span>
 					<Badge variant="outline" className="text-xs">
 						Pyodide
 					</Badge>

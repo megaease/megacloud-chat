@@ -250,15 +250,16 @@ export function Artifact({
 										damping: 30,
 									},
 								}}
-							>							{/* Artifact 头部工具栏 */}
-							<ArtifactActions
-								title={displayData.title}
-								status={displayData.status}
-								kind={displayData.kind}
-								onClose={handleClose}
-								isMobile={false}
-							/>
-
+							>
+								{" "}
+								{/* Artifact 头部工具栏 */}
+								<ArtifactActions
+									title={displayData.title}
+									status={displayData.status}
+									kind={displayData.kind}
+									onClose={handleClose}
+									isMobile={false}
+								/>
 								{/* Artifact 内容区域 */}
 								<div className="flex-1 overflow-hidden relative">
 									<ArtifactContent />
@@ -302,17 +303,18 @@ export function Artifact({
 								damping: 30,
 							},
 						}}
-					>					{/* Artifact 头部工具栏 */}
-					<ArtifactActions
-						title={displayData.title}
-						status={displayData.status}
-						kind={displayData.kind}
-						onClose={handleClose}
-						onChatToggle={() => setShowChat(!showChat)}
-						showChatButton={true}
-						isMobile={true}
-					/>
-
+					>
+						{" "}
+						{/* Artifact 头部工具栏 */}
+						<ArtifactActions
+							title={displayData.title}
+							status={displayData.status}
+							kind={displayData.kind}
+							onClose={handleClose}
+							onChatToggle={() => setShowChat(!showChat)}
+							showChatButton={true}
+							isMobile={true}
+						/>
 						{/* Artifact 内容区域 */}
 						<div className="flex-1 overflow-hidden relative">
 							<ArtifactContent />

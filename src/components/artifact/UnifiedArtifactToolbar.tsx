@@ -1,4 +1,4 @@
-// components/artifact/ArtifactActions.tsx
+// components/artifact/UnifiedArtifactToolbar.tsx
 "use client";
 
 import { useState } from "react";
@@ -27,7 +27,8 @@ import { useArtifact } from "@/context/artifact-provider-context";
 import { useArtifactVersions } from "@/hooks/use-artifact-versions";
 import { cn } from "@/lib/utils";
 
-interface ArtifactActionsProps {
+interface UnifiedArtifactToolbarProps {
+	// 基础 Artifact 功能
 	title: string;
 	status: UIArtifact["status"];
 	kind: ArtifactKind;
@@ -38,19 +39,24 @@ interface ArtifactActionsProps {
 	showChatButton?: boolean;
 	isFullscreen?: boolean;
 	isMobile?: boolean;
-	// 预览工具栏相关 props
+
+	// 预览功能 - 所有 artifact 类型都可能需要的基础功能
 	content?: string;
 	filename?: string;
 	mimeType?: string;
-	onPreviewRefresh?: () => void;
-	previewRefreshing?: boolean;
-	previewIcon?: React.ReactNode;
-	previewLabel?: string;
-	previewTools?: React.ReactNode;
-	showPreviewTools?: boolean;
+
+	// 特定类型的预览工具
+	previewConfig?: {
+		icon?: React.ReactNode;
+		label?: string;
+		customTools?: React.ReactNode;
+		onPreviewRefresh?: () => void;
+		refreshing?: boolean;
+		showCopyDownload?: boolean;
+	};
 }
 
-function ArtifactActions({
+export function UnifiedArtifactToolbar({
 	title,
 	status,
 	kind,
@@ -61,38 +67,27 @@ function ArtifactActions({
 	showChatButton = false,
 	isFullscreen = false,
 	isMobile = false,
-	// 预览工具栏相关
 	content = "",
 	filename = "file.txt",
 	mimeType = "text/plain",
-	onPreviewRefresh,
-	previewRefreshing = false,
-	previewIcon,
-	previewLabel,
-	previewTools,
-	showPreviewTools = false,
-}: ArtifactActionsProps) {
+	previewConfig,
+}: UnifiedArtifactToolbarProps) {
 	const { artifact, switchToVersion } = useArtifact();
 	const tCommon = useTranslations("Common");
 	const tArtifact = useTranslations("Artifact");
 	const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
 
-	// 获取版本数据，hook 内部已经处理了 documentId 的有效性检查
-	const {
-		data: versions = [],
-		isLoading: versionsLoading,
-		error: versionsError,
-	} = useArtifactVersions(artifact.documentId);
+	// 获取版本数据
+	const { data: versions = [], isLoading: versionsLoading } =
+		useArtifactVersions(artifact.documentId);
 
 	// 通过内容匹配找到当前显示的版本
 	const currentVersion = versions.find(
 		(v) => v.content === artifact.content && v.title === artifact.title,
 	);
 
-	// 显示的当前版本号
 	const displayCurrentVersion =
 		currentVersion?.version ?? versions?.[0]?.version;
-	// 使用 context 中的 title，如果为空则回退到 props 中的 title
 	const displayTitle = artifact.title || title;
 
 	// 版本切换处理
@@ -103,12 +98,12 @@ function ArtifactActions({
 		}
 	};
 
-	// 版本切换功能的启用条件：检查 artifact 状态而不是 props 状态
 	const canSwitchVersions =
 		artifact.status !== "streaming" && !!artifact.documentId;
 
-	// 预览工具栏功能
+	// 复制功能
 	const handleCopy = async () => {
+		if (!content) return;
 		try {
 			await navigator.clipboard.writeText(content);
 			setCopyStatus("copied");
@@ -118,7 +113,9 @@ function ArtifactActions({
 		}
 	};
 
+	// 下载功能
 	const handleDownload = () => {
+		if (!content) return;
 		const blob = new Blob([content], { type: mimeType });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement("a");
@@ -130,51 +127,60 @@ function ArtifactActions({
 		URL.revokeObjectURL(url);
 	};
 
+	// 判断是否应该显示预览工具
+	const shouldShowPreviewTools =
+		previewConfig &&
+		(previewConfig.icon ||
+			previewConfig.label ||
+			previewConfig.customTools ||
+			previewConfig.showCopyDownload);
+
 	return (
-		<div className="flex items-center justify-between px-3 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 min-h-[36px]">
-			{/* 左侧：关闭按钮和标题信息 */}
-			<div className="flex items-center gap-2 flex-1 min-w-0">
+		<div className="flex items-center justify-between px-4 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 min-h-[44px]">
+			{/* 左侧：基础控制和标题 */}
+			<div className="flex items-center space-x-3 flex-1 min-w-0">
 				{/* 关闭按钮 */}
 				<Button
 					variant="ghost"
-					size="icon"
+					size="sm"
 					onClick={onClose}
-					className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive flex-shrink-0 rounded-md"
-					title={tCommon("close")}
+					className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
 				>
 					<X className="h-3.5 w-3.5" />
 				</Button>
 
-				{/* 移动端聊天切换按钮 */}
+				{/* 移动端聊天切换 */}
 				{showChatButton && onChatToggle && (
 					<Button
 						variant="ghost"
-						size="icon"
+						size="sm"
 						onClick={onChatToggle}
-						className="h-7 w-7 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 flex-shrink-0 rounded-md"
-						title={tArtifact("toggleChat")}
+						className="h-6 w-6 p-0 hover:bg-blue-50 hover:text-blue-600 flex-shrink-0"
 					>
 						<MessageSquare className="h-3.5 w-3.5" />
 					</Button>
 				)}
 
 				{/* 预览类型标识 */}
-				{showPreviewTools && (previewIcon || previewLabel) && (
-					<div className="flex items-center gap-1.5 flex-shrink-0 px-2 py-1 bg-muted/50 rounded-md border border-border-/50">
-						{previewIcon && (
-							<span className="flex-shrink-0">{previewIcon}</span>
-						)}
-						{previewLabel && (
-							<span className="text-xs font-medium text-foreground">
-								{previewLabel}
-							</span>
-						)}
-					</div>
-				)}
+				{shouldShowPreviewTools &&
+					(previewConfig?.icon || previewConfig?.label) && (
+						<div className="flex items-center gap-2 flex-shrink-0">
+							{previewConfig?.icon && (
+								<div className="flex items-center justify-center">
+									{previewConfig.icon}
+								</div>
+							)}
+							{previewConfig?.label && (
+								<span className="text-sm font-medium text-foreground truncate">
+									{previewConfig.label}
+								</span>
+							)}
+						</div>
+					)}
 
-				{/* 标题和版本信息 */}
-				<div className="flex items-center gap-2 min-w-0 flex-1">
-					<h3 className="font-medium text-xs truncate max-w-[150px] md:max-w-[300px] text-foreground">
+				{/* 标题和版本 */}
+				<div className="flex items-center space-x-2 min-w-0 flex-1">
+					<h3 className="font-medium text-sm truncate">
 						{displayTitle || tArtifact("untitled")}
 					</h3>
 
@@ -185,11 +191,11 @@ function ArtifactActions({
 								<Button
 									variant="outline"
 									size="sm"
-									className="h-6 px-2 text-xs flex-shrink-0 border-border-/60"
+									className="h-5 px-2 text-xs flex-shrink-0"
 									disabled={versionsLoading}
 								>
 									v{displayCurrentVersion || 1}
-									<ChevronDown className="h-3 w-3 ml-1 opacity-70" />
+									<ChevronDown className="h-2.5 w-2.5 ml-1" />
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="start" className="w-32">
@@ -211,144 +217,143 @@ function ArtifactActions({
 					)}
 				</div>
 
-				{/* 预览工具 */}
-				{showPreviewTools && previewTools && (
-					<div className="flex-shrink-0">{previewTools}</div>
+				{/* 自定义预览工具 */}
+				{previewConfig?.customTools && (
+					<div className="flex-shrink-0">{previewConfig.customTools}</div>
 				)}
 			</div>
 
-			{/* 右侧：工具按钮 */}
-			<div className="flex items-center gap-1.5 flex-shrink-0">
-				{/* 桌面端直接显示的按钮 */}
-				<div className="hidden md:flex items-center gap-1.5">
-					{/* 预览刷新按钮 */}
-					{showPreviewTools && onPreviewRefresh && (
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={onPreviewRefresh}
-							disabled={previewRefreshing}
-							className="h-7 w-7 rounded-md"
-							title={tCommon("refresh")}
-						>
-							<RefreshCw
-								className={cn(
-									"h-3.5 w-3.5",
-									previewRefreshing && "animate-spin",
-								)}
-							/>
-						</Button>
-					)}
-
-					{/* 预览工具栏的复制和下载按钮 */}
-					{showPreviewTools && content && (
-						<div className="flex items-center rounded-md overflow-hidden bg-muted/30 border border-border-/50">
-							{/* 复制按钮 */}
+			{/* 右侧：操作按钮 */}
+			<div className="flex items-center space-x-1 flex-shrink-0">
+				{/* 桌面端按钮 */}
+				{!isMobile && (
+					<div className="flex items-center space-x-1">
+						{/* 预览刷新 */}
+						{previewConfig?.onPreviewRefresh && (
 							<Button
 								variant="ghost"
-								size="icon"
-								onClick={handleCopy}
-								disabled={!content}
-								className={cn(
-									"h-7 w-7 rounded-none border-0",
-									copyStatus === "copied"
-										? "text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
-										: "hover:bg-muted",
-								)}
+								size="sm"
+								onClick={previewConfig.onPreviewRefresh}
+								disabled={previewConfig.refreshing}
+								className="h-6 w-6 p-0"
+								title={tCommon("refresh")}
+							>
+								<RefreshCw
+									className={cn(
+										"h-3.5 w-3.5",
+										previewConfig.refreshing && "animate-spin",
+									)}
+								/>
+							</Button>
+						)}
+
+						{/* 复制下载按钮组 */}
+						{previewConfig?.showCopyDownload && content && (
+							<div className="flex items-center rounded-md overflow-hidden bg-background border">
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={handleCopy}
+									disabled={!content}
+									className={cn(
+										"h-6 w-6 p-0 rounded-none border-0",
+										copyStatus === "copied"
+											? "text-green-600 bg-green-50 hover:bg-green-100"
+											: "hover:bg-muted",
+									)}
+									title={
+										copyStatus === "copied"
+											? tCommon("copied")
+											: tCommon("copy")
+									}
+								>
+									{copyStatus === "copied" ? (
+										<Check className="h-3 w-3" />
+									) : (
+										<Copy className="h-3 w-3" />
+									)}
+								</Button>
+								<div className="w-px h-4 bg-border" />
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={handleDownload}
+									disabled={!content}
+									className="h-6 w-6 p-0 rounded-none border-0 hover:bg-muted"
+									title={tCommon("download")}
+								>
+									<Download className="h-3 w-3" />
+								</Button>
+							</div>
+						)}
+
+						{/* Artifact 刷新 */}
+						{onRefresh && (
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={onRefresh}
+								disabled={status === "streaming" || status === "loading"}
+								className="h-6 w-6 p-0"
+								title={tCommon("refresh")}
+							>
+								<RefreshCw
+									className={cn(
+										"h-3.5 w-3.5",
+										(status === "streaming" || status === "loading") &&
+											"animate-spin",
+									)}
+								/>
+							</Button>
+						)}
+
+						{/* 全屏切换 */}
+						{onFullscreen && (
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={onFullscreen}
+								className="h-6 w-6 p-0"
 								title={
-									copyStatus === "copied" ? tCommon("copied") : tCommon("copy")
+									isFullscreen
+										? tCommon("exitFullscreen")
+										: tCommon("fullscreen")
 								}
 							>
-								{" "}
-								{copyStatus === "copied" ? (
-									<Check className="h-3.5 w-3.5" />
+								{isFullscreen ? (
+									<Minimize2 className="h-3.5 w-3.5" />
 								) : (
-									<Copy className="h-3.5 w-3.5" />
+									<Maximize2 className="h-3.5 w-3.5" />
 								)}
 							</Button>
+						)}
+					</div>
+				)}
 
-							{/* 分隔线 */}
-							<div className="w-px h-4 bg-border-/60" />
-
-							{/* 下载按钮 */}
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={handleDownload}
-								disabled={!content}
-								className="h-7 w-7 rounded-none border-0 hover:bg-muted"
-								title={tCommon("download")}
-							>
-								<Download className="h-3.5 w-3.5" />
-							</Button>
-						</div>
-					)}
-
-					{/* Artifact 刷新按钮 */}
-					{onRefresh && (
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={onRefresh}
-							disabled={status === "streaming" || status === "loading"}
-							className="h-7 w-7 rounded-md"
-							title={tCommon("refresh")}
-						>
-							<RefreshCw
-								className={`h-3.5 w-3.5 ${status === "streaming" || status === "loading" ? "animate-spin" : ""}`}
-							/>
-						</Button>
-					)}
-
-					{/* 全屏切换按钮 */}
-					{onFullscreen && (
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={onFullscreen}
-							className="h-7 w-7 rounded-md"
-							title={
-								isFullscreen ? tCommon("exitFullscreen") : tCommon("fullscreen")
-							}
-						>
-							{isFullscreen ? (
-								<Minimize2 className="h-3.5 w-3.5" />
-							) : (
-								<Maximize2 className="h-3.5 w-3.5" />
-							)}
-						</Button>
-					)}
-				</div>{" "}
 				{/* 移动端折叠菜单 */}
-				<div className="md:hidden">
+				{isMobile && (
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-7 w-7 rounded-md"
-								title={tCommon("menu")}
-							>
+							<Button variant="ghost" size="sm" className="h-6 w-6 p-0">
 								<MoreHorizontal className="h-3.5 w-3.5" />
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-40">
-							{/* 预览工具选项 */}
-							{showPreviewTools && onPreviewRefresh && (
+							{previewConfig?.onPreviewRefresh && (
 								<DropdownMenuItem
-									onClick={onPreviewRefresh}
-									disabled={previewRefreshing}
+									onClick={previewConfig.onPreviewRefresh}
+									disabled={previewConfig.refreshing}
 								>
 									<RefreshCw
 										className={cn(
 											"h-4 w-4 mr-2",
-											previewRefreshing && "animate-spin",
+											previewConfig.refreshing && "animate-spin",
 										)}
 									/>
 									{tCommon("refresh")}
 								</DropdownMenuItem>
 							)}
-							{showPreviewTools && content && (
+							{previewConfig?.showCopyDownload && content && (
 								<>
 									<DropdownMenuItem onClick={handleCopy} disabled={!content}>
 										{copyStatus === "copied" ? (
@@ -369,14 +374,17 @@ function ArtifactActions({
 									</DropdownMenuItem>
 								</>
 							)}
-							{/* Artifact 选项 */}
 							{onRefresh && (
 								<DropdownMenuItem
 									onClick={onRefresh}
 									disabled={status === "streaming" || status === "loading"}
 								>
 									<RefreshCw
-										className={`h-4 w-4 mr-2 ${status === "streaming" || status === "loading" ? "animate-spin" : ""}`}
+										className={cn(
+											"h-4 w-4 mr-2",
+											(status === "streaming" || status === "loading") &&
+												"animate-spin",
+										)}
 									/>
 									{tCommon("refresh")}
 								</DropdownMenuItem>
@@ -398,10 +406,8 @@ function ArtifactActions({
 							)}
 						</DropdownMenuContent>
 					</DropdownMenu>
-				</div>
+				)}
 			</div>
 		</div>
 	);
 }
-
-export { ArtifactActions };

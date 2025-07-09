@@ -6,7 +6,18 @@ import { motion } from "framer-motion";
 import { CodeEditor } from "@/components/code-editor";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Code2, Eye, Copy, Check, Download, RefreshCw, Globe, Monitor, Smartphone, Tablet } from "lucide-react";
+import {
+	Code2,
+	Eye,
+	Copy,
+	Check,
+	Download,
+	RefreshCw,
+	Globe,
+	Monitor,
+	Smartphone,
+	Tablet,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
 	getLanguage,
@@ -40,7 +51,9 @@ export function CodePreview({
 	const tCommon = useTranslations("Common");
 	const [viewMode, setViewMode] = useState<"code" | "preview">("preview");
 	const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
-	const [htmlViewMode, setHtmlViewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+	const [htmlViewMode, setHtmlViewMode] = useState<
+		"desktop" | "tablet" | "mobile"
+	>("desktop");
 
 	const finalLanguage = getLanguage(language, content);
 	const previewType = getPreviewType(finalLanguage);
@@ -66,20 +79,30 @@ export function CodePreview({
 	const handleDownload = () => {
 		const getFileExtension = () => {
 			switch (previewType) {
-				case "html": return "html";
-				case "react": return "jsx";
-				case "javascript": return "js";
-				case "python": return "py";
-				default: return "txt";
+				case "html":
+					return "html";
+				case "react":
+					return "jsx";
+				case "javascript":
+					return "js";
+				case "python":
+					return "py";
+				default:
+					return "txt";
 			}
 		};
-		
+
 		const getMimeType = () => {
 			switch (previewType) {
-				case "html": return "text/html";
-				case "react": case "javascript": return "text/javascript";
-				case "python": return "text/x-python";
-				default: return "text/plain";
+				case "html":
+					return "text/html";
+				case "react":
+				case "javascript":
+					return "text/javascript";
+				case "python":
+					return "text/x-python";
+				default:
+					return "text/plain";
 			}
 		};
 
@@ -99,8 +122,8 @@ export function CodePreview({
 		switch (previewType) {
 			case "html":
 				return (
-					<HtmlPreview 
-						content={content} 
+					<HtmlPreview
+						content={content}
 						showToolbar={false}
 						viewMode={htmlViewMode}
 						onViewModeChange={setHtmlViewMode}
@@ -243,7 +266,7 @@ export function CodePreview({
 							{getLanguageDisplayName(finalLanguage)}
 						</span>
 					</div>
-					
+
 					{/* 预览特定的工具 */}
 					{renderPreviewTools()}
 				</div>
@@ -286,7 +309,9 @@ export function CodePreview({
 									? "text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
 									: "hover:bg-muted",
 							)}
-							title={copyStatus === "copied" ? tCommon("copied") : tCommon("copy")}
+							title={
+								copyStatus === "copied" ? tCommon("copied") : tCommon("copy")
+							}
 						>
 							{copyStatus === "copied" ? (
 								<Check className="h-3.5 w-3.5" />

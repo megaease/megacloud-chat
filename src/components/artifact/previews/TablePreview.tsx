@@ -59,7 +59,11 @@ interface TableData {
 // Dynamic row type for TanStack Table
 type DynamicRow = Record<string, string | number> & { _index?: number };
 
-export const TablePreview = ({ content, status = "idle", showToolbar = true }: TablePreviewProps) => {
+export const TablePreview = ({
+	content,
+	status = "idle",
+	showToolbar = true,
+}: TablePreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -94,7 +98,7 @@ export const TablePreview = ({ content, status = "idle", showToolbar = true }: T
 			const lines = content.trim().split("\n");
 
 			if (lines.length === 0) return { headers: [], rows: [] };
-			
+
 			// Helper function to filter out Markdown table separator lines
 			const isMarkdownSeparator = (line: string): boolean => {
 				const trimmedLine = line.trim();
@@ -205,16 +209,21 @@ export const TablePreview = ({ content, status = "idle", showToolbar = true }: T
 	// Convert to TanStack Table format
 	const data = useMemo((): DynamicRow[] => {
 		// 过滤掉空行
-		const validRows = tableData.rows.filter(row => 
-			row && row.length > 0 && row.some(cell => cell && cell.trim() !== "")
+		const validRows = tableData.rows.filter(
+			(row) =>
+				row && row.length > 0 && row.some((cell) => cell && cell.trim() !== ""),
 		);
-		
+
 		return validRows.map((row, index) => {
 			const rowObject: DynamicRow = { _index: index };
 			tableData.headers.forEach((header, colIndex) => {
 				// Ensure we don't have undefined values and handle different data types
 				const cellValue = row[colIndex];
-				if (cellValue !== undefined && cellValue !== null && cellValue.trim() !== "") {
+				if (
+					cellValue !== undefined &&
+					cellValue !== null &&
+					cellValue.trim() !== ""
+				) {
 					// Try to detect if it's a number
 					const numValue = Number(cellValue);
 					rowObject[header] =
@@ -232,10 +241,10 @@ export const TablePreview = ({ content, status = "idle", showToolbar = true }: T
 	// Generate columns for TanStack Table
 	const columns = useMemo<ColumnDef<DynamicRow>[]>(() => {
 		// 过滤掉空的列头
-		const validHeaders = tableData.headers.filter(header => 
-			header && header.trim() !== ""
+		const validHeaders = tableData.headers.filter(
+			(header) => header && header.trim() !== "",
 		);
-		
+
 		return validHeaders.map((header, index) => {
 			// 使用 header 名称作为 id，如果有重复则添加索引
 			const columnId = header || `column-${index}`;
@@ -246,7 +255,9 @@ export const TablePreview = ({ content, status = "idle", showToolbar = true }: T
 					return (
 						<Button
 							variant="ghost"
-							onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+							onClick={() =>
+								column.toggleSorting(column.getIsSorted() === "asc")
+							}
 							className="h-8 px-2 lg:px-3 hover:bg-muted/80 font-semibold text-left justify-start"
 						>
 							<span className="truncate">{header}</span>
@@ -366,82 +377,85 @@ export const TablePreview = ({ content, status = "idle", showToolbar = true }: T
 							>
 								{table.getFilteredRowModel().rows.length} {tArtifact("rows")}
 							</Badge>
-							<Badge variant="outline" className="text-xs font-medium px-1.5 py-0.5">
+							<Badge
+								variant="outline"
+								className="text-xs font-medium px-1.5 py-0.5"
+							>
 								{tableData.headers.length} {tArtifact("columns")}
 							</Badge>
 						</div>
 					</div>
 
-				<div className="flex items-center gap-2">
-					{/* Enhanced Global Search */}
-					<div className="relative">
-						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-						<Input
-							placeholder={tArtifact("searchAllColumns")}
-							value={searchInput}
-							onChange={(event) => handleSearchChange(event.target.value)}
-							className="h-6 w-[200px] pl-7 pr-7 text-xs bg-background/50 border-muted-foreground/20 focus:border-primary/50 focus:ring-primary/20"
-						/>
-						{searchInput && (
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={() => {
-									setSearchInput("");
-									setGlobalFilter("");
-								}}
-								className="absolute right-0.5 top-1/2 transform -translate-y-1/2 h-5 w-5 p-0 hover:bg-muted text-xs"
-							>
-								<span className="sr-only">{tArtifact("clearSearch")}</span>×
-							</Button>
-						)}
+					<div className="flex items-center gap-2">
+						{/* Enhanced Global Search */}
+						<div className="relative">
+							<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+							<Input
+								placeholder={tArtifact("searchAllColumns")}
+								value={searchInput}
+								onChange={(event) => handleSearchChange(event.target.value)}
+								className="h-6 w-[200px] pl-7 pr-7 text-xs bg-background/50 border-muted-foreground/20 focus:border-primary/50 focus:ring-primary/20"
+							/>
+							{searchInput && (
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => {
+										setSearchInput("");
+										setGlobalFilter("");
+									}}
+									className="absolute right-0.5 top-1/2 transform -translate-y-1/2 h-5 w-5 p-0 hover:bg-muted text-xs"
+								>
+									<span className="sr-only">{tArtifact("clearSearch")}</span>×
+								</Button>
+							)}
+						</div>
+
+						{/* Enhanced Column visibility toggle */}
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button
+									variant="outline"
+									size="sm"
+									className="h-6 px-2 text-xs font-medium border-muted-foreground/20 hover:bg-muted/80"
+								>
+									<Settings2 className="w-3 h-3 mr-1" />
+									{tArtifact("columns")}
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-[180px]">
+								{table
+									.getAllColumns()
+									.filter((column) => column.getCanHide())
+									.map((column) => {
+										return (
+											<DropdownMenuCheckboxItem
+												key={column.id}
+												className="capitalize"
+												checked={column.getIsVisible()}
+												onCheckedChange={(value) =>
+													column.toggleVisibility(!!value)
+												}
+											>
+												{column.id}
+											</DropdownMenuCheckboxItem>
+										);
+									})}
+							</DropdownMenuContent>
+						</DropdownMenu>
+
+						{/* Export button */}
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={exportCSV}
+							className="h-6 px-2 text-xs"
+						>
+							<Download className="w-3 h-3 mr-1" />
+							{tArtifact("export")}
+						</Button>
 					</div>
-
-					{/* Enhanced Column visibility toggle */}
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button
-								variant="outline"
-								size="sm"
-								className="h-6 px-2 text-xs font-medium border-muted-foreground/20 hover:bg-muted/80"
-							>
-								<Settings2 className="w-3 h-3 mr-1" />
-								{tArtifact("columns")}
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-[180px]">
-							{table
-								.getAllColumns()
-								.filter((column) => column.getCanHide())
-								.map((column) => {
-									return (
-										<DropdownMenuCheckboxItem
-											key={column.id}
-											className="capitalize"
-											checked={column.getIsVisible()}
-											onCheckedChange={(value) =>
-												column.toggleVisibility(!!value)
-											}
-										>
-											{column.id}
-										</DropdownMenuCheckboxItem>
-									);
-								})}
-						</DropdownMenuContent>
-					</DropdownMenu>
-
-					{/* Export button */}
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={exportCSV}
-						className="h-6 px-2 text-xs"
-					>
-						<Download className="w-3 h-3 mr-1" />
-						{tArtifact("export")}
-					</Button>
 				</div>
-			</div>
 			)}
 
 			{/* Table content */}

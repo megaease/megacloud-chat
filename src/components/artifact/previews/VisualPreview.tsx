@@ -36,49 +36,65 @@ export interface VisualState {
 export function useContentTypeDetection(content: string): VisualContentType {
 	return useMemo(() => {
 		if (!content || content.trim() === "") return "none";
-		
+
 		const trimmedContent = content.trim();
-		
+
 		// 检测图表 JSON 数据
 		try {
 			const parsed = JSON.parse(trimmedContent);
-			if (parsed && typeof parsed === 'object' && (parsed.data || parsed.datasets || parsed.series)) {
+			if (
+				parsed &&
+				typeof parsed === "object" &&
+				(parsed.data || parsed.datasets || parsed.series)
+			) {
 				return "chart";
 			}
 		} catch {
 			// 不是有效的 JSON，继续其他检测
 		}
-		
+
 		// 检测 SVG 内容 - 更严格的检测
-		if (trimmedContent.startsWith("<svg") && trimmedContent.includes("</svg>")) {
+		if (
+			trimmedContent.startsWith("<svg") &&
+			trimmedContent.includes("</svg>")
+		) {
 			return "svg";
 		}
-		
+
 		// 检测 base64 格式
 		if (trimmedContent.startsWith("data:image/")) {
 			return "image";
 		}
-		
+
 		// 检测 URL
 		if (trimmedContent.startsWith("http") || trimmedContent.startsWith("/")) {
 			return "image";
 		}
-		
+
 		// 检测 base64 但没有前缀 - 放宽检测条件
-		if (trimmedContent.match(/^[A-Za-z0-9+/]+=*$/) && trimmedContent.length > 10) {
+		if (
+			trimmedContent.match(/^[A-Za-z0-9+/]+=*$/) &&
+			trimmedContent.length > 10
+		) {
 			return "image";
 		}
-		
+
 		// 如果内容看起来像 HTML/XML，可能是 SVG 的变体
 		if (trimmedContent.startsWith("<") && trimmedContent.includes(">")) {
 			return "svg";
 		}
-		
+
 		return "unknown";
 	}, [content]);
 }
 
-export function VisualPreview({ content, title, className, status = "idle", showToolbar = true }: VisualPreviewProps) {
+export function VisualPreview({
+	content,
+	title,
+	className,
+	status = "idle",
+	showToolbar = true,
+}: VisualPreviewProps) {
 	// 状态管理
 	const [visualState, setVisualState] = useState<VisualState>({
 		zoom: 100,
@@ -86,7 +102,7 @@ export function VisualPreview({ content, title, className, status = "idle", show
 		isFullscreen: false,
 		loaded: false,
 		error: false,
-		copyStatus: "idle"
+		copyStatus: "idle",
 	});
 
 	// Force re-render key to ensure component re-renders when content changes
@@ -97,41 +113,41 @@ export function VisualPreview({ content, title, className, status = "idle", show
 
 	// 当内容发生变化时，强制重新渲染
 	useEffect(() => {
-		setRenderKey(prev => prev + 1);
+		setRenderKey((prev) => prev + 1);
 		// 重置加载状态，让组件重新初始化
-		setVisualState(prev => ({
+		setVisualState((prev) => ({
 			...prev,
 			loaded: false,
-			error: false
+			error: false,
 		}));
 	}, [content]);
 
 	// 状态更新函数
 	const updateVisualState = useCallback((updates: Partial<VisualState>) => {
-		setVisualState(prev => ({ ...prev, ...updates }));
+		setVisualState((prev) => ({ ...prev, ...updates }));
 	}, []);
 
 	// 处理图片内容，支持多种格式
 	const getImageSrc = useCallback(() => {
 		if (!content) return "";
-		
+
 		if (contentType === "svg") {
 			const svgBlob = new Blob([content], { type: "image/svg+xml" });
 			return URL.createObjectURL(svgBlob);
 		}
-		
+
 		if (content.startsWith("data:image/")) {
 			return content;
 		}
-		
+
 		if (content.startsWith("http") || content.startsWith("/")) {
 			return content;
 		}
-		
+
 		if (content.match(/^[A-Za-z0-9+/]+=*$/)) {
 			return `data:image/png;base64,${content}`;
 		}
-		
+
 		return content;
 	}, [content, contentType]);
 
@@ -176,7 +192,7 @@ export function VisualPreview({ content, title, className, status = "idle", show
 	}
 
 	return (
-		<div 
+		<div
 			key={renderKey}
 			className={cn("h-full flex flex-col bg-background", className)}
 		>
@@ -207,10 +223,7 @@ export function VisualPreview({ content, title, className, status = "idle", show
 						updateVisualState={updateVisualState}
 					/>
 				) : contentType === "svg" ? (
-					<SvgRenderer
-						content={content}
-						visualState={visualState}
-					/>
+					<SvgRenderer content={content} visualState={visualState} />
 				) : (
 					<ImageRenderer
 						imageSrc={imageSrc}

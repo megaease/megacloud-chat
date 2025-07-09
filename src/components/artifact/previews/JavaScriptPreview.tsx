@@ -11,7 +11,10 @@ interface JavaScriptPreviewProps {
 	showToolbar?: boolean;
 }
 
-export const JavaScriptPreview = ({ content, showToolbar = true }: JavaScriptPreviewProps) => {
+export const JavaScriptPreview = ({
+	content,
+	showToolbar = true,
+}: JavaScriptPreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
 	const [output, setOutput] = useState<string>("");
 	const [error, setError] = useState<string>("");

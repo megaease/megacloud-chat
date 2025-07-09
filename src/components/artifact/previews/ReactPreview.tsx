@@ -13,7 +13,10 @@ interface ReactPreviewProps {
 	showToolbar?: boolean;
 }
 
-export const ReactPreview = ({ content, showToolbar = true }: ReactPreviewProps) => {
+export const ReactPreview = ({
+	content,
+	showToolbar = true,
+}: ReactPreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
 	const [error, setError] = useState<string>("");
 	const [loading, setLoading] = useState(false);
