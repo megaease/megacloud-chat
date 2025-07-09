@@ -8,9 +8,10 @@ import { Play, AlertCircle } from "lucide-react";
 
 interface JavaScriptPreviewProps {
 	content: string;
+	showToolbar?: boolean;
 }
 
-export const JavaScriptPreview = ({ content }: JavaScriptPreviewProps) => {
+export const JavaScriptPreview = ({ content, showToolbar = true }: JavaScriptPreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
 	const [output, setOutput] = useState<string>("");
 	const [error, setError] = useState<string>("");
@@ -60,29 +61,46 @@ export const JavaScriptPreview = ({ content }: JavaScriptPreviewProps) => {
 	return (
 		<div className="flex flex-col h-full">
 			{/* 工具栏 */}
-			<div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 flex-shrink-0">
-				<div className="flex items-center gap-2">
-					<Play className="w-3.5 h-3.5" />
-					<span className="text-sm font-medium">
-						{tArtifact("javascriptExecution")}
-					</span>
-					<Badge variant="outline" className="text-xs">
-						{tArtifact("sandboxEnvironment")}
-					</Badge>
+			{showToolbar && (
+				<div className="flex items-center justify-between px-3 py-1.5 border-b bg-muted/30 flex-shrink-0">
+					<div className="flex items-center gap-1.5">
+						<Play className="w-3 h-3" />
+						<span className="text-xs font-medium">
+							{tArtifact("javascriptExecution")}
+						</span>
+						<Badge variant="outline" className="text-xs px-1.5 py-0.5">
+							{tArtifact("sandboxEnvironment")}
+						</Badge>
+					</div>
+					<Button
+						onClick={executeCode}
+						size="sm"
+						variant="outline"
+						className="h-6 px-2 text-xs"
+					>
+						<Play className="w-3 h-3 mr-1" />
+						{tArtifact("run")}
+					</Button>
 				</div>
-				<Button
-					onClick={executeCode}
-					size="sm"
-					variant="outline"
-					className="h-7 px-2"
-				>
-					<Play className="w-3 h-3 mr-1" />
-					{tArtifact("run")}
-				</Button>
-			</div>
+			)}
 
 			{/* 内容区域 */}
-			<div className="flex-1 flex flex-col p-4 overflow-hidden">
+			<div className="flex-1 flex flex-col p-4 overflow-hidden relative">
+				{/* 浮动执行按钮（当没有工具栏时） */}
+				{!showToolbar && (
+					<div className="absolute top-3 right-3 z-10">
+						<Button
+							onClick={executeCode}
+							size="sm"
+							variant="default"
+							className="h-8 px-3 text-xs shadow-lg hover:shadow-xl transition-shadow bg-primary hover:bg-primary/90"
+						>
+							<Play className="w-3.5 h-3.5 mr-1.5" />
+							{tArtifact("run")}
+						</Button>
+					</div>
+				)}
+
 				{error && (
 					<div className="flex items-center gap-2 p-3 mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex-shrink-0">
 						<AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
@@ -104,6 +122,17 @@ export const JavaScriptPreview = ({ content }: JavaScriptPreviewProps) => {
 						<div className="text-center space-y-2">
 							<Play className="w-8 h-8 mx-auto opacity-30" />
 							<p className="text-sm">{tArtifact("clickRunToExecute")}</p>
+							{!showToolbar && (
+								<Button
+									onClick={executeCode}
+									size="sm"
+									variant="default"
+									className="h-9 px-4 text-sm mt-4 shadow-md hover:shadow-lg transition-shadow"
+								>
+									<Play className="w-4 h-4 mr-2" />
+									{tArtifact("run")}
+								</Button>
+							)}
 						</div>
 					</div>
 				)}

@@ -80,7 +80,6 @@ export function Artifact({
 	});
 	const [isMobile, setIsMobile] = useState(false);
 	const [showChat, setShowChat] = useState(false);
-	const [viewMode, setViewMode] = useState<"code" | "preview">("preview");
 
 	useEffect(() => {
 		const updateDimensions = () => {
@@ -109,23 +108,6 @@ export function Artifact({
 		content: artifact.content,
 		language: artifact.language,
 	};
-
-	// 检测是否支持预览：基于 artifact 状态
-	const canPreview = useMemo(() => {
-		if (displayData.kind !== "code") return false;
-		return displayData.status === "idle";
-	}, [displayData.kind, displayData.status]);
-
-	const effectiveViewMode = useMemo(() => {
-		if (
-			displayData.status === "loading" ||
-			displayData.status === "streaming"
-		) {
-			return "code";
-		}
-		// 其他状态使用用户选择的视图模式
-		return viewMode;
-	}, [displayData.status, viewMode]);
 
 	if (!artifact.isVisible) return null;
 
@@ -268,25 +250,18 @@ export function Artifact({
 										damping: 30,
 									},
 								}}
-							>
-								{/* Artifact 头部工具栏 */}
-								<ArtifactActions
-									title={displayData.title}
-									status={displayData.status}
-									kind={displayData.kind}
-									content={displayData.content}
-									onClose={handleClose}
-									isMobile={false}
-									viewMode={viewMode}
-									onViewModeChange={
-										displayData.status === "idle" ? setViewMode : undefined
-									}
-									canPreview={canPreview}
-								/>
+							>							{/* Artifact 头部工具栏 */}
+							<ArtifactActions
+								title={displayData.title}
+								status={displayData.status}
+								kind={displayData.kind}
+								onClose={handleClose}
+								isMobile={false}
+							/>
 
 								{/* Artifact 内容区域 */}
 								<div className="flex-1 overflow-hidden relative">
-									<ArtifactContent viewMode={effectiveViewMode} />
+									<ArtifactContent />
 								</div>
 							</motion.div>
 						</ResizablePanel>
@@ -327,27 +302,20 @@ export function Artifact({
 								damping: 30,
 							},
 						}}
-					>
-						{/* Artifact 头部工具栏 */}
-						<ArtifactActions
-							title={displayData.title}
-							status={displayData.status}
-							kind={displayData.kind}
-							content={displayData.content}
-							onClose={handleClose}
-							onChatToggle={() => setShowChat(!showChat)}
-							showChatButton={true}
-							isMobile={true}
-							viewMode={viewMode}
-							onViewModeChange={
-								displayData.status === "idle" ? setViewMode : undefined
-							}
-							canPreview={canPreview}
-						/>
+					>					{/* Artifact 头部工具栏 */}
+					<ArtifactActions
+						title={displayData.title}
+						status={displayData.status}
+						kind={displayData.kind}
+						onClose={handleClose}
+						onChatToggle={() => setShowChat(!showChat)}
+						showChatButton={true}
+						isMobile={true}
+					/>
 
 						{/* Artifact 内容区域 */}
 						<div className="flex-1 overflow-hidden relative">
-							<ArtifactContent viewMode={effectiveViewMode} />
+							<ArtifactContent />
 						</div>
 					</motion.div>
 				)}

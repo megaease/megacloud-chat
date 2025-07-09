@@ -4,10 +4,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, AlertCircle, Package, Loader2 } from "lucide-react";
+import { Play, AlertCircle, Package, Loader2, Code2 } from "lucide-react";
+import { PreviewToolbar } from "../PreviewToolbar";
 
 interface PythonPreviewProps {
 	content: string;
+	showToolbar?: boolean;
 }
 
 // Pyodide 类型定义
@@ -23,7 +25,7 @@ declare global {
 	}
 }
 
-export const PythonPreview = ({ content }: PythonPreviewProps) => {
+export const PythonPreview = ({ content, showToolbar = true }: PythonPreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
 	const [output, setOutput] = useState<string>("");
 	const [error, setError] = useState<string>("");
@@ -204,11 +206,15 @@ sys.stderr = _output_capture
 
 	return (
 		<div className="flex flex-col h-full">
-			{/* 工具栏 */}
-			<div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 flex-shrink-0">
-				<div className="flex items-center gap-2">
-					<div className="text-blue-600">🐍</div>
-					<span className="text-sm font-medium">Python 执行器</span>
+			{/* 工具栏 - 可选显示 */}
+			{showToolbar && (
+				<PreviewToolbar
+					content={content}
+					filename="python_code.py"
+					mimeType="text/x-python"
+				>
+					<Code2 className="w-3.5 h-3.5 text-blue-600" />
+					<span className="text-sm font-medium text-blue-700">Python 执行器</span>
 					<Badge variant="outline" className="text-xs">
 						Pyodide
 					</Badge>
@@ -217,21 +223,19 @@ sys.stderr = _output_capture
 							{isInitializing ? `初始化中... ${preloadProgress}%` : "未就绪"}
 						</Badge>
 					)}
-				</div>
 
-				<div className="flex items-center gap-2">
 					{/* 常用包安装 */}
-					<div className="flex items-center gap-1">
+					<div className="flex items-center gap-1 ml-3">
 						{commonPackages.map((pkg) => (
 							<Button
 								key={pkg}
 								variant="outline"
 								size="sm"
-								className="h-6 px-2 text-xs"
+								className="h-5 px-2 text-xs"
 								onClick={() => installPackage(pkg)}
 								disabled={isLoading || !pyodideReady}
 							>
-								<Package className="w-3 h-3 mr-1" />
+								<Package className="w-2.5 h-2.5 mr-1" />
 								{pkg}
 							</Button>
 						))}
@@ -242,7 +246,7 @@ sys.stderr = _output_capture
 						onClick={pyodideReady ? executeCode : initializePyodide}
 						size="sm"
 						variant="outline"
-						className="h-7 px-2"
+						className="h-6 px-2 ml-2"
 						disabled={isLoading}
 					>
 						{isLoading ? (
@@ -252,8 +256,8 @@ sys.stderr = _output_capture
 						)}
 						{pyodideReady ? "运行" : "初始化"}
 					</Button>
-				</div>
-			</div>
+				</PreviewToolbar>
+			)}
 
 			{/* 内容区域 */}
 			<div className="flex-1 flex flex-col p-4 overflow-hidden">

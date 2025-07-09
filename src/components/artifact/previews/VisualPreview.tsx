@@ -20,6 +20,7 @@ export interface VisualPreviewProps {
 	title?: string;
 	className?: string;
 	status?: "idle" | "streaming" | "error" | "loading";
+	showToolbar?: boolean;
 }
 
 export interface VisualState {
@@ -77,7 +78,7 @@ export function useContentTypeDetection(content: string): VisualContentType {
 	}, [content]);
 }
 
-export function VisualPreview({ content, title, className, status = "idle" }: VisualPreviewProps) {
+export function VisualPreview({ content, title, className, status = "idle", showToolbar = true }: VisualPreviewProps) {
 	// 状态管理
 	const [visualState, setVisualState] = useState<VisualState>({
 		zoom: 100,
@@ -180,15 +181,17 @@ export function VisualPreview({ content, title, className, status = "idle" }: Vi
 			className={cn("h-full flex flex-col bg-background", className)}
 		>
 			{/* 工具栏 */}
-			<VisualToolbar
-				contentType={contentType}
-				title={title}
-				visualState={visualState}
-				updateVisualState={updateVisualState}
-				imageSrc={imageSrc}
-				imageRef={imageRef}
-				content={content}
-			/>
+			{showToolbar && (
+				<VisualToolbar
+					contentType={contentType}
+					title={title}
+					visualState={visualState}
+					updateVisualState={updateVisualState}
+					imageSrc={imageSrc}
+					imageRef={imageRef}
+					content={content}
+				/>
+			)}
 
 			{/* 内容预览区域 */}
 			<VisualContainer

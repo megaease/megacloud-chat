@@ -48,6 +48,7 @@ import { TableSkeleton } from "../TableSkeleton";
 interface TablePreviewProps {
 	content: string;
 	status?: "idle" | "streaming" | "error" | "loading";
+	showToolbar?: boolean;
 }
 
 interface TableData {
@@ -58,7 +59,7 @@ interface TableData {
 // Dynamic row type for TanStack Table
 type DynamicRow = Record<string, string | number> & { _index?: number };
 
-export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) => {
+export const TablePreview = ({ content, status = "idle", showToolbar = true }: TablePreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -348,37 +349,38 @@ export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) =>
 	return (
 		<div className="flex flex-col h-full bg-background">
 			{/* Enhanced Toolbar */}
-			<div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-muted/30 to-muted/10 backdrop-blur-sm flex-shrink-0">
-				<div className="flex items-center gap-3">
+			{showToolbar && (
+				<div className="flex items-center justify-between px-4 py-2 border-b bg-gradient-to-r from-muted/30 to-muted/10 backdrop-blur-sm flex-shrink-0">
 					<div className="flex items-center gap-2">
-						<div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50" />
-						<Grid3X3 className="w-5 h-5 text-primary" />
-						<span className="text-sm font-semibold text-foreground">
-							{tArtifact("tablePreview")}
-						</span>
+						<div className="flex items-center gap-1.5">
+							<div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50" />
+							<Grid3X3 className="w-4 h-4 text-primary" />
+							<span className="text-xs font-semibold text-foreground">
+								{tArtifact("tablePreview")}
+							</span>
+						</div>
+						<div className="flex items-center gap-1.5">
+							<Badge
+								variant="secondary"
+								className="text-xs font-medium px-1.5 py-0.5"
+							>
+								{table.getFilteredRowModel().rows.length} {tArtifact("rows")}
+							</Badge>
+							<Badge variant="outline" className="text-xs font-medium px-1.5 py-0.5">
+								{tableData.headers.length} {tArtifact("columns")}
+							</Badge>
+						</div>
 					</div>
-					<div className="flex items-center gap-2">
-						<Badge
-							variant="secondary"
-							className="text-xs font-medium px-2 py-1"
-						>
-							{table.getFilteredRowModel().rows.length} {tArtifact("rows")}
-						</Badge>
-						<Badge variant="outline" className="text-xs font-medium px-2 py-1">
-							{tableData.headers.length} {tArtifact("columns")}
-						</Badge>
-					</div>
-				</div>
 
-				<div className="flex items-center gap-3">
+				<div className="flex items-center gap-2">
 					{/* Enhanced Global Search */}
 					<div className="relative">
-						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+						<Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground" />
 						<Input
 							placeholder={tArtifact("searchAllColumns")}
 							value={searchInput}
 							onChange={(event) => handleSearchChange(event.target.value)}
-							className="h-9 w-[250px] pl-10 pr-4 text-sm bg-background/50 border-muted-foreground/20 focus:border-primary/50 focus:ring-primary/20"
+							className="h-6 w-[200px] pl-7 pr-7 text-xs bg-background/50 border-muted-foreground/20 focus:border-primary/50 focus:ring-primary/20"
 						/>
 						{searchInput && (
 							<Button
@@ -388,7 +390,7 @@ export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) =>
 									setSearchInput("");
 									setGlobalFilter("");
 								}}
-								className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 hover:bg-muted"
+								className="absolute right-0.5 top-1/2 transform -translate-y-1/2 h-5 w-5 p-0 hover:bg-muted text-xs"
 							>
 								<span className="sr-only">{tArtifact("clearSearch")}</span>×
 							</Button>
@@ -401,9 +403,9 @@ export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) =>
 							<Button
 								variant="outline"
 								size="sm"
-								className="h-9 px-3 text-sm font-medium border-muted-foreground/20 hover:bg-muted/80"
+								className="h-6 px-2 text-xs font-medium border-muted-foreground/20 hover:bg-muted/80"
 							>
-								<Settings2 className="w-4 h-4 mr-2" />
+								<Settings2 className="w-3 h-3 mr-1" />
 								{tArtifact("columns")}
 							</Button>
 						</DropdownMenuTrigger>
@@ -433,13 +435,14 @@ export const TablePreview = ({ content, status = "idle" }: TablePreviewProps) =>
 						variant="outline"
 						size="sm"
 						onClick={exportCSV}
-						className="h-8 px-3 text-xs"
+						className="h-6 px-2 text-xs"
 					>
-						<Download className="w-3.5 h-3.5 mr-1" />
+						<Download className="w-3 h-3 mr-1" />
 						{tArtifact("export")}
 					</Button>
 				</div>
 			</div>
+			)}
 
 			{/* Table content */}
 			<div className="flex-1 overflow-auto p-4">

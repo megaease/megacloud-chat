@@ -9,9 +9,7 @@ import { TablePreview } from "./previews";
 import { VisualPreview } from "./previews/VisualPreview";
 import { useArtifact } from "@/context/artifact-provider-context";
 
-export function ArtifactContent({
-	viewMode = "code",
-}: { viewMode?: "code" | "preview" }) {
+export function ArtifactContent() {
 	const { artifact } = useArtifact();
 
 	// 直接使用 artifact context 中的数据
@@ -79,13 +77,14 @@ export function ArtifactContent({
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						transition={{ duration: 0.3, ease: "easeInOut" }}
-					>					<CodePreview
-						content={displayData.content}
-						language={displayData.language}
-						className="h-full"
-						mode={viewMode}
-						status={displayStatus}
-					/>
+					>
+						{" "}
+						<CodePreview
+							content={displayData.content}
+							language={displayData.language}
+							className="h-full"
+							status={displayStatus}
+						/>
 					</motion.div>
 				);
 
@@ -113,7 +112,11 @@ export function ArtifactContent({
 						animate={{ opacity: 1 }}
 						transition={{ duration: 0.3, ease: "easeInOut" }}
 					>
-						<TablePreview content={displayData.content} status={displayStatus} />
+						<TablePreview
+							content={displayData.content}
+							status={displayStatus}
+							showToolbar={false}
+						/>
 					</motion.div>
 				);
 
@@ -124,12 +127,15 @@ export function ArtifactContent({
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						transition={{ duration: 0.3, ease: "easeInOut" }}
-					>					<VisualPreview 
-						content={displayData.content} 
-						title={displayData.title}
-						className="h-full"
-						status={displayStatus}
-					/>
+					>
+						{" "}
+						<VisualPreview
+							content={displayData.content}
+							title={displayData.title}
+							className="h-full"
+							status={displayStatus}
+							showToolbar={false}
+						/>
 					</motion.div>
 				);
 

@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Code2, AlertCircle, RefreshCw } from "lucide-react";
 import * as Babel from "@babel/standalone";
+import { PreviewToolbar } from "../PreviewToolbar";
 
 interface ReactPreviewProps {
 	content: string;
+	showToolbar?: boolean;
 }
 
-export const ReactPreview = ({ content }: ReactPreviewProps) => {
+export const ReactPreview = ({ content, showToolbar = true }: ReactPreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
 	const [error, setError] = useState<string>("");
 	const [loading, setLoading] = useState(false);
@@ -210,31 +212,24 @@ export const ReactPreview = ({ content }: ReactPreviewProps) => {
 
 	return (
 		<div className="flex flex-col h-full">
-			{/* 工具栏 */}
-			<div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 flex-shrink-0">
-				<div className="flex items-center gap-2">
-					<Code2 className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-					<span className="text-sm font-medium text-cyan-700 dark:text-cyan-300">
+			{/* 工具栏 - 可选显示 */}
+			{showToolbar && (
+				<PreviewToolbar
+					content={content}
+					filename="react_component.jsx"
+					mimeType="text/jsx"
+					onRefresh={handleManualRefresh}
+					refreshing={loading}
+				>
+					<Code2 className="w-3.5 h-3.5 text-cyan-600" />
+					<span className="text-sm font-medium text-cyan-700">
 						{tArtifact("reactComponentPreview")}
 					</span>
 					<Badge variant="secondary" className="text-xs">
 						{tArtifact("liveRendering")}
 					</Badge>
-				</div>
-				<div className="flex items-center gap-2">
-					{loading && <RefreshCw className="w-3 h-3 animate-spin" />}
-					<Button
-						onClick={handleManualRefresh}
-						size="sm"
-						variant="outline"
-						className="h-7 px-2"
-						disabled={loading}
-					>
-						<RefreshCw className="w-3 h-3 mr-1" />
-						{tArtifact("rerender")}
-					</Button>
-				</div>
-			</div>
+				</PreviewToolbar>
+			)}
 
 			{/* 预览区域 */}
 			<div className="flex-1 bg-muted/20 overflow-hidden">
