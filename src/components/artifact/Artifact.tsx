@@ -12,10 +12,10 @@ import {
 	ResizablePanel,
 	ResizableHandle,
 } from "@/components/ui/resizable";
-import { X, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
+import { X } from "lucide-react";
 import { ArtifactChat } from "./ArtifactChat";
 import type { Message } from "@ai-sdk/react";
-import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
+import type { ArtifactKind } from "@/lib/artifact-types";
 import { useTranslations } from "next-intl";
 
 // 根据文档类型生成简洁的默认标题（不包含状态信息）
@@ -100,14 +100,16 @@ export function Artifact({
 		onClose?.();
 	};
 
-	// 简化的显示数据：直接使用 artifact context 中的数据
-	const displayData = {
-		title: artifact.title || getDefaultTitle(artifact.kind, tArtifact),
-		status: artifact.status,
-		kind: artifact.kind,
-		content: artifact.content,
-		language: artifact.language,
-	};
+	// 优化：使用 useMemo 避免 ArtifactActions 因为 content 变化而重新渲染
+	// ArtifactActions 只需要 title, status, kind，不需要 content
+	const artifactActionsProps = useMemo(
+		() => ({
+			title: artifact.title || getDefaultTitle(artifact.kind, tArtifact),
+			status: artifact.status,
+			kind: artifact.kind,
+		}),
+		[artifact.title, artifact.status, artifact.kind, tArtifact],
+	);
 
 	if (!artifact.isVisible) return null;
 
@@ -254,9 +256,9 @@ export function Artifact({
 								{" "}
 								{/* Artifact 头部工具栏 */}
 								<ArtifactActions
-									title={displayData.title}
-									status={displayData.status}
-									kind={displayData.kind}
+									title={artifactActionsProps.title}
+									status={artifactActionsProps.status}
+									kind={artifactActionsProps.kind}
 									onClose={handleClose}
 									isMobile={false}
 								/>
@@ -307,9 +309,9 @@ export function Artifact({
 						{" "}
 						{/* Artifact 头部工具栏 */}
 						<ArtifactActions
-							title={displayData.title}
-							status={displayData.status}
-							kind={displayData.kind}
+							title={artifactActionsProps.title}
+							status={artifactActionsProps.status}
+							kind={artifactActionsProps.kind}
 							onClose={handleClose}
 							onChatToggle={() => setShowChat(!showChat)}
 							showChatButton={true}

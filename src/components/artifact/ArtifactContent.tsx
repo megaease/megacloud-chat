@@ -2,7 +2,6 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import type { ArtifactLanguage } from "@/lib/artifact-types";
 import { TextArtifact } from "./TextArtifact";
 import { CodePreview } from "./CodePreview";
 import { TablePreview } from "./previews";
@@ -21,10 +20,9 @@ export function ArtifactContent() {
 	};
 	const displayStatus = artifact.status;
 
-	// 创建一个更稳定的 key，只在内容真正变化时才触发动画
-	// 不包含 status，避免状态切换时重新挂载组件
-	// 使用内容的哈希值来确保内容变化时组件会重新渲染
-	const contentKey = `${displayData.kind}-${displayData.content?.length || 0}-${displayData.content ? displayData.content.slice(0, 50) + displayData.content.slice(-50) : ""}`;
+	// 创建一个稳定的 key，避免在流式传输时重新挂载组件
+	// 只在 kind 变化时才重新挂载，内容变化不应该触发重新挂载
+	const contentKey = `${displayData.kind}-stable`;
 
 	// Render content based on kind
 	const renderContent = () => {

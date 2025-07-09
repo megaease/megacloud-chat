@@ -63,8 +63,15 @@ export function CodePreview({
 }: CodePreviewProps) {
 	const tArtifact = useTranslations("Artifact");
 	const tCommon = useTranslations("Common");
-	// 默认显示代码
+	// 默认显示代码，在流式传输时强制显示代码视图
 	const [viewMode, setViewMode] = useState<"code" | "preview">("code");
+	
+	// 在流式传输时强制切换到代码视图
+	useEffect(() => {
+		if (status === "streaming" && viewMode === "preview") {
+			setViewMode("code");
+		}
+	}, [status, viewMode]);
 	const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
 	const [htmlViewMode, setHtmlViewMode] = useState<
 		"desktop" | "tablet" | "mobile"
@@ -529,7 +536,7 @@ sys.stderr = _output_capture
 									<Code2 className="w-4 h-4 mr-1.5" />
 									<span className="hidden sm:inline">代码</span>
 								</TabsTrigger>
-								<TabsTrigger value="preview" disabled={!canPreview}>
+								<TabsTrigger value="preview" disabled={!canPreview || status === "streaming"}>
 									<Eye className="w-4 h-4 mr-1.5" />
 									<span className="hidden sm:inline">预览</span>
 								</TabsTrigger>
