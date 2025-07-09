@@ -1,22 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { CodeEditor } from "@/components/code-editor";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import {
 	Code2,
 	Eye,
 	Copy,
 	Check,
 	Download,
-	RefreshCw,
 	Globe,
 	Monitor,
 	Smartphone,
 	Tablet,
+	Play,
+	Loader2,
+	Package,
+	AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -34,6 +38,19 @@ import {
 import { CodeSkeleton } from "./CodeSkeleton";
 import type { ArtifactLanguage } from "@/lib/artifact-types";
 
+// Pyodide 类型定义
+interface PyodideInterface {
+	runPython: (code: string) => unknown;
+	loadPackage: (packages: string[]) => Promise<void>;
+}
+
+declare global {
+	interface Window {
+		loadPyodide: (config: { indexURL: string }) => Promise<PyodideInterface>;
+		pyodide: PyodideInterface;
+	}
+}
+
 interface CodePreviewProps {
 	content: string;
 	language?: ArtifactLanguage;
@@ -49,15 +66,198 @@ export function CodePreview({
 }: CodePreviewProps) {
 	const tArtifact = useTranslations("Artifact");
 	const tCommon = useTranslations("Common");
-	const [viewMode, setViewMode] = useState<"code" | "preview">("preview");
+	// 默认显示代码
+	const [viewMode, setViewMode] = useState<"code" | "preview">("code");
 	const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
 	const [htmlViewMode, setHtmlViewMode] = useState<
 		"desktop" | "tablet" | "mobile"
 	>("desktop");
+	const [isExecuting, setIsExecuting] = useState(false);
+	const [consoleOutput, setConsoleOutput] = useState<string>("");
+	const [consoleError, setConsoleError] = useState<string>("");
+	
+	// Python 特定状态
+	const [pyodideReady, setPyodideReady] = useState(false);
+	const [isInitializing, setIsInitializing] = useState(false);
+	const [preloadProgress, setPreloadProgress] = useState(0);
+	const pyodideRef = useRef<PyodideInterface | null>(null);
 
 	const finalLanguage = getLanguage(language, content);
 	const previewType = getPreviewType(finalLanguage);
 	const canPreview = isPreviewSupported(finalLanguage);
+
+	// Python Pyodide 懒加载 - 不自动预加载
+	useEffect(() => {
+		if (previewType !== "python") return;
+		
+		// 只检查是否已经存在现成的 Pyodide 实例
+		if (window.pyodide || pyodideRef.current) {
+			setPyodideReady(true);
+		}
+	}, [previewType]);
+
+	// 初始化 Pyodide
+	const initializePyodide = useCallback(async () => {
+		if (pyodideRef.current || isInitializing) return;
+
+		setIsInitializing(true);
+		setPreloadProgress(20);
+
+		try {
+			if (typeof window.loadPyodide !== "function") {
+				console.log("Pyodide script not loaded yet, loading...");
+				const script = document.createElement("script");
+				script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
+				script.async = true;
+				document.head.appendChild(script);
+
+				await new Promise((resolve, reject) => {
+					script.onload = resolve;
+					script.onerror = reject;
+				});
+			}
+
+			setPreloadProgress(50);
+
+			console.log("Initializing Pyodide...");
+			pyodideRef.current = await window.loadPyodide({
+				indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/",
+			});
+
+			setPreloadProgress(80);
+
+			// 重定向 stdout 和 stderr
+			pyodideRef.current.runPython(`
+import sys
+from io import StringIO
+
+class OutputCapture:
+    def __init__(self):
+        self.output = StringIO()
+        
+    def write(self, text):
+        self.output.write(text)
+        
+    def flush(self):
+        pass
+        
+    def get_output(self):
+        return self.output.getvalue()
+        
+    def clear(self):
+        self.output = StringIO()
+
+_output_capture = OutputCapture()
+sys.stdout = _output_capture
+sys.stderr = _output_capture
+			`);
+
+			setPreloadProgress(100);
+			setPyodideReady(true);
+			console.log("Pyodide initialized successfully!");
+		} catch (err) {
+			setConsoleError(
+				`Pyodide 初始化失败：${err instanceof Error ? err.message : String(err)}`,
+			);
+			console.error("Pyodide initialization failed:", err);
+		} finally {
+			setIsInitializing(false);
+		}
+	}, [isInitializing]);
+
+	// 安装包
+	const installPackage = async (packageName: string) => {
+		if (!pyodideRef.current) {
+			await initializePyodide();
+			if (!pyodideRef.current) return;
+		}
+
+		setIsExecuting(true);
+		try {
+			await pyodideRef.current.loadPackage([packageName]);
+			setConsoleOutput(
+				(prev) => `${prev ? `${prev}\n` : ""}✅ 成功安装包：${packageName}`,
+			);
+		} catch (err) {
+			setConsoleError(
+				`安装包失败：${err instanceof Error ? err.message : String(err)}`,
+			);
+		} finally {
+			setIsExecuting(false);
+		}
+	};
+
+	// 执行代码
+	const handleExecute = async () => {
+		if (previewType === "python" || previewType === "javascript") {
+			setIsExecuting(true);
+			setConsoleOutput("");
+			setConsoleError("");
+			
+			try {
+				if (previewType === "javascript") {
+					// JavaScript 执行逻辑
+					const logs: string[] = [];
+					const originalLog = console.log;
+					console.log = (...args) => {
+						logs.push(
+							args
+								.map((arg) =>
+									typeof arg === "object"
+										? JSON.stringify(arg, null, 2)
+										: String(arg),
+								)
+								.join(" "),
+						);
+					};
+
+					// eslint-disable-next-line no-new-func
+					const func = new Function(content);
+					const result = func();
+					console.log = originalLog;
+
+					if (result !== undefined) {
+						logs.push(`返回值: ${typeof result === "object" ? JSON.stringify(result, null, 2) : String(result)}`);
+					}
+
+					setConsoleOutput(logs.join("\n") || "代码执行完成，无输出");
+				} else if (previewType === "python") {
+					// Python 执行逻辑
+					if (!pyodideRef.current) {
+						await initializePyodide();
+						if (!pyodideRef.current) return;
+					}
+
+					// 清空之前的输出
+					pyodideRef.current.runPython("_output_capture.clear()");
+
+					// 执行用户代码
+					const result = pyodideRef.current.runPython(content);
+
+					// 获取输出
+					const capturedOutput = pyodideRef.current.runPython(
+						"_output_capture.get_output()",
+					) as string;
+
+					let finalOutput = capturedOutput || "";
+
+					// 如果有返回值且不是 None，添加到输出
+					if (result !== undefined && result !== null) {
+						const resultStr = String(result);
+						if (resultStr !== "None") {
+							finalOutput = `${finalOutput}${finalOutput ? "\n" : ""}输出：${resultStr}`;
+						}
+					}
+
+					setConsoleOutput(finalOutput || "代码执行完成，无输出");
+				}
+			} catch (error) {
+				setConsoleError(`执行出错：${error instanceof Error ? error.message : String(error)}`);
+			} finally {
+				setIsExecuting(false);
+			}
+		}
+	};
 
 	// 如果正在流式传输，显示骨架屏
 	if (status === "streaming") {
@@ -180,182 +380,349 @@ export function CodePreview({
 	const renderPreviewTools = () => {
 		if (viewMode !== "preview" || !canPreview) return null;
 
-		switch (previewType) {
-			case "html":
-				return (
-					<div className="flex items-center gap-3">
-						<div className="flex items-center gap-2 px-2 py-1 bg-primary/10 rounded-md border border-primary/20">
-							<Globe className="w-4 h-4 text-primary" />
-							<span className="text-sm font-medium text-foreground">
-								{tArtifact("htmlPreview")}
-							</span>
-						</div>
-						{/* HTML 响应式视图切换 */}
-						<div className="flex items-center gap-1 p-1 bg-muted/50 rounded-md border">
-							<Button
-								variant={htmlViewMode === "desktop" ? "default" : "ghost"}
-								size="sm"
-								onClick={() => setHtmlViewMode("desktop")}
-								className="h-6 w-6 p-0"
-								title={tArtifact("desktopView")}
-							>
-								<Monitor className="w-3 h-3" />
-							</Button>
-							<Button
-								variant={htmlViewMode === "tablet" ? "default" : "ghost"}
-								size="sm"
-								onClick={() => setHtmlViewMode("tablet")}
-								className="h-6 w-6 p-0"
-								title={tArtifact("tabletView")}
-							>
-								<Tablet className="w-3 h-3" />
-							</Button>
-							<Button
-								variant={htmlViewMode === "mobile" ? "default" : "ghost"}
-								size="sm"
-								onClick={() => setHtmlViewMode("mobile")}
-								className="h-6 w-6 p-0"
-								title={tArtifact("mobileView")}
-							>
-								<Smartphone className="w-3 h-3" />
-							</Button>
-						</div>
+		const getPreviewConfig = (type: string) => {
+			switch (type) {
+				case "html":
+					return {
+						icon: Globe,
+						label: tArtifact("htmlPreview"),
+						hasViewModes: true,
+					};
+				case "react":
+					return {
+						icon: Code2,
+						label: tArtifact("reactComponentPreview"),
+						hasViewModes: false,
+					};
+				case "python":
+					return {
+						icon: Code2,
+						label: "Python 执行器",
+						hasViewModes: false,
+					};
+				case "javascript":
+					return {
+						icon: Code2,
+						label: "JavaScript 执行器",
+						hasViewModes: false,
+					};
+				default:
+					return null;
+			}
+		};
+
+		const config = getPreviewConfig(previewType);
+		if (!config) return null;
+
+		const { hasViewModes } = config;
+
+		return (
+			<div className="flex items-center gap-3">
+				{/* HTML 响应式视图切换 */}
+				{hasViewModes && (
+					<div className="flex items-center gap-1 p-1 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+						<Button
+							variant={htmlViewMode === "desktop" ? "default" : "ghost"}
+							size="sm"
+							onClick={() => setHtmlViewMode("desktop")}
+							className="h-6 w-6 p-0"
+							title={tArtifact("desktopView")}
+						>
+							<Monitor className="w-3.5 h-3.5" />
+						</Button>
+						<Button
+							variant={htmlViewMode === "tablet" ? "default" : "ghost"}
+							size="sm"
+							onClick={() => setHtmlViewMode("tablet")}
+							className="h-6 w-6 p-0"
+							title={tArtifact("tabletView")}
+						>
+							<Tablet className="w-3.5 h-3.5" />
+						</Button>
+						<Button
+							variant={htmlViewMode === "mobile" ? "default" : "ghost"}
+							size="sm"
+							onClick={() => setHtmlViewMode("mobile")}
+							className="h-6 w-6 p-0"
+							title={tArtifact("mobileView")}
+						>
+							<Smartphone className="w-3.5 h-3.5" />
+						</Button>
 					</div>
-				);
-			case "react":
-				return (
-					<div className="flex items-center gap-2 px-2 py-1 bg-cyan-50 dark:bg-cyan-900/20 rounded-md border border-cyan-200 dark:border-cyan-800">
-						<Code2 className="w-4 h-4 text-cyan-600" />
-						<span className="text-sm font-medium text-cyan-700 dark:text-cyan-400">
-							{tArtifact("reactComponentPreview")}
-						</span>
-					</div>
-				);
-			case "python":
-				return (
-					<div className="flex items-center gap-2 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
-						<Code2 className="w-4 h-4 text-blue-600" />
-						<span className="text-sm font-medium text-blue-700 dark:text-blue-400">
-							Python 执行器
-						</span>
-					</div>
-				);
-			case "javascript":
-				return (
-					<div className="flex items-center gap-2 px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-800">
-						<Code2 className="w-4 h-4 text-yellow-600" />
-						<span className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
-							JavaScript 执行器
-						</span>
-					</div>
-				);
-			default:
-				return null;
-		}
+				)}
+			</div>
+		);
 	};
 
 	return (
 		<div className={cn("h-full flex flex-col", className)}>
 			{/* 统一工具栏 */}
-			<div className="flex items-center justify-between px-3 py-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 min-h-[40px]">
+			<div className="flex items-center justify-between px-4 py-2.5 border-b bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-sm min-h-[44px] gap-3">
 				{/* 左侧：语言标识和预览工具 */}
-				<div className="flex items-center gap-3 min-w-0 flex-1">
-					<div className="flex items-center gap-2 px-2.5 py-1 bg-muted/40 rounded-md border border-border/40">
-						<Code2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-						<span className="text-sm font-medium text-foreground">
+				<div className="flex items-center gap-3 min-w-0">
+					<div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+						<Code2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+						<span className="text-sm font-medium text-slate-700 dark:text-slate-300 hidden sm:inline">
 							{getLanguageDisplayName(finalLanguage)}
 						</span>
 					</div>
 
 					{/* 预览特定的工具 */}
-					{renderPreviewTools()}
+					<div className="hidden lg:block">{renderPreviewTools()}</div>
 				</div>
 
-				{/* 中间：视图切换 */}
-				<div className="flex-shrink-0">
-					<Tabs
-						value={viewMode}
-						onValueChange={(v) => setViewMode(v as typeof viewMode)}
-					>
-						<TabsList className="h-7 bg-muted/30">
-							<TabsTrigger value="code" className="h-6 px-3 text-xs">
-								<Code2 className="w-3 h-3 mr-1" />
-								代码
-							</TabsTrigger>
-							<TabsTrigger
-								value="preview"
-								className="h-6 px-3 text-xs"
-								disabled={!canPreview}
+				{/* 右侧：视图切换和工具按钮 */}
+				<div className="flex items-center gap-3 flex-shrink-0">
+					{/* 视图切换 - 只对传统预览显示 */}
+					{previewType !== "python" && previewType !== "javascript" && (
+						<Tabs
+							value={viewMode}
+							onValueChange={(v) => setViewMode(v as typeof viewMode)}
+						>
+							<TabsList>
+								<TabsTrigger value="code">
+									<Code2 className="w-4 h-4 mr-1.5" />
+									<span className="hidden sm:inline">代码</span>
+								</TabsTrigger>
+								<TabsTrigger value="preview" disabled={!canPreview}>
+									<Eye className="w-4 h-4 mr-1.5" />
+									<span className="hidden sm:inline">预览</span>
+								</TabsTrigger>
+							</TabsList>
+						</Tabs>
+					)}
+
+					{/* 工具按钮 */}
+					<div className="flex items-center gap-2">
+						{/* 执行按钮 - 只对Python/JavaScript显示 */}
+						{(previewType === "python" || previewType === "javascript") && (
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={previewType === "python" && !pyodideReady ? initializePyodide : handleExecute}
+								disabled={isExecuting || (previewType === "python" && isInitializing)}
+								className="h-8 px-3 text-sm font-medium gap-1.5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+								title={previewType === "python" && !pyodideReady ? "初始化Python环境" : "执行代码"}
 							>
-								<Eye className="w-3 h-3 mr-1" />
-								预览
-							</TabsTrigger>
-						</TabsList>
-					</Tabs>
-				</div>
-
-				{/* 右侧：工具按钮 */}
-				<div className="flex items-center gap-1 flex-shrink-0">
-					{/* 复制下载按钮组 */}
-					<div className="flex items-center rounded-md overflow-hidden bg-background border border-border/50">
+								{isExecuting || isInitializing ? (
+									<Loader2 className="h-4 w-4 animate-spin" />
+								) : (
+									<Play className="h-4 w-4" />
+								)}
+								<span className="hidden sm:inline">
+									{isExecuting 
+										? "执行中..." 
+										: isInitializing 
+										? "初始化中..." 
+										: previewType === "python" && !pyodideReady 
+										? "初始化" 
+										: "执行"}
+								</span>
+							</Button>
+						)}
 						<Button
-							variant="ghost"
+							variant="outline"
 							size="sm"
 							onClick={handleCopy}
 							disabled={!content}
 							className={cn(
-								"h-7 px-2 text-xs rounded-none border-0",
+								"h-8 px-3 text-sm font-medium gap-1.5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700",
 								copyStatus === "copied"
-									? "text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
-									: "hover:bg-muted/50",
+									? "text-emerald-600 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-800"
+									: "hover:bg-slate-50 dark:hover:bg-slate-700",
 							)}
 							title={
 								copyStatus === "copied" ? tCommon("copied") : tCommon("copy")
 							}
 						>
 							{copyStatus === "copied" ? (
-								<Check className="h-3.5 w-3.5 mr-1" />
+								<Check className="h-4 w-4" />
 							) : (
-								<Copy className="h-3.5 w-3.5 mr-1" />
+								<Copy className="h-4 w-4" />
 							)}
-							{copyStatus === "copied" ? tCommon("copied") : tCommon("copy")}
+							<span className="hidden sm:inline">
+								{copyStatus === "copied" ? tCommon("copied") : tCommon("copy")}
+							</span>
 						</Button>
 
-						<div className="w-px h-4 bg-border" />
-
 						<Button
-							variant="ghost"
+							variant="outline"
 							size="sm"
 							onClick={handleDownload}
 							disabled={!content}
-							className="h-7 px-2 text-xs rounded-none border-0 hover:bg-muted/50"
+							className="h-8 px-3 text-sm font-medium gap-1.5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
 							title={tCommon("download")}
 						>
-							<Download className="h-3.5 w-3.5 mr-1" />
-							{tCommon("download")}
+							<Download className="h-4 w-4" />
+							<span className="hidden sm:inline">{tCommon("download")}</span>
 						</Button>
 					</div>
 				</div>
 			</div>
 
 			{/* 内容区域 */}
-			<div className="flex-1 overflow-hidden">
-				<Tabs value={viewMode} className="h-full">
+			<div className="flex-1 overflow-hidden flex flex-col">
+				<Tabs value={viewMode} className="flex-1">
 					<TabsContent value="code" className="h-full m-0">
 						<motion.div
-							className="h-full"
+							className="h-full flex flex-col"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							transition={{ duration: 0.3, ease: "easeInOut" }}
 						>
-							<CodeEditor
-								value={content}
-								language={finalLanguage}
-								showHeader={false}
-								showCopyButton={true}
-								height="100%"
-								className="h-full"
-							/>
+							{/* 对于 Python/JavaScript 使用可调整大小的面板 */}
+							{(previewType === "python" || previewType === "javascript") ? (
+								<ResizablePanelGroup direction="vertical" className="h-full">
+									<ResizablePanel defaultSize={70} minSize={30}>
+										<CodeEditor
+											value={content}
+											language={finalLanguage}
+											showHeader={false}
+											showCopyButton={true}
+											height="100%"
+											className="h-full"
+										/>
+									</ResizablePanel>
+									
+									<ResizableHandle withHandle />
+									
+									<ResizablePanel defaultSize={30} minSize={20}>
+										<div className="h-full bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-sm flex flex-col border-t border-slate-200 dark:border-slate-800">
+											{/* Console 头部 */}
+											<div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-950">
+												<div className="flex items-center gap-2">
+													<div className="flex items-center gap-2 px-2 py-1 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm">
+														<div className="w-2 h-2 rounded-full bg-blue-500" />
+														<span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+															控制台
+														</span>
+													</div>
+													{(consoleOutput || consoleError) && (
+														<div className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
+															<div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+															<span className="text-xs text-green-700 dark:text-green-400 font-medium">活跃</span>
+														</div>
+													)}
+													
+													{/* Python 特定状态 */}
+													{previewType === "python" && !pyodideReady && (
+														<div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-800">
+															<div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+															<span className="text-xs text-yellow-700 dark:text-yellow-400 font-medium">
+																{isInitializing ? `初始化中 ${preloadProgress}%` : "未就绪"}
+															</span>
+														</div>
+													)}
+												</div>
+												<div className="flex items-center gap-1">
+													{/* Python 包安装按钮 */}
+													{previewType === "python" && pyodideReady && (
+														<div className="flex items-center gap-1 mr-2">
+															{["numpy", "pandas", "matplotlib"].map((pkg) => (
+																<Button
+																	key={pkg}
+																	variant="outline"
+																	size="sm"
+																	onClick={() => installPackage(pkg)}
+																	disabled={isExecuting}
+																	className="h-6 px-2 text-xs border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+																	title={`安装 ${pkg}`}
+																>
+																	<Package className="w-2.5 h-2.5 mr-1" />
+																	{pkg}
+																</Button>
+															))}
+														</div>
+													)}
+													
+													<Button
+														variant="ghost"
+														size="sm"
+														onClick={() => {
+															setConsoleOutput("");
+															setConsoleError("");
+														}}
+														className="h-7 px-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+														title="清空输出"
+													>
+														清空
+													</Button>
+												</div>
+											</div>
+											
+											{/* Console 内容 */}
+											<div className="flex-1 p-4 overflow-auto bg-gradient-to-br from-slate-50/50 to-white/50 dark:from-slate-950/50 dark:to-slate-900/50">
+												{consoleError && (
+													<div className="mb-3 p-3 bg-gradient-to-r from-red-50 to-red-25 dark:from-red-950/50 dark:to-red-900/30 border border-red-200 dark:border-red-800/50 rounded-lg text-red-700 dark:text-red-400 text-sm shadow-sm">
+														<div className="flex items-start gap-2">
+															<div className="w-4 h-4 rounded-full bg-red-500 flex-shrink-0 mt-0.5 flex items-center justify-center">
+																<span className="text-white text-xs font-bold">!</span>
+															</div>
+															<div className="flex-1">
+																<div className="text-xs font-semibold mb-1 text-red-800 dark:text-red-300">执行错误</div>
+																<pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{consoleError}</pre>
+															</div>
+														</div>
+													</div>
+												)}
+												{consoleOutput && (
+													<div className="p-3 bg-gray-900 text-green-400 rounded-lg shadow-lg border border-gray-700">
+														<div className="flex items-center gap-2 mb-2 border-b border-gray-700 pb-2">
+															<div className="w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
+																<div className="w-1 h-1 rounded-full bg-white" />
+															</div>
+															<span className="text-xs text-gray-400 font-mono font-semibold tracking-wide">OUTPUT</span>
+														</div>
+														<pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">{consoleOutput}</pre>
+													</div>
+												)}
+												{!consoleOutput && !consoleError && (
+													<div className="flex items-center justify-center h-full text-muted-foreground">
+														<div className="text-center p-8">
+															{previewType === "python" ? (
+																<>
+																	<div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center">
+																		<div className="text-2xl">🐍</div>
+																	</div>
+																	<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+																		{pyodideReady ? "Python 环境就绪" : "Python 环境"}
+																	</p>
+																	<p className="text-xs text-slate-500 dark:text-slate-500">
+																		{pyodideReady 
+																			? "点击执行按钮运行代码" 
+																			: isInitializing 
+																			? `正在初始化... ${preloadProgress}%`
+																			: "点击初始化按钮启动环境"}
+																	</p>
+																</>
+															) : (
+																<>
+																	<div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center">
+																		<div className="text-2xl">⚡</div>
+																	</div>
+																	<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">准备就绪</p>
+																	<p className="text-xs text-slate-500 dark:text-slate-500">点击执行按钮查看输出结果</p>
+																</>
+															)}
+														</div>
+													</div>
+												)}
+											</div>
+										</div>
+									</ResizablePanel>
+								</ResizablePanelGroup>
+							) : (
+								<div className="h-full">
+									<CodeEditor
+										value={content}
+										language={finalLanguage}
+										showHeader={false}
+										showCopyButton={true}
+										height="100%"
+										className="h-full"
+									/>
+								</div>
+							)}
 						</motion.div>
 					</TabsContent>
 

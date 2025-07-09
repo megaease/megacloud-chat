@@ -250,7 +250,7 @@ export function DocumentToolInvocation({
 						</h3>
 						<span
 							className={cn(
-								"text-xs px-2 py-1 rounded-full font-medium",
+								"text-xs px-2 py-1 rounded-full font-medium min-w-fit",
 								isCreating
 									? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
 									: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",

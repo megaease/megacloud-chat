@@ -208,14 +208,16 @@ function ArtifactActions({
 										.slice()
 										.sort((a, b) => b.version - a.version)
 										.map((version) => {
-											const isCurrentVersion = version.version === displayCurrentVersion;
+											const isCurrentVersion =
+												version.version === displayCurrentVersion;
 											return (
 												<DropdownMenuItem
 													key={`${version.version}-${version.updatedAt}`}
 													onClick={() => handleVersionChange(version.version)}
 													className={cn(
 														"cursor-pointer flex items-center justify-between px-2.5 py-2 text-sm rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-														isCurrentVersion && "bg-accent text-accent-foreground font-medium"
+														isCurrentVersion &&
+															"bg-accent text-accent-foreground font-medium",
 													)}
 												>
 													<span className="text-sm">v{version.version}</span>
@@ -285,12 +287,14 @@ function ArtifactActions({
 									variant="ghost"
 									size="icon"
 									className="h-9 w-9 hover:bg-gray-50 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300 rounded-lg transition-all duration-200 hover:scale-105"
-									title={tCommon("menu")}
 								>
 									<MoreHorizontal className="h-4 w-4" />
 								</Button>
 							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="w-44 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+							<DropdownMenuContent
+								align="end"
+								className="w-44 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg"
+							>
 								{/* 移动端菜单项 */}
 								{onRefresh && (
 									<DropdownMenuItem
