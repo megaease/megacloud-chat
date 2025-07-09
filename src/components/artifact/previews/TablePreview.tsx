@@ -43,7 +43,6 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
-import { TableSkeleton } from "../TableSkeleton";
 
 interface TablePreviewProps {
 	content: string;
@@ -61,7 +60,7 @@ type DynamicRow = Record<string, string | number> & { _index?: number };
 
 export const TablePreview = ({
 	content,
-	status = "idle",
+	status: _status = "idle",
 	showToolbar = true,
 }: TablePreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
@@ -71,10 +70,11 @@ export const TablePreview = ({
 	const [globalFilter, setGlobalFilter] = useState("");
 	const [searchInput, setSearchInput] = useState("");
 
-	// 如果正在流式传输，显示骨架屏
-	if (status === "streaming") {
-		return <TableSkeleton />;
-	}
+	// 在流式传输时显示实时内容而不是骨架屏
+	// 注释掉骨架屏，让用户可以看到表格数据逐步生成
+	// if (status === "streaming") {
+	// 	return <TableSkeleton />;
+	// }
 
 	// Debounced search handler
 	const debouncedSetGlobalFilter = useCallback((value: string) => {

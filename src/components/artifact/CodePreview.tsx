@@ -20,7 +20,6 @@ import {
 	Play,
 	Loader2,
 	Package,
-	AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -32,11 +31,9 @@ import {
 import {
 	HtmlPreview,
 	ReactPreview,
-	JavaScriptPreview,
-	PythonPreview,
 } from "./previews";
 import { CodeSkeleton } from "./CodeSkeleton";
-import type { ArtifactLanguage } from "@/lib/artifact-types";
+import type { ArtifactLanguage, ArtifactKind } from "@/lib/artifact-types";
 
 // Pyodide 类型定义
 interface PyodideInterface {
@@ -54,6 +51,7 @@ declare global {
 interface CodePreviewProps {
 	content: string;
 	language?: ArtifactLanguage;
+	kind?: ArtifactKind;
 	className?: string;
 	status?: "idle" | "streaming" | "error" | "loading";
 }
@@ -85,6 +83,25 @@ export function CodePreview({
 	const finalLanguage = getLanguage(language, content);
 	const previewType = getPreviewType(finalLanguage);
 	const canPreview = isPreviewSupported(finalLanguage);
+	
+	// 在流式传输时，为内容添加光标动画效果
+	const [cursorVisible, setCursorVisible] = useState(true);
+	
+	// 光标闪烁效果
+	useEffect(() => {
+		if (status !== "streaming") {
+			setCursorVisible(false);
+			return;
+		}
+		
+		const interval = setInterval(() => {
+			setCursorVisible(prev => !prev);
+		}, 500);
+		
+		return () => clearInterval(interval);
+	}, [status]);
+	
+	const displayContent = status === "streaming" && cursorVisible ? `${content}█` : content;
 
 	// Python Pyodide 懒加载 - 不自动预加载
 	useEffect(() => {
@@ -259,10 +276,11 @@ sys.stderr = _output_capture
 		}
 	};
 
-	// 如果正在流式传输，显示骨架屏
-	if (status === "streaming") {
-		return <CodeSkeleton className={className} />;
-	}
+	// 如果正在流式传输，显示实时内容而不是骨架屏
+	// 注释掉骨架屏，让用户可以看到流式内容逐步出现
+	// if (status === "streaming") {
+	// 	return <CodeSkeleton className={className} />;
+	// }
 
 	// 复制功能
 	const handleCopy = async () => {
@@ -332,9 +350,43 @@ sys.stderr = _output_capture
 			case "react":
 				return <ReactPreview content={content} showToolbar={false} />;
 			case "javascript":
-				return <JavaScriptPreview content={content} showToolbar={false} />;
 			case "python":
-				return <PythonPreview content={content} showToolbar={false} />;
+				// JavaScript 和 Python 现在在代码视图中有完整的控制台，不需要预览
+				return (
+					<motion.div
+						className="flex items-center justify-center h-full text-muted-foreground"
+						initial={{ opacity: 0, scale: 0.95 }}
+						animate={{ opacity: 1, scale: 1 }}
+						transition={{ duration: 0.3, ease: "easeOut" }}
+					>
+						<div className="bg-gradient-to-br from-muted/10 to-muted/30 rounded-xl border border-border/50 backdrop-blur-sm w-full h-full flex items-center justify-center">
+							<div className="text-center space-y-6 p-8">
+								<motion.div
+									className="relative"
+									initial={{ scale: 0 }}
+									animate={{ scale: 1 }}
+									transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+								>
+									<Code2 className="w-20 h-20 mx-auto opacity-30" />
+									<div className="absolute inset-0 w-20 h-20 mx-auto border-2 border-dashed border-muted-foreground/30 rounded-2xl" />
+								</motion.div>
+								<motion.div
+									className="space-y-3"
+									initial={{ opacity: 0, y: 10 }}
+									animate={{ opacity: 1, y: 0 }}
+									transition={{ delay: 0.2, duration: 0.3 }}
+								>
+									<p className="text-sm font-semibold text-foreground">
+										代码执行在代码视图
+									</p>
+									<p className="text-xs text-muted-foreground/80 max-w-xs mx-auto leading-relaxed">
+										请切换到"代码"视图使用完整的{previewType === "python" ? "Python" : "JavaScript"}执行环境
+									</p>
+								</motion.div>
+							</div>
+						</div>
+					</motion.div>
+				);
 			default:
 				return (
 					<motion.div
@@ -458,7 +510,7 @@ sys.stderr = _output_capture
 		<div className={cn("h-full flex flex-col", className)}>
 			{/* 统一工具栏 */}
 			<div className="flex items-center justify-between px-4 py-2.5 border-b bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-sm min-h-[44px] gap-3">
-				{/* 左侧：语言标识和预览工具 */}
+				{/* 左侧：语言标识、流式状态和预览工具 */}
 				<div className="flex items-center gap-3 min-w-0">
 					<div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
 						<Code2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -466,6 +518,16 @@ sys.stderr = _output_capture
 							{getLanguageDisplayName(finalLanguage)}
 						</span>
 					</div>
+
+					{/* 流式状态指示器 */}
+					{status === "streaming" && (
+						<div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700">
+							<div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+							<span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+								正在生成...
+							</span>
+						</div>
+					)}
 
 					{/* 预览特定的工具 */}
 					<div className="hidden lg:block">{renderPreviewTools()}</div>
@@ -500,7 +562,7 @@ sys.stderr = _output_capture
 								variant="outline"
 								size="sm"
 								onClick={previewType === "python" && !pyodideReady ? initializePyodide : handleExecute}
-								disabled={isExecuting || (previewType === "python" && isInitializing)}
+								disabled={isExecuting || (previewType === "python" && isInitializing) || status === "streaming"}
 								className="h-8 px-3 text-sm font-medium gap-1.5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
 								title={previewType === "python" && !pyodideReady ? "初始化Python环境" : "执行代码"}
 							>
@@ -524,7 +586,7 @@ sys.stderr = _output_capture
 							variant="outline"
 							size="sm"
 							onClick={handleCopy}
-							disabled={!content}
+							disabled={!content || status === "streaming"}
 							className={cn(
 								"h-8 px-3 text-sm font-medium gap-1.5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700",
 								copyStatus === "copied"
@@ -549,7 +611,7 @@ sys.stderr = _output_capture
 							variant="outline"
 							size="sm"
 							onClick={handleDownload}
-							disabled={!content}
+							disabled={!content || status === "streaming"}
 							className="h-8 px-3 text-sm font-medium gap-1.5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
 							title={tCommon("download")}
 						>
@@ -575,7 +637,7 @@ sys.stderr = _output_capture
 								<ResizablePanelGroup direction="vertical" className="h-full">
 									<ResizablePanel defaultSize={70} minSize={30}>
 										<CodeEditor
-											value={content}
+											value={displayContent}
 											language={finalLanguage}
 											showHeader={false}
 											showCopyButton={true}
@@ -714,7 +776,7 @@ sys.stderr = _output_capture
 							) : (
 								<div className="h-full">
 									<CodeEditor
-										value={content}
+										value={displayContent}
 										language={finalLanguage}
 										showHeader={false}
 										showCopyButton={true}
