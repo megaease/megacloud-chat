@@ -21,6 +21,7 @@ import {
 	Check,
 	Download,
 	MoreHorizontal,
+	FileText,
 } from "lucide-react";
 import type { ArtifactKind, UIArtifact } from "@/lib/artifact-types";
 import { useArtifact } from "@/context/artifact-provider-context";
@@ -83,7 +84,9 @@ function ArtifactActions({
 		isLoading: versionsLoading,
 		error: versionsError,
 	} = useArtifactVersions(
-		artifact.status !== "streaming" && artifact.documentId ? artifact.documentId : undefined
+		artifact.status !== "streaming" && artifact.documentId
+			? artifact.documentId
+			: undefined,
 	);
 
 	// 通过内容匹配找到当前显示的版本
@@ -109,10 +112,17 @@ function ArtifactActions({
 	const canSwitchVersions =
 		artifact.status !== "streaming" && !!artifact.documentId;
 
+	// 对于文本类型，启用预览工具栏
+	const isTextKind = kind === "text";
+	const shouldShowPreviewTools = showPreviewTools || isTextKind;
+
 	// 预览工具栏功能
 	const handleCopy = async () => {
+		// 对于文本类型，直接使用 artifact 内容
+		const contentToUse = isTextKind ? artifact.content : content;
+
 		try {
-			await navigator.clipboard.writeText(content);
+			await navigator.clipboard.writeText(contentToUse);
 			setCopyStatus("copied");
 			setTimeout(() => setCopyStatus("idle"), 2000);
 		} catch (error) {
@@ -121,16 +131,34 @@ function ArtifactActions({
 	};
 
 	const handleDownload = () => {
-		const blob = new Blob([content], { type: mimeType });
+		// 对于文本类型，直接使用 artifact 内容和标题
+		const contentToUse = isTextKind ? artifact.content : content;
+		const filenameToUse = isTextKind
+			? `${artifact.title || "text"}.txt`
+			: filename;
+		const mimeTypeToUse = isTextKind ? "text/plain" : mimeType;
+
+		const blob = new Blob([contentToUse], { type: mimeTypeToUse });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement("a");
 		a.href = url;
-		a.download = filename;
+		a.download = filenameToUse;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
 		URL.revokeObjectURL(url);
 	};
+
+	// 为文本类型设置图标和标签
+	const displayIcon = isTextKind ? (
+		<FileText className="h-4 w-4" />
+	) : (
+		previewIcon
+	);
+	const displayLabel = isTextKind ? "纯文本" : previewLabel;
+
+	// 如果是文本类型，则不在顶部工具栏中显示标签
+	const showInTopToolbar = !isTextKind && shouldShowPreviewTools;
 
 	return (
 		<div className="border-b bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
@@ -163,21 +191,21 @@ function ArtifactActions({
 					)}
 
 					{/* 分隔线 */}
-					{(showChatButton || showPreviewTools) && (
+					{(showChatButton || showInTopToolbar) && (
 						<div className="w-px h-7 bg-gradient-to-b from-transparent via-border to-transparent mx-2" />
 					)}
 
-					{/* 预览类型标识 */}
-					{showPreviewTools && (previewIcon || previewLabel) && (
+					{/* 预览类型标识 - 仅为非文本类型显示在顶部 */}
+					{showInTopToolbar && (displayIcon || displayLabel) && (
 						<div className="flex items-center gap-2.5 px-3 py-1.5 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg shadow-sm">
-							{previewIcon && (
+							{displayIcon && (
 								<span className="flex-shrink-0 text-primary/80">
-									{previewIcon}
+									{displayIcon}
 								</span>
 							)}
-							{previewLabel && (
+							{displayLabel && (
 								<span className="text-sm font-semibold text-primary">
-									{previewLabel}
+									{displayLabel}
 								</span>
 							)}
 						</div>
@@ -338,18 +366,25 @@ function ArtifactActions({
 				</div>
 			</div>
 			{/* 预览工具栏（条件显示） */}
-			{showPreviewTools && (previewTools || content) && (
+			{shouldShowPreviewTools && (previewTools || isTextKind) && (
 				<div className="flex items-center justify-between px-4 py-2 bg-gray-50/50 dark:bg-gray-800/30 border-t border-gray-200 dark:border-gray-700">
 					{/* 左侧：预览工具 */}
 					<div className="flex items-center gap-3 flex-1 min-w-0">
 						{previewTools && (
 							<div className="flex items-center gap-2">{previewTools}</div>
 						)}
+						{/* 文本类型标签 - 在底部工具栏显示 */}
+						{isTextKind && (
+							<div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg">
+								<FileText className="h-3.5 w-3.5 text-primary/80" />
+								<span className="text-xs font-medium text-primary">纯文本</span>
+							</div>
+						)}
 					</div>
 
 					{/* 右侧：内容操作按钮 */}
-					{content && (
-						<div className="flex items-center gap-3 flex-shrink-0">
+					{(content || isTextKind) && (
+						<div className="flex items-center gap-3 flex-shrink-0 jus">
 							{/* 预览刷新按钮 */}
 							{onPreviewRefresh && (
 								<Button
@@ -376,7 +411,7 @@ function ArtifactActions({
 									variant="ghost"
 									size="sm"
 									onClick={handleCopy}
-									disabled={!content}
+									disabled={!content && !isTextKind}
 									className={cn(
 										"h-8 px-3 text-xs rounded-none border-0 transition-all duration-200 font-medium",
 										copyStatus === "copied"
@@ -405,7 +440,7 @@ function ArtifactActions({
 									variant="ghost"
 									size="sm"
 									onClick={handleDownload}
-									disabled={!content}
+									disabled={!content && !isTextKind}
 									className="h-8 px-3 text-xs rounded-none border-0 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 transition-all duration-200 font-medium"
 									title={tCommon("download")}
 								>
