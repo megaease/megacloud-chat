@@ -4,14 +4,15 @@
 import { useEffect, useRef } from "react";
 import type { Message } from "@ai-sdk/react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 import { ChatInput } from "../chat/chat-input";
 import { ArtifactMessage } from "./ArtifactMessage";
-import { Thinking } from "../chat/thinking";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 
 interface ArtifactChatProps {
-	chatId: string;
 	className?: string;
+	chatId?: string;
 	// Chat state from parent component
 	messages: Message[];
 	input: string;
@@ -30,8 +31,8 @@ interface ArtifactChatProps {
 }
 
 export function ArtifactChat({
-	chatId,
 	className,
+	chatId,
 	messages,
 	input,
 	handleInputChange,
@@ -48,6 +49,7 @@ export function ArtifactChat({
 
 	const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
 		useScrollToBottom({
+			behavior: "smooth",
 			bottomThreshold: 100,
 			scrollOnMount: true,
 			forceScrollOnNewContent: false,
@@ -85,7 +87,7 @@ export function ArtifactChat({
 		}, 100);
 	};
 
-	// Auto scroll to bottom
+	// Auto scroll to bottom - 标准聊天滚动行为
 	useEffect(() => {
 		if (messages.length > 0 && isAtBottom) {
 			scrollToBottom();
@@ -95,37 +97,53 @@ export function ArtifactChat({
 	return (
 		<div className={`flex flex-col h-full bg-card ${className || ""}`}>
 			{/* Message list area */}
-			<div
-				ref={scrollAreaRef}
-				className="flex-1 overflow-y-auto overflow-x-hidden"
-			>
-				{messages.length === 0 ? (
-					<div className="flex-1 flex items-center justify-center h-full">
-						<div className="text-center px-4">
-							<p className="text-sm text-muted-foreground">
-								Start a new conversation
-							</p>
-							<p className="text-xs text-muted-foreground mt-1">
-								Chat with AI here
-							</p>
-						</div>
+			{messages.length === 0 ? (
+				<div className="flex-1 flex items-center justify-center min-h-0">
+					<div className="text-center px-4">
+						<p className="text-sm text-muted-foreground">
+							Start a new conversation
+						</p>
+						<p className="text-xs text-muted-foreground mt-1">
+							Chat with AI here
+						</p>
 					</div>
-				) : (
-					<div className="space-y-0 min-w-0">
-						{messages.map((message, index) => {
-							const isLastMessage = index === messages.length - 1;
-							return (
-								<ArtifactMessage
-									key={message.id}
-									message={message}
-									isLoading={status === "streaming" && isLastMessage}
-								/>
-							);
-						})}
+				</div>
+			) : (
+				<div className="flex-1 relative min-h-0">
+					<div
+						ref={scrollAreaRef}
+						className="h-full overflow-y-auto overflow-x-hidden px-2 space-y-2"
+					>
+						<div className="min-w-0">
+							{messages.map((message, index) => {
+								const isLastMessage = index === messages.length - 1;
+								return (
+									<ArtifactMessage
+										key={message.id}
+										message={message}
+										isLoading={status === "streaming" && isLastMessage}
+									/>
+								);
+							})}
+						</div>
 						<div ref={endRef} />
 					</div>
-				)}
-			</div>
+
+					{/* 滚动到底部按钮 */}
+					{!isAtBottom && (
+						<div className="absolute bottom-4 right-4 z-10">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={scrollToBottom}
+								className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
+							>
+								<ChevronDown className="h-4 w-4" />
+							</Button>
+						</div>
+					)}
+				</div>
+			)}
 
 			{/* {status === "submitted" && (
 				<div className="relative">
@@ -134,7 +152,7 @@ export function ArtifactChat({
 			)} */}
 
 			{/* Chat input area */}
-			<div className="p-2">
+			<div className="flex-shrink-0 p-2">
 				{/* Error display */}
 				{error && (
 					<div className="px-3 py-2 bg-destructive/10 border-t border-destructive/20">

@@ -77,12 +77,14 @@ function ArtifactActions({
 	const tArtifact = useTranslations("Artifact");
 	const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
 
-	// 获取版本数据，hook 内部已经处理了 documentId 的有效性检查
+	// 获取版本数据，只在 artifact 不是流式传输状态且有 documentId 时才启用
 	const {
 		data: versions = [],
 		isLoading: versionsLoading,
 		error: versionsError,
-	} = useArtifactVersions(artifact.documentId);
+	} = useArtifactVersions(
+		artifact.status !== "streaming" && artifact.documentId ? artifact.documentId : undefined
+	);
 
 	// 通过内容匹配找到当前显示的版本
 	const currentVersion = versions.find(

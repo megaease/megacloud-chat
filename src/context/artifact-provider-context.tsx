@@ -50,7 +50,7 @@ const ArtifactContext = createContext<ArtifactContextType | null>(null);
 const defaultArtifact: UIArtifact = {
 	documentId: "",
 	title: "",
-	kind: "text",
+	kind: "" as ArtifactKind, // 默认类型为文本
 	content: "",
 	isVisible: false,
 	status: "idle",
@@ -62,18 +62,23 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 	const queryClient = useQueryClient();
 
 	// 包装 setArtifact 以添加调试信息
-	const setArtifact = useCallback((
-		artifact: UIArtifact | ((prev: UIArtifact) => UIArtifact),
-	) => {
-		setArtifactInternal((prev) => {
-			const newArtifact = typeof artifact === 'function' ? artifact(prev) : artifact;
-			return newArtifact;
-		});
-	}, []);
+	const setArtifact = useCallback(
+		(artifact: UIArtifact | ((prev: UIArtifact) => UIArtifact)) => {
+			setArtifactInternal((prev) => {
+				const newArtifact =
+					typeof artifact === "function" ? artifact(prev) : artifact;
+				return newArtifact;
+			});
+		},
+		[],
+	);
 
 	// 获取版本数据的辅助函数，使用 React Query 的缓存
 	const getVersionsFromCache = useCallback(
-		async (documentId: string, forceRefresh = false): Promise<ArtifactVersion[]> => {
+		async (
+			documentId: string,
+			forceRefresh = false,
+		): Promise<ArtifactVersion[]> => {
 			try {
 				// 如果需要强制刷新，先清除缓存
 				if (forceRefresh) {
@@ -179,21 +184,24 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 				}));
 			}
 		},
-		[getVersionsFromCache],
+		[getVersionsFromCache, setArtifact],
 	);
 
 	// 切换到指定版本
-	const switchToVersion = useCallback((version: ArtifactVersion) => {
-		setArtifact((prev) => ({
-			...prev,
-			// 不改变 documentId，因为所有版本都属于同一个文档
-			title: version.title,
-			kind: version.kind,
-			content: version.content,
-			language: version.language,
-			status: "idle",
-		}));
-	}, []);
+	const switchToVersion = useCallback(
+		(version: ArtifactVersion) => {
+			setArtifact((prev) => ({
+				...prev,
+				// 不改变 documentId，因为所有版本都属于同一个文档
+				title: version.title,
+				kind: version.kind,
+				content: version.content,
+				language: version.language,
+				status: "idle",
+			}));
+		},
+		[setArtifact],
+	);
 
 	// 显示 artifact
 	const showArtifact = useCallback(
@@ -209,7 +217,7 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 				boundingBox: boundingBox || prev.boundingBox,
 			}));
 		},
-		[],
+		[setArtifact],
 	);
 
 	// 隐藏 artifact
@@ -218,12 +226,12 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 			...prev,
 			isVisible: false,
 		}));
-	}, []);
+	}, [setArtifact]);
 
 	// 重置 artifact
 	const reset = useCallback(() => {
 		setArtifact(defaultArtifact);
-	}, []);
+	}, [setArtifact]);
 
 	const value: ArtifactContextType = {
 		artifact,

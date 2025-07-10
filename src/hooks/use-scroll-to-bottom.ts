@@ -202,7 +202,7 @@ export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
 				clearTimeout(scrollTimeoutId.current);
 			}
 		};
-	}, [updateIsAtBottomState, scrollToBottom, forceScrollOnNewContent]); // Include all stable dependencies
+	}, [updateIsAtBottomState, scrollToBottom, forceScrollOnNewContent]); // 移除 checkIfNearBottom 依赖
 
 	// Initial scroll to bottom on mount
 	useLayoutEffect(() => {

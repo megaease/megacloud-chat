@@ -147,22 +147,21 @@ export function Artifact({
 									</div>
 								</div>
 							</div>
-							<div className="flex-1 overflow-hidden">
-								<ArtifactChat
-									chatId={chatId}
-									messages={messages}
-									input={input}
-									handleInputChange={handleInputChange}
-									handleSubmit={handleSubmit}
-									status={status}
-									stop={stop}
-									error={error}
-									reload={reload}
-									isUploading={isUploading}
-									mcpEnabled={mcpEnabled}
-									toggleMcpEnabled={toggleMcpEnabled}
-								/>
-							</div>
+							<ArtifactChat
+								className="flex-1"
+								chatId={chatId}
+								messages={messages}
+								input={input}
+								handleInputChange={handleInputChange}
+								handleSubmit={handleSubmit}
+								status={status}
+								stop={stop}
+								error={error}
+								reload={reload}
+								isUploading={isUploading}
+								mcpEnabled={mcpEnabled}
+								toggleMcpEnabled={toggleMcpEnabled}
+							/>
 						</div>
 					</motion.div>
 				)}
@@ -192,24 +191,20 @@ export function Artifact({
 									transition: { duration: 0.2 },
 								}}
 							>
-								<div className="h-full flex flex-col">
-									<div className="flex-1 overflow-hidden">
-										<ArtifactChat
-											chatId={chatId}
-											messages={messages}
-											input={input}
-											handleInputChange={handleInputChange}
-											handleSubmit={handleSubmit}
-											status={status}
-											stop={stop}
-											error={error}
-											reload={reload}
-											isUploading={isUploading}
-											mcpEnabled={mcpEnabled}
-											toggleMcpEnabled={toggleMcpEnabled}
-										/>
-									</div>
-								</div>
+								<ArtifactChat
+									chatId={chatId}
+									messages={messages}
+									input={input}
+									handleInputChange={handleInputChange}
+									handleSubmit={handleSubmit}
+									status={status}
+									stop={stop}
+									error={error}
+									reload={reload}
+									isUploading={isUploading}
+									mcpEnabled={mcpEnabled}
+									toggleMcpEnabled={toggleMcpEnabled}
+								/>
 							</motion.div>
 						</ResizablePanel>
 
