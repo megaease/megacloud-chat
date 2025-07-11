@@ -209,7 +209,7 @@ export function Artifact({
 						</ResizablePanel>
 
 						{/* 可拖动的分隔条 */}
-						<ResizableHandle withHandle />
+						<ResizableHandle />
 
 						{/* 右侧 Artifact 内容面板 */}
 						<ResizablePanel defaultSize={70} minSize={50}>
