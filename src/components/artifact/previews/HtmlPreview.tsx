@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Monitor, Smartphone, Tablet, Globe } from "lucide-react";
@@ -12,6 +12,7 @@ interface HtmlPreviewProps {
 	showToolbar?: boolean;
 	viewMode?: "desktop" | "tablet" | "mobile";
 	onViewModeChange?: (mode: "desktop" | "tablet" | "mobile") => void;
+	isStreaming?: boolean;
 }
 
 export const HtmlPreview = ({
@@ -19,15 +20,55 @@ export const HtmlPreview = ({
 	showToolbar = true,
 	viewMode: externalViewMode,
 	onViewModeChange,
+	isStreaming = false,
 }: HtmlPreviewProps) => {
 	const tArtifact = useTranslations("Artifact");
 	const [internalViewMode, setInternalViewMode] = useState<
 		"desktop" | "tablet" | "mobile"
 	>("desktop");
+	
+	// 稳定化的内容状态，用于 iframe 渲染
+	const [stableContent, setStableContent] = useState(content);
+	const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	// 使用外部控制的 viewMode 或内部状态
 	const viewMode = externalViewMode || internalViewMode;
 	const setViewMode = onViewModeChange || setInternalViewMode;
+
+	// 防抖更新机制：在流式传输时延迟更新 iframe，避免频繁重新渲染
+	const debouncedUpdateContent = useCallback(() => {
+		if (updateTimeoutRef.current) {
+			clearTimeout(updateTimeoutRef.current);
+		}
+
+		// 如果正在流式传输，延迟更新
+		const delay = isStreaming ? 1000 : 100;
+		
+		updateTimeoutRef.current = setTimeout(() => {
+			setStableContent(content);
+		}, delay);
+	}, [content, isStreaming]);
+
+	// 内容变化时触发防抖更新
+	useEffect(() => {
+		debouncedUpdateContent();
+		
+		return () => {
+			if (updateTimeoutRef.current) {
+				clearTimeout(updateTimeoutRef.current);
+			}
+		};
+	}, [debouncedUpdateContent]);
+
+	// 当流式传输结束时，立即更新到最新内容
+	useEffect(() => {
+		if (!isStreaming && content !== stableContent) {
+			if (updateTimeoutRef.current) {
+				clearTimeout(updateTimeoutRef.current);
+			}
+			setStableContent(content);
+		}
+	}, [isStreaming, content, stableContent]);
 
 	const getViewportClass = () => {
 		switch (viewMode) {
@@ -91,7 +132,7 @@ export const HtmlPreview = ({
 			<div className="flex-1 bg-gradient-to-br from-muted/10 to-muted/30 relative">
 				{viewMode === "desktop" ? (
 					<iframe
-						srcDoc={content}
+						srcDoc={stableContent}
 						className="w-full h-full border-0 bg-white dark:bg-gray-900"
 						sandbox="allow-scripts allow-same-origin"
 						title="HTML Preview"
@@ -105,7 +146,7 @@ export const HtmlPreview = ({
 							)}
 						>
 							<iframe
-								srcDoc={content}
+								srcDoc={stableContent}
 								className="w-full h-full border-0"
 								sandbox="allow-scripts allow-same-origin"
 								title="HTML Preview"

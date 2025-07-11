@@ -17,7 +17,7 @@ import { CopyButton } from "./copy-button";
 
 interface CodeEditorProps {
 	value: string;
-	language?: string;
+	language?: string | undefined;
 	editable?: boolean;
 	onChange?: (value: string) => void;
 	className?: string;
@@ -27,7 +27,11 @@ interface CodeEditorProps {
 }
 
 // 语言映射
-const getLanguageExtension = (language: string): Extension[] => {
+const getLanguageExtension = (language: string | undefined): Extension[] => {
+	if (!language) {
+		return [];
+	}
+
 	switch (language.toLowerCase()) {
 		case "javascript":
 		case "js":
@@ -60,7 +64,7 @@ const getLanguageExtension = (language: string): Extension[] => {
 
 export function CodeEditor({
 	value,
-	language = "javascript",
+	language,
 	editable = false,
 	onChange,
 	className,

@@ -335,6 +335,7 @@ sys.stderr = _output_capture
 						showToolbar={false}
 						viewMode={htmlViewMode}
 						onViewModeChange={setHtmlViewMode}
+						isStreaming={status === "streaming"}
 					/>
 				);
 			case "react":
