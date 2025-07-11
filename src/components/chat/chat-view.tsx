@@ -10,7 +10,7 @@ import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { Message } from "@ai-sdk/react";
 import { ChatInput } from "./chat-input";
 import { Thinking } from "./thinking";
-import { Artifact } from "../artifact/Artifact";
+// import { Artifact } from "../artifact/Artifact"; // 已删除
 
 // Define the Model interface
 interface Model {

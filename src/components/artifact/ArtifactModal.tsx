@@ -1,11 +1,9 @@
-// components/artifact/Artifact.tsx
+// components/artifact/ArtifactModal.tsx
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArtifact } from "@/context/artifact-provider-context";
-import { ArtifactContent } from "./ArtifactContent";
-import { ArtifactActions } from "./ArtifactActions";
 import { Button } from "@/components/ui/button";
 import {
 	ResizablePanelGroup,
@@ -13,66 +11,19 @@ import {
 	ResizableHandle,
 } from "@/components/ui/resizable";
 import { X } from "lucide-react";
-import { ArtifactChat } from "./ArtifactChat";
-import type { Message } from "@ai-sdk/react";
-import type { ArtifactKind } from "@/lib/artifact-types";
-import { useTranslations } from "next-intl";
 
-// 根据文档类型生成简洁的默认标题（不包含状态信息）
-function getDefaultTitle(
-	kind: ArtifactKind,
-	t: ReturnType<typeof useTranslations>,
-): string {
-	const kindTitles = {
-		text: t("documentType"),
-		code: t("codeType"),
-		sheet: t("sheetType"),
-		image: t("imageType"),
-	};
-
-	const baseTitle = kindTitles[kind] || t("documentType");
-
-	// 不再在标题中包含状态信息，状态由右边的指示器显示
-	return t("newType", { type: baseTitle });
-}
-
-interface ArtifactProps {
-	chatId: string;
+interface ArtifactModalProps {
 	onClose?: () => void;
-	// Chat state from parent component
-	messages: Message[];
-	input: string;
-	handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-	handleSubmit: (
-		e: React.FormEvent<HTMLFormElement>,
-		options?: { experimental_attachments?: FileList },
-	) => void;
-	status: "error" | "submitted" | "streaming" | "ready";
-	stop: () => void;
-	error: Error | undefined;
-	reload: () => void;
-	isUploading: boolean;
-	mcpEnabled: boolean;
-	toggleMcpEnabled: () => boolean;
+	chatPanel: React.ReactNode;
+	children: React.ReactNode;
 }
 
-export function Artifact({
-	chatId,
+export function ArtifactModal({
 	onClose,
-	messages,
-	input,
-	handleInputChange,
-	handleSubmit,
-	status,
-	stop,
-	error,
-	reload,
-	isUploading,
-	mcpEnabled,
-	toggleMcpEnabled,
-}: ArtifactProps) {
+	chatPanel,
+	children,
+}: ArtifactModalProps) {
 	const { artifact, hideArtifact } = useArtifact();
-	const tArtifact = useTranslations("Artifact");
 
 	const [windowDimensions, setWindowDimensions] = useState({
 		width: 0,
@@ -100,23 +51,12 @@ export function Artifact({
 		onClose?.();
 	};
 
-	// 优化：使用 useMemo 避免 ArtifactActions 因为 content 变化而重新渲染
-	// ArtifactActions 只需要 title, status, kind，不需要 content
-	const artifactActionsProps = useMemo(
-		() => ({
-			title: artifact.title || getDefaultTitle(artifact.kind, tArtifact),
-			status: artifact.status,
-			kind: artifact.kind,
-		}),
-		[artifact.title, artifact.status, artifact.kind, tArtifact],
-	);
-
 	if (!artifact.isVisible) return null;
 
 	return (
 		<AnimatePresence>
 			<motion.div
-				data-testid="artifact"
+				data-testid="artifact-modal"
 				className="fixed inset-0 z-50 bg-background"
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
@@ -147,27 +87,12 @@ export function Artifact({
 									</div>
 								</div>
 							</div>
-							<ArtifactChat
-								className="flex-1"
-								chatId={chatId}
-								messages={messages}
-								input={input}
-								handleInputChange={handleInputChange}
-								handleSubmit={handleSubmit}
-								status={status}
-								stop={stop}
-								error={error}
-								reload={reload}
-								isUploading={isUploading}
-								mcpEnabled={mcpEnabled}
-								toggleMcpEnabled={toggleMcpEnabled}
-							/>
+							<div className="flex-1">{chatPanel}</div>
 						</div>
 					</motion.div>
 				)}
 
-				{/*  桌面端：可调整大小的 bg-card/90 rounded-2xl p-6 shadow-2xl border border-border-/50 backdrop-blur-mdmd
-				 */}
+				{/* 桌面端：可调整大小的双面板布局 */}
 				{!isMobile ? (
 					<ResizablePanelGroup direction="horizontal" className="h-full">
 						{/* 左侧聊天面板 */}
@@ -191,30 +116,17 @@ export function Artifact({
 									transition: { duration: 0.2 },
 								}}
 							>
-								<ArtifactChat
-									chatId={chatId}
-									messages={messages}
-									input={input}
-									handleInputChange={handleInputChange}
-									handleSubmit={handleSubmit}
-									status={status}
-									stop={stop}
-									error={error}
-									reload={reload}
-									isUploading={isUploading}
-									mcpEnabled={mcpEnabled}
-									toggleMcpEnabled={toggleMcpEnabled}
-								/>
+								{chatPanel}
 							</motion.div>
 						</ResizablePanel>
 
 						{/* 可拖动的分隔条 */}
 						<ResizableHandle />
 
-						{/* 右侧 Artifact 内容面板 */}
+						{/* 右侧内容面板 */}
 						<ResizablePanel defaultSize={70} minSize={50}>
 							<motion.div
-								className="h-full bg-background flex flex-col"
+								className="h-full bg-background"
 								initial={{
 									opacity: 1,
 									x: artifact.boundingBox.left,
@@ -248,24 +160,12 @@ export function Artifact({
 									},
 								}}
 							>
-								{" "}
-								{/* Artifact 头部工具栏 */}
-								<ArtifactActions
-									title={artifactActionsProps.title}
-									status={artifactActionsProps.status}
-									kind={artifactActionsProps.kind}
-									onClose={handleClose}
-									isMobile={false}
-								/>
-								{/* Artifact 内容区域 */}
-								<div className="flex-1 overflow-hidden relative">
-									<ArtifactContent />
-								</div>
+								{children}
 							</motion.div>
 						</ResizablePanel>
 					</ResizablePanelGroup>
 				) : (
-					/* 移动端：原有的布局 */
+					/* 移动端：单面板布局 */
 					<motion.div
 						className="flex-1 bg-background flex flex-col"
 						initial={{
@@ -301,21 +201,16 @@ export function Artifact({
 							},
 						}}
 					>
-						{" "}
-						{/* Artifact 头部工具栏 */}
-						<ArtifactActions
-							title={artifactActionsProps.title}
-							status={artifactActionsProps.status}
-							kind={artifactActionsProps.kind}
-							onClose={handleClose}
-							onChatToggle={() => setShowChat(!showChat)}
-							showChatButton={true}
-							isMobile={true}
-						/>
-						{/* Artifact 内容区域 */}
-						<div className="flex-1 overflow-hidden relative">
-							<ArtifactContent />
-						</div>
+						{/* 为移动端渲染 children，传递额外的 props */}
+						{React.isValidElement(children) 
+							? React.cloneElement(children, {
+								onClose: handleClose,
+								onChatToggle: () => setShowChat(!showChat),
+								showChatButton: true,
+								isMobile: true,
+							} as Record<string, unknown>)
+							: children
+						}
 					</motion.div>
 				)}
 			</motion.div>
