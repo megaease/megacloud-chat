@@ -164,7 +164,7 @@ sys.stderr = _output_capture
 			console.log("Pyodide initialized successfully!");
 		} catch (err) {
 			setConsoleError(
-				`Pyodide 初始化失败：${err instanceof Error ? err.message : String(err)}`,
+				`${tArtifact("pyodideInitFailed")}: ${err instanceof Error ? err.message : String(err)}`,
 			);
 			console.error("Pyodide initialization failed:", err);
 		} finally {
@@ -183,11 +183,11 @@ sys.stderr = _output_capture
 		try {
 			await pyodideRef.current.loadPackage([packageName]);
 			setConsoleOutput(
-				(prev) => `${prev ? `${prev}\n` : ""}✅ 成功安装包：${packageName}`,
+				(prev) => `${prev ? `${prev}\n` : ""}✅ ${tArtifact("packageInstalled")}: ${packageName}`,
 			);
 		} catch (err) {
 			setConsoleError(
-				`安装包失败：${err instanceof Error ? err.message : String(err)}`,
+				`${tArtifact("packageInstallFailed")}: ${err instanceof Error ? err.message : String(err)}`,
 			);
 		} finally {
 			setIsExecuting(false);
@@ -224,10 +224,10 @@ sys.stderr = _output_capture
 					console.log = originalLog;
 
 					if (result !== undefined) {
-						logs.push(`返回值: ${typeof result === "object" ? JSON.stringify(result, null, 2) : String(result)}`);
+						logs.push(`${tArtifact("returnValue")}: ${typeof result === "object" ? JSON.stringify(result, null, 2) : String(result)}`);
 					}
 
-					setConsoleOutput(logs.join("\n") || "代码执行完成，无输出");
+					setConsoleOutput(logs.join("\n") || tArtifact("codeExecutionComplete"));
 				} else if (previewType === "python") {
 					// Python 执行逻辑
 					if (!pyodideRef.current) {
@@ -252,14 +252,14 @@ sys.stderr = _output_capture
 					if (result !== undefined && result !== null) {
 						const resultStr = String(result);
 						if (resultStr !== "None") {
-							finalOutput = `${finalOutput}${finalOutput ? "\n" : ""}输出：${resultStr}`;
+							finalOutput = `${finalOutput}${finalOutput ? "\n" : ""}${tArtifact("output")}: ${resultStr}`;
 						}
 					}
 
-					setConsoleOutput(finalOutput || "代码执行完成，无输出");
+					setConsoleOutput(finalOutput || tArtifact("codeExecutionComplete"));
 				}
 			} catch (error) {
-				setConsoleError(`执行出错：${error instanceof Error ? error.message : String(error)}`);
+				setConsoleError(`${tArtifact("executionError")}: ${error instanceof Error ? error.message : String(error)}`);
 			} finally {
 				setIsExecuting(false);
 			}
@@ -368,10 +368,12 @@ sys.stderr = _output_capture
 									transition={{ delay: 0.2, duration: 0.3 }}
 								>
 									<p className="text-sm font-semibold text-foreground">
-										代码执行在代码视图
+										{tArtifact("codeExecutionInCodeView")}
 									</p>
 									<p className="text-xs text-muted-foreground/80 max-w-xs mx-auto leading-relaxed">
-										请切换到"代码"视图使用完整的{previewType === "python" ? "Python" : "JavaScript"}执行环境
+										{tArtifact("switchToCodeView", { 
+											language: previewType === "python" ? "Python" : "JavaScript" 
+										})}
 									</p>
 								</motion.div>
 							</div>
@@ -440,13 +442,13 @@ sys.stderr = _output_capture
 				case "python":
 					return {
 						icon: Code2,
-						label: "Python 执行器",
+						label: tArtifact("pythonExecutor"),
 						hasViewModes: false,
 					};
 				case "javascript":
 					return {
 						icon: Code2,
-						label: "JavaScript 执行器",
+						label: tArtifact("javascriptExecutor"),
 						hasViewModes: false,
 					};
 				default:
@@ -515,7 +517,7 @@ sys.stderr = _output_capture
 						<div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700">
 							<div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
 							<span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-								正在生成...
+								{tArtifact("generating")}
 							</span>
 						</div>
 					)}
@@ -535,11 +537,11 @@ sys.stderr = _output_capture
 							<TabsList>
 								<TabsTrigger value="code">
 									<Code2 className="w-4 h-4 mr-1.5" />
-									<span className="hidden sm:inline">代码</span>
+									<span className="hidden sm:inline">{tArtifact("code")}</span>
 								</TabsTrigger>
 								<TabsTrigger value="preview" disabled={!canPreview || status === "streaming"}>
 									<Eye className="w-4 h-4 mr-1.5" />
-									<span className="hidden sm:inline">预览</span>
+									<span className="hidden sm:inline">{tArtifact("preview")}</span>
 								</TabsTrigger>
 							</TabsList>
 						</Tabs>
@@ -555,7 +557,7 @@ sys.stderr = _output_capture
 								onClick={previewType === "python" && !pyodideReady ? initializePyodide : handleExecute}
 								disabled={isExecuting || (previewType === "python" && isInitializing) || status === "streaming"}
 								className="h-8 px-3 text-sm font-medium gap-1.5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
-								title={previewType === "python" && !pyodideReady ? "初始化Python环境" : "执行代码"}
+								title={previewType === "python" && !pyodideReady ? tArtifact("initializePythonEnvironment") : tArtifact("executeCode")}
 							>
 								{isExecuting || isInitializing ? (
 									<Loader2 className="h-4 w-4 animate-spin" />
@@ -564,12 +566,12 @@ sys.stderr = _output_capture
 								)}
 								<span className="hidden sm:inline">
 									{isExecuting 
-										? "执行中..." 
+										? tArtifact("executing") 
 										: isInitializing 
-										? "初始化中..." 
+										? tArtifact("initializing") 
 										: previewType === "python" && !pyodideReady 
-										? "初始化" 
-										: "执行"}
+										? tArtifact("initialize") 
+										: tArtifact("execute")}
 								</span>
 							</Button>
 						)}
@@ -647,13 +649,13 @@ sys.stderr = _output_capture
 											<div className="flex items-center gap-2 px-2 py-1 bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm">
 												<div className="w-2 h-2 rounded-full bg-blue-500" />
 												<span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-													控制台
+													{tArtifact("console")}
 												</span>
 											</div>
 											{(consoleOutput || consoleError) && (
 												<div className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
 													<div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-													<span className="text-xs text-green-700 dark:text-green-400 font-medium">活跃</span>
+													<span className="text-xs text-green-700 dark:text-green-400 font-medium">{tArtifact("active")}</span>
 												</div>
 											)}
 											
@@ -662,7 +664,7 @@ sys.stderr = _output_capture
 												<div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-800">
 													<div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
 													<span className="text-xs text-yellow-700 dark:text-yellow-400 font-medium">
-														{isInitializing ? `初始化中 ${preloadProgress}%` : "未就绪"}
+														{isInitializing ? `${tArtifact("initializing")} ${preloadProgress}%` : tArtifact("notReady")}
 													</span>
 												</div>
 											)}
@@ -679,7 +681,7 @@ sys.stderr = _output_capture
 															onClick={() => installPackage(pkg)}
 															disabled={isExecuting}
 															className="h-6 px-2 text-xs border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-															title={`安装 ${pkg}`}
+															title={`${tArtifact("install")} ${pkg}`}
 														>
 															<Package className="w-2.5 h-2.5 mr-1" />
 															{pkg}
@@ -696,9 +698,9 @@ sys.stderr = _output_capture
 													setConsoleError("");
 												}}
 												className="h-7 px-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
-												title="清空输出"
+												title={tArtifact("clearOutput")}
 											>
-												清空
+												{tArtifact("clear")}
 											</Button>
 										</div>
 									</div>
@@ -712,7 +714,7 @@ sys.stderr = _output_capture
 														<span className="text-white text-xs font-bold">!</span>
 													</div>
 													<div className="flex-1">
-														<div className="text-xs font-semibold mb-1 text-red-800 dark:text-red-300">执行错误</div>
+														<div className="text-xs font-semibold mb-1 text-red-800 dark:text-red-300">{tArtifact("executionError")}</div>
 														<pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{consoleError}</pre>
 													</div>
 												</div>
@@ -738,14 +740,14 @@ sys.stderr = _output_capture
 																<div className="text-2xl">🐍</div>
 															</div>
 															<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-																{pyodideReady ? "Python 环境就绪" : "Python 环境"}
+																{pyodideReady ? tArtifact("pythonEnvironmentReady") : tArtifact("pythonEnvironment")}
 															</p>
 															<p className="text-xs text-slate-500 dark:text-slate-500">
 																{pyodideReady 
-																	? "点击执行按钮运行代码" 
+																	? tArtifact("clickExecuteToRun") 
 																	: isInitializing 
-																	? `正在初始化... ${preloadProgress}%`
-																	: "点击初始化按钮启动环境"}
+																	? `${tArtifact("initializing")}... ${preloadProgress}%`
+																	: tArtifact("clickInitializeToStart")}
 															</p>
 														</>
 													) : (
@@ -753,8 +755,8 @@ sys.stderr = _output_capture
 															<div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center">
 																<div className="text-2xl">⚡</div>
 															</div>
-															<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">准备就绪</p>
-															<p className="text-xs text-slate-500 dark:text-slate-500">点击执行按钮查看输出结果</p>
+															<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{tArtifact("ready")}</p>
+															<p className="text-xs text-slate-500 dark:text-slate-500">{tArtifact("clickExecuteToViewOutput")}</p>
 														</>
 													)}
 												</div>

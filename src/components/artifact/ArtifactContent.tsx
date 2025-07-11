@@ -2,6 +2,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { TextArtifact } from "./TextArtifact";
 import { CodePreview } from "./CodePreview";
 import { TablePreview } from "./previews";
@@ -10,6 +11,7 @@ import { useArtifact } from "@/context/artifact-provider-context";
 
 export function ArtifactContent() {
 	const { artifact } = useArtifact();
+	const tArtifact = useTranslations("Artifact");
 
 	// 直接使用 artifact context 中的数据
 	const displayData = {
@@ -54,11 +56,11 @@ export function ArtifactContent() {
 								transition={{ delay: 0.2, duration: 0.3 }}
 							>
 								<p className="text-sm font-semibold text-red-800 dark:text-red-200">
-									Failed to load content
+									{tArtifact("failedToLoadContent")}
 								</p>
 								<p className="text-xs text-red-600/80 dark:text-red-400/80 max-w-xs mx-auto leading-relaxed">
 									{displayData.content ||
-										"An error occurred while loading the document"}
+										tArtifact("errorLoadingDocument")}
 								</p>
 							</motion.div>
 						</div>
@@ -165,11 +167,12 @@ export function ArtifactContent() {
 									transition={{ delay: 0.2, duration: 0.3 }}
 								>
 									<p className="text-sm font-semibold text-foreground">
-										Unsupported Content Type
+										{tArtifact("unsupportedContentType")}
 									</p>
 									<p className="text-xs text-muted-foreground/80 max-w-xs mx-auto leading-relaxed">
-										The content type "{displayData.kind}" is not currently
-										supported
+										{tArtifact("contentTypeNotSupported", {
+											kind: displayData.kind
+										})}
 									</p>
 								</motion.div>
 							</div>
