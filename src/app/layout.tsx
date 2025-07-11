@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "@/styles/globals.css";
 import AppProviders from "@/components/app-providers";
+import { ReactScanProvider } from "@/components/react-scan-provider";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -52,11 +53,13 @@ export default async function RootLayout({
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
-				<div className="flex h-dvh w-full">
-					<NextIntlClientProvider messages={messages}>
-						<AppProviders>{children}</AppProviders>
-					</NextIntlClientProvider>
-				</div>
+				<ReactScanProvider>
+					<div className="flex h-dvh w-full">
+						<NextIntlClientProvider messages={messages}>
+							<AppProviders>{children}</AppProviders>
+						</NextIntlClientProvider>
+					</div>
+				</ReactScanProvider>
 			</body>
 		</html>
 	);
