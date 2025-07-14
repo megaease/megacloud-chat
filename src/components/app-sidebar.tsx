@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { Chat } from "@/server/db/schema";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { IconPlus, IconServer, IconX } from "@tabler/icons-react";
+import { IconPlus, IconServer, IconX, IconBox } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter, usePathname } from "next/navigation";
@@ -125,7 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					<h1 className="font-bold text-lg">Megacloud Chat</h1>
 				</div>
 
-				<div className="w-full px-4">
+				<div className="w-full px-4 space-y-2">
 					<Button
 						onClick={() => router.push("/")}
 						title={t("newChat")}
@@ -133,6 +133,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					>
 						<IconPlus className="mr-2 h-4 w-4" />
 						{t("newChat")}
+					</Button>
+
+					<Button
+						onClick={() => router.push("/artifacts")}
+						title="Artifact 管理"
+						variant="outline"
+						className="w-full rounded-xl"
+					>
+						<IconBox className="mr-2 h-4 w-4" />
+						Artifact 管理
 					</Button>
 				</div>
 			</SidebarHeader>

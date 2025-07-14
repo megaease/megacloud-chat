@@ -202,15 +202,14 @@ export function ArtifactModal({
 						}}
 					>
 						{/* 为移动端渲染 children，传递额外的 props */}
-						{React.isValidElement(children) 
+						{React.isValidElement(children)
 							? React.cloneElement(children, {
-								onClose: handleClose,
-								onChatToggle: () => setShowChat(!showChat),
-								showChatButton: true,
-								isMobile: true,
-							} as Record<string, unknown>)
-							: children
-						}
+									onClose: handleClose,
+									onChatToggle: () => setShowChat(!showChat),
+									showChatButton: true,
+									isMobile: true,
+								} as Record<string, unknown>)
+							: children}
 					</motion.div>
 				)}
 			</motion.div>

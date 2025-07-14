@@ -107,7 +107,7 @@ export function createDocumentTool(
 						"✅ Artifact created successfully:",
 						createdArtifact.id,
 						"version:",
-						createdArtifact.version,
+						createdArtifact.version
 					);
 				} catch (error) {
 					console.error("❌ Failed to save artifact to database:", error);
