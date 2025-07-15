@@ -303,6 +303,7 @@
     "editArtifact": "编辑 Artifact",
     "copyContent": "复制内容",
     "deleteArtifact": "删除 Artifact",
+    "openInNewWindow": "在新窗口打开",
     "contentCopied": "内容已复制到剪贴板",
     "copyFailed": "复制内容失败",
     "deleteSuccess": "Artifact 删除成功",

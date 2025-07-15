@@ -294,6 +294,7 @@
     "editArtifact": "Edit Artifact",
     "copyContent": "Copy Content",
     "deleteArtifact": "Delete Artifact",
+    "openInNewWindow": "Open in New Window",
     "contentCopied": "Content copied to clipboard",
     "copyFailed": "Failed to copy content",
     "deleteSuccess": "Artifact deleted successfully",

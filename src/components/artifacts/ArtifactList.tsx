@@ -29,7 +29,7 @@ export function ArtifactList({
 
 	if (loading) {
 		return (
-			<div className="flex items-center justify-center py-12">
+			<div className="flex items-center justify-center py-12 w-full h-full">
 				<Spinner />
 			</div>
 		);

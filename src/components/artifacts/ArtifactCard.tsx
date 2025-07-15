@@ -181,7 +181,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 									</DropdownMenuItem>
 									<DropdownMenuItem onClick={() => handleAction("open")}>
 										<ExternalLink className="h-4 w-4 mr-2" />
-										在新窗口打开
+										{t("openInNewWindow")}
 									</DropdownMenuItem>
 									<DropdownMenuSeparator />
 									<DropdownMenuItem
@@ -233,7 +233,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => handleAction("open")}>
 								<ExternalLink className="h-4 w-4 mr-2" />
-								在新窗口打开
+								{t("openInNewWindow")}
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
