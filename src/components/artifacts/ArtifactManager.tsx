@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { nanoid } from "nanoid";
 import { ArtifactList } from "./ArtifactList";
 import { ArtifactSearch } from "./ArtifactSearch";
@@ -18,6 +19,7 @@ interface ArtifactManagerProps {
 
 export function ArtifactManager({ initialArtifacts }: ArtifactManagerProps) {
 	console.log("initialArtifacts", initialArtifacts);
+	const t = useTranslations("ArtifactManager");
 	const [searchQuery, setSearchQuery] = useState("");
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
@@ -48,13 +50,13 @@ export function ArtifactManager({ initialArtifacts }: ArtifactManagerProps) {
 				const result = await getArtifacts();
 				if (result.success && result.data) {
 					setArtifacts(result.data);
-					toast.success("刷新成功");
+					toast.success(t("refreshSuccess"));
 				} else {
-					toast.error(result.error || "刷新失败");
+					toast.error(result.error || t("refreshFailed"));
 				}
 			} catch (error) {
 				console.error("刷新 artifacts 失败：", error);
-				toast.error("刷新失败，请重试");
+				toast.error(t("refreshError"));
 			}
 		});
 	};
@@ -74,7 +76,7 @@ export function ArtifactManager({ initialArtifacts }: ArtifactManagerProps) {
 					<ArtifactFilters filters={filters} onChange={setFilters} />
 					<Button onClick={handleCreateArtifact}>
 						<Plus className="h-4 w-4 mr-1" />
-						新建 Artifact
+						{t("newArtifact")}
 					</Button>
 				</div>
 			</div>

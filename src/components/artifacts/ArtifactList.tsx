@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArtifactCard } from "./ArtifactCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ export function ArtifactList({
 	onRefresh,
 	onCreateArtifact,
 }: ArtifactListProps) {
+	const t = useTranslations("ArtifactManager");
 	const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
 	if (loading) {
@@ -39,11 +41,11 @@ export function ArtifactList({
 				<div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
 					<Grid className="h-8 w-8 text-muted-foreground" />
 				</div>
-				<h3 className="text-lg font-medium mb-2">暂无 Artifacts</h3>
+				<h3 className="text-lg font-medium mb-2">{t("noArtifacts")}</h3>
 				<p className="text-muted-foreground mb-4">
-					开始创建您的第一个 Artifact
+					{t("noArtifactsDesc")}
 				</p>
-				<Button onClick={onCreateArtifact}>新建 Artifact</Button>
+				<Button onClick={onCreateArtifact}>{t("createFirst")}</Button>
 			</div>
 		);
 	}
@@ -53,7 +55,7 @@ export function ArtifactList({
 			{/* 工具栏 */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<Badge variant="secondary">{artifacts.length} 个 Artifacts</Badge>
+					<Badge variant="secondary">{artifacts.length} {t("versions")}</Badge>
 				</div>
 				<div className="flex items-center gap-2">
 					<div className="flex items-center border rounded-md">

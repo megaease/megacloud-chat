@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
@@ -16,6 +17,7 @@ export function ArtifactSearch({
 	onChange,
 	onSearch,
 }: ArtifactSearchProps) {
+	const t = useTranslations("ArtifactManager");
 	const [localValue, setLocalValue] = useState(value);
 
 	// 防抖搜索
@@ -46,7 +48,7 @@ export function ArtifactSearch({
 				<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 				<Input
 					type="text"
-					placeholder="搜索标题、内容或标签..."
+					placeholder={t("search")}
 					value={localValue}
 					onChange={(e) => setLocalValue(e.target.value)}
 					className="pl-10 pr-10"

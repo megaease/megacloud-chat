@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,9 +27,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import type { Artifact } from "@/server/db/schema";
 
 // 简单的时间格式化函数
-function formatDistanceToNow(date: Date): string {
+function formatDistanceToNow(date: Date, t: (key: string) => string): string {
 	const now = new Date();
 	const diff = now.getTime() - date.getTime();
 	const minutes = Math.floor(diff / (1000 * 60));
@@ -46,7 +48,6 @@ function formatDistanceToNow(date: Date): string {
 	}
 	return "刚刚";
 }
-import type { Artifact } from "@/server/db/schema";
 
 interface ArtifactCardProps {
 	artifact: Artifact;
@@ -71,6 +72,7 @@ const kindColors = {
 };
 
 export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps) {
+	const t = useTranslations("ArtifactManager");
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const router = useRouter();
 	const Icon = kindIcons[artifact.kind as keyof typeof kindIcons] || FileText;
@@ -150,7 +152,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 								<div className="flex items-center gap-2 text-sm text-muted-foreground">
 									<span>v{artifact.version}</span>
 									<span>•</span>
-									<span>{formatDistanceToNow(artifact.updatedAt)} ago</span>
+									<span>{formatDistanceToNow(artifact.updatedAt, t)} ago</span>
 									{artifact.language && (
 										<>
 											<span>•</span>
@@ -177,15 +179,15 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 								<DropdownMenuContent align="end">
 									<DropdownMenuItem onClick={() => handleAction("view")}>
 										<Eye className="h-4 w-4 mr-2" />
-										查看
+										{t("viewArtifact")}
 									</DropdownMenuItem>
 									<DropdownMenuItem onClick={() => handleAction("edit")}>
 										<Edit className="h-4 w-4 mr-2" />
-										编辑
+										{t("editArtifact")}
 									</DropdownMenuItem>
 									<DropdownMenuItem onClick={() => handleAction("copy")}>
 										<Copy className="h-4 w-4 mr-2" />
-										复制
+										{t("copyContent")}
 									</DropdownMenuItem>
 									<DropdownMenuItem onClick={() => handleAction("open")}>
 										<ExternalLink className="h-4 w-4 mr-2" />
@@ -197,7 +199,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 										className="text-destructive"
 									>
 										<Trash2 className="h-4 w-4 mr-2" />
-										删除
+										{t("deleteArtifact")}
 									</DropdownMenuItem>
 								</DropdownMenuContent>
 							</DropdownMenu>
@@ -233,15 +235,15 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 						<DropdownMenuContent align="end">
 							<DropdownMenuItem onClick={() => handleAction("view")}>
 								<Eye className="h-4 w-4 mr-2" />
-								查看
+								{t("viewArtifact")}
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => handleAction("edit")}>
 								<Edit className="h-4 w-4 mr-2" />
-								编辑
+								{t("editArtifact")}
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => handleAction("copy")}>
 								<Copy className="h-4 w-4 mr-2" />
-								复制
+								{t("copyContent")}
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => handleAction("open")}>
 								<ExternalLink className="h-4 w-4 mr-2" />
@@ -253,7 +255,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 								className="text-destructive"
 							>
 								<Trash2 className="h-4 w-4 mr-2" />
-								删除
+								{t("deleteArtifact")}
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
