@@ -4,9 +4,14 @@
  */
 import "./src/env.js";
 import createNextIntlPlugin from 'next-intl/plugin';
+import type { NextConfig } from 'next'
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config: NextConfig = {
+    experimental: {
+    reactCompiler: true,
+  },
+};
 
 const withNextIntl = createNextIntlPlugin();
 
