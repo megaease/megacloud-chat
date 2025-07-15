@@ -28,6 +28,14 @@ function useChatMessages(chatId: string | undefined) {
 			if (!chatId) {
 				return [];
 			}
+			
+			// Check if this is a new chat for creating artifact (to avoid 404)
+			if (typeof window !== 'undefined') {
+				const urlParams = new URLSearchParams(window.location.search);
+				if (urlParams.get('createArtifact') === 'true') {
+					return []; // Return empty for new artifact creation
+				}
+			}
 
 			const res = await fetch(`/api/chats/${chatId}`, {
 				headers: {
@@ -75,16 +83,27 @@ export function Chat() {
 	const chatId = id as string;
 	const router = useRouter();
 	const queryClient = useQueryClient();
-	const { currentProvider, currentModel, isConfigured } = useApiProvider();
+	const { currentProvider, currentModel } = useApiProvider();
 	const { mcpEnabled, toggleMcpEnabled } = useMcpEnabled();
-	const [randomChatId, setRandomChatId] = useState<string | undefined>(() => {
+	const [randomChatId] = useState<string | undefined>(() => {
 		if (!chatId) {
 			return nanoid(16);
 		}
 		return undefined;
 	});
-	const [isUploading, setIsUploading] = useState(false);
+	const [isUploading] = useState(false);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
+	
+	// Get createArtifact flag from URL search params
+	const [shouldCreateArtifact, setShouldCreateArtifact] = useState(false);
+	
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			const urlParams = new URLSearchParams(window.location.search);
+			const createArtifact = urlParams.get('createArtifact') === 'true';
+			setShouldCreateArtifact(createArtifact);
+		}
+	}, []);
 
 	// Get chat messages
 	const chatMessagesQuery = useChatMessages(chatId);
@@ -110,8 +129,8 @@ export function Chat() {
 	// Use AI chat hooks
 	const {
 		messages,
-		setMessages,
 		input,
+		setInput,
 		handleInputChange,
 		handleSubmit,
 		status,
@@ -159,6 +178,22 @@ export function Chat() {
 			});
 		},
 	});
+
+	// Set initial prompt from URL if this is a new chat for creating artifact
+	useEffect(() => {
+		// For new chats with createArtifact flag, set the initial prompt
+		if (shouldCreateArtifact && messages.length === 0 && setInput) {
+			const defaultPrompt = "Please help me create a new Artifact. I want:\n\n1. Type: [text/code/table/image]\n2. Content: [describe what you want to create]\n3. Features: [specific requirements]\n\nExample: Create a React component that implements a todo list";
+			setInput(defaultPrompt);
+			
+			// Clear the URL parameter to avoid re-setting on refresh
+			if (typeof window !== 'undefined') {
+				const url = new URL(window.location.href);
+				url.searchParams.delete('createArtifact');
+				router.replace(url.pathname + url.search, { scroll: false });
+			}
+		}
+	}, [shouldCreateArtifact, messages.length, setInput, router]);
 
 	// Calculate loading state
 	const isLoading = status === "streaming" || status === "submitted";

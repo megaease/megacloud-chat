@@ -12,6 +12,7 @@ interface ArtifactListProps {
 	artifacts: Artifact[];
 	loading?: boolean;
 	onRefresh?: () => void;
+	onCreateArtifact?: () => void;
 }
 
 type ViewMode = "grid" | "list";
@@ -20,6 +21,7 @@ export function ArtifactList({
 	artifacts,
 	loading = false,
 	onRefresh,
+	onCreateArtifact,
 }: ArtifactListProps) {
 	const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
@@ -41,7 +43,7 @@ export function ArtifactList({
 				<p className="text-muted-foreground mb-4">
 					开始创建您的第一个 Artifact
 				</p>
-				<Button>新建 Artifact</Button>
+				<Button onClick={onCreateArtifact}>新建 Artifact</Button>
 			</div>
 		);
 	}
@@ -98,6 +100,7 @@ export function ArtifactList({
 						key={`${artifact.id}-${artifact.version}`}
 						artifact={artifact}
 						viewMode={viewMode}
+						onUpdate={onRefresh}
 					/>
 				))}
 			</div>

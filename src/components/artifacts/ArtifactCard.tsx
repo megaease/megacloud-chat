@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import {
 	ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // 简单的时间格式化函数
 function formatDistanceToNow(date: Date): string {
@@ -49,6 +51,7 @@ import type { Artifact } from "@/server/db/schema";
 interface ArtifactCardProps {
 	artifact: Artifact;
 	viewMode: "grid" | "list";
+	onUpdate?: () => void;
 }
 
 const kindIcons = {
@@ -67,14 +70,65 @@ const kindColors = {
 		"bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
 };
 
-export function ArtifactCard({ artifact, viewMode }: ArtifactCardProps) {
+export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps) {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
+	const router = useRouter();
 	const Icon = kindIcons[artifact.kind as keyof typeof kindIcons] || FileText;
 
-	const handleAction = (action: string) => {
+	const handleAction = async (action: string) => {
 		setIsMenuOpen(false);
-		// TODO: 实现各种操作
-		console.log(`Action: ${action} for artifact:`, artifact.id);
+		
+		switch (action) {
+			case "view":
+				// 跳转到artifact详情页面
+				router.push(`/artifacts/${artifact.id}`);
+				break;
+				
+			case "edit":
+				// 跳转到对应的聊天页面进行编辑
+				router.push(`/chat/${artifact.chatId}`);
+				break;
+				
+			case "copy":
+				// 复制artifact内容到剪贴板
+				try {
+					await navigator.clipboard.writeText(artifact.content);
+					toast.success("内容已复制到剪贴板");
+				} catch (error) {
+					console.error("复制失败:", error);
+					toast.error("复制失败");
+				}
+				break;
+				
+			case "open":
+				// 在新窗口打开artifact详情
+				window.open(`/artifacts/${artifact.id}`, "_blank");
+				break;
+				
+			case "delete":
+				// 删除artifact
+				if (confirm("确定要删除这个 Artifact 吗？此操作不可恢复。")) {
+					try {
+						const response = await fetch(`/api/artifacts/${artifact.id}`, {
+							method: "DELETE",
+						});
+						
+						if (response.ok) {
+							toast.success("Artifact 已删除");
+							onUpdate?.(); // 刷新列表
+						} else {
+							toast.error("删除失败");
+						}
+					} catch (error) {
+						console.error("删除失败:", error);
+						toast.error("删除失败");
+					}
+				}
+				break;
+				
+			default:
+				console.log(`Unknown action: ${action}`);
+		}
 	};
 
 	if (viewMode === "list") {
