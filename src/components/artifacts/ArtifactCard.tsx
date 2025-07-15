@@ -29,7 +29,7 @@ import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import type { Artifact } from "@/server/db/schema";
 
 // 简单的时间格式化函数
-function formatDistanceToNow(date: Date, t: (key: string) => string): string {
+function formatDistanceToNow(date: Date): string {
 	const now = new Date();
 	const diff = now.getTime() - date.getTime();
 	const minutes = Math.floor(diff / (1000 * 60));
@@ -139,7 +139,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
 										<span>v{artifact.version}</span>
 										<span>•</span>
-										<span>{formatDistanceToNow(artifact.updatedAt, t)} ago</span>
+										<span>{formatDistanceToNow(artifact.updatedAt)} ago</span>
 										{artifact.language && (
 											<>
 												<span>•</span>
@@ -246,7 +246,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 					<h3 className="font-medium mb-2 line-clamp-2">{artifact.title}</h3>
 					<div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
 						<span>v{artifact.version}</span>
-						<span>{formatDistanceToNow(artifact.updatedAt, t)} ago</span>
+						<span>{formatDistanceToNow(artifact.updatedAt)} ago</span>
 					</div>
 					<div className="flex items-center gap-2">
 						{artifact.language && (
