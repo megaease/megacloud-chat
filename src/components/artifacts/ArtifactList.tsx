@@ -12,7 +12,7 @@ import type { Artifact } from "@/server/db/schema";
 interface ArtifactListProps {
 	artifacts: Artifact[];
 	loading?: boolean;
-	onRefresh?: () => void;
+	onRefresh?: (silent?: boolean) => void;
 	onCreateArtifact?: () => void;
 }
 
@@ -80,7 +80,7 @@ export function ArtifactList({
 						<Button
 							variant="outline"
 							size="sm"
-							onClick={onRefresh}
+							onClick={() => onRefresh()}
 							disabled={loading}
 						>
 							<RefreshCw className="h-4 w-4" />

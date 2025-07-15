@@ -43,13 +43,15 @@ export function ArtifactManager({ initialArtifacts }: ArtifactManagerProps) {
 		router.push(`/chat/${newChatId}?createArtifact=true`);
 	};
 
-	const handleRefresh = async () => {
+	const handleRefresh = async (silent = false) => {
 		startTransition(async () => {
 			try {
 				const result = await getArtifacts();
 				if (result.success && result.data) {
 					setArtifacts(result.data);
-					toast.success(t("refreshSuccess"));
+					if (!silent) {
+						toast.success(t("refreshSuccess"));
+					}
 				} else {
 					toast.error(result.error || t("refreshFailed"));
 				}
