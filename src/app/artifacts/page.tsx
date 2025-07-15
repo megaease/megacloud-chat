@@ -13,7 +13,7 @@ export default async function ArtifactsPage() {
 			<div className="flex items-center justify-between">
 				<h1 className="text-3xl font-bold">{t("title")}</h1>
 			</div>
-			<Suspense fallback={<Spinner />}>
+			<Suspense fallback={<div className="flex justify-center items-center min-h-64"><Spinner /></div>}>
 				{error ? (
 					<div className="text-destructive text-center p-8">{error}</div>
 				) : (
