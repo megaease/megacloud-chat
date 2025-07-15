@@ -20,7 +20,6 @@ import {
 	Image,
 	MoreHorizontal,
 	Eye,
-	Copy,
 	Trash2,
 	ExternalLink,
 } from "lucide-react";
@@ -85,17 +84,6 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 			case "view":
 				// 跳转到聊天页面并自动打开 Artifact modal
 				router.push(`/chat/${artifact.chatId}?openArtifact=${artifact.id}`);
-				break;
-				
-			case "copy":
-				// 复制artifact内容到剪贴板
-				try {
-					await navigator.clipboard.writeText(artifact.content);
-					toast.success(t("contentCopied"));
-				} catch (error) {
-					console.error("复制失败:", error);
-					toast.error(t("copyFailed"));
-				}
 				break;
 				
 			case "open":
@@ -180,10 +168,6 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 											<Eye className="h-4 w-4 mr-2" />
 											{t("viewArtifact")}
 										</DropdownMenuItem>
-										<DropdownMenuItem onClick={() => handleAction("copy")}>
-											<Copy className="h-4 w-4 mr-2" />
-											{t("copyContent")}
-										</DropdownMenuItem>
 										<DropdownMenuItem onClick={() => handleAction("open")}>
 											<ExternalLink className="h-4 w-4 mr-2" />
 											{t("openInNewWindow")}
@@ -241,10 +225,6 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 								<DropdownMenuItem onClick={() => handleAction("view")}>
 									<Eye className="h-4 w-4 mr-2" />
 									{t("viewArtifact")}
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => handleAction("copy")}>
-									<Copy className="h-4 w-4 mr-2" />
-									{t("copyContent")}
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => handleAction("open")}>
 									<ExternalLink className="h-4 w-4 mr-2" />
