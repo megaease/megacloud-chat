@@ -18,7 +18,6 @@ interface ArtifactManagerProps {
 }
 
 export function ArtifactManager({ initialArtifacts }: ArtifactManagerProps) {
-	console.log("initialArtifacts", initialArtifacts);
 	const t = useTranslations("ArtifactManager");
 	const [searchQuery, setSearchQuery] = useState("");
 	const router = useRouter();

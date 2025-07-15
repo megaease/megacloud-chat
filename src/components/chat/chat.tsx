@@ -18,6 +18,7 @@ import { ArtifactModal } from "@/components/artifact/ArtifactModal";
 import { ArtifactChatPanel } from "@/components/artifact/ArtifactChatPanel";
 import { ArtifactContentPanel } from "@/components/artifact/ArtifactContentPanel";
 import { ArtifactProvider } from "@/context/artifact-provider-context";
+import { ArtifactOpener } from "./ArtifactOpener";
 
 // Fetch chat messages hook
 function useChatMessages(chatId: string | undefined) {
@@ -96,12 +97,16 @@ export function Chat() {
 	
 	// Get createArtifact flag from URL search params
 	const [shouldCreateArtifact, setShouldCreateArtifact] = useState(false);
+	const [openArtifactId, setOpenArtifactId] = useState<string | null>(null);
 	
 	useEffect(() => {
 		if (typeof window !== 'undefined') {
 			const urlParams = new URLSearchParams(window.location.search);
 			const createArtifact = urlParams.get('createArtifact') === 'true';
+			const openArtifact = urlParams.get('openArtifact');
+			
 			setShouldCreateArtifact(createArtifact);
+			setOpenArtifactId(openArtifact);
 		}
 	}, []);
 
@@ -264,6 +269,7 @@ export function Chat() {
 
 	return (
 		<ArtifactProvider>
+			<ArtifactOpener artifactId={openArtifactId} />
 			<ChatView
 				messages={messages}
 				input={input}

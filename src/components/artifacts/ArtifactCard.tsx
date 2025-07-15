@@ -20,7 +20,6 @@ import {
 	Image,
 	MoreHorizontal,
 	Eye,
-	Edit,
 	Copy,
 	Trash2,
 	ExternalLink,
@@ -82,29 +81,24 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 		
 		switch (action) {
 			case "view":
-				// 跳转到artifact详情页面
-				router.push(`/artifacts/${artifact.id}`);
-				break;
-				
-			case "edit":
-				// 跳转到对应的聊天页面进行编辑
-				router.push(`/chat/${artifact.chatId}`);
+				// 跳转到聊天页面并自动打开 Artifact modal
+				router.push(`/chat/${artifact.chatId}?openArtifact=${artifact.id}`);
 				break;
 				
 			case "copy":
 				// 复制artifact内容到剪贴板
 				try {
 					await navigator.clipboard.writeText(artifact.content);
-					toast.success("内容已复制到剪贴板");
+					toast.success(t("contentCopied"));
 				} catch (error) {
 					console.error("复制失败:", error);
-					toast.error("复制失败");
+					toast.error(t("copyFailed"));
 				}
 				break;
 				
 			case "open":
-				// 在新窗口打开artifact详情
-				window.open(`/artifacts/${artifact.id}`, "_blank");
+				// 在新窗口打开聊天页面并显示 Artifact
+				window.open(`/chat/${artifact.chatId}?openArtifact=${artifact.id}`, "_blank");
 				break;
 				
 			case "delete":
@@ -181,10 +175,6 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 										<Eye className="h-4 w-4 mr-2" />
 										{t("viewArtifact")}
 									</DropdownMenuItem>
-									<DropdownMenuItem onClick={() => handleAction("edit")}>
-										<Edit className="h-4 w-4 mr-2" />
-										{t("editArtifact")}
-									</DropdownMenuItem>
 									<DropdownMenuItem onClick={() => handleAction("copy")}>
 										<Copy className="h-4 w-4 mr-2" />
 										{t("copyContent")}
@@ -237,10 +227,6 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 								<Eye className="h-4 w-4 mr-2" />
 								{t("viewArtifact")}
 							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => handleAction("edit")}>
-								<Edit className="h-4 w-4 mr-2" />
-								{t("editArtifact")}
-							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => handleAction("copy")}>
 								<Copy className="h-4 w-4 mr-2" />
 								{t("copyContent")}
@@ -265,7 +251,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 				<h3 className="font-medium mb-2 line-clamp-2">{artifact.title}</h3>
 				<div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
 					<span>v{artifact.version}</span>
-					<span>{formatDistanceToNow(artifact.updatedAt)} ago</span>
+					<span>{formatDistanceToNow(artifact.updatedAt, t)} ago</span>
 				</div>
 				<div className="flex items-center gap-2">
 					{artifact.language && (
