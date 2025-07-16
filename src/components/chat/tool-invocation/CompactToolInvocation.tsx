@@ -8,6 +8,7 @@ import {
   IconPhoto,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { useDocumentToolAction } from "@/hooks/useDocumentToolAction";
 import type { ToolState, ToolStatus, ToolTheme } from "./types";
 import type {
   ResultContent,
@@ -145,26 +146,34 @@ export function CompactToolInvocation({
   isCompact = false,
   part,
 }: CompactToolInvocationProps) {
-  // 从工具结果中获取版本信息（如果可用）
-  const getVersionFromResult = (): number | undefined => {
-    if (
-      part?.toolInvocation?.result &&
-      typeof part.toolInvocation.result === "object"
-    ) {
-      const toolResult = part.toolInvocation.result as Record<string, unknown>;
-      if ("version" in toolResult) {
-        return toolResult.version as number;
-      }
-    }
-    return undefined;
-  };
-
-  const resultVersion = getVersionFromResult();
+  const { handleDocumentClick, canOpenArtifact: canOpenDoc, extractDocumentInfo } = useDocumentToolAction();
+  
   const args = (toolState.args || {}) as {
     title?: string;
     content?: string;
     kind?: string;
     documentId?: string;
+  };
+
+  // 从工具结果中提取版本信息
+  const documentInfo = extractDocumentInfo(part);
+  const resultVersion = documentInfo?.version;
+
+  // 检查是否可以打开 artifact
+  const canOpenArtifact = canOpenDoc(part, args, status);
+
+  // 处理文档点击事件
+  const handleOpenArtifact = () => {
+    if (!canOpenArtifact) return;
+    
+    const boundingBox = {
+      top: window.innerHeight / 2 - 100,
+      left: window.innerWidth / 2 - 200,
+      width: 400,
+      height: 200,
+    };
+
+    handleDocumentClick(part, args, boundingBox);
   };
 
   // For document tools, display a more compact card style
@@ -179,12 +188,6 @@ export function CompactToolInvocation({
     const executingTitle = isUpdate
       ? "Updating Document..."
       : "Creating Document...";
-
-    // Determine if the artifact can be opened
-    const canOpenArtifact =
-      status === "success" ||
-      (status === "executing" && args.title) ||
-      (isUpdate && args.documentId);
 
     // 从工具结果中获取标题（如果可用）
     const getResultTitle = () => {
@@ -218,8 +221,13 @@ export function CompactToolInvocation({
           canOpenArtifact &&
             "cursor-pointer hover:border-blue-300/80 dark:hover:border-blue-700/60"
         )}
-        onClick={() => {}}
-        onKeyDown={() => {}}
+        onClick={handleOpenArtifact}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleOpenArtifact();
+          }
+        }}
         aria-label={canOpenArtifact ? `Open document: ${title}` : undefined}
       >
         {/* Compact document header */}

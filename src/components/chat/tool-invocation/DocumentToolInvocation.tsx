@@ -15,7 +15,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useArtifact } from "@/context/artifact-provider-context";
+import { useDocumentToolAction } from "@/hooks/useDocumentToolAction";
 import type { ToolState, ToolStatus, ToolTheme } from "./types";
 import type { ToolInvocationPart } from "@/types/tool-invocation";
 
@@ -89,7 +89,7 @@ export function DocumentToolInvocation({
 	isLoading = false,
 	part,
 }: DocumentToolInvocationProps) {
-	const { setArtifact } = useArtifact();
+	const { handleDocumentClick, extractDocumentInfo } = useDocumentToolAction();
 	const tArtifact = useTranslations("Artifact");
 
 	const args = (toolState.args || {}) as {
@@ -114,29 +114,11 @@ export function DocumentToolInvocation({
 	// 区分创建和更新操作 - 基于 documentId 而不是 toolName
 	const isUpdateOperation = !!args.documentId;
 
-	// 从工具结果中获取标题和版本信息（如果可用）
-	const getResultInfo = () => {
-		if (part?.toolInvocation?.result) {
-			const toolResult = part.toolInvocation.result;
-			// 工具返回的结果格式：{ documentId, title, kind, language, version, success }
-			const info: { title?: string; version?: number } = {};
+	// 从工具结果中获取文档信息
+	const documentInfo = extractDocumentInfo(part);
+	const resultTitle = documentInfo?.title;
+	const resultVersion = documentInfo?.version;
 
-			if (typeof toolResult === "object") {
-				if ("title" in toolResult) {
-					info.title = (toolResult as Record<string, unknown>).title as string;
-				}
-				if ("version" in toolResult) {
-					info.version = (toolResult as Record<string, unknown>)
-						.version as number;
-				}
-			}
-
-			return info;
-		}
-		return {};
-	};
-
-	const { title: resultTitle, version: resultVersion } = getResultInfo();
 	const actualTitle = args.title || resultTitle;
 
 	// 简化显示逻辑：第一行始终显示标题，第二行始终显示工具名称
@@ -158,43 +140,7 @@ export function DocumentToolInvocation({
 			height: 200,
 		};
 
-		// 统一使用 setArtifact，让整个文档系统自己处理状态
-		setArtifact((prev) => {
-			// 如果已经在 streaming 状态，只改变可见性
-			if (prev.status === "streaming") {
-				return {
-					...prev,
-					isVisible: true,
-					boundingBox,
-				};
-			}
-
-			// 尝试从结果中获取 documentId
-			let documentId = undefined;
-
-			if (part?.toolInvocation?.result) {
-				const result = part.toolInvocation.result;
-				if (typeof result === "object") {
-					documentId =
-						"documentId" in result
-							? ((result as Record<string, unknown>).documentId as string)
-							: ((result as Record<string, unknown>).id as string);
-				}
-			}
-
-			return {
-				...prev,
-				documentId: documentId || prev.documentId,
-				title: args.title || prev.title || toolState.toolName,
-				kind:
-					(args.kind as "text" | "code" | "sheet" | "image") ||
-					prev.kind ||
-					"text",
-				content: content || prev.content,
-				isVisible: true,
-				boundingBox,
-			};
-		});
+		handleDocumentClick(part, args, boundingBox);
 	};
 
 	return (

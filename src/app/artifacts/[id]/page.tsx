@@ -3,18 +3,20 @@ import { ArtifactDetail } from "@/components/artifacts/ArtifactDetail";
 import { Spinner } from "@/components/spinner";
 
 interface ArtifactDetailPageProps {
-	params: {
+	params: Promise<{
 		id: string;
-	};
+	}>;
 }
 
-export default function ArtifactDetailPage({
+export default async function ArtifactDetailPage({
 	params,
 }: ArtifactDetailPageProps) {
+	const { id } = await params;
+	
 	return (
 		<div className="space-y-6">
 			<Suspense fallback={<Spinner />}>
-				<ArtifactDetail artifactId={params.id} />
+				<ArtifactDetail artifactId={id} />
 			</Suspense>
 		</div>
 	);

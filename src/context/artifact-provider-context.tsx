@@ -131,6 +131,19 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 			versionNumber?: number,
 		) => {
 			try {
+				// 🛡️ 防止 streaming 时的数据冲突
+				const currentArtifact = artifact;
+				if (currentArtifact.status === "streaming") {
+					console.warn("Cannot switch version while streaming content");
+					// 只更新显示状态，不加载新版本
+					setArtifact((prev) => ({
+						...prev,
+						isVisible: true,
+						boundingBox: boundingBox || prev.boundingBox,
+					}));
+					return;
+				}
+
 				// 优化：只有在没有现有内容时才显示加载状态，避免闪烁
 				setArtifact((prev) => {
 					const hasExistingContent = prev.content && prev.content.trim() !== "";
