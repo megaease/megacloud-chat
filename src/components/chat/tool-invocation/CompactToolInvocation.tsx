@@ -49,11 +49,10 @@ const renderResult = (
   // 如果结果是数组
   if (Array.isArray(result)) {
     return result.map((item, index) => {
-      const key = `result-${
-        typeof item === "string"
-          ? item.slice(0, 20)
-          : item.text?.slice(0, 20) || "item"
-      }-${index}`;
+      const key = `result-${typeof item === "string"
+        ? item.slice(0, 20)
+        : item.text?.slice(0, 20) || "item"
+        }-${index}`;
 
       if (typeof item === "string") {
         return (
@@ -146,8 +145,14 @@ export function CompactToolInvocation({
   isCompact = false,
   part,
 }: CompactToolInvocationProps) {
-  const { handleDocumentClick, canOpenArtifact: canOpenDoc, extractDocumentInfo } = useDocumentToolAction();
-  
+  const {
+    handleDocumentClick,
+    canOpenArtifact: canOpenDoc,
+    extractDocumentInfo,
+    shouldDisableVersionSwitch,
+    isStreamingActive
+  } = useDocumentToolAction();
+
   const args = (toolState.args || {}) as {
     title?: string;
     content?: string;
@@ -162,10 +167,23 @@ export function CompactToolInvocation({
   // 检查是否可以打开 artifact
   const canOpenArtifact = canOpenDoc(part, args, status);
 
+  // 检查是否应该禁用版本切换
+  const isDisabled = shouldDisableVersionSwitch(part, args);
+
+  // 直接检查是否正在流式输出
+  const isStreaming = isStreamingActive();
+
   // 处理文档点击事件
   const handleOpenArtifact = () => {
-    if (!canOpenArtifact) return;
-    
+    // 如果正在流式输出，直接阻止所有点击
+    if (isStreaming) {
+      return;
+    }
+
+    if (!canOpenArtifact || isDisabled) {
+      return;
+    }
+
     const boundingBox = {
       top: window.innerHeight / 2 - 100,
       left: window.innerWidth / 2 - 200,
@@ -218,17 +236,26 @@ export function CompactToolInvocation({
           status === "executing"
             ? "border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/30"
             : "border-blue-200/60 dark:border-blue-800/40 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-950/40 dark:to-indigo-950/30",
-          canOpenArtifact &&
-            "cursor-pointer hover:border-blue-300/80 dark:hover:border-blue-700/60"
+          canOpenArtifact && !isDisabled && !isStreaming &&
+          "cursor-pointer hover:border-blue-300/80 dark:hover:border-blue-700/60",
+          (isDisabled || isStreaming) && "opacity-60 cursor-not-allowed"
         )}
-        onClick={handleOpenArtifact}
-        onKeyDown={(e) => {
+        onClick={(isDisabled || isStreaming) ? undefined : handleOpenArtifact}
+        onKeyDown={(isDisabled || isStreaming) ? undefined : (e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             handleOpenArtifact();
           }
         }}
-        aria-label={canOpenArtifact ? `Open document: ${title}` : undefined}
+        aria-label={
+          isStreaming
+            ? "Cannot open while AI is streaming"
+            : isDisabled
+              ? "Cannot open while streaming other content"
+              : canOpenArtifact
+                ? `Open document: ${title}`
+                : undefined
+        }
       >
         {/* Compact document header */}
         <div className="flex items-center gap-3 p-3 relative">
@@ -308,19 +335,19 @@ export function CompactToolInvocation({
             status === "success"
               ? "bg-blue-500"
               : status === "error"
-              ? "bg-red-500"
-              : status === "executing"
-              ? "bg-amber-500"
-              : "bg-gray-500"
+                ? "bg-red-500"
+                : status === "executing"
+                  ? "bg-amber-500"
+                  : "bg-gray-500"
           )}
         >
           {status === "success"
             ? "✓"
             : status === "error"
-            ? "✗"
-            : status === "executing"
-            ? "⋯"
-            : "⋅"}
+              ? "✗"
+              : status === "executing"
+                ? "⋯"
+                : "⋅"}
         </div>
 
         {/* Tool name and status */}
@@ -350,19 +377,19 @@ export function CompactToolInvocation({
               status === "executing"
                 ? "text-amber-600 dark:text-amber-400"
                 : status === "success"
-                ? "text-blue-600 dark:text-blue-400"
-                : status === "error"
-                ? "text-red-600 dark:text-red-400"
-                : "text-gray-600 dark:text-gray-400"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : status === "error"
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-gray-600 dark:text-gray-400"
             )}
           >
             {status === "executing"
               ? "Executing..."
               : status === "success"
-              ? "Completed"
-              : status === "error"
-              ? "Failed"
-              : "Completed"}
+                ? "Completed"
+                : status === "error"
+                  ? "Failed"
+                  : "Completed"}
           </span>
         </div>
 

@@ -8,11 +8,11 @@ import type { ToolInvocationPart } from "@/types/tool-invocation";
  * 职责：
  * 1. 从工具结果中提取文档信息
  * 2. 提供统一的版本切换接口
- * 3. 避免直接修改 artifact context
+ * 3. 防止 streaming 时的数据冲突
  * 4. 确保数据流向清晰
  */
 export function useDocumentToolAction() {
-  const { loadAndShowArtifact } = useArtifact();
+  const { loadAndShowArtifact, artifact } = useArtifact();
 
   /**
    * 从工具调用结果中提取文档信息
@@ -90,6 +90,8 @@ export function useDocumentToolAction() {
 
   /**
    * 检查是否可以打开 artifact
+   * 
+   * 新增：考虑 streaming 状态的影响
    */
   const canOpenArtifact = useCallback(
     (
@@ -117,9 +119,46 @@ export function useDocumentToolAction() {
     []
   );
 
+  /**
+   * 检查当前是否正在 streaming
+   * 如果是，则不应该切换版本
+   */
+  const isStreamingActive = useCallback(() => {
+    return artifact.status === "streaming";
+  }, [artifact.status]);
+
+  /**
+   * 检查是否应该禁用版本切换
+   */
+  const shouldDisableVersionSwitch = useCallback(
+    (
+      part?: ToolInvocationPart,
+      args?: {
+        title?: string;
+        content?: string;
+        kind?: string;
+        documentId?: string;
+      }
+    ) => {
+      // 如果当前正在 streaming，且点击的不是当前 streaming 的文档
+      if (isStreamingActive()) {
+        const resultInfo = extractDocumentInfo(part);
+        const documentId = resultInfo?.documentId || args?.documentId;
+        
+        // 如果点击的是不同的文档，则禁用
+        return documentId !== artifact.documentId;
+      }
+      
+      return false;
+    },
+    [isStreamingActive, extractDocumentInfo, artifact.documentId]
+  );
+
   return {
     handleDocumentClick,
     canOpenArtifact,
     extractDocumentInfo,
+    isStreamingActive,
+    shouldDisableVersionSwitch,
   };
 }
