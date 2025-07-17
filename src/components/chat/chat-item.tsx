@@ -1,8 +1,14 @@
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { IconCopy, IconRefresh, IconReload } from "@tabler/icons-react";
-import { toast } from "sonner";
+import {
+  IconRefresh,
+  IconReload,
+  IconCopy,
+  IconCheck,
+} from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
+import { useCopy } from "@/hooks/use-copy";
 import {
   Tooltip,
   TooltipContent,
@@ -33,93 +39,111 @@ export function ChatItem({
   regenerate,
   messageContent,
 }: ChatItemProps) {
-  // Render action buttons for last message
+  const t = useTranslations("Common");
+  const tArtifact = useTranslations("Artifact");
+  const { copied, copy } = useCopy();
+
+  // Handle copy functionality
+  const handleCopy = async () => {
+    const content = messageContent || "";
+    await copy(content);
+  };
+
+  // Render action buttons
   const renderActionButtons = () => {
-    if (!isLastMessage) return null;
+    // Always show copy button for all messages
+    const showCopyButton = true;
 
-    // Only show buttons when the request is complete (not streaming)
-    if (status === "streaming" || status === "submitted") return null;
-
-    const showRetryButton = isUser && error && status === "error" && retry;
+    // Only show retry/regenerate buttons for the last message when request is complete
+    const showRetryButton =
+      isLastMessage && isUser && error && status === "error" && retry;
     const showRegenerateButton =
-      !isUser && !error && status === "ready" && regenerate;
-    const showCopyButton = true; // Always show copy button for completed messages
+      isLastMessage && !isUser && !error && status === "ready" && regenerate;
+
+    // For non-last messages, only show copy button
+    // For last message, check if streaming/submitted to hide all buttons temporarily
+    if (isLastMessage && (status === "streaming" || status === "submitted")) {
+      return null; // Hide all buttons during streaming
+    }
 
     if (!showRetryButton && !showRegenerateButton && !showCopyButton)
       return null;
 
-    const handleCopy = async () => {
-      try {
-        const content = messageContent || "";
-        await navigator.clipboard.writeText(content);
-        toast.success("已复制到剪贴板");
-      } catch (err) {
-        console.error("Failed to copy text: ", err);
-        toast.error("复制失败");
-      }
-    };
-
     return (
       <TooltipProvider>
-        <div className="flex gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-                className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
-              >
-                <IconCopy className="w-3.5 h-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>复制</p>
-            </TooltipContent>
-          </Tooltip>
-          {showRetryButton && (
+        <div
+          className={cn(
+            "flex gap-1 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+            isUser ? "justify-end" : "justify-start pl-4"
+          )}
+        >
+          <div className="flex gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={retry}
+                  onClick={handleCopy}
                   className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
                 >
-                  <IconRefresh className="w-3.5 h-3.5" />
+                  {copied ? (
+                    <IconCheck className="w-3.5 h-3.5 text-green-600" />
+                  ) : (
+                    <IconCopy className="w-3.5 h-3.5" />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>重试</p>
+                <p>{copied ? t("copied") : t("copy")}</p>
               </TooltipContent>
             </Tooltip>
-          )}
-          {showRegenerateButton && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={regenerate}
-                  className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
-                >
-                  <IconReload className="w-3.5 h-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>重新生成</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
+            {showRetryButton && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={retry}
+                    className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
+                  >
+                    <IconRefresh className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("retry")}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {showRegenerateButton && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={regenerate}
+                    className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
+                  >
+                    <IconReload className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tArtifact("regenerate")}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
       </TooltipProvider>
     );
   };
 
+  // Determine if this message has an error
+  const hasError = isLastMessage && error && status === "error";
+
   return (
     <div
       className={cn(
-        "flex gap-4 text-sm py-4",
+        "group flex gap-4 text-sm py-4",
         isUser ? "flex-row-reverse pr-1" : "pl-1",
         isCompact && isUser && "gap-0 pr-0"
       )}
@@ -158,10 +182,14 @@ export function ChatItem({
             // 在紧凑模式下优化显示
             isCompact
               ? isUser
-                ? "inline-block bg-primary text-primary-foreground shadow-[var(--shadow-xs)] max-w-full break-words"
+                ? hasError
+                  ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 border border-red-300 dark:border-red-800 shadow-[var(--shadow-xs)] max-w-full break-words"
+                  : "inline-block bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300  max-w-full break-words"
                 : "block bg-transparent text-card-foreground w-full overflow-hidden"
               : isUser
-              ? "inline-block bg-primary text-primary-foreground shadow-[var(--shadow-xs)] w-auto"
+              ? hasError
+                ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 border border-red-300 dark:border-red-800 shadow-[var(--shadow-xs)] w-auto"
+                : "inline-block bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300  w-auto"
               : "inline-block bg-transparent text-card-foreground w-full",
             // 添加链接样式修复
             "[&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-2",

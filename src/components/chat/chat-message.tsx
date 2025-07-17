@@ -15,6 +15,7 @@ import {
   IconFileText,
   IconDownload,
   IconFileTypography,
+  IconAlertCircle,
 } from "@tabler/icons-react";
 import { Spinner } from "../spinner";
 import { Markdown } from "../markdown";
@@ -343,6 +344,13 @@ export function ChatMessage({
         {isLoading && !isUser && (
           <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
             <Spinner variant="ellipsis" />
+          </div>
+        )}
+        {/* Error indicator for failed messages */}
+        {isLastMessage && error && status === "error" && (
+          <div className="flex items-center gap-2 mb-2 text-xs text-red-600 bg-red-50 dark:bg-red-950/20 dark:text-red-400 px-2 py-1 rounded-md border border-red-200 dark:border-red-800">
+            <IconAlertCircle className="w-3 h-3" />
+            <span>消息发送失败</span>
           </div>
         )}
         {renderAttachments()}
