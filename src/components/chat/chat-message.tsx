@@ -29,11 +29,13 @@ import type {
   ReasoningPart as ReasoningPartType,
 } from "@/types/tool-invocation";
 import { ChatItem } from "./chat-item";
+import { MessageEditor } from "./message-editor";
 import { ReasoningPart } from "./reasoning-part";
 import { FilePreviewDialog } from "@/components/ui/file-preview-dialog";
 import { ToolInvocationPart } from "./tool-invocation-part";
 import { Button } from "@/components/ui/button";
 import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
+import { useEditMessage } from "@/hooks/use-edit-message";
 
 interface ChatMessageProps {
   message: Message | UIMessage;
@@ -44,6 +46,8 @@ interface ChatMessageProps {
   status?: "error" | "submitted" | "streaming" | "ready";
   retry?: () => void;
   regenerate?: () => void;
+  onEdit?: (messageId: string) => void;
+  isEditing?: boolean;
 }
 
 // Render different types of message parts
@@ -141,10 +145,33 @@ export function ChatMessage({
   status = "ready",
   retry,
   regenerate,
+  onEdit,
+  isEditing = false,
 }: ChatMessageProps) {
   const t = useTranslations("Chat");
   const tCommon = useTranslations("Common");
+  const { editMessage, isLoading: isEditLoading } = useEditMessage();
   const isUser = message.role === "user";
+
+  // Handle edit save
+  const handleEditSave = async (content: string) => {
+    if (!message.id) return;
+
+    try {
+      await editMessage(message.id, content);
+      // The parent component will handle the state update
+    } catch (error) {
+      console.error("Failed to save edited message:", error);
+      throw error;
+    }
+  };
+
+  // Handle edit cancel
+  const handleEditCancel = () => {
+    if (onEdit) {
+      onEdit(""); // Pass empty string to cancel editing
+    }
+  };
   const [previewAttachment, setPreviewAttachment] = useState<{
     url: string;
     type: string;
@@ -340,6 +367,9 @@ export function ChatMessage({
         retry={retry}
         regenerate={regenerate}
         messageContent={getMessageContent()}
+        messageId={message.id}
+        onEdit={onEdit}
+        isEditing={isEditing}
       >
         {isLoading && !isUser && (
           <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
@@ -354,7 +384,26 @@ export function ChatMessage({
           </div>
         )}
         {renderAttachments()}
-        <div>{content}</div>
+
+        {/* Conditional rendering: MessageEditor for editing, normal content otherwise */}
+        {isEditing && isUser ? (
+          <MessageEditor
+            initialContent={getMessageContent()}
+            onSave={handleEditSave}
+            onCancel={handleEditCancel}
+            isLoading={isEditLoading}
+            className="mt-2"
+          />
+        ) : (
+          <div
+            className={cn(
+              "transition-all duration-200",
+              isEditing && "opacity-50 pointer-events-none"
+            )}
+          >
+            {content}
+          </div>
+        )}
       </ChatItem>
 
       <FilePreviewDialog

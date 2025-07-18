@@ -50,6 +50,22 @@ export const chatMessages = createTable("chat_messages", {
 	parts: json("parts").notNull(),
 	role: text("role").notNull(), // 'user', 'assistant', 'system'
 	attachments: json("attachments").notNull(),
+	originalContent: text("original_content"), // Store original content for edit history
+	editCount: integer("edit_count").notNull().default(0), // Track number of edits
+});
+
+// Message edit history table
+export const messageEditHistory = createTable("message_edit_history", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => nanoid(16)),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	messageId: text("message_id")
+		.references(() => chatMessages.id, { onDelete: "cascade" })
+		.notNull(),
+	previousContent: text("previous_content").notNull(),
+	newContent: text("new_content").notNull(),
+	editReason: text("edit_reason"), // Optional reason for the edit
 });
 
 export const apiProviders = createTable("api_providers", {
@@ -99,6 +115,7 @@ export const artifacts = createTable(
 
 export const chatsSchema = createSelectSchema(chats);
 export const chatMessagesSchema = createSelectSchema(chatMessages);
+export const messageEditHistorySchema = createSelectSchema(messageEditHistory);
 export const artifactsSchema = createSelectSchema(artifacts);
 
 export const ChatRoleEnum = z.enum(["user", "assistant", "system"]);
@@ -116,6 +133,7 @@ export type ArtifactKind = z.infer<typeof ArtifactKindEnum>;
 export type ArtifactLanguage = z.infer<typeof ArtifactLanguageEnum>;
 export type Chat = z.infer<typeof chatsSchema>;
 export type DBMessage = InferSelectModel<typeof chatMessages>;
+export type MessageEditHistory = InferSelectModel<typeof messageEditHistory>;
 export type Artifact = InferSelectModel<typeof artifacts>;
 
 // Insert schemas for artifacts

@@ -1,7 +1,8 @@
 import "server-only";
 import { db } from "..";
-import { chatMessages } from "../schema";
+import { chatMessages, messageEditHistory } from "../schema";
 import { nanoid } from "nanoid";
+import { eq, desc } from "drizzle-orm";
 import type { UIMessage } from "ai";
 
 function convertToDBMessages(messages: UIMessage[], chatId: string) {
@@ -54,5 +55,140 @@ export async function saveMessages(chatId: string, messages: UIMessage[]) {
 		}
 
 		throw new Error("Failed to save messages");
+	}
+}
+
+/**
+ * Update a message by ID with edit history tracking
+ * @param messageId - The ID of the message to update
+ * @param content - The new content for the message
+ * @param editReason - Optional reason for the edit
+ * @param userId - The user ID for permission validation (optional for now)
+ * @returns The updated message
+ */
+export async function updateMessage(
+	messageId: string,
+	content: string,
+	editReason?: string,
+	userId?: string
+) {
+	if (!messageId) {
+		throw new Error("Message ID is required");
+	}
+
+	if (!content || content.trim() === "") {
+		throw new Error("Message content is required");
+	}
+
+	try {
+		// First, check if the message exists
+		const existingMessage = await db
+			.select()
+			.from(chatMessages)
+			.where(eq(chatMessages.id, messageId))
+			.limit(1);
+
+		if (existingMessage.length === 0) {
+			throw new Error("Message not found");
+		}
+
+		const currentMessage = existingMessage[0];
+		const previousContent = currentMessage.content;
+
+		// Don't update if content is the same
+		if (previousContent === content.trim()) {
+			return currentMessage;
+		}
+
+		// Start a transaction to update message and create edit history
+		const result = await db.transaction(async (tx) => {
+			// Store original content if this is the first edit
+			const originalContent = currentMessage.originalContent || previousContent;
+			const newEditCount = (currentMessage.editCount || 0) + 1;
+
+			// Update the message
+			const updatedMessages = await tx
+				.update(chatMessages)
+				.set({
+					content: content.trim(),
+					updatedAt: new Date(),
+					originalContent,
+					editCount: newEditCount,
+				})
+				.where(eq(chatMessages.id, messageId))
+				.returning();
+
+			if (updatedMessages.length === 0) {
+				throw new Error("Failed to update message");
+			}
+
+			// Create edit history record
+			await tx.insert(messageEditHistory).values({
+				messageId,
+				previousContent,
+				newContent: content.trim(),
+				editReason,
+			});
+
+			return updatedMessages[0];
+		});
+
+		return result;
+	} catch (error) {
+		console.error("Error updating message:", error);
+
+		if (error instanceof Error) {
+			throw error;
+		}
+
+		throw new Error("Failed to update message");
+	}
+}
+
+/**
+ * Get a message by ID
+ * @param messageId - The ID of the message to retrieve
+ * @returns The message or null if not found
+ */
+export async function getMessageById(messageId: string) {
+	if (!messageId) {
+		throw new Error("Message ID is required");
+	}
+
+	try {
+		const messages = await db
+			.select()
+			.from(chatMessages)
+			.where(eq(chatMessages.id, messageId))
+			.limit(1);
+
+		return messages.length > 0 ? messages[0] : null;
+	} catch (error) {
+		console.error("Error fetching message by ID:", error);
+		throw new Error("Failed to fetch message");
+	}
+}
+
+/**
+ * Get edit history for a message
+ * @param messageId - The ID of the message
+ * @returns Array of edit history records
+ */
+export async function getMessageEditHistory(messageId: string) {
+	if (!messageId) {
+		throw new Error("Message ID is required");
+	}
+
+	try {
+		const history = await db
+			.select()
+			.from(messageEditHistory)
+			.where(eq(messageEditHistory.messageId, messageId))
+			.orderBy(desc(messageEditHistory.createdAt));
+
+		return history;
+	} catch (error) {
+		console.error("Error fetching message edit history:", error);
+		throw new Error("Failed to fetch edit history");
 	}
 }

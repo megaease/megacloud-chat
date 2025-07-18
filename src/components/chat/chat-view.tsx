@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
@@ -9,6 +9,7 @@ import { ChatMessage } from "./chat-message";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { Message } from "@ai-sdk/react";
 import { ChatInput } from "./chat-input";
+import { EditConfirmationDialog } from "./edit-confirmation-dialog";
 import { Thinking } from "./thinking";
 // import { Artifact } from "../artifact/Artifact"; // 已删除
 
@@ -35,6 +36,14 @@ interface ChatViewProps {
   toggleMcpEnabled: () => boolean;
   status: "error" | "submitted" | "streaming" | "ready";
   isUploading?: boolean;
+  onEditMessage?: (
+    messageId: string,
+    newContent: string,
+    options?: {
+      regenerateAI?: boolean;
+      deleteSubsequent?: boolean;
+    }
+  ) => Promise<void>;
 }
 
 export function ChatView({
@@ -51,8 +60,73 @@ export function ChatView({
   toggleMcpEnabled,
   status,
   isUploading = false,
+  onEditMessage,
 }: ChatViewProps) {
   const tCommon = useTranslations("Common");
+
+  // Edit state management
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [showEditConfirmation, setShowEditConfirmation] = useState(false);
+  const [editedMessageData, setEditedMessageData] = useState<{
+    messageId: string;
+    newContent: string;
+  } | null>(null);
+
+  // Handle edit message
+  const handleEditMessage = (messageId: string) => {
+    setEditingMessageId(messageId);
+  };
+
+  // Handle cancel edit
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+  };
+
+  // Handle save edit - temporarily simplified
+  const handleSaveEdit = async (messageId: string, newContent: string) => {
+    if (!onEditMessage) return;
+
+    try {
+      // For now, just save the edit without confirmation dialog
+      await onEditMessage(messageId, newContent);
+      setEditingMessageId(null);
+    } catch (error) {
+      console.error("Failed to save edited message:", error);
+      throw error;
+    }
+  };
+
+  // Handle edit confirmation
+  const handleEditConfirmation = async (
+    regenerateAI: boolean,
+    deleteSubsequent: boolean
+  ) => {
+    if (!editedMessageData || !onEditMessage) return;
+
+    try {
+      await onEditMessage(
+        editedMessageData.messageId,
+        editedMessageData.newContent,
+        {
+          regenerateAI,
+          deleteSubsequent,
+        }
+      );
+
+      setShowEditConfirmation(false);
+      setEditedMessageData(null);
+    } catch (error) {
+      console.error("Failed to save edited message:", error);
+      // Error handling will be done by the parent component
+      throw error;
+    }
+  };
+
+  // Handle edit confirmation cancel
+  const handleEditConfirmationCancel = () => {
+    setShowEditConfirmation(false);
+    setEditedMessageData(null);
+  };
 
   // Use the enhanced scroll-to-bottom hook
   const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
@@ -79,6 +153,7 @@ export function ChatView({
             <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 py-4">
               {messages.map((message, index) => {
                 const isLastMessage = index === messages.length - 1;
+                const isEditing = editingMessageId === message.id;
                 return (
                   <ChatMessage
                     key={message.id}
@@ -89,6 +164,8 @@ export function ChatView({
                     status={status}
                     retry={retry}
                     regenerate={regenerate}
+                    onEdit={handleEditMessage}
+                    isEditing={isEditing}
                   />
                 );
               })}
@@ -132,6 +209,19 @@ export function ChatView({
           isUploading={isUploading}
         />
       </div>
+
+      {/* Edit Confirmation Dialog */}
+      <EditConfirmationDialog
+        isOpen={showEditConfirmation}
+        onClose={handleEditConfirmationCancel}
+        onConfirm={handleEditConfirmation}
+        hasSubsequentMessages={
+          editedMessageData
+            ? messages.findIndex((m) => m.id === editedMessageData.messageId) <
+              messages.length - 1
+            : false
+        }
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useApiProvider } from "@/context/api-provider-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
+import { useEditMessage } from "@/hooks/use-edit-message";
 import { ChatView } from "./chat-view";
 import { IconLoader2 } from "@tabler/icons-react";
 import { appendClientMessage, type UIMessage } from "ai";
@@ -86,6 +87,7 @@ export function Chat() {
   const queryClient = useQueryClient();
   const { currentProvider, currentModel } = useApiProvider();
   const { mcpEnabled, toggleMcpEnabled } = useMcpEnabled();
+  const { editMessage } = useEditMessage();
   const [randomChatId] = useState<string | undefined>(() => {
     if (!chatId) {
       return nanoid(16);
@@ -303,6 +305,42 @@ export function Chat() {
     }
   };
 
+  // Handle edit message
+  const handleEditMessage = async (
+    messageId: string,
+    newContent: string,
+    options?: {
+      regenerateAI?: boolean;
+      deleteSubsequent?: boolean;
+    }
+  ) => {
+    try {
+      // Call the API to update the message
+      await editMessage(messageId, newContent);
+
+      // Immediately update the local message state for instant UI feedback
+      setMessages((currentMessages) =>
+        currentMessages.map((msg) =>
+          msg.id === messageId ? { ...msg, content: newContent } : msg
+        )
+      );
+
+      // Invalidate and refetch chat messages to ensure data consistency
+      queryClient.invalidateQueries({
+        queryKey: ["chats", "user-id", chatId],
+      });
+
+      // Also invalidate the chat list to update any previews
+      queryClient.invalidateQueries({
+        queryKey: ["chats", "user-id"],
+      });
+    } catch (error) {
+      console.error("Failed to edit message:", error);
+      // Error handling is done by the useEditMessage hook
+      throw error;
+    }
+  };
+
   if (isLoadingMessage) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2">
@@ -328,6 +366,7 @@ export function Chat() {
         toggleMcpEnabled={toggleMcpEnabled}
         status={status}
         isUploading={isUploading}
+        onEditMessage={handleEditMessage}
       />
 
       <DataStreamHandler chatId={chatId} />

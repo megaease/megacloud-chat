@@ -6,6 +6,7 @@ import {
   IconReload,
   IconCopy,
   IconCheck,
+  IconEdit,
 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useCopy } from "@/hooks/use-copy";
@@ -26,6 +27,9 @@ interface ChatItemProps {
   retry?: () => void;
   regenerate?: () => void;
   messageContent?: string;
+  messageId?: string;
+  onEdit?: (messageId: string) => void;
+  isEditing?: boolean;
 }
 
 export function ChatItem({
@@ -38,6 +42,9 @@ export function ChatItem({
   retry,
   regenerate,
   messageContent,
+  messageId,
+  onEdit,
+  isEditing = false,
 }: ChatItemProps) {
   const t = useTranslations("Common");
   const tArtifact = useTranslations("Artifact");
@@ -49,10 +56,20 @@ export function ChatItem({
     await copy(content);
   };
 
+  // Handle edit functionality
+  const handleEdit = () => {
+    if (messageId && onEdit) {
+      onEdit(messageId);
+    }
+  };
+
   // Render action buttons
   const renderActionButtons = () => {
     // Always show copy button for all messages
     const showCopyButton = true;
+
+    // Only show edit button for user messages (not during editing)
+    const showEditButton = isUser && messageId && onEdit && !isEditing;
 
     // Only show retry/regenerate buttons for the last message when request is complete
     const showRetryButton =
@@ -60,13 +77,18 @@ export function ChatItem({
     const showRegenerateButton =
       isLastMessage && !isUser && !error && status === "ready" && regenerate;
 
-    // For non-last messages, only show copy button
+    // For non-last messages, only show copy and edit buttons
     // For last message, check if streaming/submitted to hide all buttons temporarily
     if (isLastMessage && (status === "streaming" || status === "submitted")) {
       return null; // Hide all buttons during streaming
     }
 
-    if (!showRetryButton && !showRegenerateButton && !showCopyButton)
+    if (
+      !showRetryButton &&
+      !showRegenerateButton &&
+      !showCopyButton &&
+      !showEditButton
+    )
       return null;
 
     return (
@@ -97,6 +119,23 @@ export function ChatItem({
                 <p>{copied ? t("copied") : t("copy")}</p>
               </TooltipContent>
             </Tooltip>
+            {showEditButton && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleEdit}
+                    className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
+                  >
+                    <IconEdit className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("edit")}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             {showRetryButton && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -178,7 +217,7 @@ export function ChatItem({
       >
         <div
           className={cn(
-            "rounded-[var(--radius)] px-4 py-3 text-left min-w-0", // 添加 min-w-0
+            "rounded-[var(--radius)] px-4 py-3 text-left min-w-0 transition-all duration-200", // 添加 min-w-0 和过渡动画
             // 在紧凑模式下优化显示
             isCompact
               ? isUser
@@ -191,6 +230,14 @@ export function ChatItem({
                 ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 border border-red-300 dark:border-red-800 shadow-[var(--shadow-xs)] w-auto"
                 : "inline-block bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300  w-auto"
               : "inline-block bg-transparent text-card-foreground w-full",
+            // 添加编辑状态的视觉反馈
+            isEditing && [
+              "ring-2 ring-blue-500 ring-opacity-50",
+              "bg-blue-50/50 dark:bg-blue-950/20",
+              "border-blue-200 dark:border-blue-800",
+              "shadow-lg",
+              "scale-[1.02]",
+            ],
             // 添加链接样式修复
             "[&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-2",
             // 为用户消息中的链接使用对比色
