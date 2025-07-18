@@ -100,6 +100,7 @@ export function Chat() {
   // Get createArtifact flag from URL search params
   const [shouldCreateArtifact, setShouldCreateArtifact] = useState(false);
   const [openArtifactId, setOpenArtifactId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -315,30 +316,35 @@ export function Chat() {
     }
   ) => {
     try {
-      // Call the API to update the message
+      // 1. 保存到数据库
       await editMessage(messageId, newContent);
 
-      // Immediately update the local message state for instant UI feedback
-      setMessages((currentMessages) =>
-        currentMessages.map((msg) =>
-          msg.id === messageId ? { ...msg, content: newContent } : msg
-        )
-      );
+      // 2. 关闭编辑状态
+      setEditingMessageId(null);
 
-      // Invalidate and refetch chat messages to ensure data consistency
+      // 3. 重新获取数据
       queryClient.invalidateQueries({
         queryKey: ["chats", "user-id", chatId],
       });
 
-      // Also invalidate the chat list to update any previews
+      // 4. 更新聊天列表
       queryClient.invalidateQueries({
         queryKey: ["chats", "user-id"],
       });
     } catch (error) {
       console.error("Failed to edit message:", error);
-      // Error handling is done by the useEditMessage hook
       throw error;
     }
+  };
+
+  // Handle start editing
+  const handleStartEdit = (messageId: string) => {
+    setEditingMessageId(messageId);
+  };
+
+  // Handle cancel editing
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
   };
 
   if (isLoadingMessage) {
@@ -367,6 +373,9 @@ export function Chat() {
         status={status}
         isUploading={isUploading}
         onEditMessage={handleEditMessage}
+        onStartEdit={handleStartEdit}
+        onCancelEdit={handleCancelEdit}
+        editingMessageId={editingMessageId}
       />
 
       <DataStreamHandler chatId={chatId} />

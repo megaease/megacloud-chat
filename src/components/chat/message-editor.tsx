@@ -40,26 +40,6 @@ export function MessageEditor({
     setHasChanges(content.trim() !== initialContent.trim());
   }, [content, initialContent]);
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Escape to cancel
-      if (event.key === "Escape") {
-        event.preventDefault();
-        handleCancel();
-      }
-
-      // Ctrl/Cmd + Enter to save
-      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-        event.preventDefault();
-        handleSave();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [content]);
-
   const handleSave = async () => {
     if (!hasChanges || isLoading) return;
 
@@ -78,11 +58,7 @@ export function MessageEditor({
   };
 
   const handleCancel = () => {
-    if (hasChanges && !isLoading) {
-      // Show confirmation dialog for unsaved changes
-      const confirmed = window.confirm(t("unsavedChanges"));
-      if (!confirmed) return;
-    }
+    if (isLoading) return;
     onCancel();
   };
 
@@ -149,13 +125,6 @@ export function MessageEditor({
             <IconX className="w-3.5 h-3.5" />
             {t("cancel")}
           </Button>
-        </div>
-
-        {/* Keyboard shortcuts hint */}
-        <div className="text-xs text-muted-foreground">
-          <span className="hidden sm:inline">
-            {t("save")}: Ctrl+Enter • {t("cancel")}: Esc
-          </span>
         </div>
       </div>
 

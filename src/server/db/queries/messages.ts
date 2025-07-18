@@ -106,11 +106,13 @@ export async function updateMessage(
 			const originalContent = currentMessage.originalContent || previousContent;
 			const newEditCount = (currentMessage.editCount || 0) + 1;
 
-			// Update the message
+			// Update the message - update both content and parts
 			const updatedMessages = await tx
 				.update(chatMessages)
 				.set({
 					content: content.trim(),
+					// Also update parts array to maintain consistency
+					parts: [{ type: "text", text: content.trim() }],
 					updatedAt: new Date(),
 					originalContent,
 					editCount: newEditCount,

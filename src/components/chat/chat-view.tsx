@@ -44,6 +44,9 @@ interface ChatViewProps {
       deleteSubsequent?: boolean;
     }
   ) => Promise<void>;
+  onStartEdit?: (messageId: string) => void;
+  onCancelEdit?: () => void;
+  editingMessageId?: string | null;
 }
 
 export function ChatView({
@@ -61,35 +64,27 @@ export function ChatView({
   status,
   isUploading = false,
   onEditMessage,
+  onStartEdit,
+  onCancelEdit,
+  editingMessageId,
 }: ChatViewProps) {
   const tCommon = useTranslations("Common");
 
-  // Edit state management
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  // Edit state management (now handled by parent component)
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
   const [editedMessageData, setEditedMessageData] = useState<{
     messageId: string;
     newContent: string;
   } | null>(null);
 
-  // Handle edit message
-  const handleEditMessage = (messageId: string) => {
-    setEditingMessageId(messageId);
-  };
-
-  // Handle cancel edit
-  const handleCancelEdit = () => {
-    setEditingMessageId(null);
-  };
-
-  // Handle save edit - temporarily simplified
+  // Handle save edit
   const handleSaveEdit = async (messageId: string, newContent: string) => {
     if (!onEditMessage) return;
 
     try {
-      // For now, just save the edit without confirmation dialog
+      // Call parent component's edit handler which includes local state update
       await onEditMessage(messageId, newContent);
-      setEditingMessageId(null);
+      // Don't set editingMessageId to null here - let the parent handle it
     } catch (error) {
       console.error("Failed to save edited message:", error);
       throw error;
@@ -164,7 +159,9 @@ export function ChatView({
                     status={status}
                     retry={retry}
                     regenerate={regenerate}
-                    onEdit={handleEditMessage}
+                    onEdit={onStartEdit}
+                    onCancelEdit={onCancelEdit}
+                    onSaveEdit={handleSaveEdit}
                     isEditing={isEditing}
                   />
                 );
@@ -189,13 +186,11 @@ export function ChatView({
           )}
         </div>
       )}
-
       {status === "submitted" && (
         <div className="flex-shrink-0">
           <Thinking />
         </div>
       )}
-
       {/* Chat input - 固定在底部 */}
       <div className="flex-shrink-0">
         <ChatInput
@@ -209,7 +204,6 @@ export function ChatView({
           isUploading={isUploading}
         />
       </div>
-
       {/* Edit Confirmation Dialog */}
       <EditConfirmationDialog
         isOpen={showEditConfirmation}

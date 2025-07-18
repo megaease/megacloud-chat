@@ -47,6 +47,8 @@ interface ChatMessageProps {
   retry?: () => void;
   regenerate?: () => void;
   onEdit?: (messageId: string) => void;
+  onCancelEdit?: () => void;
+  onSaveEdit?: (messageId: string, content: string) => Promise<void>;
   isEditing?: boolean;
 }
 
@@ -146,6 +148,8 @@ export function ChatMessage({
   retry,
   regenerate,
   onEdit,
+  onCancelEdit,
+  onSaveEdit,
   isEditing = false,
 }: ChatMessageProps) {
   const t = useTranslations("Chat");
@@ -158,8 +162,16 @@ export function ChatMessage({
     if (!message.id) return;
 
     try {
-      await editMessage(message.id, content);
-      // The parent component will handle the state update
+      // 使用父组件的保存函数（包含数据库保存和状态管理）
+      if (onSaveEdit) {
+        await onSaveEdit(message.id, content);
+      } else {
+        // 降级方案：直接调用API
+        await editMessage(message.id, content);
+        if (onCancelEdit) {
+          onCancelEdit();
+        }
+      }
     } catch (error) {
       console.error("Failed to save edited message:", error);
       throw error;
@@ -168,8 +180,8 @@ export function ChatMessage({
 
   // Handle edit cancel
   const handleEditCancel = () => {
-    if (onEdit) {
-      onEdit(""); // Pass empty string to cancel editing
+    if (onCancelEdit) {
+      onCancelEdit();
     }
   };
   const [previewAttachment, setPreviewAttachment] = useState<{
