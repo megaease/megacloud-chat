@@ -187,7 +187,7 @@ export function ChatView({
         </div>
       )}
       {status === "submitted" && (
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 relative">
           <Thinking />
         </div>
       )}
