@@ -230,14 +230,8 @@ export function ChatItem({
                 ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 border border-red-300 dark:border-red-800 shadow-[var(--shadow-xs)] w-auto"
                 : "inline-block bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300  w-auto"
               : "inline-block bg-transparent text-card-foreground w-full",
-            // 添加编辑状态的视觉反馈
-            isEditing && [
-              "ring-2 ring-blue-500 ring-opacity-50",
-              "bg-blue-50/50 dark:bg-blue-950/20",
-              "border-blue-200 dark:border-blue-800",
-              "shadow-lg",
-              "scale-[1.02]",
-            ],
+            // 编辑状态的简洁样式
+            isEditing && "bg-muted/20",
             // 添加链接样式修复
             "[&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-2",
             // 为用户消息中的链接使用对比色

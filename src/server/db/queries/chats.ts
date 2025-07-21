@@ -73,3 +73,52 @@ export async function getChatById({
 		throw new Error("Failed to fetch chat");
 	}
 }
+
+export async function updateChatTitle({
+	chatId,
+	userId,
+	title,
+}: {
+	chatId: string;
+	userId: string;
+	title: string;
+}) {
+	if (!chatId) {
+		throw new Error("Chat ID is required");
+	}
+
+	if (!userId) {
+		throw new Error("User ID is required");
+	}
+
+	if (!title || title.trim() === "") {
+		throw new Error("Chat title is required");
+	}
+
+	try {
+		// First, check if the chat exists and belongs to the user
+		const existingChat = await getChatById({ chatId, userId });
+		if (!existingChat) {
+			throw new Error("Chat not found or you don't have permission to update it");
+		}
+
+		// Update the chat title
+		const updatedChats = await db
+			.update(chats)
+			.set({
+				title: title.trim(),
+				updatedAt: new Date(),
+			})
+			.where(and(eq(chats.id, chatId), eq(chats.userId, userId)))
+			.returning();
+
+		if (updatedChats.length === 0) {
+			throw new Error("Failed to update chat title");
+		}
+
+		return updatedChats[0];
+	} catch (error) {
+		console.error("Error updating chat title:", error);
+		throw error;
+	}
+}

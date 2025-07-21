@@ -15,7 +15,14 @@ import {
 } from "@/components/ui/sidebar";
 import type { Chat } from "@/server/db/schema";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { IconPlus, IconServer, IconX, IconBox } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconServer,
+  IconX,
+  IconBox,
+  IconEdit,
+  IconCheck,
+} from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter, usePathname } from "next/navigation";
@@ -36,6 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import { use, useState } from "react";
 import { useMCPDrawer } from "@/context/mcp-drawer-context";
 const userId = "user-id"; // Replace with actual user ID
@@ -48,6 +56,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const queryClient = useQueryClient();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   const {
     data: chatData = [],
@@ -102,6 +112,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   });
 
+  // Rename chat mutation
+  const renameChatMutation = useMutation({
+    mutationFn: async ({
+      chatId,
+      title,
+    }: {
+      chatId: string;
+      title: string;
+    }) => {
+      const response = await fetch(`/api/chats/${chatId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          userId: userId,
+        },
+        body: JSON.stringify({ title }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to rename chat");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      // Refresh chat list after successful rename
+      queryClient.invalidateQueries({ queryKey: ["chats", userId] });
+      toast.success("Chat renamed successfully");
+      setEditingChatId(null);
+      setEditingTitle("");
+    },
+    onError: (error) => {
+      toast.error(`Rename failed: ${error.message}`);
+    },
+  });
+
   const handleDeleteChat = (chatId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -115,6 +162,42 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       deleteChatMutation.mutate(chatToDelete);
     }
     setIsAlertOpen(false);
+  };
+
+  const handleEditChat = (
+    chatId: string,
+    currentTitle: string,
+    e: React.MouseEvent
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setEditingChatId(chatId);
+    setEditingTitle(currentTitle);
+  };
+
+  const handleSaveRename = (chatId: string) => {
+    if (editingTitle.trim() && editingTitle.trim() !== "") {
+      renameChatMutation.mutate({ chatId, title: editingTitle.trim() });
+    } else {
+      setEditingChatId(null);
+      setEditingTitle("");
+    }
+  };
+
+  const handleCancelRename = () => {
+    setEditingChatId(null);
+    setEditingTitle("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, chatId: string) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSaveRename(chatId);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      handleCancelRename();
+    }
   };
 
   return (
@@ -169,37 +252,98 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               ) : (
                 chatData.map((item) => {
                   const isActive = pathname === `/chat/${item.id}`;
+                  const isEditing = editingChatId === item.id;
+
                   return (
                     <SidebarMenuItem
                       key={item.id}
-                      className="group-item relative overflow-hidden"
+                      className="relative overflow-hidden group/item"
                     >
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        className="flex-1 truncate group/item"
-                      >
-                        <Link
-                          href={`/chat/${item.id}`}
-                          className="flex items-center justify-between w-full min-w-0 pr-6"
-                        >
-                          <span className="truncate">{item.title}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                              "absolute right-1 top-1/2 h-6 w-6", // Base positioning
-                              "opacity-0 group-hover/item:opacity-100", // Fade in/out on hover
-                              "translate-x-full group-hover/item:translate-x-0", // Slide in from right on hover
-                              "transform transition-all duration-200 ease-in-out -translate-y-1/2" // Smooth transition for opacity and transform
-                            )}
-                            onClick={(e) => handleDeleteChat(item.id, e)}
-                            title="Delete chat"
+                      {isEditing ? (
+                        // Editing mode
+                        <div className="flex items-center gap-1 px-2 py-1">
+                          <Input
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, item.id)}
+                            className="h-8 text-sm"
+                            autoFocus
+                          />
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 hover:bg-green-500/10 hover:text-green-600 dark:hover:text-green-400"
+                              onClick={() => handleSaveRename(item.id)}
+                              disabled={renameChatMutation.isPending}
+                              title="Save (Enter)"
+                            >
+                              <IconCheck className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+                              onClick={handleCancelRename}
+                              disabled={renameChatMutation.isPending}
+                              title="Cancel (Esc)"
+                            >
+                              <IconX className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        // Normal mode
+                        <>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive}
+                            className="w-full"
                           >
-                            <IconX className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                      </SidebarMenuButton>
+                            <Link
+                              href={`/chat/${item.id}`}
+                              className={cn(
+                                "flex items-center w-full min-w-0 transition-all duration-300 ease-out",
+                                "pr-0 group-hover/item:pr-16" // Smooth padding transition to make room for buttons
+                              )}
+                            >
+                              <span className="truncate">{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+
+                          {/* Action buttons - slide in from right */}
+                          <div
+                            className={cn(
+                              "absolute right-1 top-1/2 flex items-center gap-1", // Base positioning
+                              "opacity-0 group-hover/item:opacity-100", // Fade in
+                              "translate-x-2 group-hover/item:translate-x-0", // Slide in from right
+                              "transform transition-all duration-300 ease-out -translate-y-1/2", // Smooth transition
+                              "pointer-events-none group-hover/item:pointer-events-auto" // Enable pointer events only on hover
+                            )}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                              onClick={(e) =>
+                                handleEditChat(item.id, item.title, e)
+                              }
+                              title="Rename chat"
+                            >
+                              <IconEdit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                              onClick={(e) => handleDeleteChat(item.id, e)}
+                              title="Delete chat"
+                            >
+                              <IconX className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
                     </SidebarMenuItem>
                   );
                 })
