@@ -65,9 +65,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     isLoading,
     isError,
   } = useQuery<Chat[]>({
-    queryKey: ["chats", userId],
+    queryKey: ["chats", userId, "recent"],
     queryFn: async () => {
-      const res = await fetch("/api/chats", {
+      const res = await fetch("/api/chats?limit=20", {
         headers: {
           userId: userId,
         },
@@ -100,7 +100,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     onSuccess: (_, chatId) => {
       // Refresh chat list after successful deletion
-      queryClient.invalidateQueries({ queryKey: ["chats", userId] });
+      queryClient.invalidateQueries({ queryKey: ["chats", userId, "recent"] });
       toast.success("Chat deleted");
 
       // Navigate to homepage if currently viewing the deleted chat
@@ -140,7 +140,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     onSuccess: () => {
       // Refresh chat list after successful rename
-      queryClient.invalidateQueries({ queryKey: ["chats", userId] });
+      queryClient.invalidateQueries({ queryKey: ["chats", userId, "recent"] });
       toast.success("Chat renamed successfully");
       setEditingChatId(null);
       setEditingTitle("");
@@ -237,7 +237,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {t("chat")}
             <Button
               onClick={() => router.push("/search")}
-              title="Search Conversations"
+              title="Browse All & Search Conversations"
               variant="ghost"
               size="icon"
               className="h-6 w-6"
@@ -359,6 +359,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 })
               )}
             </SidebarMenu>
+
+            {/* Show more conversations hint */}
+            {chatData.length >= 20 && (
+              <div className="px-4 py-2 text-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push("/search")}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  View all conversations...
+                </Button>
+              </div>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

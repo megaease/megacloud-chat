@@ -25,6 +25,13 @@ interface SearchResult {
   }>;
 }
 
+interface Chat {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface SearchResponse {
   results: SearchResult[];
   query: string;
@@ -51,7 +58,7 @@ export default function SearchPage() {
     setSearchQuery(query);
   };
 
-  // Search query
+  // Search query and browse all chats
   const {
     data: searchResults,
     isLoading,
@@ -59,10 +66,35 @@ export default function SearchPage() {
   } = useQuery<SearchResponse>({
     queryKey: ["search", debouncedQuery],
     queryFn: async () => {
+      // If no search query, fetch all chats
       if (!debouncedQuery.trim()) {
-        return { results: [], query: "", total: 0, success: true };
+        const response = await fetch("/api/chats?limit=100", {
+          headers: {
+            userId: "user-id", // TODO: Get actual user ID from auth context
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch chats");
+        }
+
+        const data = await response.json();
+        // Transform chats to search result format
+        return {
+          results: data.chats.map((chat: Chat) => ({
+            id: chat.id,
+            title: chat.title,
+            createdAt: chat.createdAt,
+            updatedAt: chat.updatedAt,
+            matchedMessages: [], // No matched messages when browsing all
+          })),
+          query: "",
+          total: data.chats.length,
+          success: true,
+        };
       }
 
+      // Search with query
       const response = await fetch(
         `/api/search?query=${encodeURIComponent(debouncedQuery)}`,
         {
@@ -113,9 +145,13 @@ export default function SearchPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Search Conversations</h1>
+          <h1 className="text-3xl font-bold">
+            {debouncedQuery ? "Search Results" : "All Conversations"}
+          </h1>
           <p className="text-muted-foreground">
-            Search through your chat history and messages
+            {debouncedQuery
+              ? "Search results for your query"
+              : "Browse all your conversations or search for specific content"}
           </p>
         </div>
 
@@ -148,14 +184,18 @@ export default function SearchPage() {
             </div>
           )}
 
-          {searchResults && debouncedQuery && !isLoading && (
+          {searchResults && !isLoading && (
             <>
               {/* Results Summary */}
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Found {searchResults.total} conversation
-                  {searchResults.total !== 1 ? "s" : ""}
-                  {debouncedQuery && ` for "${debouncedQuery}"`}
+                  {debouncedQuery
+                    ? `Found ${searchResults.total} conversation${
+                        searchResults.total !== 1 ? "s" : ""
+                      } for "${debouncedQuery}"`
+                    : `Showing ${searchResults.total} conversation${
+                        searchResults.total !== 1 ? "s" : ""
+                      }`}
                 </p>
               </div>
 
@@ -267,12 +307,13 @@ export default function SearchPage() {
             </>
           )}
 
-          {!debouncedQuery && !isLoading && (
+          {!searchResults && !isLoading && (
             <div className="text-center py-12">
               <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Start searching</h3>
+              <h3 className="text-lg font-medium mb-2">Browse & Search</h3>
               <p className="text-muted-foreground">
-                Enter keywords to search through your conversations
+                All your conversations are shown below. Enter keywords to search
+                for specific content.
               </p>
             </div>
           )}
