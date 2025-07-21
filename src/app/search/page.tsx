@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Search, MessageSquare, Calendar, User, Bot } from "lucide-react";
@@ -37,16 +37,18 @@ export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  // Debounce search query
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    
-    // Debounce the actual search
+  // Debounce search query using useEffect
+  useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedQuery(query);
+      setDebouncedQuery(searchQuery);
     }, 300);
 
     return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Handle search input change
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
   };
 
   // Search query
@@ -81,16 +83,24 @@ export default function SearchPage() {
 
   const highlightText = (text: string, query: string) => {
     if (!query.trim()) return text;
-    
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+
+    const regex = new RegExp(
+      `(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+      "gi"
+    );
     const parts = text.split(regex);
-    
-    return parts.map((part, index) => 
+
+    return parts.map((part, index) =>
       regex.test(part) ? (
-        <mark key={index} className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">
+        <mark
+          key={`${part}-${index}`}
+          className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded"
+        >
           {part}
         </mark>
-      ) : part
+      ) : (
+        part
+      )
     );
   };
 
@@ -125,14 +135,16 @@ export default function SearchPage() {
         <div className="space-y-4">
           {isLoading && debouncedQuery && (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
               <p className="mt-2 text-muted-foreground">Searching...</p>
             </div>
           )}
 
           {error && (
             <div className="text-center py-8">
-              <p className="text-destructive">Failed to search. Please try again.</p>
+              <p className="text-destructive">
+                Failed to search. Please try again.
+              </p>
             </div>
           )}
 
@@ -141,7 +153,8 @@ export default function SearchPage() {
               {/* Results Summary */}
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Found {searchResults.total} conversation{searchResults.total !== 1 ? 's' : ''} 
+                  Found {searchResults.total} conversation
+                  {searchResults.total !== 1 ? "s" : ""}
                   {debouncedQuery && ` for "${debouncedQuery}"`}
                 </p>
               </div>
@@ -150,7 +163,9 @@ export default function SearchPage() {
               {searchResults.results.length === 0 ? (
                 <div className="text-center py-12">
                   <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No conversations found</h3>
+                  <h3 className="text-lg font-medium mb-2">
+                    No conversations found
+                  </h3>
                   <p className="text-muted-foreground">
                     Try different keywords or check your spelling
                   </p>
@@ -158,12 +173,15 @@ export default function SearchPage() {
               ) : (
                 <div className="space-y-4">
                   {searchResults.results.map((result) => (
-                    <Card key={result.id} className="hover:shadow-md transition-shadow">
+                    <Card
+                      key={result.id}
+                      className="hover:shadow-md transition-shadow"
+                    >
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <div className="space-y-1">
                             <CardTitle className="text-lg">
-                              <Link 
+                              <Link
                                 href={`/chat/${result.id}`}
                                 className="hover:text-primary transition-colors"
                               >
@@ -172,44 +190,71 @@ export default function SearchPage() {
                             </CardTitle>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Calendar className="h-3 w-3" />
-                              <span>Updated {formatDate(result.updatedAt)}</span>
+                              <span>
+                                Updated {formatDate(result.updatedAt)}
+                              </span>
                               {result.matchedMessages.length > 0 && (
                                 <>
-                                  <Separator orientation="vertical" className="h-3" />
-                                  <span>{result.matchedMessages.length} matched message{result.matchedMessages.length !== 1 ? 's' : ''}</span>
+                                  <Separator
+                                    orientation="vertical"
+                                    className="h-3"
+                                  />
+                                  <span>
+                                    {result.matchedMessages.length} matched
+                                    message
+                                    {result.matchedMessages.length !== 1
+                                      ? "s"
+                                      : ""}
+                                  </span>
                                 </>
                               )}
                             </div>
                           </div>
                         </div>
                       </CardHeader>
-                      
+
                       {result.matchedMessages.length > 0 && (
                         <CardContent className="pt-0">
                           <div className="space-y-3">
-                            {result.matchedMessages.slice(0, 3).map((message) => (
-                              <div key={message.id} className="border-l-2 border-muted pl-4 py-2">
-                                <div className="flex items-center gap-2 mb-1">
-                                  {message.role === "user" ? (
-                                    <User className="h-3 w-3" />
-                                  ) : (
-                                    <Bot className="h-3 w-3" />
-                                  )}
-                                  <Badge variant={message.role === "user" ? "default" : "secondary"} className="text-xs">
-                                    {message.role === "user" ? "You" : "AI"}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {formatDate(message.createdAt)}
-                                  </span>
+                            {result.matchedMessages
+                              .slice(0, 3)
+                              .map((message) => (
+                                <div
+                                  key={message.id}
+                                  className="border-l-2 border-muted pl-4 py-2"
+                                >
+                                  <div className="flex items-center gap-2 mb-1">
+                                    {message.role === "user" ? (
+                                      <User className="h-3 w-3" />
+                                    ) : (
+                                      <Bot className="h-3 w-3" />
+                                    )}
+                                    <Badge
+                                      variant={
+                                        message.role === "user"
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                      className="text-xs"
+                                    >
+                                      {message.role === "user" ? "You" : "AI"}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">
+                                      {formatDate(message.createdAt)}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground line-clamp-2">
+                                    {highlightText(
+                                      message.content,
+                                      debouncedQuery
+                                    )}
+                                  </p>
                                 </div>
-                                <p className="text-sm text-muted-foreground line-clamp-2">
-                                  {highlightText(message.content, debouncedQuery)}
-                                </p>
-                              </div>
-                            ))}
+                              ))}
                             {result.matchedMessages.length > 3 && (
                               <p className="text-xs text-muted-foreground text-center">
-                                +{result.matchedMessages.length - 3} more matched messages
+                                +{result.matchedMessages.length - 3} more
+                                matched messages
                               </p>
                             )}
                           </div>
