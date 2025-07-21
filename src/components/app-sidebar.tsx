@@ -22,6 +22,7 @@ import {
   IconBox,
   IconEdit,
   IconCheck,
+  IconSearch,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -234,6 +235,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup key={"chats"}>
           <SidebarGroupLabel className="flex items-center justify-between">
             {t("chat")}
+            <Button
+              onClick={() => router.push("/search")}
+              title="Search Conversations"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+            >
+              <IconSearch className="h-4 w-4" />
+            </Button>
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
