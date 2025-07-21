@@ -321,5 +321,25 @@
     "networkError": "Network error",
     "tryAgain": "Please try again later",
     "goHome": "Go to Home"
+  },
+  "Search": {
+    "title": "All Conversations",
+    "searchResults": "Search Results",
+    "description": "Browse all your conversations or search for specific content",
+    "searchResultsDescription": "Search results for your query",
+    "searchPlaceholder": "Search conversations and messages...",
+    "searching": "Searching...",
+    "searchFailed": "Failed to search. Please try again.",
+    "noResults": "No conversations found",
+    "noResultsDescription": "Try different keywords or check your spelling",
+    "startSearching": "Browse & Search",
+    "startSearchingDescription": "All your conversations are shown below. Enter keywords to search for specific content.",
+    "foundResults": "Found {count} conversation{plural} for \"{query}\"",
+    "showingResults": "Showing {count} conversation{plural}",
+    "matchedMessages": "{count} matched message{plural}",
+    "moreMatches": "+{count} more matched messages",
+    "updatedOn": "Updated {date}",
+    "you": "You",
+    "ai": "AI"
   }
 }

@@ -40,7 +40,7 @@ interface SearchResponse {
 }
 
 export default function SearchPage() {
-  const t = useTranslations("Common");
+  const t = useTranslations("Search");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
@@ -146,12 +146,10 @@ export default function SearchPage() {
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">
-            {debouncedQuery ? "Search Results" : "All Conversations"}
+            {debouncedQuery ? t("searchResults") : t("title")}
           </h1>
           <p className="text-muted-foreground">
-            {debouncedQuery
-              ? "Search results for your query"
-              : "Browse all your conversations or search for specific content"}
+            {debouncedQuery ? t("searchResultsDescription") : t("description")}
           </p>
         </div>
 
@@ -160,7 +158,7 @@ export default function SearchPage() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search conversations and messages..."
+            placeholder={t("searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-10 h-12 text-lg"
@@ -172,15 +170,13 @@ export default function SearchPage() {
           {isLoading && debouncedQuery && (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-              <p className="mt-2 text-muted-foreground">Searching...</p>
+              <p className="mt-2 text-muted-foreground">{t("searching")}</p>
             </div>
           )}
 
           {error && (
             <div className="text-center py-8">
-              <p className="text-destructive">
-                Failed to search. Please try again.
-              </p>
+              <p className="text-destructive">{t("searchFailed")}</p>
             </div>
           )}
 
@@ -190,12 +186,15 @@ export default function SearchPage() {
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
                   {debouncedQuery
-                    ? `Found ${searchResults.total} conversation${
-                        searchResults.total !== 1 ? "s" : ""
-                      } for "${debouncedQuery}"`
-                    : `Showing ${searchResults.total} conversation${
-                        searchResults.total !== 1 ? "s" : ""
-                      }`}
+                    ? t("foundResults", {
+                        count: searchResults.total,
+                        plural: searchResults.total !== 1 ? "s" : "",
+                        query: debouncedQuery,
+                      })
+                    : t("showingResults", {
+                        count: searchResults.total,
+                        plural: searchResults.total !== 1 ? "s" : "",
+                      })}
                 </p>
               </div>
 
@@ -203,11 +202,9 @@ export default function SearchPage() {
               {searchResults.results.length === 0 ? (
                 <div className="text-center py-12">
                   <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">
-                    No conversations found
-                  </h3>
+                  <h3 className="text-lg font-medium mb-2">{t("noResults")}</h3>
                   <p className="text-muted-foreground">
-                    Try different keywords or check your spelling
+                    {t("noResultsDescription")}
                   </p>
                 </div>
               ) : (
@@ -231,7 +228,9 @@ export default function SearchPage() {
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Calendar className="h-3 w-3" />
                               <span>
-                                Updated {formatDate(result.updatedAt)}
+                                {t("updatedOn", {
+                                  date: formatDate(result.updatedAt),
+                                })}
                               </span>
                               {result.matchedMessages.length > 0 && (
                                 <>
@@ -240,11 +239,13 @@ export default function SearchPage() {
                                     className="h-3"
                                   />
                                   <span>
-                                    {result.matchedMessages.length} matched
-                                    message
-                                    {result.matchedMessages.length !== 1
-                                      ? "s"
-                                      : ""}
+                                    {t("matchedMessages", {
+                                      count: result.matchedMessages.length,
+                                      plural:
+                                        result.matchedMessages.length !== 1
+                                          ? "s"
+                                          : "",
+                                    })}
                                   </span>
                                 </>
                               )}
@@ -277,7 +278,9 @@ export default function SearchPage() {
                                       }
                                       className="text-xs"
                                     >
-                                      {message.role === "user" ? "You" : "AI"}
+                                      {message.role === "user"
+                                        ? t("you")
+                                        : t("ai")}
                                     </Badge>
                                     <span className="text-xs text-muted-foreground">
                                       {formatDate(message.createdAt)}
@@ -293,8 +296,9 @@ export default function SearchPage() {
                               ))}
                             {result.matchedMessages.length > 3 && (
                               <p className="text-xs text-muted-foreground text-center">
-                                +{result.matchedMessages.length - 3} more
-                                matched messages
+                                {t("moreMatches", {
+                                  count: result.matchedMessages.length - 3,
+                                })}
                               </p>
                             )}
                           </div>
@@ -310,10 +314,11 @@ export default function SearchPage() {
           {!searchResults && !isLoading && (
             <div className="text-center py-12">
               <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Browse & Search</h3>
+              <h3 className="text-lg font-medium mb-2">
+                {t("startSearching")}
+              </h3>
               <p className="text-muted-foreground">
-                All your conversations are shown below. Enter keywords to search
-                for specific content.
+                {t("startSearchingDescription")}
               </p>
             </div>
           )}

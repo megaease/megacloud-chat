@@ -330,5 +330,25 @@
     "networkError": "网络错误",
     "tryAgain": "请稍后重试",
     "goHome": "回到首页"
+  },
+  "Search": {
+    "title": "全部对话",
+    "searchResults": "搜索结果",
+    "description": "浏览全部对话或搜索特定内容",
+    "searchResultsDescription": "搜索结果",
+    "searchPlaceholder": "搜索对话和消息...",
+    "searching": "搜索中...",
+    "searchFailed": "搜索失败，请重试。",
+    "noResults": "未找到对话",
+    "noResultsDescription": "尝试不同的关键词或检查拼写",
+    "startSearching": "浏览和搜索",
+    "startSearchingDescription": "下方显示您的全部对话。输入关键词搜索特定内容。",
+    "foundResults": "找到 {count} 个包含 \"{query}\" 的对话",
+    "showingResults": "显示 {count} 个对话",
+    "matchedMessages": "{count} 条匹配消息",
+    "moreMatches": "还有 {count} 条匹配消息",
+    "updatedOn": "更新于 {date}",
+    "you": "您",
+    "ai": "AI"
   }
 }
