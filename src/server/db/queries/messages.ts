@@ -93,6 +93,10 @@ export async function updateMessage(
 		}
 
 		const currentMessage = existingMessage[0];
+		if (!currentMessage) {
+			throw new Error("Message not found");
+		}
+		
 		const previousContent = currentMessage.content;
 
 		// Don't update if content is the same
