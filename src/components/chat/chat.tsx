@@ -1,18 +1,17 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useChat, type Message } from "@ai-sdk/react";
+import { useChat } from "@ai-sdk/react";
 import { nanoid } from "nanoid";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 import { useApiProvider } from "@/context/api-provider-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { useEditMessage } from "@/hooks/use-edit-message";
-import { ChatView } from "./chat-view";
+import { VirtualChatView } from "./VirtualChatView";
 import { IconLoader2 } from "@tabler/icons-react";
-import { appendClientMessage, type UIMessage } from "ai";
+import type { UIMessage } from "ai";
 import type { DBMessage } from "@/server/db/schema";
 import { DataStreamHandler } from "../artifact/DataStreamHandler";
 import { ArtifactModal } from "@/components/artifact/ArtifactModal";
@@ -358,7 +357,8 @@ export function Chat() {
   return (
     <ArtifactProvider>
       <ArtifactOpener artifactId={openArtifactId} />
-      <ChatView
+      
+      <VirtualChatView
         messages={messages}
         input={input}
         handleInputChange={handleInputChange}

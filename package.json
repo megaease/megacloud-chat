@@ -56,6 +56,7 @@
 		"@tabler/icons-react": "^3.34.0",
 		"@tanstack/react-query": "^5.74.4",
 		"@tanstack/react-table": "^8.21.3",
+		"@tanstack/react-virtual": "^3.13.12",
 		"@types/babel__standalone": "^7.1.9",
 		"@uiw/codemirror-theme-github": "^4.23.12",
 		"@uiw/react-codemirror": "^4.23.12",
