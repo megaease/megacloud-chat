@@ -15,7 +15,7 @@ import type { UIMessage } from "ai";
 import type { DBMessage } from "@/server/db/schema";
 import { DataStreamHandler } from "../artifact/DataStreamHandler";
 import { ArtifactModal } from "@/components/artifact/ArtifactModal";
-import { ArtifactChatPanel } from "@/components/artifact/ArtifactChatPanel";
+import { VirtualArtifactChatPanel } from "@/components/artifact/VirtualArtifactChatPanel";
 import { ArtifactContentPanel } from "@/components/artifact/ArtifactContentPanel";
 import { ArtifactProvider } from "@/context/artifact-provider-context";
 import { ArtifactOpener } from "./ArtifactOpener";
@@ -381,7 +381,7 @@ export function Chat() {
       <DataStreamHandler chatId={chatId} />
       <ArtifactModal
         chatPanel={
-          <ArtifactChatPanel
+          <VirtualArtifactChatPanel
             chatId={chatId}
             messages={messages}
             input={input}

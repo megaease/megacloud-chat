@@ -46,14 +46,14 @@ interface VirtualChatViewProps {
 const estimateMessageSize = (message: Message): number => {
   // 基础高度
   let baseHeight = 80;
-  
+
   // 根据角色调整
   if (message.role === "assistant") {
     baseHeight = 120;
   } else if (message.role === "system") {
     baseHeight = 60;
   }
-  
+
   // 根据内容长度调整
   const contentLength = message.content?.length || 0;
   if (contentLength > 500) {
@@ -61,23 +61,26 @@ const estimateMessageSize = (message: Message): number => {
   } else if (contentLength > 100) {
     baseHeight += Math.floor(contentLength / 100) * 15;
   }
-  
+
   // 检查是否有附件
-  if (message.experimental_attachments && message.experimental_attachments.length > 0) {
+  if (
+    message.experimental_attachments &&
+    message.experimental_attachments.length > 0
+  ) {
     baseHeight += message.experimental_attachments.length * 80;
   }
-  
+
   // 检查是否有工具调用
   if (message.toolInvocations && message.toolInvocations.length > 0) {
     baseHeight += message.toolInvocations.length * 120;
   }
-  
+
   // 检查是否有代码块 (粗略估算)
   const codeBlockCount = (message.content?.match(/```/g) || []).length / 2;
   if (codeBlockCount > 0) {
     baseHeight += codeBlockCount * 150;
   }
-  
+
   return Math.max(baseHeight, 60); // 最小高度
 };
 
@@ -101,10 +104,10 @@ export function VirtualChatView({
   editingMessageId,
 }: VirtualChatViewProps) {
   const tCommon = useTranslations("Common");
-  
+
   // 虚拟滚动容器的引用
   const parentRef = useRef<HTMLDivElement>(null);
-  
+
   // 编辑状态管理
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
   const [editedMessageData, setEditedMessageData] = useState<{
@@ -116,12 +119,15 @@ export function VirtualChatView({
   const virtualizer = useVirtualizer({
     count: messages.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: useCallback((index: number) => {
-      const message = messages[index];
-      if (!message) return 100; // 默认高度
-      return estimateMessageSize(message);
-    }, [messages]),
-    overscan: 5, // 预渲染5个项目
+    estimateSize: useCallback(
+      (index: number) => {
+        const message = messages[index];
+        if (!message) return 100; // 默认高度
+        return estimateMessageSize(message);
+      },
+      [messages]
+    ),
+    overscan: 5, // 预渲染 5 个项目
     // 启用动态大小调整
     measureElement: (element) => {
       // 返回元素的实际高度，用于精确测量
@@ -132,16 +138,16 @@ export function VirtualChatView({
   // 自动滚动到底部 - 优化版本
   const scrollToBottom = useCallback(() => {
     if (messages.length === 0) return;
-    
+
     try {
-      // 方法1: 使用 virtualizer 的 scrollToIndex
+      // 方法 1: 使用 virtualizer 的 scrollToIndex
       virtualizer.scrollToIndex(messages.length - 1, {
-        align: 'end',
-        behavior: 'smooth',
+        align: "end",
+        behavior: "smooth",
       });
     } catch (error) {
-      // 方法2: fallback 到直接滚动
-      console.warn('Virtualizer scrollToIndex failed, using fallback:', error);
+      // 方法 2: fallback 到直接滚动
+      console.warn("Virtualizer scrollToIndex failed, using fallback:", error);
       if (parentRef.current) {
         parentRef.current.scrollTop = parentRef.current.scrollHeight;
       }
@@ -151,27 +157,28 @@ export function VirtualChatView({
   // 检查是否在底部附近 - 基于虚拟滚动的逻辑
   const isNearBottom = useCallback(() => {
     if (!parentRef.current || messages.length === 0) return true;
-    
+
     // 获取当前可见的虚拟项
     const virtualItems = virtualizer.getVirtualItems();
     if (virtualItems.length === 0) return true;
-    
+
     // 检查最后一个可见项是否是最后的消息
     const lastVisibleIndex = virtualItems[virtualItems.length - 1]?.index ?? 0;
     const isLastMessageVisible = lastVisibleIndex >= messages.length - 1;
-    
+
     // 或者检查滚动位置
     const scrollElement = parentRef.current;
     const { scrollTop, scrollHeight, clientHeight } = scrollElement;
     const threshold = 100; // 100px 阈值
-    const isScrollNearBottom = scrollTop + clientHeight >= scrollHeight - threshold;
-    
+    const isScrollNearBottom =
+      scrollTop + clientHeight >= scrollHeight - threshold;
+
     return isLastMessageVisible || isScrollNearBottom;
   }, [virtualizer, messages.length]);
 
   // 检查用户是否手动滚动了
   const [isAtBottom, setIsAtBottom] = useState(true);
-  
+
   useEffect(() => {
     const scrollElement = parentRef.current;
     if (!scrollElement) return;
@@ -191,7 +198,7 @@ export function VirtualChatView({
       const timer = setTimeout(() => {
         scrollToBottom();
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
   }, [messages.length, scrollToBottom, isAtBottom]);
@@ -204,7 +211,7 @@ export function VirtualChatView({
         const timer = setTimeout(() => {
           scrollToBottom();
         }, 200);
-        
+
         return () => clearTimeout(timer);
       }
     }
@@ -263,20 +270,20 @@ export function VirtualChatView({
             ref={parentRef}
             className="h-full overflow-y-auto px-2 sm:px-4"
             style={{
-              contain: 'strict',
+              contain: "strict",
             }}
           >
             <div
               style={{
                 height: virtualizer.getTotalSize(),
-                width: '100%',
-                position: 'relative',
+                width: "100%",
+                position: "relative",
               }}
             >
               {virtualizer.getVirtualItems().map((virtualItem) => {
                 const message = messages[virtualItem.index];
                 if (!message) return null; // 安全检查
-                
+
                 const isLastMessage = virtualItem.index === messages.length - 1;
                 const isEditing = editingMessageId === message.id;
 
@@ -286,10 +293,10 @@ export function VirtualChatView({
                     data-index={virtualItem.index}
                     ref={virtualizer.measureElement}
                     style={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: 0,
                       left: 0,
-                      width: '100%',
+                      width: "100%",
                       transform: `translateY(${virtualItem.start}px)`,
                     }}
                   >
@@ -329,13 +336,13 @@ export function VirtualChatView({
           )}
         </div>
       )}
-      
+
       {status === "submitted" && (
         <div className="flex-shrink-0 relative">
           <Thinking />
         </div>
       )}
-      
+
       {/* Chat input - 固定在底部 */}
       <div className="flex-shrink-0">
         <ChatInput
@@ -349,7 +356,7 @@ export function VirtualChatView({
           isUploading={isUploading}
         />
       </div>
-      
+
       {/* Edit Confirmation Dialog */}
       <EditConfirmationDialog
         isOpen={showEditConfirmation}
