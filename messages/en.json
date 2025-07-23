@@ -1,12 +1,34 @@
 {
   "HomePage": {
-    "title": "MegaCloud MCP",
-    "description": "AI Assistant with Model Context Protocol",
-    "welcome": "Experience intelligent conversations powered by advanced AI models and seamless context understanding.",
+    "title": "MegaCloud Chat",
+    "description": "Next-Generation AI Assistant with MCP & Artifacts",
+    "welcome": "Unlock the full potential of AI with Model Context Protocol integration and interactive artifacts. Create, collaborate, and innovate with intelligent tools that understand your context.",
     "configurationRequired": "Configuration required",
     "readyWith": "Ready with {model}",
     "getStarted": "Get Started",
-    "startConversation": "Start a conversation to begin..."
+    "startConversation": "Start typing your message to begin a new conversation",
+    "features": {
+      "mcp": {
+        "title": "Model Context Protocol",
+        "description": "Connect and manage external tools and services seamlessly. Enable AI to interact with your development environment, databases, APIs, and more through standardized MCP servers.",
+        "tags": ["STDIO & SSE Support", "Real-time Management"]
+      },
+      "artifacts": {
+        "title": "Interactive Artifacts",
+        "description": "Create, edit, and preview documents, code, data tables, and visualizations in real-time. Support for React components, HTML, Python scripts, and more with live execution environments.",
+        "tags": ["Live Preview", "Version History"]
+      },
+      "ai": {
+        "title": "Multi-Provider AI",
+        "description": "Support for multiple AI providers including OpenAI, Anthropic, DeepSeek, and more. Switch between models seamlessly and configure custom endpoints for your specific needs.",
+        "tags": ["Multi-Provider", "Custom Endpoints"]
+      },
+      "chat": {
+        "title": "Smart Chat Management",
+        "description": "Organize and manage your conversations with intelligent chat history, search functionality, and convenient conversation management tools.",
+        "tags": ["Chat History", "Smart Search"]
+      }
+    }
   },
   "Navigation": {
     "dashboard": "Dashboard",

@@ -1,12 +1,34 @@
 {
   "HomePage": {
-    "title": "MegaCloud MCP",
-    "description": "基于 Model Context Protocol 的 AI 助手",
-    "welcome": "体验由先进 AI 模型和无缝上下文理解驱动的智能对话。",
+    "title": "MegaCloud Chat",
+    "description": "新一代 AI 助手，集成 MCP 与 Artifacts",
+    "welcome": "释放 AI 的全部潜能，通过 Model Context Protocol 集成和交互式 Artifacts 实现创作、协作与创新。智能工具理解您的上下文，助力高效工作。",
     "configurationRequired": "需要配置",
     "readyWith": "已准备就绪：{model}",
     "getStarted": "开始使用",
-    "startConversation": "开始对话..."
+    "startConversation": "开始输入消息以开始新对话",
+    "features": {
+      "mcp": {
+        "title": "Model Context Protocol",
+        "description": "无缝连接和管理外部工具与服务。让 AI 通过标准化的 MCP 服务器与您的开发环境、数据库、API 等进行交互。",
+        "tags": ["STDIO & SSE 支持", "实时管理"]
+      },
+      "artifacts": {
+        "title": "交互式 Artifacts",
+        "description": "实时创建、编辑和预览文档、代码、数据表格和可视化内容。支持 React 组件、HTML、Python 脚本等，提供实时执行环境。",
+        "tags": ["实时预览", "版本历史"]
+      },
+      "ai": {
+        "title": "多提供商 AI",
+        "description": "支持多个 AI 提供商，包括 OpenAI、Anthropic、DeepSeek 等。无缝切换模型，为您的特定需求配置自定义端点。",
+        "tags": ["多提供商", "自定义端点"]
+      },
+      "chat": {
+        "title": "智能聊天管理",
+        "description": "通过智能聊天历史记录、搜索功能和便捷的对话管理来组织您的所有聊天内容。",
+        "tags": ["聊天历史", "智能搜索"]
+      }
+    }
   },
   "Navigation": {
     "dashboard": "仪表板",
@@ -249,7 +271,7 @@
     "clickOpenToViewFull": "点击查看完整内容...",
     "toggleColumns": "切换列显示",
     "untitled": "无标题",
-    "exportCSV": "导出为CSV",
+    "exportCSV": "导出为 CSV",
     "failedToLoadContent": "加载内容失败",
     "errorLoadingDocument": "加载文档时发生错误",
     "unsupportedContentType": "不支持的内容类型",
@@ -275,7 +297,7 @@
     "clickInitializeToStart": "点击初始化按钮启动环境",
     "ready": "准备就绪",
     "clickExecuteToViewOutput": "点击执行按钮查看输出结果",
-    "initializePythonEnvironment": "初始化Python环境",
+    "initializePythonEnvironment": "初始化 Python 环境",
     "executeCode": "执行代码",
     "executing": "执行中...",
     "initializing": "初始化中...",
