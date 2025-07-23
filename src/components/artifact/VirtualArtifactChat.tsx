@@ -9,7 +9,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatInput } from "../chat/chat-input";
 import { ArtifactMessage } from "./ArtifactMessage";
-import { useVirtualChatScroll } from "@/hooks/use-virtual-chat-scroll";
+import { useChatVirtualScroll } from "@/hooks/use-chat-virtual-scroll";
 
 interface VirtualArtifactChatProps {
   className?: string;
@@ -48,11 +48,10 @@ export function VirtualArtifactChat({
 }: VirtualArtifactChatProps) {
   // 使用优化的虚拟滚动hook
   const { virtualizer, parentRef, isAtBottom, scrollToBottom } =
-    useVirtualChatScroll(messages, {
+    useChatVirtualScroll(messages, {
       behavior: "smooth",
       bottomThreshold: 50, // Artifact中使用更小的阈值
       overscan: 3, // Artifact聊天中预渲染3个项目
-      streamingScrollInterval: 120, // 更快的流式响应滚动
       debug: process.env.NODE_ENV === "development",
     });
 

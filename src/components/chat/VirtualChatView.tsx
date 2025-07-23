@@ -10,7 +10,7 @@ import type { Message } from "@ai-sdk/react";
 import { ChatInput } from "./chat-input";
 import { EditConfirmationDialog } from "./edit-confirmation-dialog";
 import { Thinking } from "./thinking";
-import { useVirtualChatScroll } from "@/hooks/use-virtual-chat-scroll";
+import { useChatVirtualScroll } from "@/hooks/use-chat-virtual-scroll";
 
 interface VirtualChatViewProps {
   messages: Message[];
@@ -65,11 +65,10 @@ export function VirtualChatView({
 
   // 使用优化的虚拟滚动hook
   const { virtualizer, parentRef, isAtBottom, scrollToBottom } =
-    useVirtualChatScroll(messages, {
+    useChatVirtualScroll(messages, {
       behavior: "smooth",
       bottomThreshold: 80,
       overscan: 5,
-      streamingScrollInterval: 150,
       debug: process.env.NODE_ENV === "development",
     });
 

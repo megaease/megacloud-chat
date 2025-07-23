@@ -191,6 +191,7 @@
     "compilationFailed": "编译失败",
     "previewNotSupported": "暂不支持预览",
     "languageNotSupported": "{language} 语言暂时不支持可视化预览",
+    "preparingContent": "正在准备内容...",
     "javascriptExecution": "JavaScript 执行",
     "sandboxEnvironment": "沙盒环境",
     "run": "运行",

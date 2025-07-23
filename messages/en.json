@@ -191,6 +191,7 @@
     "compilationFailed": "Compilation failed",
     "previewNotSupported": "Preview not supported",
     "languageNotSupported": "{language} language does not support visual preview yet",
+    "preparingContent": "Preparing content...",
     "javascriptExecution": "JavaScript Execution",
     "sandboxEnvironment": "Sandbox Environment",
     "run": "Run",
