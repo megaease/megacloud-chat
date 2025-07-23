@@ -42,14 +42,14 @@ function estimateMessageHeight(message: Message): number {
   // 代码块额外高度
   const codeBlocks = (content.match(/```[\s\S]*?```/g) || []).length;
   if (codeBlocks > 0) {
-    baseHeight += codeBlocks * 200; // 每个代码块约200px
+    baseHeight += codeBlocks * 200; // 每个代码块约 200px
   }
   
   return Math.min(baseHeight, 800); // 限制最大高度
 }
 
 /**
- * 专为聊天优化的虚拟滚动hook
+ * 专为聊天优化的虚拟滚动 hook
  * 核心特性：
  * 1. 默认从最后一条消息开始显示
  * 2. 智能的底部检测和自动滚动
@@ -70,7 +70,8 @@ export function useChatVirtualScroll(
   const parentRef = useRef<HTMLDivElement>(null);
   const isUserScrollingRef = useRef(false);
   const hasInitializedRef = useRef(false);
-  
+  const lastMessagesLengthRef = useRef(0);
+
   const [isAtBottom, setIsAtBottom] = useState(true);
   
   // 创建虚拟化器
@@ -111,7 +112,7 @@ export function useChatVirtualScroll(
     }
 
     if (scrollBehavior === 'smooth') {
-      // 平滑滚动：使用原生scrollTo
+      // 平滑滚动：使用原生 scrollTo
       const scrollElement = parentRef.current;
       if (scrollElement) {
         const totalSize = virtualizer.getTotalSize();
@@ -121,7 +122,7 @@ export function useChatVirtualScroll(
         });
       }
     } else {
-      // 立即滚动：使用virtualizer的scrollToIndex
+      // 立即滚动：使用 virtualizer 的 scrollToIndex
       virtualizer.scrollToIndex(messages.length - 1, {
         align: 'end',
       });
@@ -140,18 +141,21 @@ export function useChatVirtualScroll(
   useEffect(() => {
     if (messages.length > 0 && virtualizer && !hasInitializedRef.current) {
       hasInitializedRef.current = true;
-      
+
       if (debug) {
         console.log('[ChatVirtualScroll] Initializing at bottom, messages:', messages.length);
       }
-      
-      // 立即滚动到最后一条消息
-      virtualizer.scrollToIndex(messages.length - 1, {
-        align: 'end',
-      });
-      
-      setIsAtBottom(true);
-      isUserScrollingRef.current = false;
+
+      // 使用 setTimeout 确保 DOM 已经渲染
+      setTimeout(() => {
+        // 立即滚动到最后一条消息
+        virtualizer.scrollToIndex(messages.length - 1, {
+          align: 'end',
+        });
+
+        setIsAtBottom(true);
+        isUserScrollingRef.current = false;
+      }, 0);
     }
   }, [messages.length, virtualizer, debug]);
 

@@ -1,7 +1,6 @@
 // components/artifact/VirtualArtifactChat.tsx
 "use client";
 
-import { useState } from "react";
 import type { Message } from "@ai-sdk/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -46,12 +45,12 @@ export function VirtualArtifactChat({
   mcpEnabled,
   toggleMcpEnabled,
 }: VirtualArtifactChatProps) {
-  // 使用优化的虚拟滚动hook
+  // 使用优化的虚拟滚动 hook
   const { virtualizer, parentRef, isAtBottom, scrollToBottom } =
     useChatVirtualScroll(messages, {
       behavior: "smooth",
-      bottomThreshold: 50, // Artifact中使用更小的阈值
-      overscan: 3, // Artifact聊天中预渲染3个项目
+      bottomThreshold: 50, // Artifact 中使用更小的阈值
+      overscan: 3, // Artifact 聊天中预渲染 3 个项目
       debug: process.env.NODE_ENV === "development",
     });
 
@@ -99,10 +98,10 @@ export function VirtualArtifactChat({
           </div>
         </div>
       ) : (
-        <div className="flex-1 relative min-h-0">
+        <div className="flex-1 relative min-h-0 overflow-hidden">
           <div
             ref={parentRef}
-            className="h-full overflow-y-auto overflow-x-hidden px-2"
+            className="absolute inset-0 overflow-y-auto overflow-x-hidden px-2"
             style={{
               contain: "strict",
             }}

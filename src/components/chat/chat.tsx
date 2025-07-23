@@ -78,10 +78,18 @@ function useChatMessages(chatId: string | undefined) {
   return query;
 }
 
-// Container component that handles data and state
-export function Chat() {
-  const { id } = useParams();
-  const chatId = id as string;
+// Chat content component that handles the actual chat logic
+function ChatContent({
+  chatId,
+  chatMessages,
+  shouldCreateArtifact,
+  openArtifactId,
+}: {
+  chatId: string | undefined;
+  chatMessages: UIMessage[];
+  shouldCreateArtifact: boolean;
+  openArtifactId: string | null;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { currentProvider, currentModel } = useApiProvider();
@@ -95,45 +103,12 @@ export function Chat() {
   });
   const [isUploading] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Get createArtifact flag from URL search params
-  const [shouldCreateArtifact, setShouldCreateArtifact] = useState(false);
-  const [openArtifactId, setOpenArtifactId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const createArtifact = urlParams.get("createArtifact") === "true";
-      const openArtifact = urlParams.get("openArtifact");
+  // Ensure we have a valid chatId for components that require it
+  const effectiveChatId = chatId || randomChatId || "";
 
-      setShouldCreateArtifact(createArtifact);
-      setOpenArtifactId(openArtifact);
-    }
-  }, []);
-
-  // Get chat messages
-  const chatMessagesQuery = useChatMessages(chatId);
-  const {
-    data: chatMessages = [],
-    isLoading: isLoadingMessage,
-    isError: isLoadingError,
-    error: loadingError,
-  } = chatMessagesQuery;
-
-  // Show error toast for loading errors
-  useEffect(() => {
-    if (isLoadingError && loadingError) {
-      toast.error("Failed to load chat messages", {
-        description:
-          loadingError instanceof Error
-            ? loadingError.message
-            : "Unknown error",
-      });
-    }
-  }, [isLoadingError, loadingError]);
-
-  // Use AI chat hooks
+  // Use AI chat hooks - now with properly loaded chatMessages
   const {
     messages,
     input,
@@ -147,7 +122,8 @@ export function Chat() {
   } = useChat({
     id: chatId || randomChatId,
     maxSteps: 10,
-    initialMessages: chatMessages,
+    initialMessages: chatMessages, // Now guaranteed to be loaded
+    api: "/api/chat", // Explicitly set the API endpoint
     experimental_prepareRequestBody: (body) => {
       // Check if provider and model are configured
       if (!currentProvider) {
@@ -186,10 +162,15 @@ export function Chat() {
     },
   });
 
+  // Ensure messages are properly initialized from chatMessages
+  // This fixes the artifact chat panel not showing messages initially
+  // Use chatMessages if useChat hasn't initialized messages yet, otherwise use messages from useChat
+  const effectiveMessages = messages.length > 0 ? messages : chatMessages;
+
   // Set initial prompt from URL if this is a new chat for creating artifact
   useEffect(() => {
     // For new chats with createArtifact flag, set the initial prompt
-    if (shouldCreateArtifact && messages.length === 0 && setInput) {
+    if (shouldCreateArtifact && effectiveMessages.length === 0 && setInput) {
       const defaultPrompt =
         "Please help me create a new Artifact. I want:\n\n1. Type: [text/code/table/image]\n2. Content: [describe what you want to create]\n3. Features: [specific requirements]\n\nExample: Create a React component that implements a todo list";
       setInput(defaultPrompt);
@@ -201,7 +182,7 @@ export function Chat() {
         router.replace(url.pathname + url.search, { scroll: false });
       }
     }
-  }, [shouldCreateArtifact, messages.length, setInput, router]);
+  }, [shouldCreateArtifact, effectiveMessages.length, setInput, router]);
 
   // Calculate loading state
   const isLoading = status === "streaming" || status === "submitted";
@@ -306,14 +287,7 @@ export function Chat() {
   };
 
   // Handle edit message
-  const handleEditMessage = async (
-    messageId: string,
-    newContent: string,
-    options?: {
-      regenerateAI?: boolean;
-      deleteSubsequent?: boolean;
-    }
-  ) => {
+  const handleEditMessage = async (messageId: string, newContent: string) => {
     try {
       // 1. 保存到数据库
       await editMessage(messageId, newContent);
@@ -346,20 +320,12 @@ export function Chat() {
     setEditingMessageId(null);
   };
 
-  if (isLoadingMessage) {
-    return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-        <IconLoader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
     <ArtifactProvider>
       <ArtifactOpener artifactId={openArtifactId} />
-      
+
       <VirtualChatView
-        messages={messages}
+        messages={effectiveMessages}
         input={input}
         handleInputChange={handleInputChange}
         handleSubmit={handleFormSubmit}
@@ -378,12 +344,12 @@ export function Chat() {
         editingMessageId={editingMessageId}
       />
 
-      <DataStreamHandler chatId={chatId} />
+      <DataStreamHandler chatId={effectiveChatId} />
       <ArtifactModal
         chatPanel={
           <VirtualArtifactChatPanel
-            chatId={chatId}
-            messages={messages}
+            chatId={effectiveChatId}
+            messages={effectiveMessages} // Use effectiveMessages to ensure initial messages are shown
             input={input}
             handleInputChange={handleInputChange}
             handleSubmit={handleFormSubmit}
@@ -400,5 +366,67 @@ export function Chat() {
         <ArtifactContentPanel />
       </ArtifactModal>
     </ArtifactProvider>
+  );
+}
+
+// Container component that handles data loading and conditional rendering
+export function Chat() {
+  const { id } = useParams();
+  const chatId = id as string;
+
+  // Get createArtifact flag from URL search params
+  const [shouldCreateArtifact, setShouldCreateArtifact] = useState(false);
+  const [openArtifactId, setOpenArtifactId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const createArtifact = urlParams.get("createArtifact") === "true";
+      const openArtifact = urlParams.get("openArtifact");
+
+      setShouldCreateArtifact(createArtifact);
+      setOpenArtifactId(openArtifact);
+    }
+  }, []);
+
+  // Get chat messages
+  const chatMessagesQuery = useChatMessages(chatId);
+  const {
+    data: chatMessages = [],
+    isLoading: isLoadingMessage,
+    isError: isLoadingError,
+    error: loadingError,
+  } = chatMessagesQuery;
+
+  // Show error toast for loading errors
+  useEffect(() => {
+    if (isLoadingError && loadingError) {
+      toast.error("Failed to load chat messages", {
+        description:
+          loadingError instanceof Error
+            ? loadingError.message
+            : "Unknown error",
+      });
+    }
+  }, [isLoadingError, loadingError]);
+
+  // Show loading state while messages are being fetched
+  if (isLoadingMessage) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2">
+        <IconLoader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Only render ChatContent when messages are loaded
+  // This ensures useChat gets the correct initialMessages
+  return (
+    <ChatContent
+      chatId={chatId}
+      chatMessages={chatMessages}
+      shouldCreateArtifact={shouldCreateArtifact}
+      openArtifactId={openArtifactId}
+    />
   );
 }
