@@ -291,8 +291,8 @@ export async function updateMcpServerStatus(id: number, status: ServerStatus) {
 			.where(eq(mcpServers.id, id))
 			.returning();
 
-		// Revalidate the path to update the UI
-		revalidatePath("/");
+		// Note: revalidatePath is removed from here to avoid render-time issues
+		// UI updates should be handled by the calling component
 
 		return { success: true, data: updatedServer };
 	} catch (error) {

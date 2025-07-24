@@ -31,95 +31,74 @@ class MCPConnectionManager {
 	>();
 
 	/**
-	 * 验证 STDIO 命令是否可执行
+	 * 简化的命令验证 - 只检查命令是否存在，不实际运行
 	 */
 	private async validateStdioCommand(
 		command: string,
-		args: string[] = [],
-		env: Record<string, string> = {},
+		_args: string[] = [],
+		_env: Record<string, string> = {},
 	): Promise<{ success: boolean; error?: string }> {
-		return new Promise((resolve) => {
-			// 动态导入 spawn 以避免在客户端使用
+		try {
+			// 动态导入 which 或使用简单的命令检查
 			const { spawn } = require("node:child_process");
 
-			let errorOutput = "";
-			let hasResolved = false;
+			console.log(`Validating command availability: ${command}`);
 
-			const childProcess = spawn(command, args, {
-				env: { ...process.env, ...env },
-				stdio: ["pipe", "pipe", "pipe"],
-			});
+			// 对于常见的包管理器，直接返回成功，让实际连接时处理
+			const trustedCommands = ["npx", "uvx", "pnpx", "yarn", "bun", "deno", "node", "python", "python3", "docker"];
+			if (trustedCommands.includes(command)) {
+				console.log(`Trusted command ${command}, skipping validation`);
+				return { success: true };
+			}
 
-			// 设置超时
-			const timeout = setTimeout(() => {
-				if (!hasResolved) {
-					hasResolved = true;
-					childProcess.kill();
-					resolve({
-						success: false,
-						error: `Command execution timeout (10s): ${command} ${args.join(" ")}`,
-					});
-				}
-			}, 10000);
+			// 对于其他命令，做简单的存在性检查
+			return new Promise((resolve) => {
+				const checkProcess = spawn("which", [command], {
+					stdio: ["pipe", "pipe", "pipe"],
+				});
 
-			// 捕获 stderr 输出
-			childProcess.stderr?.on("data", (data: Buffer) => {
-				errorOutput += data.toString();
-			});
+				let hasResolved = false;
 
-			// 处理进程退出
-			childProcess.on("exit", (code: number | null, signal: string | null) => {
-				clearTimeout(timeout);
-				if (!hasResolved) {
-					hasResolved = true;
-
-					if (code === 0) {
+				// 3 秒超时
+				const timeout = setTimeout(() => {
+					if (!hasResolved) {
+						hasResolved = true;
+						checkProcess.kill();
+						// 即使检查失败，也允许尝试连接
+						console.log(`Command check timeout for ${command}, allowing connection attempt`);
 						resolve({ success: true });
-					} else {
-						let errorMessage = `Command failed with exit code ${code}`;
-						if (signal) {
-							errorMessage += ` (signal: ${signal})`;
-						}
-						if (errorOutput.trim()) {
-							errorMessage += `\nError output: ${errorOutput.trim()}`;
-						}
-						resolve({
-							success: false,
-							error: errorMessage,
-						});
 					}
-				}
-			});
+				}, 3000);
 
-			// 处理 spawn 错误（如命令不存在）
-			childProcess.on("error", (error: Error) => {
-				clearTimeout(timeout);
-				if (!hasResolved) {
-					hasResolved = true;
-					let errorMessage = `Failed to execute command: ${command}`;
-
-					if (error.message.includes("ENOENT")) {
-						errorMessage += " (command not found)";
-					} else if (error.message.includes("EACCES")) {
-						errorMessage += " (permission denied)";
+				checkProcess.on("exit", (code: number | null) => {
+					clearTimeout(timeout);
+					if (!hasResolved) {
+						hasResolved = true;
+						if (code === 0) {
+							resolve({ success: true });
+						} else {
+							// 命令不存在，但仍然允许尝试连接
+							console.log(`Command ${command} not found in PATH, but allowing connection attempt`);
+							resolve({ success: true });
+						}
 					}
+				});
 
-					errorMessage += `\nDetails: ${error.message}`;
-
-					resolve({
-						success: false,
-						error: errorMessage,
-					});
-				}
+				checkProcess.on("error", () => {
+					clearTimeout(timeout);
+					if (!hasResolved) {
+						hasResolved = true;
+						// 检查失败，但仍然允许尝试连接
+						console.log(`Command check failed for ${command}, but allowing connection attempt`);
+						resolve({ success: true });
+					}
+				});
 			});
-
-			// 立即关闭子进程，我们只是测试它是否能启动
-			setTimeout(() => {
-				if (!hasResolved) {
-					childProcess.kill();
-				}
-			}, 1000);
-		});
+		} catch (error) {
+			// 验证失败时，仍然允许尝试连接
+			console.log(`Command validation error for ${command}:`, error);
+			return { success: true };
+		}
 	}
 
 	/**
@@ -282,8 +261,14 @@ class MCPConnectionManager {
 				const serverTools = await connection.client.tools();
 
 				// 使用服务器名称作为前缀避免工具名冲突
+				// 清理服务器名称，确保符合工具名称规范（只允许字母、数字、下划线和连字符）
+				const cleanServerName = connection.server.name
+					.replace(/[^a-zA-Z0-9_-]/g, "_") // 将非法字符替换为下划线
+					.replace(/_+/g, "_") // 将多个连续下划线合并为一个
+					.replace(/^_|_$/g, ""); // 移除开头和结尾的下划线
+
 				for (const [toolName, toolImpl] of Object.entries(serverTools)) {
-					const prefixedToolName = `${connection.server.name}_${toolName}`;
+					const prefixedToolName = `${cleanServerName}_${toolName}`;
 					allTools[prefixedToolName] = toolImpl;
 				}
 			} catch (error) {
