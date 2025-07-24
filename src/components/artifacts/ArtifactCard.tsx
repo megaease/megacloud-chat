@@ -122,7 +122,10 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 	if (viewMode === "list") {
 		return (
 			<>
-				<Card className="hover:shadow-md transition-shadow">
+				<Card 
+					className="hover:shadow-md transition-shadow cursor-pointer"
+					onClick={() => handleAction("view")}
+				>
 					<CardContent className="p-4">
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-3 flex-1 min-w-0">
@@ -159,7 +162,11 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 								)}
 								<DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
 									<DropdownMenuTrigger asChild>
-										<Button variant="ghost" size="sm">
+										<Button 
+											variant="ghost" 
+											size="sm"
+											onClick={(e) => e.stopPropagation()}
+										>
 											<MoreHorizontal className="h-4 w-4" />
 										</Button>
 									</DropdownMenuTrigger>
@@ -200,7 +207,10 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 
 	return (
 		<>
-			<Card className="hover:shadow-md transition-shadow cursor-pointer group">
+			<Card 
+				className="hover:shadow-md transition-shadow cursor-pointer group"
+				onClick={() => handleAction("view")}
+			>
 				<CardHeader className="pb-3">
 					<div className="flex items-start justify-between">
 						<div
@@ -217,6 +227,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 									variant="ghost"
 									size="sm"
 									className="opacity-0 group-hover:opacity-100 transition-opacity"
+									onClick={(e) => e.stopPropagation()}
 								>
 									<MoreHorizontal className="h-4 w-4" />
 								</Button>
