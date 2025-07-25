@@ -52,8 +52,9 @@ export function HomePage() {
       sendExtraMessageFields: true,
       onFinish: (message) => {
         console.log("Message finished:", message);
+        // 失效聊天列表查询以刷新 sidebar
         queryClient.invalidateQueries({
-          queryKey: ["chats", "user-id"],
+          queryKey: ["chats", "user-id", "recent"],
         });
       },
       onError: (error) => {
@@ -90,7 +91,7 @@ export function HomePage() {
 
         // Update query cache to refresh sidebar chat list
         queryClient.invalidateQueries({
-          queryKey: ["chats", "user-id"],
+          queryKey: ["chats", "user-id", "recent"],
         });
       }, 100);
     } catch (error) {

@@ -47,7 +47,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { use, useState } from "react";
 import { useMCPDrawer } from "@/context/mcp-drawer-context";
-const userId = "user-id"; // Replace with actual user ID
+const USER_ID = "user-id"; // Replace with actual user ID
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations("Navigation");
@@ -65,18 +65,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     isLoading,
     isError,
   } = useQuery<Chat[]>({
-    queryKey: ["chats", userId, "recent"],
+    queryKey: ["chats", USER_ID, "recent"],
     queryFn: async () => {
       const res = await fetch("/api/chats?limit=20", {
         headers: {
-          userId: userId,
+          userId: USER_ID,
         },
       });
       const data = await res.json();
       return data.chats;
     },
-    enabled: !!userId,
-    staleTime: 1000 * 60 * 2,
+    enabled: !!USER_ID,
+    staleTime: 0, // 设置为 0 以确保 invalidateQueries 能立即重新获取
+    refetchOnWindowFocus: false,
   });
 
   // Delete chat mutation
@@ -86,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          userId: userId,
+          userId: USER_ID,
         },
         body: JSON.stringify({ chatId }),
       });
@@ -100,7 +101,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     onSuccess: (_, chatId) => {
       // Refresh chat list after successful deletion
-      queryClient.invalidateQueries({ queryKey: ["chats", userId, "recent"] });
+      queryClient.invalidateQueries({
+        queryKey: ["chats", "user-id", "recent"],
+      });
       toast.success("Chat deleted");
 
       // Navigate to homepage if currently viewing the deleted chat
@@ -126,7 +129,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          userId: userId,
+          userId: USER_ID,
         },
         body: JSON.stringify({ title }),
       });
@@ -140,7 +143,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     onSuccess: () => {
       // Refresh chat list after successful rename
-      queryClient.invalidateQueries({ queryKey: ["chats", userId, "recent"] });
+      queryClient.invalidateQueries({
+        queryKey: ["chats", "user-id", "recent"],
+      });
       toast.success("Chat renamed successfully");
       setEditingChatId(null);
       setEditingTitle("");

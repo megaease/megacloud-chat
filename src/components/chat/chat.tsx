@@ -149,8 +149,9 @@ function ChatContent({
     sendExtraMessageFields: true,
     onFinish: (message) => {
       console.log("Message finished:", message);
+      // 失效聊天列表查询以刷新 sidebar
       queryClient.invalidateQueries({
-        queryKey: ["chats", "user-id"],
+        queryKey: ["chats", "user-id", "recent"],
       });
     },
     onError: (error) => {
@@ -220,7 +221,7 @@ function ChatContent({
 
           // Update query cache to refresh sidebar chat list
           queryClient.invalidateQueries({
-            queryKey: ["chats", "user-id"],
+            queryKey: ["chats", "user-id", "recent"],
           });
         }, 100);
         return;
@@ -302,7 +303,7 @@ function ChatContent({
 
       // 4. 更新聊天列表
       queryClient.invalidateQueries({
-        queryKey: ["chats", "user-id"],
+        queryKey: ["chats", "user-id", "recent"],
       });
     } catch (error) {
       console.error("Failed to edit message:", error);
