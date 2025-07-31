@@ -227,8 +227,20 @@ function PureHtmlPreview({
       )}
 
       {/* 预览区域 */}
-      <div className="flex-1 bg-gradient-to-br from-muted/10 to-muted/30 relative">
-        {viewMode === "desktop" ? (
+      <div
+        className={cn(
+          "relative flex flex-1 items-center justify-center bg-gradient-to-br from-muted/10 to-muted/30 transition-all duration-300 ease-in-out",
+          viewMode !== "desktop" ? "p-6" : "p-0"
+        )}
+      >
+        <div
+          className={cn(
+            "transition-all duration-300 ease-in-out",
+            viewMode !== "desktop" &&
+              "overflow-hidden rounded-lg border-2 border-border/30 bg-white shadow-lg hover:shadow-xl dark:bg-gray-900",
+            getViewportClass()
+          )}
+        >
           <iframe
             ref={iframeRef}
             className="w-full h-full border-0 bg-white dark:bg-gray-900"
@@ -236,24 +248,7 @@ function PureHtmlPreview({
             title="HTML Preview"
             onLoad={handleIframeLoad}
           />
-        ) : (
-          <div className="flex items-center justify-center h-full p-6">
-            <div
-              className={cn(
-                "bg-white dark:bg-gray-900 border-2 border-border/30 shadow-lg rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl",
-                getViewportClass()
-              )}
-            >
-              <iframe
-                ref={iframeRef}
-                className="w-full h-full border-0"
-                sandbox="allow-scripts allow-same-origin"
-                title="HTML Preview"
-                onLoad={handleIframeLoad}
-              />
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
