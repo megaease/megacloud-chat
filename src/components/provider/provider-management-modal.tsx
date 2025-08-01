@@ -43,10 +43,6 @@ import {
 	IconRefresh,
 	IconSearch,
 	IconPlus,
-	IconBolt,
-	IconGlobe,
-	IconCpu,
-	IconShield,
 	IconAlertCircle,
 	IconCircleCheck,
 	IconClock,
@@ -55,7 +51,6 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { ProviderForm } from "@/components/provider/provider-form";
-import { useQueryClient } from "@tanstack/react-query";
 import { getProviderTypeInfo } from "./utils";
 
 export function ProviderManagementModal() {
@@ -76,7 +71,6 @@ export function ProviderManagementModal() {
 		providers,
 		currentProvider,
 		isLoading,
-		addProvider,
 		isProviderModalOpen,
 		setProviderModalOpen,
 		switchProvider,
@@ -171,32 +165,6 @@ export function ProviderManagementModal() {
 				provider.providerType.toLowerCase().includes(searchTerm.toLowerCase()),
 		);
 	}, [providers, searchTerm]);
-
-	// 获取连接状态
-	const getConnectionStatus = (provider: ApiProvider) => {
-		if (!provider.lastTestedAt) {
-			return {
-				status: "untested",
-				label: t("never"),
-				color: "text-muted-foreground",
-				icon: IconClock,
-			};
-		}
-		if (provider.lastTestSuccess) {
-			return {
-				status: "success",
-				label: "Connected",
-				color: "text-green-600",
-				icon: IconCircleCheck,
-			};
-		}
-		return {
-			status: "failed",
-			label: "Connection failed",
-			color: "text-red-600",
-			icon: IconAlertCircle,
-		};
-	};
 
 	if (isLoading) {
 		return (
@@ -293,7 +261,6 @@ export function ProviderManagementModal() {
 							<div className="space-y-3 p-1">
 								{filteredProviders.map((provider) => {
 									const typeInfo = getProviderTypeInfo(provider.providerType);
-									const connectionStatus = getConnectionStatus(provider);
 									const isCurrentProvider = currentProvider?.id === provider.id;
 									const isTesting = testingProvider === provider.id;
 
@@ -523,7 +490,11 @@ export function ProviderManagementModal() {
 			</AlertDialog>
 			{/* Add/Edit Provider Form Dialog */}
 			<Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-				<DialogContent className="max-w-md">
+				<DialogContent 
+					className="max-w-md"
+					onPointerDownOutside={(e) => e.preventDefault()}
+					onEscapeKeyDown={(e) => e.preventDefault()}
+				>
 					<DialogHeader>
 						<DialogTitle>
 							{editingProvider ? t("editProvider") : t("addProvider")}
