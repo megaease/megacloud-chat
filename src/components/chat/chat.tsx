@@ -9,13 +9,13 @@ import { toast } from "sonner";
 import { useApiProvider } from "@/context/api-provider-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { useEditMessage } from "@/hooks/use-edit-message";
-import { VirtualChatView } from "./VirtualChatView";
+import { ChatView } from "./chat-view";
 import { IconLoader2 } from "@tabler/icons-react";
 import type { UIMessage } from "ai";
 import type { DBMessage } from "@/server/db/schema";
 import { DataStreamHandler } from "../artifact/DataStreamHandler";
 import { ArtifactModal } from "@/components/artifact/ArtifactModal";
-import { VirtualArtifactChatPanel } from "@/components/artifact/VirtualArtifactChatPanel";
+import { ArtifactChatPanel } from "@/components/artifact/ArtifactChatPanel";
 import { ArtifactContentPanel } from "@/components/artifact/ArtifactContentPanel";
 import { ArtifactProvider } from "@/context/artifact-provider-context";
 import { ArtifactOpener } from "./ArtifactOpener";
@@ -325,7 +325,7 @@ function ChatContent({
     <ArtifactProvider>
       <ArtifactOpener artifactId={openArtifactId} />
 
-      <VirtualChatView
+      <ChatView
         messages={effectiveMessages}
         input={input}
         handleInputChange={handleInputChange}
@@ -348,7 +348,7 @@ function ChatContent({
       <DataStreamHandler chatId={effectiveChatId} />
       <ArtifactModal
         chatPanel={
-          <VirtualArtifactChatPanel
+          <ArtifactChatPanel
             chatId={effectiveChatId}
             messages={effectiveMessages} // Use effectiveMessages to ensure initial messages are shown
             input={input}
