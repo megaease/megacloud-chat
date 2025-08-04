@@ -12,7 +12,7 @@ import type { ToolInvocationPart } from "@/types/tool-invocation";
  * 4. 确保数据流向清晰
  */
 export function useDocumentToolAction() {
-  const { loadAndShowArtifact, artifact } = useArtifact();
+  const { loadAndShowArtifact, showArtifact, artifact } = useArtifact();
 
   /**
    * 从工具调用结果中提取文档信息
@@ -43,9 +43,10 @@ export function useDocumentToolAction() {
    * 
    * 逻辑：
    * 1. 优先使用工具结果中的 documentId
-   * 2. 如果有版本号，切换到指定版本
-   * 3. 否则加载最新版本
-   * 4. 统一通过 loadAndShowArtifact 管理状态
+   * 2. 如果有 documentId，加载对应的 artifact
+   * 3. 如果没有 documentId 但有 kind，只显示当前 artifact（避免覆盖 streaming 数据）
+   * 4. 如果有版本号，切换到指定版本
+   * 5. 统一通过 artifact provider 管理状态
    */
   const handleDocumentClick = useCallback(
     (
@@ -63,9 +64,10 @@ export function useDocumentToolAction() {
       
       // 确定要使用的 documentId
       const documentId = resultInfo?.documentId || args?.documentId;
+      const kind = resultInfo?.kind || args?.kind;
       
-      if (!documentId) {
-        console.warn("No documentId found in tool result or args");
+      if (!documentId && !kind) {
+        console.warn("No documentId or kind found in tool result or args");
         return;
       }
 
@@ -77,21 +79,29 @@ export function useDocumentToolAction() {
         height: 200,
       };
 
-      // 如果有版本号，切换到指定版本
-      if (resultInfo?.version !== undefined) {
-        loadAndShowArtifact(documentId, defaultBoundingBox, resultInfo.version);
-      } else {
-        // 否则加载最新版本
-        loadAndShowArtifact(documentId, defaultBoundingBox);
+      // 如果有 documentId，使用 documentId 加载
+      if (documentId) {
+        // 如果有版本号，切换到指定版本
+        if (resultInfo?.version !== undefined) {
+          loadAndShowArtifact(documentId, defaultBoundingBox, resultInfo.version);
+        } else {
+          // 否则加载最新版本
+          loadAndShowArtifact(documentId, defaultBoundingBox);
+        }
+      } else if (kind) {
+        // 如果只有 kind，不加载新的 artifact，只显示当前的 artifact
+        // 这样避免覆盖正在 streaming 的数据
+        showArtifact(defaultBoundingBox);
       }
     },
-    [extractDocumentInfo, loadAndShowArtifact]
+    [extractDocumentInfo, loadAndShowArtifact, showArtifact]
   );
 
   /**
    * 检查是否可以打开 artifact
    * 
    * 新增：考虑 streaming 状态的影响
+   * 支持通过 kind 也能打开 artifact
    */
   const canOpenArtifact = useCallback(
     (
@@ -109,9 +119,9 @@ export function useDocumentToolAction() {
         return true;
       }
 
-      // 执行中状态，如果有标题或者是更新操作也可以打开
+      // 执行中状态，如果有标题、documentId 或者 kind 都可以打开
       if (status === "executing") {
-        return !!(args?.title || args?.documentId);
+        return !!(args?.title || args?.documentId || args?.kind);
       }
 
       return false;
@@ -144,9 +154,20 @@ export function useDocumentToolAction() {
       if (isStreamingActive()) {
         const resultInfo = extractDocumentInfo(part);
         const documentId = resultInfo?.documentId || args?.documentId;
+        const kind = resultInfo?.kind || args?.kind;
         
         // 如果点击的是不同的文档，则禁用
-        return documentId !== artifact.documentId;
+        // 优先比较 documentId，如果没有则比较 kind
+        if (documentId) {
+          return documentId !== artifact.documentId;
+        }
+        
+        if (kind) {
+          // 如果只有 kind，可能是新文档，允许切换
+          return false;
+        }
+        
+        return true;
       }
       
       return false;
