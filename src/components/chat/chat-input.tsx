@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
 	IconLoader2,
@@ -22,7 +23,8 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
+import { MCPToggle } from "@/components/mcp/mcp-toggle";
+import { FilePreviewDialog } from "@/components/ui/file-preview-dialog";
 
 interface ChatInputProps {
 	input: string;
@@ -50,6 +52,8 @@ export function ChatInput({
 	isUploading = false,
 	className = "",
 }: ChatInputProps) {
+	const t = useTranslations("Chat");
+	const tCommon = useTranslations("Common");
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [uploadedFiles, setUploadedFiles] = useState<
@@ -58,9 +62,10 @@ export function ChatInput({
 	const [uploadingFiles, setUploadingFiles] = useState<
 		Map<string, { name: string; contentType: string; previewUrl?: string }>
 	>(new Map());
-	const [previewImage, setPreviewImage] = useState<{
+	const [previewFile, setPreviewFile] = useState<{
 		url: string;
 		name: string;
+		contentType: string;
 	} | null>(null);
 
 	// 获取文件类型图标
@@ -68,10 +73,10 @@ export function ChatInput({
 		if (contentType.startsWith("image/")) {
 			return <IconPhoto className="h-4 w-4" />;
 		}
-		if (
-			contentType.includes("text/") ||
-			contentType.includes("application/pdf")
-		) {
+		if (contentType === "application/pdf") {
+			return <IconFileText className="h-4 w-4" />;
+		}
+		if (contentType.includes("text/")) {
 			return <IconFileText className="h-4 w-4" />;
 		}
 		return <IconFile className="h-4 w-4" />;
@@ -108,8 +113,23 @@ export function ChatInput({
 
 	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
-			const selectedFiles = Array.from(e.target.files); // 立即上传文件
-			for (const file of selectedFiles) {
+			const selectedFiles = Array.from(e.target.files);
+
+			// 过滤支持的文件类型
+			const supportedFiles = selectedFiles.filter((file) => {
+				const isImage = file.type.startsWith("image/");
+				const isPDF = file.type === "application/pdf";
+				return isImage || isPDF;
+			});
+
+			if (supportedFiles.length !== selectedFiles.length) {
+				console.warn(
+					"Some files were filtered out due to unsupported file types",
+				);
+			}
+
+			// 立即上传文件
+			for (const file of supportedFiles) {
 				const fileName = file.name;
 				const previewUrl = file.type.startsWith("image/")
 					? URL.createObjectURL(file)
@@ -137,7 +157,7 @@ export function ChatInput({
 
 					if (!response.ok) {
 						const errorData = await response.json();
-						throw new Error(errorData.error || "Upload failed");
+						throw new Error(errorData.error || `Failed to upload ${file.name}`);
 					}
 
 					const data = await response.json();
@@ -169,7 +189,7 @@ export function ChatInput({
 
 	return (
 		<div
-			className={`p-4 relative max-w-4xl text-center w-full mx-auto ${className}`}
+			className={`relative max-w-4xl text-center w-full mx-auto ${className} mb-2 px-4`}
 		>
 			<form
 				onSubmit={(e) => {
@@ -196,18 +216,19 @@ export function ChatInput({
 				}}
 				className="relative"
 			>
-				<div className="relative rounded-2xl border border-border/50 bg-background/95 shadow-md transition-all duration-300 ease-in-out focus-within:shadow-lg focus-within:border-primary/60 hover:shadow-lg group">
+				<div className="relative rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white/90 dark:bg-gray-800/90 shadow-sm transition-all duration-300 ease-in-out focus-within:shadow-md focus-within:border-primary/50 hover:shadow-md group backdrop-blur-sm">
 					<input
 						type="file"
 						ref={fileInputRef}
 						className="hidden"
 						onChange={handleFileUpload}
 						multiple
+						accept="image/*,.pdf"
 						aria-label="Upload files"
 						title="Upload files"
 					/>
 					{uploadedFiles.length > 0 || uploadingFiles.size > 0 ? (
-						<div className="px-4 py-2 flex flex-wrap gap-2 border-t border-border/50">
+						<div className="px-4 py-3 flex flex-wrap gap-2 border-b border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/50">
 							{/* 显示正在上传的文件 */}
 							{Array.from(uploadingFiles).map(([fileName, fileInfo]) => (
 								<div
@@ -215,7 +236,7 @@ export function ChatInput({
 									className={`relative group ${
 										isImageFile(fileInfo.contentType)
 											? "rounded-lg overflow-hidden"
-											: "flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+											: "flex items-center gap-2 px-3 py-2 bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-lg text-sm shadow-sm"
 									}`}
 								>
 									{isImageFile(fileInfo.contentType) && fileInfo.previewUrl ? (
@@ -245,8 +266,8 @@ export function ChatInput({
 									key={file.url}
 									className={`relative group ${
 										isImageFile(file.contentType)
-											? "rounded-lg overflow-hidden"
-											: "flex items-center gap-2 px-2 py-1 bg-muted rounded-md text-sm"
+											? "rounded-lg overflow-hidden shadow-md"
+											: "flex items-center gap-2 px-3 py-2 bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 rounded-lg text-sm shadow-sm"
 									}`}
 								>
 									{isImageFile(file.contentType) ? (
@@ -254,12 +275,20 @@ export function ChatInput({
 											<div
 												className="cursor-pointer"
 												onClick={() => {
-													setPreviewImage({ url: file.url, name: file.name });
+													setPreviewFile({
+														url: file.url,
+														name: file.name,
+														contentType: file.contentType,
+													});
 												}}
 												onKeyDown={(e) => {
 													if (e.key === "Enter" || e.key === " ") {
 														e.preventDefault();
-														setPreviewImage({ url: file.url, name: file.name });
+														setPreviewFile({
+															url: file.url,
+															name: file.name,
+															contentType: file.contentType,
+														});
 													}
 												}}
 												aria-label={`Open ${file.name}`}
@@ -274,7 +303,7 @@ export function ChatInput({
 												type="button"
 												size="icon"
 												variant="ghost"
-												className="absolute top-1 right-1 h-5 w-5 p-0 rounded-full  shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/80 hover:bg-white/90"
+												className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60"
 												onClick={() => {
 													setUploadedFiles((prev) =>
 														prev.filter((f) => f.url !== file.url),
@@ -286,13 +315,26 @@ export function ChatInput({
 										</>
 									) : (
 										<>
-											{getFileTypeIcon(file.contentType)}
-											<span className="truncate max-w-32">{file.name}</span>
+											<button
+												type="button"
+												className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-1 py-1 transition-colors"
+												onClick={() => {
+													setPreviewFile({
+														url: file.url,
+														name: file.name,
+														contentType: file.contentType,
+													});
+												}}
+												aria-label={`预览 ${file.name}`}
+											>
+												{getFileTypeIcon(file.contentType)}
+												<span className="truncate max-w-32">{file.name}</span>
+											</button>
 											<Button
 												type="button"
 												size="icon"
 												variant="ghost"
-												className="h-4 w-4 p-0"
+												className="h-5 w-5 p-0 rounded-full bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 shadow-xs hover:shadow-sm transition-all duration-200"
 												onClick={() => {
 													setUploadedFiles((prev) =>
 														prev.filter((f) => f.url !== file.url),
@@ -312,35 +354,21 @@ export function ChatInput({
 						value={input}
 						onChange={handleInputChange}
 						onKeyDown={handleKeyDown}
-						placeholder="Type your message..."
-						className="min-h-30 w-full resize-none border-0 bg-transparent px-4 py-3 pr-14 focus-visible:ring-0 
-						focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 selection:bg-primary/20 pb-12"
+						placeholder={t("placeholder")}
+						className="min-h-30 w-full resize-none border-0 bg-transparent px-4 py-4 pr-14 focus-visible:ring-0 
+						focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 selection:bg-primary/20 pb-14 text-sm leading-relaxed"
 						rows={2}
 						autoFocus
 					/>
 
-					{/* MCP Toggle switch */}
-					<div className="absolute bottom-2 left-2 flex items-center gap-2">
-						<TooltipProvider>
-							<Tooltip delayDuration={300}>
-								<TooltipTrigger asChild>
-									<div className="flex items-center rounded px-4 py-2 border border-border/50 transition-all duration-300 hover:border-primary/50 hover:bg-primary/10 group">
-										<span className="text-xs font-medium mr-2 text-muted-foreground group-hover:text-foreground/80">
-											MCP
-										</span>
-										<Switch
-											checked={mcpEnabled}
-											onCheckedChange={() => toggleMcpEnabled()}
-										/>
-									</div>
-								</TooltipTrigger>
-								<TooltipContent side="top" className="text-xs font-medium">
-									<p>{mcpEnabled ? "MCP Enabled" : "MCP Disabled"}</p>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
+					{/* MCP Toggle */}
+					<div className="absolute bottom-3 left-3 flex items-center gap-2">
+						<MCPToggle
+							mcpEnabled={mcpEnabled}
+							toggleMcpEnabled={toggleMcpEnabled}
+						/>
 					</div>
-					<div className="absolute bottom-2 right-2 flex items-center gap-2">
+					<div className="absolute bottom-3 right-3 flex items-center gap-2">
 						{/* Upload button */}
 						<TooltipProvider>
 							<Tooltip delayDuration={300}>
@@ -349,14 +377,14 @@ export function ChatInput({
 										type="button"
 										size="icon"
 										variant="ghost"
-										className="h-9 w-9 rounded-full text-muted-foreground/80 hover:text-primary hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200"
+										className="h-9 w-9 rounded-lg bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 shadow-xs hover:shadow-sm transition-all duration-200 hover:scale-105 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
 										onClick={() => fileInputRef.current?.click()}
 									>
 										<IconPaperclip className="h-4 w-4 transition-transform group-hover:rotate-12" />
 									</Button>
 								</TooltipTrigger>
-								<TooltipContent side="top" className="text-xs font-medium">
-									<p>Upload file</p>
+								<TooltipContent side="top">
+									<p>Upload images or PDF files</p>
 								</TooltipContent>
 							</Tooltip>
 						</TooltipProvider>
@@ -369,15 +397,15 @@ export function ChatInput({
 											size="icon"
 											onClick={handleStopGeneration}
 											variant="ghost"
-											className="h-9 w-9 rounded-full bg-primary text-primary-foreground 
+											className="h-9 w-9 rounded-lg bg-primary text-primary-foreground 
 											hover:text-primary-foreground
-											shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
+											shadow-sm transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-sm active:scale-95"
 											type="button"
 										>
 											<IconSquare className="h-4 w-4" />
 										</Button>
 									</TooltipTrigger>
-									<TooltipContent side="top" className="text-xs font-medium">
+									<TooltipContent side="top">
 										<p>Stop generation</p>
 									</TooltipContent>
 								</Tooltip>
@@ -390,7 +418,7 @@ export function ChatInput({
 											type="submit"
 											size="icon"
 											disabled={!input.trim() || isUploading}
-											className="h-9 w-9 rounded-full bg-primary text-primary-foreground shadow-md transition-all duration-200 hover:scale-110 hover:shadow-lg hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-md active:scale-95"
+											className="h-9 w-9 rounded-lg bg-primary text-primary-foreground shadow-sm transition-all duration-200 hover:scale-105 hover:shadow-md hover:bg-primary/90 disabled:opacity-60 disabled:hover:scale-100 disabled:hover:bg-primary disabled:hover:shadow-sm active:scale-95"
 										>
 											{isUploading ? (
 												<IconLoader2 className="h-4 w-4 animate-spin" />
@@ -399,8 +427,8 @@ export function ChatInput({
 											)}
 										</Button>
 									</TooltipTrigger>
-									<TooltipContent side="top" className="text-xs font-medium">
-										<p>{isUploading ? "Uploading..." : "Send message"}</p>
+									<TooltipContent side="top">
+										<p>{isUploading ? tCommon("loading") : t("send")}</p>
 									</TooltipContent>
 								</Tooltip>
 							</TooltipProvider>
@@ -409,13 +437,13 @@ export function ChatInput({
 				</div>
 			</form>
 
-			{/* 图片预览对话框 */}
-			<ImagePreviewDialog
-				isOpen={!!previewImage}
-				onClose={() => setPreviewImage(null)}
-				imageUrl={previewImage?.url || ""}
-				imageName={previewImage?.name}
-				variant="simple"
+			{/* 文件预览对话框 */}
+			<FilePreviewDialog
+				isOpen={!!previewFile}
+				onClose={() => setPreviewFile(null)}
+				fileUrl={previewFile?.url || ""}
+				fileName={previewFile?.name}
+				fileType={previewFile?.contentType || ""}
 			/>
 		</div>
 	);

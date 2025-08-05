@@ -41,10 +41,10 @@ export async function PUT(
 
 export async function DELETE(
 	request: Request,
-	{ params }: { params: { id: string } },
+	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		const { id } = params;
+		const { id } = await params;
 
 		// Check if this is the default provider
 		const provider = await db
@@ -60,20 +60,28 @@ export async function DELETE(
 			);
 		}
 
+		const currentProvider = provider[0];
+		if (!currentProvider) {
+			return NextResponse.json(
+				{ error: "Provider not found" },
+				{ status: 404 },
+			);
+		}
+
 		// If deleting the default provider, set another one as default
-		if (provider[0].isDefault === 1) {
+		if (currentProvider.isDefault === 1) {
 			const otherProviders = await db
 				.select()
 				.from(apiProviders)
 				.where(
 					and(
-						eq(apiProviders.userId, provider[0].userId),
+						eq(apiProviders.userId, currentProvider.userId),
 						ne(apiProviders.id, id),
 					),
 				)
 				.limit(1);
 
-			if (otherProviders.length > 0) {
+			if (otherProviders.length > 0 && otherProviders[0]) {
 				await db
 					.update(apiProviders)
 					.set({ isDefault: 1 })

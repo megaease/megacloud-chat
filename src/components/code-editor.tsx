@@ -9,7 +9,7 @@ import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { githubLight, githubDark } from "@uiw/codemirror-theme-github";
+import { githubLight } from "@uiw/codemirror-theme-github";
 import { useTheme } from "next-themes";
 import type { Extension } from "@codemirror/state";
 import { cn } from "@/lib/utils";
@@ -17,16 +17,21 @@ import { CopyButton } from "./copy-button";
 
 interface CodeEditorProps {
 	value: string;
-	language?: string;
+	language?: string | undefined;
 	editable?: boolean;
 	onChange?: (value: string) => void;
 	className?: string;
 	showHeader?: boolean;
 	showCopyButton?: boolean;
+	height?: string | number;
 }
 
 // 语言映射
-const getLanguageExtension = (language: string): Extension[] => {
+const getLanguageExtension = (language: string | undefined): Extension[] => {
+	if (!language) {
+		return [];
+	}
+
 	switch (language.toLowerCase()) {
 		case "javascript":
 		case "js":
@@ -59,12 +64,13 @@ const getLanguageExtension = (language: string): Extension[] => {
 
 export function CodeEditor({
 	value,
-	language = "javascript",
+	language,
 	editable = false,
 	onChange,
 	className,
 	showHeader = true,
 	showCopyButton = true,
+	height = "auto",
 }: CodeEditorProps) {
 	const extensions = getLanguageExtension(language);
 	const { resolvedTheme } = useTheme();
@@ -80,7 +86,8 @@ export function CodeEditor({
 	return (
 		<div
 			className={cn(
-				"relative my-2 rounded-[var(--radius)] border border-border overflow-hidden",
+				"relative overflow-hidden flex flex-col bg-background",
+				height !== "auto" && "h-full",
 				className,
 			)}
 		>
@@ -90,10 +97,10 @@ export function CodeEditor({
 					{showCopyButton && <CopyButton text={value} />}
 				</div>
 			)}
-			<div className="overflow-x-auto">
+			<div className="flex-1 overflow-hidden">
 				<CodeMirror
 					value={value}
-					height="auto"
+					height={height === "auto" ? "auto" : "100%"}
 					theme={getTheme()}
 					extensions={extensions}
 					editable={editable}
@@ -108,9 +115,11 @@ export function CodeEditor({
 						closeBrackets: true,
 						autocompletion: true,
 						highlightSelectionMatches: false,
+						searchKeymap: true,
 					}}
 					style={{
 						fontSize: "14px",
+						height: "100%",
 					}}
 				/>
 			</div>

@@ -1,3 +1,4 @@
+import "server-only";
 import { db } from "@/server/db";
 import { chatMessages } from "@/server/db/schema";
 import { and, eq } from "drizzle-orm";

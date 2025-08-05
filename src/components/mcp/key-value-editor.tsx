@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconPlus, IconX, IconArrowRight } from "@tabler/icons-react";
@@ -25,6 +26,7 @@ export function KeyValueEditor({
 	keyPlaceholder = "Key",
 	valuePlaceholder = "Value",
 }: KeyValueEditorProps) {
+	const t = useTranslations("KeyValueEditor");
 	const [newKey, setNewKey] = useState("");
 	const [newValue, setNewValue] = useState("");
 	const [isFocused, setIsFocused] = useState(false);
@@ -59,7 +61,7 @@ export function KeyValueEditor({
 
 	// Handle key press events (Enter to add)
 	const handleKeyPress = (e: React.KeyboardEvent) => {
-		if (e.key === 'Enter' && newKey.trim()) {
+		if (e.key === "Enter" && newKey.trim()) {
 			e.preventDefault();
 			handleAdd();
 		}
@@ -91,7 +93,7 @@ export function KeyValueEditor({
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent>
-								<p>Remove this item</p>
+								<p>{t("removeItem")}</p>
 							</TooltipContent>
 						</Tooltip>
 					</TooltipProvider>
@@ -137,19 +139,18 @@ export function KeyValueEditor({
 									className="gap-1"
 								>
 									<IconArrowRight className="h-4 w-4" />
-									<span>Add</span>
+									<span>{t("add")}</span>
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent>
-								<p>Click to add this item</p>
+								<p>{t("addItemHint")}</p>
 							</TooltipContent>
 						</Tooltip>
 					</TooltipProvider>
 				</div>
 				{newKey.trim() && (
 					<p className="text-xs text-muted-foreground px-1">
-						<span className="text-primary">*</span>{" "}
-						Please click the "Add" button to save this item
+						<span className="text-primary">*</span> {t("addItemHint")}
 					</p>
 				)}
 			</div>

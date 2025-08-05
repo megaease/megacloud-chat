@@ -1,4 +1,4 @@
-import { IconCpu, IconGlobe, IconSettings, IconShield, IconBolt } from "@tabler/icons-react";
+import { IconCpu, IconGlobe, IconSettings, IconShield, IconBolt, IconBrain } from "@tabler/icons-react";
 
 export const getProviderTypeInfo = (type: string) => {
 	const types: Record<
@@ -19,6 +19,11 @@ export const getProviderTypeInfo = (type: string) => {
 			name: "OpenRouter",
 			icon: <IconShield className="h-4 w-4" />,
 			color: "text-yellow-600 dark:text-yellow-400",
+		},
+		anthropic: {
+			name: "Anthropic",
+			icon: <IconBrain className="h-4 w-4" />,
+			color: "text-orange-600 dark:text-orange-400",
 		},
 		custom: {
 			name: "Custom",

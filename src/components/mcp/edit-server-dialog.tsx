@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -32,6 +32,15 @@ import { updateMcpServer, getMcpServerById } from "@/lib/mcp-server-action";
 import { insertMcpServerSchema, TypeEnum } from "@/server/db/schema";
 import { useQuery } from "@tanstack/react-query";
 
+// Generate unique ID for array items
+const generateId = () => Math.random().toString(36).substr(2, 9);
+
+// Argument item with unique ID
+interface ArgumentItem {
+	id: string;
+	value: string;
+}
+
 interface EditServerDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
@@ -48,6 +57,7 @@ export function EditServerDialog({
 	serverId,
 }: EditServerDialogProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [argItems, setArgItems] = useState<ArgumentItem[]>([]);
 
 	const { data: serverResult, isLoading } = useQuery({
 		queryKey: ["getMcpServer", serverId],
@@ -110,8 +120,34 @@ export function EditServerDialog({
 		values: server ? defaultValues : undefined,
 	});
 
+	// Initialize argItems when server data loads
+	useEffect(() => {
+		if (server?.args && server.args.length > 0) {
+			setArgItems(
+				server.args.map((value) => ({
+					id: generateId(),
+					value,
+				})),
+			);
+		}
+	}, [server]);
+
+	// Update form when argItems change
+	const updateFormArgs = (newArgItems: ArgumentItem[]) => {
+		setArgItems(newArgItems);
+		form.setValue(
+			"args",
+			newArgItems.map((item) => item.value),
+		);
+	};
+
 	const handleTypeChange = (type: (typeof TypeEnum)[keyof typeof TypeEnum]) => {
 		form.setValue("type", type);
+		// Reset argItems when switching to SSE type
+		if (type === TypeEnum.SSE) {
+			setArgItems([]);
+			form.setValue("args", []);
+		}
 	};
 
 	const onSubmit = async (data: ServerFormValues) => {
@@ -330,24 +366,25 @@ export function EditServerDialog({
 											<FormField
 												control={form.control}
 												name="args"
-												render={({ field }) => (
+												render={() => (
 													<FormItem>
 														<FormLabel>Command Arguments</FormLabel>
 														<FormControl>
 															<div className="space-y-2">
-																{field.value?.map((arg, i) => (
+																{argItems.map((item, i) => (
 																	<div
-																		key={`arg-${i}`}
+																		key={item.id}
 																		className="flex items-center gap-2"
 																	>
 																		<Input
-																			value={arg}
+																			value={item.value}
 																			onChange={(e) => {
-																				const newArgs = [
-																					...(field.value || []),
-																				];
-																				newArgs[i] = e.target.value;
-																				field.onChange(newArgs);
+																				const newArgItems = [...argItems];
+																				newArgItems[i] = {
+																					...item,
+																					value: e.target.value,
+																				};
+																				updateFormArgs(newArgItems);
 																			}}
 																			placeholder={`Argument ${i + 1}`}
 																		/>
@@ -356,11 +393,10 @@ export function EditServerDialog({
 																			variant="outline"
 																			size="icon"
 																			onClick={() => {
-																				const newArgs = [
-																					...(field.value || []),
-																				];
-																				newArgs.splice(i, 1);
-																				field.onChange(newArgs);
+																				const newArgItems = argItems.filter(
+																					(_, idx) => idx !== i,
+																				);
+																				updateFormArgs(newArgItems);
 																			}}
 																		>
 																			×
@@ -371,10 +407,11 @@ export function EditServerDialog({
 																	type="button"
 																	variant="outline"
 																	onClick={() => {
-																		field.onChange([
-																			...(field.value || []),
-																			"",
-																		]);
+																		const newArgItems = [
+																			...argItems,
+																			{ id: generateId(), value: "" },
+																		];
+																		updateFormArgs(newArgItems);
 																	}}
 																>
 																	Add Argument

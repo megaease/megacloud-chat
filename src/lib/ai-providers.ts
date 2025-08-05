@@ -1,7 +1,8 @@
 import { openai, createOpenAI } from "@ai-sdk/openai";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-export type ProviderType = "openai" | "deepseek" | "openrouter" | "custom";
+import { createAnthropic } from "@ai-sdk/anthropic";
+export type ProviderType = "openai" | "deepseek" | "openrouter" | "anthropic" | "custom";
 
 interface ProviderConfig {
 	apiKey?: string;
@@ -10,13 +11,13 @@ interface ProviderConfig {
 }
 
 export function isOpenAI(url: string): boolean {
-	if (!url) return true; // 默认认为是 OpenAI
+	if (!url) return true; // Default to OpenAI
 	return url.includes("openai") || url.includes("api.openai");
 }
 
 /**
- * 创建 AI 模型配置的统一抽象层
- * @param providerType 提供商类型
+ * Create unified abstraction layer for AI model configuration
+ * @param providerType Provider type
  * @param config 配置参数
  * @returns 配置好的 AI 模型
  */
@@ -37,7 +38,26 @@ export function createAIModelConfig(
 			return customOpenAI(modelName);
 		}
 
+		case "anthropic": {
+			console.log("Creating AI model for provider:", "anthropic");
+			const anthropic = createAnthropic({
+				apiKey: apiKey || "",
+				baseURL: baseUrl || "https://api.anthropic.com",
+			});
+			return anthropic(modelName || "claude-3-5-sonnet-20241022");
+		}
+
 		case "deepseek": {
+			// 如果 baseUrl 不是官方 DeepSeek API，使用 OpenAI 兼容模式
+			if (baseUrl && !baseUrl.includes("api.deepseek.com")) {
+				const compatibleAI = createOpenAI({
+					baseURL: baseUrl,
+					apiKey: apiKey || "",
+					compatibility: "compatible",
+				});
+				return compatibleAI(modelName);
+			}
+
 			const deepseek = createDeepSeek({
 				apiKey: apiKey || "",
 				baseURL: baseUrl || "https://api.deepseek.com",
@@ -55,14 +75,14 @@ export function createAIModelConfig(
 					},
 				},
 			});
-			return openRouter(modelName || "openai/gpt-4o-mini");
+			return openRouter(modelName || "openai/gpt-4o-mini"); // 修正模型名称
 		}
 
 		case "custom": {
 			const compatibleAI = createOpenAI({
 				baseURL: baseUrl || "https://api.openai.com/v1",
 				apiKey: apiKey || "",
-				compatibility: "compatible",
+				compatibility: "compatible", // 使用 compatible 模式处理不严格的响应格式
 			});
 			return compatibleAI(modelName);
 		}
@@ -104,6 +124,8 @@ export function detectAndCreateAIModel(config: {
 	if (baseUrl) {
 		if (baseUrl.includes("deepseek") || modelName?.includes("deepseek")) {
 			detectedProvider = "deepseek";
+		} else if (baseUrl.includes("anthropic") || modelName?.includes("claude")) {
+			detectedProvider = "anthropic";
 		} else if (!isOpenAI(baseUrl)) {
 			detectedProvider = "custom";
 		}
@@ -111,6 +133,8 @@ export function detectAndCreateAIModel(config: {
 		// 根据模型名称推断
 		if (modelName.includes("deepseek")) {
 			detectedProvider = "deepseek";
+		} else if (modelName.includes("claude")) {
+			detectedProvider = "anthropic";
 		}
 	}
 
@@ -128,6 +152,7 @@ const providerUrlMapping: Record<ProviderType, string> = {
 	openai: "https://api.openai.com/v1",
 	deepseek: "https://api.deepseek.com",
 	openrouter: "https://openrouter.ai/api/v1",
+	anthropic: "https://api.anthropic.com",
 	custom: "https://api.openai.com/v1",
 };
 

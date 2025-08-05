@@ -1,4 +1,4 @@
-import { IconCircle } from "@tabler/icons-react";
+import { IconCircle, IconLoader2 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { type ServerStatus, ServerStatusEnum } from "@/server/db/schema";
 
@@ -6,12 +6,14 @@ interface ServerStatusBadgeProps {
 	status: ServerStatus;
 	className?: string;
 	showLabel?: boolean;
+	isLoading?: boolean;
 }
 
 export function ServerStatusBadge({
 	status,
 	className,
 	showLabel = true,
+	isLoading = false,
 }: ServerStatusBadgeProps) {
 	const statusConfig = {
 		[ServerStatusEnum.ONLINE]: {
@@ -36,11 +38,15 @@ export function ServerStatusBadge({
 		},
 	};
 
-	const config = statusConfig[status];
+	const config = statusConfig[status] || statusConfig[ServerStatusEnum.OFFLINE];
 
 	return (
 		<div className={cn("flex items-center gap-1.5", className)}>
-			<IconCircle className={cn("h-3 w-3 fill-current", config.color)} />
+			{isLoading ? (
+				<IconLoader2 className="h-3 w-3 animate-spin text-amber-500" />
+			) : (
+				<IconCircle className={cn("h-3 w-3 fill-current", config.color)} />
+			)}
 			{showLabel && <span className="text-sm font-medium">{config.label}</span>}
 		</div>
 	);

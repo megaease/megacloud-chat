@@ -1,191 +1,255 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 
 export interface UseScrollToBottomOptions {
 	/**
 	 * Scroll behavior, defaults to "smooth"
 	 */
 	behavior?: ScrollBehavior;
+
 	/**
-	 * How many pixels from bottom to consider "scrolled to bottom", defaults to 200
+	 * How many pixels from bottom to consider "near bottom", defaults to 100
 	 */
 	bottomThreshold?: number;
+
 	/**
-	 * Whether to automatically scroll to bottom when component mounts, defaults to true
+	 * Whether to automatically scroll to bottom on initial mount, defaults to true
 	 */
 	scrollOnMount?: boolean;
+
 	/**
-	 * Whether to automatically scroll to bottom when content changes, defaults to true
+	 * Whether to force scroll to bottom after content changes, defaults to false
 	 */
-	scrollOnContentChange?: boolean;
-	/**
-	 * Whether to adapt to Radix UI ScrollArea component, defaults to false
-	 */
-	adaptRadixScrollArea?: boolean;
-	/**
-	 * Delay time (ms) when scrolling to bottom, defaults to 0
-	 */
-	scrollDelay?: number;
+	forceScrollOnNewContent?: boolean;
 }
 
 /**
- * Custom Hook for managing scroll-to-bottom behavior
- * @param options Configuration options
- * @returns Scroll state and control methods, as well as scrollAreaRef and messagesEndRef
+ * Smart scroll-to-bottom hook
+ * Uses MutationObserver to monitor content changes
  */
 export function useScrollToBottom(options: UseScrollToBottomOptions = {}) {
-	const scrollAreaRef = useRef<HTMLDivElement>(null);
-	const messagesEndRef = useRef<HTMLDivElement>(null);
-	const isFirstScrollRef = useRef(true);
-
 	const {
 		behavior = "smooth",
-		bottomThreshold = 200,
+		bottomThreshold = 100,
 		scrollOnMount = true,
-		scrollOnContentChange = true,
-		adaptRadixScrollArea = false,
-		scrollDelay = 0,
+		forceScrollOnNewContent = false,
 	} = options;
 
-	const [autoScroll, setAutoScroll] = useState(true);
-	const [hasScrolledUp, setHasScrolledUp] = useState(false);
-	const observerRef = useRef<MutationObserver | null>(null);
-	const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	// References for container and bottom element
+	const scrollAreaRef = useRef<HTMLDivElement>(null);
+	const endRef = useRef<HTMLDivElement>(null);
 
-	// Get the actual scroll container element (handles Radix UI ScrollArea case)
-	const getScrollContainer = useCallback((): HTMLElement | null => {
-		if (!scrollAreaRef.current) return null; // Use scrollAreaRef.current directly
+	// User scrolling intention and content tracking
+	const isUserScrolling = useRef(false);
+	const lastContentHeight = useRef(0);
+	const scrollTimeoutId = useRef<NodeJS.Timeout | null>(null);
 
-		if (adaptRadixScrollArea) {
-			// For Radix UI's ScrollArea component, we need to get its inner viewport
-			const radixViewport = scrollAreaRef.current.querySelector?.(
-				"[data-radix-scroll-area-viewport]",
-			) as HTMLElement;
+	// Public state
+	const [isAtBottom, setIsAtBottom] = useState(true);
 
-			if (radixViewport) return radixViewport;
-		}
+	// Check if near bottom - unified function
+	const checkIfNearBottom = useCallback(() => {
+		const container = scrollAreaRef.current;
+		if (!container) return false;
 
-		return scrollAreaRef.current; // Use scrollAreaRef.current directly
-	}, [adaptRadixScrollArea]); // scrollAreaRef itself is stable
+		const { scrollTop, scrollHeight, clientHeight } = container;
+		const scrollBottom = scrollTop + clientHeight;
+		const distanceFromBottom = scrollHeight - scrollBottom;
 
-	// Detect scroll position
-	const checkScrollPosition = useCallback(() => {
-		const scrollContainer = getScrollContainer();
-		if (!scrollContainer) return;
+		return distanceFromBottom <= bottomThreshold;
+	}, [bottomThreshold]);
 
-		const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-		const isNearBottom =
-			scrollHeight - scrollTop - clientHeight < bottomThreshold;
+	// Update isAtBottom state consistently
+	const updateIsAtBottomState = useCallback(() => {
+		const nearBottom = checkIfNearBottom();
+		setIsAtBottom(nearBottom);
+		return nearBottom;
+	}, [checkIfNearBottom]);
 
-		setHasScrolledUp(!isNearBottom);
-		setAutoScroll(isNearBottom);
-	}, [getScrollContainer, bottomThreshold]);
+	// Scroll to bottom
+	const scrollToBottom = useCallback(
+		(withBehavior: ScrollBehavior = behavior) => {
+			const container = scrollAreaRef.current;
+			const end = endRef.current;
 
-	// Function to scroll to bottom
-	const scrollToBottom = useCallback(() => {
-		// Clear any previous delayed scrolling
-		if (scrollTimeoutRef.current) {
-			clearTimeout(scrollTimeoutRef.current);
-		}
+			if (!container || !end) return;
 
-		scrollTimeoutRef.current = setTimeout(() => {
-			const scrollContainer = getScrollContainer();
-			if (!scrollContainer) return;
+			// Clear any pending scroll timeout
+			if (scrollTimeoutId.current) {
+				clearTimeout(scrollTimeoutId.current);
+			}
 
-			scrollContainer.scrollTo({
-				top: scrollContainer.scrollHeight,
-				behavior: isFirstScrollRef.current ? "auto" : behavior,
+			// Use scrollIntoView, more reliable
+			end.scrollIntoView({
+				behavior: withBehavior,
+				block: "end",
 			});
 
-			if (isFirstScrollRef.current) {
-				isFirstScrollRef.current = false;
+			// Reset user scrolling flag when we programmatically scroll
+			isUserScrolling.current = false;
+
+			// Update state immediately for instant mode, or after animation for smooth mode
+			if (withBehavior === "auto") {
+				setIsAtBottom(true);
+			} else {
+				// For smooth scrolling, wait for animation to complete
+				scrollTimeoutId.current = setTimeout(() => {
+					updateIsAtBottomState();
+				}, 300); // Reasonable time for smooth scroll animation
+			}
+		},
+		[behavior, updateIsAtBottomState],
+	);
+	// Add DOM mutation listener
+	useEffect(() => {
+		const container = scrollAreaRef.current;
+		if (!container) return;
+
+		// Set initial height
+		lastContentHeight.current = container.scrollHeight;
+
+		// Check initial position
+		updateIsAtBottomState();
+
+		// Scroll event listener
+		const handleScroll = () => {
+			// Clear any pending scroll timeout since user is manually scrolling
+			if (scrollTimeoutId.current) {
+				clearTimeout(scrollTimeoutId.current);
+				scrollTimeoutId.current = null;
 			}
 
-			setAutoScroll(true);
-			setHasScrolledUp(false);
-		}, scrollDelay);
-	}, [getScrollContainer, behavior, scrollDelay]);
+			const nearBottom = updateIsAtBottomState();
 
-	// Initialize and clean up scroll event listeners
-	useEffect(() => {
-		const scrollContainer = getScrollContainer();
-		if (!scrollContainer) return;
+			// If user scrolled away from bottom, mark as user scrolling
+			if (!nearBottom && !isUserScrolling.current) {
+				isUserScrolling.current = true;
+			}
 
-		// Listen for scroll events
-		scrollContainer.addEventListener("scroll", checkScrollPosition);
+			// If user scrolled back to bottom, reset user scrolling flag
+			if (nearBottom && isUserScrolling.current) {
+				isUserScrolling.current = false;
+			}
 
-		// Initial scroll to bottom
+			// Update current content height
+			lastContentHeight.current = container.scrollHeight;
+		};
+
+		container.addEventListener("scroll", handleScroll, { passive: true });
+
+		// MutationObserver to monitor DOM changes
+		const observer = new MutationObserver((mutations) => {
+			// Check if child nodes have changed
+			const hasChildrenChanged = mutations.some(
+				(mutation) =>
+					mutation.type === "childList" &&
+					(mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0),
+			);
+
+			if (hasChildrenChanged) {
+				// Use requestAnimationFrame to ensure DOM updates are complete
+				requestAnimationFrame(() => {
+					const currentHeight = container.scrollHeight;
+					const heightChanged = currentHeight !== lastContentHeight.current;
+
+					if (heightChanged) {
+						console.log(
+							"DOM changes detected: content height changed from",
+							lastContentHeight.current,
+							"to",
+							currentHeight,
+						);
+
+						// Update stored height
+						lastContentHeight.current = currentHeight;
+
+						// Decide whether to auto-scroll
+						const shouldAutoScroll =
+							!isUserScrolling.current || forceScrollOnNewContent;
+
+						if (shouldAutoScroll) {
+							// Auto-scroll to bottom
+							scrollToBottom();
+						} else {
+							// Just update the state based on current position
+							updateIsAtBottomState();
+						}
+					}
+				});
+			}
+		});
+
+		// Observer configuration
+		const observerConfig = {
+			childList: true, // Observe changes to child nodes
+			subtree: true, // Observe all descendant nodes
+		};
+
+		observer.observe(container, observerConfig);
+
+		// Cleanup function
+		return () => {
+			container.removeEventListener("scroll", handleScroll);
+			observer.disconnect();
+			if (scrollTimeoutId.current) {
+				clearTimeout(scrollTimeoutId.current);
+			}
+		};
+	}, [updateIsAtBottomState, scrollToBottom, forceScrollOnNewContent]); // 移除 checkIfNearBottom 依赖
+
+	// Initial scroll to bottom on mount
+	useLayoutEffect(() => {
 		if (scrollOnMount) {
+			const container = scrollAreaRef.current;
+			const end = endRef.current;
+
+			if (container && end) {
+				// Use scrollIntoView with auto behavior for instant initial scroll
+				end.scrollIntoView({
+					behavior: "auto",
+					block: "end",
+				});
+
+				// Update state and reset user scrolling flag
+				setIsAtBottom(true);
+				isUserScrolling.current = false;
+
+				// Update stored height
+				lastContentHeight.current = container.scrollHeight;
+			}
+		}
+	}, [scrollOnMount]);
+
+	// Enhanced scroll to bottom for external use (e.g., on submit)
+	const scrollToBottomOnSubmit = useCallback(() => {
+		// Reset user scrolling flag immediately
+		isUserScrolling.current = false;
+		// Scroll with a small delay to ensure any pending DOM updates
+		requestAnimationFrame(() => {
 			scrollToBottom();
-		}
+		});
+	}, [scrollToBottom]);
 
-		return () => {
-			// Check if scrollContainer still exists before removing listener
-			if (scrollContainer) {
-				scrollContainer.removeEventListener("scroll", checkScrollPosition);
-			}
-			// Clean up any existing timeouts
-			if (scrollTimeoutRef.current) {
-				clearTimeout(scrollTimeoutRef.current);
-			}
-		};
-		// Add scrollAreaRef.current to dependencies to re-run when the ref is attached
-	}, [
-		scrollAreaRef.current,
-		getScrollContainer,
-		checkScrollPosition,
-		scrollToBottom,
-		scrollOnMount,
-	]);
-
-	// Monitor content changes, auto-scroll to bottom
+	// Cleanup timeout on unmount
 	useEffect(() => {
-		if (!scrollOnContentChange) return;
-
-		const scrollContainer = getScrollContainer();
-		if (!scrollContainer) return;
-
-		// Clean up previous observer
-		if (observerRef.current) {
-			observerRef.current.disconnect();
-		}
-
-		// Create MutationObserver instance
-		observerRef.current = new MutationObserver(() => {
-			if (autoScroll) {
-				scrollToBottom();
-			}
-		});
-
-		// Start observing
-		observerRef.current.observe(scrollContainer, {
-			childList: true, // Observe direct child node changes
-			subtree: true, // Observe all descendant node changes
-			characterData: true, // Observe text content changes
-		});
-
 		return () => {
-			if (observerRef.current) {
-				observerRef.current.disconnect();
+			if (scrollTimeoutId.current) {
+				clearTimeout(scrollTimeoutId.current);
 			}
 		};
-		// Add scrollAreaRef.current to dependencies
-	}, [
-		scrollAreaRef.current,
-		autoScroll,
-		scrollOnContentChange,
-		getScrollContainer,
-		scrollToBottom,
-	]);
+	}, []);
 
 	return {
-		autoScroll,
-		hasScrolledUp,
-		scrollToBottom,
-		setAutoScroll,
-		checkScrollPosition,
-		scrollAreaRef, // Return scrollAreaRef
-		messagesEndRef, // Return messagesEndRef
+		scrollAreaRef,
+		endRef,
+		isAtBottom,
+		scrollToBottom: scrollToBottomOnSubmit,
 	};
 }

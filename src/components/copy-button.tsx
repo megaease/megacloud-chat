@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { IconCheck, IconCopy } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
@@ -15,34 +16,68 @@ import {
 export function CopyButton({
 	text,
 	className,
-}: { text: string; className?: string }) {
+	size = "sm",
+	showText = false,
+	textLabel,
+	tooltipLabel,
+}: {
+	text: string;
+	className?: string;
+	size?: "default" | "sm" | "lg" | "icon";
+	showText?: boolean;
+	textLabel?: string;
+	tooltipLabel?: string;
+}) {
+	const t = useTranslations("Common");
 	const [copied, setCopied] = useState<boolean>(false);
+	const defaultTextLabel = textLabel || t("copy");
+	const defaultTooltipLabel = tooltipLabel || t("copy");
 
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(text);
 			setCopied(true);
-			setTimeout(() => setCopied(false), 1500);
+			// 使用更合适的延迟时间，并添加成功动画
+			setTimeout(() => setCopied(false), 2000);
 		} catch (err) {
 			console.error("Failed to copy text: ", err);
+			// 可以添加错误状态处理
 		}
 	};
 
 	return (
-		<TooltipProvider delayDuration={0}>
+		<TooltipProvider delayDuration={300}>
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<Button
 						onClick={handleCopy}
 						aria-label="Copy to clipboard"
-						className={cn(className)}
-						size={"icon"}
+						variant="ghost"
+						size={size}
+						className={cn(
+							showText ? "h-8 px-3 gap-2" : "h-8 w-8",
+							"hover:text-current",
+							copied && "text-green-600 hover:text-green-700",
+							className,
+						)}
 					>
-						{copied ? <IconCheck /> : <IconCopy />}
+						{copied ? (
+							<>
+								<IconCheck className={showText ? "h-3 w-3" : "h-4 w-4"} />
+								{showText && <span className="text-xs">{t("copied")}</span>}
+							</>
+						) : (
+							<>
+								<IconCopy className={showText ? "h-3 w-3" : "h-4 w-4"} />
+								{showText && (
+									<span className="text-xs">{defaultTextLabel}</span>
+								)}
+							</>
+						)}
 					</Button>
 				</TooltipTrigger>
-				<TooltipContent className="px-2 py-1 text-xs">
-					Click to copy
+				<TooltipContent side="top">
+					{copied ? t("copied") : defaultTooltipLabel}
 				</TooltipContent>
 			</Tooltip>
 		</TooltipProvider>

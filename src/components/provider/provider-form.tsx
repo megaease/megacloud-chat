@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,10 +26,10 @@ import {
 import type { ApiProvider } from "@/types/api-provider";
 
 const providerSchema = z.object({
-	name: z.string().min(1, { message: "Name cannot be empty" }),
-	providerType: z.string().min(1, { message: "Please select a provider type" }),
-	apiKey: z.string().min(1, { message: "API key cannot be empty" }),
-	baseUrl: z.string().min(1, { message: "API URL cannot be empty" }),
+	name: z.string().min(1, { message: "nameRequired" }),
+	providerType: z.string().min(1, { message: "providerTypeRequired" }),
+	apiKey: z.string().min(1, { message: "apiKeyRequired" }),
+	baseUrl: z.string().min(1, { message: "baseUrlRequired" }),
 });
 
 type ProviderFormValues = z.infer<typeof providerSchema>;
@@ -42,6 +43,7 @@ export function ProviderForm({
 	initialProvider,
 	onSuccess,
 }: ProviderFormProps) {
+	const t = useTranslations("Provider");
 	const { addProvider, updateProvider, testConnection } = useApiProvider();
 	const [isTesting, setIsTesting] = useState(false);
 	const [connectionTested, setConnectionTested] = useState(false);
@@ -68,7 +70,7 @@ export function ProviderForm({
 	const onSubmit = async (data: ProviderFormValues) => {
 		try {
 			if (!connectionTested) {
-				toast.error("Please test the connection first");
+				toast.error(t("connectionTestRequired"));
 				return;
 			}
 
@@ -81,6 +83,7 @@ export function ProviderForm({
 					baseUrl: data.baseUrl,
 					availableModels,
 				});
+				toast.success(t("providerUpdated"));
 			} else {
 				// Add new provider
 				await addProvider({
@@ -90,6 +93,7 @@ export function ProviderForm({
 					baseUrl: data.baseUrl,
 					availableModels: availableModels,
 				});
+				toast.success(t("providerAdded"));
 			}
 
 			if (onSuccess) {
@@ -97,7 +101,7 @@ export function ProviderForm({
 			}
 		} catch (error) {
 			console.error("Error saving provider:", error);
-			toast.error("Failed to save provider");
+			toast.error(t("operationFailed"));
 		}
 	};
 
@@ -106,7 +110,7 @@ export function ProviderForm({
 		const values = form.getValues();
 
 		if (!values.apiKey || !values.baseUrl) {
-			toast.error("Please fill in API key and URL");
+			toast.error(`${t("apiKeyRequired")} and ${t("baseUrlRequired")}`);
 			return;
 		}
 
@@ -121,17 +125,17 @@ export function ProviderForm({
 			setAvailableModels(models);
 			setConnectionTested(true);
 
-			toast.success("Connection test successful", {
+			toast.success(t("connectionTestSuccess"), {
 				description:
 					models.length > 0
-						? `Found ${models.length} available models`
-						: "No available models found",
+						? t("modelsFound", { count: models.length })
+						: t("noModels"),
 				action:
 					models.length > 0
 						? {
 								label: "View Models",
 								onClick: () => {
-									toast.info("Available Models", {
+									toast.info(t("availableModels"), {
 										description:
 											models.slice(0, 20).join(", ") +
 											(models.length > 20 ? "..." : ""),
@@ -143,25 +147,25 @@ export function ProviderForm({
 			});
 		} catch (error) {
 			console.error("Test connection error:", error);
-			toast.error("Connection test failed", {
-				description:
-					error instanceof Error ? error.message : "Cannot connect to API",
+			toast.error(t("connectionTestFailed"), {
+				description: error instanceof Error ? error.message : "Unknown error",
 			});
 		} finally {
 			setIsTesting(false);
 		}
 	};
 
-	// Handle provider type change and set default URL
+	// Handle provider type change
 	const handleProviderTypeChange = (value: string) => {
 		form.setValue("providerType", value);
 
-		// Update URL to default value, unless user has modified it
+		// Auto-fill URL based on provider type
 		const defaultUrl = getDefaultUrlForProvider(value as ProviderType);
-		const currentUrl = form.getValues("baseUrl");
-		const isDefaultUrl = isKnownDefaultUrl(currentUrl);
-
-		if (isDefaultUrl) {
+		if (
+			defaultUrl &&
+			(!form.getValues("baseUrl") ||
+				isKnownDefaultUrl(form.getValues("baseUrl")))
+		) {
 			form.setValue("baseUrl", defaultUrl);
 		}
 
@@ -172,67 +176,80 @@ export function ProviderForm({
 	return (
 		<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 			<div className="space-y-2">
-				<Label htmlFor="name">Name</Label>
+				<Label htmlFor="name">{t("name")}</Label>
 				<Input
 					id="name"
-					placeholder="My OpenAI Account"
+					placeholder={t("namePlaceholder")}
 					{...form.register("name")}
 				/>
 				{form.formState.errors.name && (
 					<p className="text-sm text-red-500">
-						{form.formState.errors.name.message}
+						{t(
+							form.formState.errors.name
+								.message as keyof IntlMessages["Provider"],
+						)}
 					</p>
 				)}
 			</div>
 
 			<div className="space-y-2">
-				<Label htmlFor="providerType">Provider Type</Label>
+				<Label htmlFor="providerType">{t("providerType")}</Label>
 				<Select
 					value={form.watch("providerType")}
 					onValueChange={handleProviderTypeChange}
 				>
 					<SelectTrigger id="providerType">
-						<SelectValue placeholder="Select provider type" />
+						<SelectValue placeholder={t("providerTypeRequired")} />
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="openai">OpenAI</SelectItem>
 						<SelectItem value="deepseek">DeepSeek</SelectItem>
 						<SelectItem value="openrouter">OpenRouter</SelectItem>
+						<SelectItem value="anthropic">Anthropic</SelectItem>
 						<SelectItem value="custom">Custom</SelectItem>
 					</SelectContent>
 				</Select>
 				{form.formState.errors.providerType && (
 					<p className="text-sm text-red-500">
-						{form.formState.errors.providerType.message}
+						{t(
+							form.formState.errors.providerType
+								.message as keyof IntlMessages["Provider"],
+						)}
 					</p>
 				)}
 			</div>
 
 			<div className="space-y-2">
-				<Label htmlFor="apiKey">API Key</Label>
+				<Label htmlFor="apiKey">{t("apiKey")}</Label>
 				<Input
 					id="apiKey"
 					type="password"
-					placeholder="sk-..."
+					placeholder={t("apiKeyPlaceholder")}
 					{...form.register("apiKey")}
 				/>
 				{form.formState.errors.apiKey && (
 					<p className="text-sm text-red-500">
-						{form.formState.errors.apiKey.message}
+						{t(
+							form.formState.errors.apiKey
+								.message as keyof IntlMessages["Provider"],
+						)}
 					</p>
 				)}
 			</div>
 
 			<div className="space-y-2">
-				<Label htmlFor="baseUrl">API URL</Label>
+				<Label htmlFor="baseUrl">{t("baseUrl")}</Label>
 				<Input
 					id="baseUrl"
-					placeholder="https://api.openai.com/v1"
+					placeholder={t("baseUrlPlaceholder")}
 					{...form.register("baseUrl")}
 				/>
 				{form.formState.errors.baseUrl && (
 					<p className="text-sm text-red-500">
-						{form.formState.errors.baseUrl.message}
+						{t(
+							form.formState.errors.baseUrl
+								.message as keyof IntlMessages["Provider"],
+						)}
 					</p>
 				)}
 				<p className="text-xs text-muted-foreground">
@@ -250,20 +267,20 @@ export function ProviderForm({
 					{isTesting ? (
 						<>
 							<IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
-							Testing connection...
+							{t("testingConnection")}
 						</>
 					) : connectionTested ? (
 						<>
 							<IconCheck className="mr-2 h-4 w-4" />
-							Connection successful
+							{t("connectionTestSuccess")}
 						</>
 					) : (
-						"Test Connection"
+						t("testConnection")
 					)}
 				</Button>
 
 				<Button type="submit" disabled={!connectionTested}>
-					{initialProvider ? "Update" : "Add"} Provider
+					{initialProvider ? t("editProvider") : t("addProvider")}
 				</Button>
 			</div>
 		</form>

@@ -8,11 +8,13 @@ import {
 	integer,
 	json,
 	pgTableCreator,
+	primaryKey,
 	serial,
 	text,
 	timestamp,
 	uuid,
 	varchar,
+	boolean,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -48,6 +50,22 @@ export const chatMessages = createTable("chat_messages", {
 	parts: json("parts").notNull(),
 	role: text("role").notNull(), // 'user', 'assistant', 'system'
 	attachments: json("attachments").notNull(),
+	originalContent: text("original_content"), // Store original content for edit history
+	editCount: integer("edit_count").notNull().default(0), // Track number of edits
+});
+
+// Message edit history table
+export const messageEditHistory = createTable("message_edit_history", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => nanoid(16)),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	messageId: text("message_id")
+		.references(() => chatMessages.id, { onDelete: "cascade" })
+		.notNull(),
+	previousContent: text("previous_content").notNull(),
+	newContent: text("new_content").notNull(),
+	editReason: text("edit_reason"), // Optional reason for the edit
 });
 
 export const apiProviders = createTable("api_providers", {
@@ -66,12 +84,61 @@ export const apiProviders = createTable("api_providers", {
 	lastModelUsed: text("last_model_used"), // Last used model
 });
 
+// Artifacts table for storing created documents with version history
+export const artifacts = createTable(
+	"artifacts",
+	{
+		id: text("id").notNull(),
+		version: integer("version").notNull().default(1),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+		title: text("title").notNull(),
+		content: text("content").notNull(),
+		kind: text("kind").notNull(), // 'text', 'code', 'sheet', 'image'
+		language: text("language"), // For code artifacts: 'html', 'react', 'javascript', 'python', 'css', etc.
+		userId: text("user_id").notNull(),
+		chatId: text("chat_id")
+			.references(() => chats.id, { onDelete: "cascade" })
+			.notNull(),
+		isPublic: boolean("is_public").notNull().default(false),
+		tags: json("tags").$type<string[]>().default([]),
+		changeDescription: text("change_description"), // Description of what changed in this version
+	},
+	(table) => [
+		primaryKey({ columns: [table.id, table.version] }),
+		index("idx_artifact_user_id").on(table.userId),
+		index("idx_artifact_chat_id").on(table.chatId),
+		index("idx_artifact_kind").on(table.kind),
+		index("idx_artifact_language").on(table.language),
+	],
+);
+
 export const chatsSchema = createSelectSchema(chats);
 export const chatMessagesSchema = createSelectSchema(chatMessages);
+export const messageEditHistorySchema = createSelectSchema(messageEditHistory);
+export const artifactsSchema = createSelectSchema(artifacts);
+
 export const ChatRoleEnum = z.enum(["user", "assistant", "system"]);
+export const ArtifactKindEnum = z.enum(["text", "code", "sheet", "image"]);
+export const ArtifactLanguageEnum = z.enum([
+	"html",
+	"react",
+	"javascript",
+	"python",
+	"css",
+]);
+
 export type ChatRole = z.infer<typeof ChatRoleEnum>;
+export type ArtifactKind = z.infer<typeof ArtifactKindEnum>;
+export type ArtifactLanguage = z.infer<typeof ArtifactLanguageEnum>;
 export type Chat = z.infer<typeof chatsSchema>;
 export type DBMessage = InferSelectModel<typeof chatMessages>;
+export type MessageEditHistory = InferSelectModel<typeof messageEditHistory>;
+export type Artifact = InferSelectModel<typeof artifacts>;
+
+// Insert schemas for artifacts
+export const insertArtifactSchema = createInsertSchema(artifacts);
+
 // MCP server-related type definitions
 // =========================================
 

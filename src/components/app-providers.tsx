@@ -11,26 +11,26 @@ import { ProviderManagementModal } from "./provider/provider-management-modal";
 import { Button } from "@/components/ui/button";
 
 export default function Page({ children }: React.PropsWithChildren) {
-	return (
-		<ThemeProvider
-			attribute="class"
-			defaultTheme="system"
-			enableSystem
-			disableTransitionOnChange
-		>
-			<ApiProviderWrapper>
-				<MCPDrawerProvider>
-					<SidebarProvider>
-						<AppSidebar />
-						<SidebarInset className="flex h-dvh flex-col">
-							<HeaderNav />
-							<div className="flex-1 overflow-auto">{children}</div>
-						</SidebarInset>
-					</SidebarProvider>
-					<ProviderManagementModal />
-					<Toaster richColors position="top-right" />
-				</MCPDrawerProvider>
-			</ApiProviderWrapper>
-		</ThemeProvider>
-	);
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <ApiProviderWrapper>
+        <MCPDrawerProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            <div className="flex h-dvh flex-col w-full">
+              <HeaderNav />
+              <div className="flex-1 overflow-auto">{children}</div>
+            </div>
+          </SidebarProvider>
+          <ProviderManagementModal />
+          <Toaster richColors position="top-right" />
+        </MCPDrawerProvider>
+      </ApiProviderWrapper>
+    </ThemeProvider>
+  );
 }
