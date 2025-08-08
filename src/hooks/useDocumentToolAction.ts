@@ -29,13 +29,17 @@ export function useDocumentToolAction() {
     }
 
     const resultObj = result as Record<string, unknown>;
-    
-    return {
+    const info = {
       documentId: (resultObj.documentId || resultObj.id) as string | undefined,
       title: resultObj.title as string | undefined,
       version: resultObj.version as number | undefined,
       kind: resultObj.kind as string | undefined,
     };
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.debug("[Artifact] extractDocumentInfo", info);
+    }
+    return info;
   }, []);
 
   /**
@@ -83,14 +87,26 @@ export function useDocumentToolAction() {
       if (documentId) {
         // 如果有版本号，切换到指定版本
         if (resultInfo?.version !== undefined) {
+          if (process.env.NODE_ENV !== "production") {
+            // eslint-disable-next-line no-console
+            console.debug("[Artifact] loadAndShowArtifact (with version)", { documentId, version: resultInfo.version });
+          }
           loadAndShowArtifact(documentId, defaultBoundingBox, resultInfo.version);
         } else {
           // 否则加载最新版本
+          if (process.env.NODE_ENV !== "production") {
+            // eslint-disable-next-line no-console
+            console.debug("[Artifact] loadAndShowArtifact (latest)", { documentId });
+          }
           loadAndShowArtifact(documentId, defaultBoundingBox);
         }
       } else if (kind) {
         // 如果只有 kind，不加载新的 artifact，只显示当前的 artifact
         // 这样避免覆盖正在 streaming 的数据
+        if (process.env.NODE_ENV !== "production") {
+          // eslint-disable-next-line no-console
+          console.debug("[Artifact] showArtifact (kind only)", { kind });
+        }
         showArtifact(defaultBoundingBox);
       }
     },

@@ -5,7 +5,7 @@ import {
 } from "@/server/db/queries/chats";
 import { saveMessages } from "@/server/db/queries/messages";
 import {
-	convertToCoreMessages,
+	convertToModelMessages,
 	smoothStream,
 	streamText,
 	createUIMessageStream,
@@ -123,7 +123,20 @@ export async function POST(req: Request) {
 			} as UIMessage;
 		});
 
-		const coreMessages = convertToCoreMessages(uiMessages);
+	const coreMessages = convertToModelMessages(uiMessages);
+
+		// Heuristic: if the latest user message strongly implies creating a document,
+		// nudge the model to pick the createDocument tool first to validate the tool chain.
+		const lastUser = uiMessages.slice().reverse().find((m) => m.role === "user");
+		type Part = { type?: string; text?: string };
+		const userParts = (lastUser?.parts ?? []) as Part[];
+		const lastText = userParts
+			.filter((p) => p?.type === "text" && typeof p.text === "string")
+			.map((p) => p.text as string)
+			.join("\n");
+		const forceCreateDoc = /create\s+document|create\s+doc|新建文档|创建文档|生成文档|生成笔记|写.*文档/i.test(
+			lastText,
+		);
 
 		// Load MCP tools using the extracted utility function
 		// Load MCP tools with a safe fallback so chat continues even if MCP fails
@@ -155,7 +168,7 @@ export async function POST(req: Request) {
 		// Create a UI message stream for better handling
 		const stream = createUIMessageStream({
 			execute: ({ writer: dataStream }) => {
-				const result = streamText({
+				const baseOpts = {
 					model: modelConfig as LanguageModel,
 					system: systemPrompt,
 					messages: coreMessages,
@@ -175,7 +188,14 @@ export async function POST(req: Request) {
 						isEnabled: process.env.NODE_ENV === "production",
 						functionId: "stream-text",
 					},
-				});
+				};
+
+				// Prefer the createDocument tool when strongly hinted by the user.
+				const result = streamText(
+					forceCreateDoc
+						? { ...baseOpts, toolChoice: { type: "tool", toolName: "createDocument" } }
+						: baseOpts,
+				);
 
 				result.consumeStream();
 

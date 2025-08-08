@@ -41,7 +41,7 @@ const getDocumentIcon = (kind?: string) => {
 
 // 渲染工具调用结果
 const renderResult = (
-  result: Array<ResultContent | string> | string | null,
+  result: Array<ResultContent | string> | string | Record<string, unknown> | null,
   isCompact = false
 ) => {
   if (!result) return null;
@@ -128,6 +128,21 @@ const renderResult = (
         )}
       >
         {result}
+      </div>
+    );
+  }
+
+  // 如果结果是对象（AI SDK v5 工具返回的结构化数据），以 JSON 方式展示一个摘要
+  if (typeof result === "object") {
+    const json = JSON.stringify(result, null, 2);
+    return (
+      <div
+        className={cn(
+          "text-[11px] font-mono whitespace-pre overflow-x-auto rounded bg-gray-100 dark:bg-gray-800 p-2 border border-gray-200/60 dark:border-gray-700/50",
+          isCompact ? "max-h-24" : "max-h-40"
+        )}
+      >
+        {json}
       </div>
     );
   }
