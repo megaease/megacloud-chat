@@ -37,13 +37,13 @@ export function MessageEditor({
 
   // Track changes
   useEffect(() => {
-    setHasChanges(content.trim() !== initialContent.trim());
+    setHasChanges((content?.trim() || "") !== (initialContent?.trim() || ""));
   }, [content, initialContent]);
 
   const handleSave = async () => {
     if (!hasChanges || isLoading) return;
 
-    const trimmedContent = content.trim();
+    const trimmedContent = content?.trim() || "";
     if (!trimmedContent) {
       // Don't allow empty messages
       return;
@@ -103,7 +103,7 @@ export function MessageEditor({
         <div className="flex items-center gap-2">
           <Button
             onClick={handleSave}
-            disabled={!hasChanges || isLoading || !content.trim()}
+            disabled={!hasChanges || isLoading || !content?.trim()}
             size="sm"
             className="h-8 px-3 gap-1.5"
           >
@@ -129,7 +129,7 @@ export function MessageEditor({
       </div>
 
       {/* Validation message */}
-      {!content.trim() && hasChanges && (
+      {!content?.trim() && hasChanges && (
         <div className="text-xs text-red-600 dark:text-red-400">
           {t("messageCannotBeEmpty")}
         </div>

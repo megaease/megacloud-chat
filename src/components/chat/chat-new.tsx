@@ -3,7 +3,6 @@
 import { useParams, useRouter } from "next/navigation";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +12,7 @@ import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { useEditMessage } from "@/hooks/use-edit-message";
 import { ChatView } from "./chat-view";
 import { IconLoader2 } from "@tabler/icons-react";
+import type { UIMessage } from "ai";
 import type { DBMessage } from "@/server/db/schema";
 import { DataStreamHandler } from "../artifact/DataStreamHandler";
 import { ArtifactModal } from "@/components/artifact/ArtifactModal";
@@ -21,31 +21,6 @@ import { ArtifactContentPanel } from "@/components/artifact/ArtifactContentPanel
 import { ArtifactProvider } from "@/context/artifact-provider-context";
 import { ArtifactOpener } from "./ArtifactOpener";
 import { useChatFlow } from "@/context/chat-flow-context";
-
-// Helper function to get message content safely
-function getMessageContent(message: UIMessage): string {
-  // Try to get content from the legacy content field first
-  if ((message as unknown as Record<string, unknown>).content) {
-    const content = (message as unknown as Record<string, unknown>).content;
-    return typeof content === "string" ? content : JSON.stringify(content);
-  }
-
-  // Try to extract text from parts
-  if (message.parts && Array.isArray(message.parts)) {
-    const textParts = message.parts
-      .filter(
-        (part: unknown) => (part as Record<string, unknown>)?.type === "text"
-      )
-      .map((part: unknown) => (part as Record<string, unknown>).text)
-      .filter(Boolean) as string[];
-
-    if (textParts.length > 0) {
-      return textParts.join("");
-    }
-  }
-
-  return "";
-}
 
 // Fetch chat messages hook
 function useChatMessages(chatId: string | undefined) {
@@ -131,80 +106,60 @@ function ChatContent({
   const [isUploading] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [input, setInput] = useState<string>("");
   const { consumePendingMessage } = useChatFlow();
 
   // Ensure we have a valid chatId for components that require it
   const effectiveChatId = chatId || randomChatId || "";
 
-  // Use AI chat hooks - AI SDK 5 compatible
-  const chat = useChat({
+  // Input state management
+  const [input, setInput] = useState("");
+
+  // Use AI chat hooks - AI SDK 5 format
+  const {
+    messages,
+    setMessages,
+    sendMessage,
+    status: chatStatus,
+    stop,
+    regenerate,
+    error,
+  } = useChat({
     id: chatId || randomChatId,
+    messages: chatMessages, // Initialize with existing messages
+    experimental_throttle: 100,
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      prepareSendMessagesRequest: ({
-        messages,
-        id,
-        body,
-      }: {
-        messages: UIMessage[];
-        id: string;
-        body?: Record<string, unknown>;
-      }) => {
-        // Check if provider and model are configured
-        if (!currentProvider) {
-          throw new Error("Please configure API provider first");
-        }
-
-        if (!currentModel) {
-          throw new Error("Please select a model");
-        }
-
+      prepareSendMessagesRequest: ({ messages, id, body }) => {
         return {
           body: {
             id,
-            message: messages.at(-1),
-            chatId: chatId || randomChatId,
-            userId: "user-id",
-            apiKey: currentProvider.apiKey,
-            modelName: currentModel,
-            baseUrl: currentProvider.baseUrl,
-            mcpEnabled,
-            providerType: currentProvider.providerType,
+            message: messages.at(-1), // Send only the last message
+            chatId: id,
+            userId: "user-id", // TODO: Get from auth
+            modelName: currentModel || "deepseek-chat", // Default to DeepSeek
+            apiKey: currentProvider?.apiKey,
+            baseUrl: currentProvider?.baseUrl,
+            providerType: currentProvider?.id || "deepseek", // Default to DeepSeek
+            mcpEnabled: mcpEnabled,
             ...body,
           },
         };
       },
     }),
-    onFinish: (message) => {
-      console.log("Message finished:", message);
-
-      // Only handle routing for new chats that weren't created from homepage
-      // Homepage navigation is handled in the homepage component itself
-      // This prevents duplicate routing and maintains stream continuity
-
-      // 失效聊天列表查询以刷新 sidebar
-      queryClient.invalidateQueries({
-        queryKey: ["chats", "user-id", "recent"],
-      });
+    onFinish: () => {
+      // Invalidate queries to refresh chat list
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
     },
     onError: (error) => {
-      console.error("Error in chat:", JSON.stringify(error, null, 2));
-      toast.error("Chat error", {
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
+      console.error("Chat error:", error);
+      // TODO: Add toast notification
     },
   });
-
-  const { messages, sendMessage, status, stop } = chat;
-
-  // Ensure messages are properly initialized from chatMessages
-  const effectiveMessages = messages.length > 0 ? messages : chatMessages;
 
   // Set initial prompt from URL if this is a new chat for creating artifact
   useEffect(() => {
     // For new chats with createArtifact flag, set the initial prompt
-    if (shouldCreateArtifact && effectiveMessages.length === 0 && setInput) {
+    if (shouldCreateArtifact && messages.length === 0) {
       const defaultPrompt =
         "Please help me create a new Artifact. I want:\n\n1. Type: [text/code/table/image]\n2. Content: [describe what you want to create]\n3. Features: [specific requirements]\n\nExample: Create a React component that implements a todo list";
       setInput(defaultPrompt);
@@ -216,33 +171,69 @@ function ChatContent({
         router.replace(url.pathname + url.search, { scroll: false });
       }
     }
-  }, [shouldCreateArtifact, effectiveMessages.length, router]);
+  }, [shouldCreateArtifact, messages.length, router]);
 
-  // On first mount, if HomePage stashed a pending message, consume and send here.
+  // If HomePage stashed a pending message, start streaming here
   useEffect(() => {
     const effectiveId = chatId || randomChatId;
     if (!effectiveId) return;
-    // Only auto-send when there are no messages yet to avoid duplicates
-    if ((messages?.length ?? 0) > 0 || (chatMessages?.length ?? 0) > 0) return;
-    try {
-      const payload = consumePendingMessage(effectiveId);
-      if (!payload) return;
-      sendMessage(payload);
-      setInput("");
-    } catch (e) {
-      console.error("Failed to consume pending message:", e);
-    }
+    if ((messages?.length ?? 0) > 0) return;
+    const payload = consumePendingMessage(effectiveId);
+    if (!payload) return;
+    sendMessage(payload);
+    setInput("");
   }, [
     chatId,
     randomChatId,
     messages?.length,
-    chatMessages?.length,
     consumePendingMessage,
     sendMessage,
   ]);
 
+  // Input handlers
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleSubmit = async (
+    e: React.FormEvent,
+    options?: { experimental_attachments?: FileList }
+  ) => {
+    e.preventDefault();
+    if (!input?.trim() && !options?.experimental_attachments) return;
+
+    // Check if provider and model are configured
+    if (!currentProvider) {
+      toast.error("Please configure API provider first");
+      return;
+    }
+
+    if (!currentModel) {
+      toast.error("Please select a model");
+      return;
+    }
+
+    try {
+      // Use AI SDK 5's sendMessage function
+      await sendMessage({
+        text: input,
+      });
+      setInput("");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      toast.error("Failed to send message", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  // Calculate status based on loading and error states
+  const isChatLoading =
+    chatStatus === "submitted" || chatStatus === "streaming";
+  const status: "error" | "submitted" | "streaming" | "ready" = chatStatus;
+
   // Calculate loading state
-  const isLoading = status === "streaming" || status === "submitted";
+  const isLoading = isChatLoading;
 
   // Form submit handler
   const handleFormSubmit = async (
@@ -250,7 +241,7 @@ function ChatContent({
     options?: { experimental_attachments?: FileList }
   ) => {
     e.preventDefault();
-    if ((!input || !input.trim()) && !options?.experimental_attachments) return;
+    if (!input?.trim() && !options?.experimental_attachments) return;
 
     // Prevent multiple submissions
     if (isLoading || isUploading) {
@@ -258,29 +249,46 @@ function ChatContent({
     }
 
     try {
-      // Submit the message using AI SDK 5 sendMessage pattern
-      sendMessage({
-        text: input,
-        files: options?.experimental_attachments
-          ? Array.from(options.experimental_attachments).map((file) => ({
-              type: "file" as const,
-              name: file.name,
-              mediaType: file.type,
-              url: URL.createObjectURL(file),
-            }))
-          : undefined,
-      });
+      // If we have an existing chatId, just submit normally
+      if (chatId) {
+        handleSubmit(e, options);
+        return;
+      }
 
-      // Clear the input after submission
-      setInput("");
+      // For new chats, we need to handle the routing more smoothly
+      if (!chatId && randomChatId) {
+        // Submit first to prevent interruption by route change
+        handleSubmit(e, options);
 
-      // For new chats, handle the routing in onFinish callback
-      // Don't navigate immediately to avoid losing stream state
+        // Then handle route change after a brief delay
+        setTimeout(() => {
+          router.push(`/chat/${randomChatId}`, {
+            scroll: false, // Prevent scroll jumping
+          });
+
+          // Update query cache to refresh sidebar chat list
+          queryClient.invalidateQueries({
+            queryKey: ["chats", "user-id", "recent"],
+          });
+        }, 100);
+        return;
+      }
     } catch (error) {
-      toast.error("Failed to send message", {
+      toast.error("Failed to process request", {
         description: error instanceof Error ? error.message : "Unknown error",
       });
     }
+  };
+
+  // Stop generation handler
+  const handleStopGeneration = () => {
+    stop();
+    toast.info("Generation stopped", {
+      description: "You can continue the conversation or start a new one.",
+    });
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
   };
 
   // Handle retry for failed requests
@@ -325,30 +333,9 @@ function ChatContent({
   // Handle regenerate for successful responses
   const handleRegenerate = () => {
     if (messages.length > 0) {
-      // Find the last user message to regenerate response
-      const lastUserMessage = messages.filter((m) => m.role === "user").pop();
-      if (lastUserMessage) {
-        // Extract content from the message
-        const messageContent = getMessageContent(lastUserMessage);
-        if (messageContent) {
-          // Send the message again to regenerate the response
-          sendMessage({
-            text: messageContent,
-          });
-        }
-      }
+      // Use the regenerate function from useChat to regenerate the last response
+      regenerate();
     }
-  };
-
-  // Stop generation handler
-  const handleStopGeneration = () => {
-    stop();
-    toast.info("Generation stopped", {
-      description: "You can continue the conversation or start a new one.",
-    });
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 100);
   };
 
   // Handle edit message
@@ -390,13 +377,13 @@ function ChatContent({
       <ArtifactOpener artifactId={openArtifactId} />
 
       <ChatView
-        messages={effectiveMessages}
+        messages={messages}
         input={input}
-        handleInputChange={(e) => setInput(e.target.value)}
+        handleInputChange={handleInputChange}
         handleSubmit={handleFormSubmit}
         handleStopGeneration={handleStopGeneration}
-        error={null}
-        reload={handleRegenerate}
+        error={error || null}
+        reload={regenerate}
         retry={handleRetry}
         regenerate={handleRegenerate}
         mcpEnabled={mcpEnabled}
@@ -414,14 +401,14 @@ function ChatContent({
         chatPanel={
           <ArtifactChatPanel
             chatId={effectiveChatId}
-            messages={effectiveMessages} // Use effectiveMessages to ensure initial messages are shown
+            messages={messages} // Use messages from useChat
             input={input}
-            handleInputChange={(e) => setInput(e.target.value)}
+            handleInputChange={handleInputChange}
             handleSubmit={handleFormSubmit}
             status={status}
             stop={stop}
-            error={undefined}
-            reload={handleRegenerate}
+            error={error}
+            reload={regenerate}
             isUploading={isUploading}
             mcpEnabled={mcpEnabled}
             toggleMcpEnabled={toggleMcpEnabled}

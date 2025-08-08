@@ -3,11 +3,11 @@
 
 import { memo } from "react";
 import { ArtifactChat } from "./ArtifactChat";
-import type { Message } from "@ai-sdk/react";
+import type { UIMessage } from "ai";
 
 interface ArtifactChatPanelProps {
   chatId: string;
-  messages: Message[];
+  messages: UIMessage[];
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (

@@ -1,72 +1,85 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import type { UIMessage } from "ai";
+import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useApiProvider } from "@/context/api-provider-context";
 import { useMcpEnabled } from "@/hooks/use-mcp-enabled";
 import { ChatInput } from "@/components/chat/chat-input";
+import { useChatFlow } from "@/context/chat-flow-context";
 
 export function HomePage() {
   const t = useTranslations("HomePage");
-  const tCommon = useTranslations("Common");
   const router = useRouter();
   const queryClient = useQueryClient();
   const { currentProvider, currentModel, isConfigured } = useApiProvider();
   const { mcpEnabled, toggleMcpEnabled } = useMcpEnabled();
   const [randomChatId] = useState<string>(() => nanoid(16));
   const [isUploading, setIsUploading] = useState(false);
+  const [input, setInput] = useState<string>("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { setPendingMessage } = useChatFlow();
 
-  // Use AI chat hooks for new chat
-  const { input, handleInputChange, handleSubmit, status, stop, error } =
-    useChat({
-      id: randomChatId,
-      maxSteps: 10,
-      experimental_prepareRequestBody: (body) => {
-        // 检查提供商和模型是否已配置
-        if (!currentProvider) {
-          throw new Error("Please configure API provider first");
-        }
+  // Use the same chat ID to ensure state sharing with Chat component
+  const chatIdToUse = randomChatId;
 
-        if (!currentModel) {
-          throw new Error("Please select a model");
-        }
-
+  // Use AI chat hooks for new chat - AI SDK 5 compatible
+  const chat = useChat({
+    id: chatIdToUse, // Use consistent chat ID for state sharing
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      prepareSendMessagesRequest: ({
+        messages,
+        id,
+        body,
+      }: {
+        messages: UIMessage[];
+        id: string;
+        body?: Record<string, unknown>;
+      }) => {
         return {
-          chatId: randomChatId,
-          userId: "user-id",
-          apiKey: currentProvider.apiKey,
-          modelName: currentModel,
-          baseUrl: currentProvider.baseUrl,
-          mcpEnabled,
-          message: body.messages.at(-1),
-          providerType: currentProvider.providerType,
+          body: {
+            id,
+            message: messages.at(-1),
+            chatId: chatIdToUse, // Use consistent chat ID
+            userId: "user-id",
+            apiKey: currentProvider?.apiKey,
+            modelName: currentModel || "gpt-4o-mini",
+            baseUrl: currentProvider?.baseUrl,
+            mcpEnabled,
+            providerType: currentProvider?.providerType,
+            ...body,
+          },
         };
       },
-      experimental_throttle: 100,
-      sendExtraMessageFields: true,
-      onFinish: (message) => {
-        console.log("Message finished:", message);
-        // 失效聊天列表查询以刷新 sidebar
-        queryClient.invalidateQueries({
-          queryKey: ["chats", "user-id", "recent"],
-        });
-      },
-      onError: (error) => {
-        console.error("Error in chat:", JSON.stringify(error, null, 2));
-        toast.error("Chat error", {
-          description: error instanceof Error ? error.message : "Unknown error",
-        });
-      },
-    });
+    }),
+    onFinish: () => {
+      // Update query cache to refresh sidebar chat list
+      queryClient.invalidateQueries({
+        queryKey: ["chats", "user-id", "recent"],
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Chat error:", error);
+      toast.error("Chat error", {
+        description: error.message,
+      });
+    },
+  });
 
-  // Calculate loading state
-  const isLoading = status === "streaming" || status === "submitted";
+  const { messages, sendMessage, status, stop } = chat;
+
+  // Calculate loading state based on status
+  const isStatusLoading = status === "streaming" || status === "submitted";
+
+  // We will navigate immediately on submit and start streaming in Chat page.
+  // (Remove auto-navigation based on streaming status to avoid losing stream state.)
 
   // Form submit handler
   const handleFormSubmit = async (
@@ -74,26 +87,37 @@ export function HomePage() {
     options?: { experimental_attachments?: FileList }
   ) => {
     e.preventDefault();
-    if (!input.trim() && !options?.experimental_attachments) return;
+    if (!input?.trim() && !options?.experimental_attachments) return;
 
     // Prevent multiple submissions
-    if (isLoading || isUploading) {
+    if (isStatusLoading || isUploading) {
+      return;
+    }
+
+    // Check if provider and model are configured
+    if (!currentProvider) {
+      toast.error("Please configure API provider first");
       return;
     }
 
     try {
-      // Submit first to start the chat
-      handleSubmit(e, options);
+      // Stash pending message into in-memory context, then navigate.
+      setPendingMessage(chatIdToUse, {
+        text: input,
+        files: options?.experimental_attachments
+          ? Array.from(options.experimental_attachments).map((file) => ({
+              type: "file" as const,
+              name: file.name,
+              mediaType: file.type,
+              url: URL.createObjectURL(file),
+            }))
+          : undefined,
+      });
 
-      // Navigate to the new chat after a brief delay
-      setTimeout(() => {
-        router.push(`/chat/${randomChatId}`);
+      router.push(`/chat/${randomChatId}`, { scroll: false });
 
-        // Update query cache to refresh sidebar chat list
-        queryClient.invalidateQueries({
-          queryKey: ["chats", "user-id", "recent"],
-        });
-      }, 100);
+      // Clear the input after scheduling navigation
+      setInput("");
     } catch (error) {
       toast.error("Failed to process request", {
         description: error instanceof Error ? error.message : "Unknown error",
@@ -161,12 +185,12 @@ export function HomePage() {
             <div className="relative">
               <ChatInput
                 input={input}
-                handleInputChange={handleInputChange}
+                handleInputChange={(e) => setInput(e.target.value)}
                 handleSubmit={handleFormSubmit}
                 handleStopGeneration={handleStopGeneration}
                 mcpEnabled={mcpEnabled}
                 toggleMcpEnabled={toggleMcpEnabled}
-                status={status}
+                status={status as "error" | "submitted" | "streaming" | "ready"}
                 isUploading={isUploading}
               />
             </div>

@@ -26,7 +26,7 @@ export type ArtifactLanguage =
 
 export interface DataStreamDelta {
 	type:
-		| "text-delta"
+		| 'text'
 		| "code-delta"
 		| "sheet-delta"
 		| "image-delta"

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -25,7 +25,6 @@ import type {
   ToolInvocationPart as ToolInvocationPartType,
   ResultContent,
   FilePart,
-  UIMessage,
   ReasoningPart as ReasoningPartType,
 } from "@/types/tool-invocation";
 import { ChatItem } from "./chat-item";
@@ -38,7 +37,7 @@ import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
 import { useEditMessage } from "@/hooks/use-edit-message";
 
 interface ChatMessageProps {
-  message: Message | UIMessage;
+  message: UIMessage | UIMessage;
   isLoading: boolean;
   isCompact?: boolean; // Compact mode for narrow screens like Artifact sidebar
   isLastMessage?: boolean;
@@ -50,6 +49,29 @@ interface ChatMessageProps {
   onCancelEdit?: () => void;
   onSaveEdit?: (messageId: string, content: string) => Promise<void>;
   isEditing?: boolean;
+}
+
+// Helper function to get message content safely
+function getMessageContent(message: UIMessage): string {
+  // Try to get content from the legacy content field first
+  if ((message as any).content) {
+    const content = (message as any).content;
+    return typeof content === "string" ? content : JSON.stringify(content);
+  }
+
+  // Try to extract text from parts
+  if (message.parts && Array.isArray(message.parts)) {
+    const textParts = message.parts
+      .filter((part: any) => part?.type === "text")
+      .map((part: any) => part.text)
+      .filter(Boolean);
+
+    if (textParts.length > 0) {
+      return textParts.join("");
+    }
+  }
+
+  return "";
 }
 
 // Render different types of message parts
@@ -215,7 +237,7 @@ export function ChatMessage({
     }
 
     // If only has regular content, or if parts are empty during streaming
-    const content = message.content as string;
+    const content = getMessageContent(message);
     if (content && content.trim().length > 0) {
       return <Markdown content={content} />;
     }
@@ -235,16 +257,15 @@ export function ChatMessage({
 
   // Render attachments if present
   const renderAttachments = () => {
-    if (
-      !message.experimental_attachments ||
-      message.experimental_attachments.length === 0
-    ) {
+    const attachments =
+      (message as any).experimental_attachments || (message as any).attachments;
+    if (!attachments || attachments.length === 0) {
       return null;
     }
 
     return (
       <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2">
-        {message.experimental_attachments.map((attachment) => {
+        {attachments.map((attachment: any) => {
           const uniqueKey = `${message.id}-${attachment.name || ""}-${
             attachment.url
           }`;
@@ -345,23 +366,26 @@ export function ChatMessage({
   };
 
   // Get message content for copying
-  const getMessageContent = () => {
-    if (typeof message.content === "string") {
-      return message.content;
+  const getMessageContentForCopy = () => {
+    // Try to get content from the legacy content field first
+    if ((message as any).content) {
+      const content = (message as any).content;
+      return typeof content === "string" ? content : JSON.stringify(content);
     }
-    // Handle parts array
+
+    // Try to extract text from parts
     if (message.parts && Array.isArray(message.parts)) {
-      return message.parts
-        .map((part: any) => {
-          if (typeof part === "string") return part;
-          if (part.type === "text") return part.text;
-          return "";
-        })
-        .filter(Boolean)
-        .join("\n");
+      const textParts = message.parts
+        .filter((part: any) => part?.type === "text")
+        .map((part: any) => part.text)
+        .filter(Boolean);
+
+      if (textParts.length > 0) {
+        return textParts.join("");
+      }
     }
-    // Fallback to JSON string
-    return JSON.stringify(message.content);
+
+    return "";
   };
 
   // Check if there's any actual content to render
@@ -378,7 +402,7 @@ export function ChatMessage({
         status={status}
         retry={retry}
         regenerate={regenerate}
-        messageContent={getMessageContent()}
+        messageContent={getMessageContentForCopy()}
         messageId={message.id}
         onEdit={onEdit}
         isEditing={isEditing}
@@ -400,7 +424,7 @@ export function ChatMessage({
         {/* Conditional rendering: MessageEditor for editing, normal content otherwise */}
         {isEditing && isUser ? (
           <MessageEditor
-            initialContent={getMessageContent()}
+            initialContent={getMessageContentForCopy()}
             onSave={handleEditSave}
             onCancel={handleEditCancel}
             isLoading={isEditLoading}

@@ -5,15 +5,14 @@ import {
 } from "@/server/db/queries/chats";
 import { saveMessages } from "@/server/db/queries/messages";
 import {
-	appendClientMessage,
-	appendResponseMessages,
 	convertToCoreMessages,
-	createDataStream,
 	smoothStream,
 	streamText,
-	type Message,
+	createUIMessageStream,
+	JsonToSseTransformStream,
 	type ToolSet,
 	type UIMessage,
+	type LanguageModel,
 } from "ai";
 import { loadMCPTools, type MCPClient } from "@/lib/mcp-utils";
 import { nanoid } from "nanoid";
@@ -23,37 +22,10 @@ import { getTrailingMessageId } from "@/lib/utils";
 import { systemPrompt } from "@/lib/prompt";
 import { createDocumentTool } from "@/lib/ai/tools/create-document";
 import { updateDocumentTool } from "@/lib/ai/tools/update-document";
-import {
-	createResumableStreamContext,
-	type ResumableStreamContext,
-} from "resumable-stream";
-import { after } from "next/server";
+import { stepCountIs } from "ai";
 
 export const maxDuration = 30;
 
-let globalStreamContext: ResumableStreamContext | null = null;
-
-function getStreamContext() {
-	if (!globalStreamContext) {
-		try {
-			globalStreamContext = createResumableStreamContext({
-				waitUntil: after,
-			});
-		} catch (error: unknown) {
-			const errorMessage =
-				error instanceof Error ? error.message : String(error);
-			if (errorMessage.includes("REDIS_URL")) {
-				console.log(
-					" > Resumable streams are disabled due to missing REDIS_URL",
-				);
-			} else {
-				console.error(error);
-			}
-		}
-	}
-
-	return globalStreamContext;
-}
 type requestBody = {
 	userId: string;
 	chatId: string;
@@ -64,9 +36,11 @@ type requestBody = {
 	mcpEnabled?: boolean;
 	message: UIMessage;
 };
+
 export async function POST(req: Request) {
 	console.log("POST /api/chat");
 	const json = await req.json();
+	console.log("Request body:", JSON.stringify(json, null, 2));
 	const requestBody: requestBody = json as requestBody;
 	const {
 		userId,
@@ -78,6 +52,9 @@ export async function POST(req: Request) {
 		mcpEnabled,
 		message,
 	} = requestBody;
+
+	console.log("Extracted fields:", { userId, chatId, modelName, providerType });
+
 	if (!userId) {
 		return Response.json({ error: "User ID is required" }, { status: 400 });
 	}
@@ -93,7 +70,9 @@ export async function POST(req: Request) {
 			{ status: 400 },
 		);
 	}
+
 	console.log("chatId:", chatId);
+
 	try {
 		const { model: modelConfig, detectedProvider } = detectAndCreateAIModel({
 			apiKey,
@@ -106,7 +85,11 @@ export async function POST(req: Request) {
 		const chat = await getChatById({ chatId, userId });
 		console.log(chat, "chat");
 		if (!chat) {
-			const title = await generateTitle(chatId, [message], modelConfig);
+			const title = await generateTitle(
+				chatId,
+				[message],
+				modelConfig as LanguageModel,
+			);
 
 			await saveToChatsTable({
 				userId,
@@ -119,152 +102,117 @@ export async function POST(req: Request) {
 		// Fetch existing messages or create a new chat if it doesn't exist
 		const existingChatMessages = await getChatMessageById(userId, chatId);
 		console.log(existingChatMessages, "existingChatMessages");
-		const messages = appendClientMessage({
-			// @ts-ignore
-			messages: existingChatMessages || [],
-			message,
-		});
+
+		// Manually append the new message to existing messages (AI SDK 5 pattern)
+		const allMessages = [...(existingChatMessages || []), message];
 		await saveMessages(chatId, [message]);
+
+		// Convert to core messages for the AI model
+		// Filter and convert existing DB messages to UIMessage format
+		const uiMessages: UIMessage[] = allMessages.map((msg) => {
+			if ("parts" in msg && Array.isArray(msg.parts)) {
+				// This is already a UIMessage
+				return msg as UIMessage;
+			}
+			// This is a DB message, convert it
+			const dbMsg = msg as { id: string; role: string; content: string };
+			return {
+				id: dbMsg.id,
+				role: dbMsg.role,
+				parts: [{ type: "text" as const, text: dbMsg.content }],
+			} as UIMessage;
+		});
+
+		const coreMessages = convertToCoreMessages(uiMessages);
+
 		// Load MCP tools using the extracted utility function
-		const {
-			tools: mcpTools,
-			clients: mcpClients,
-			closeAllMcpClients,
-		} = await loadMCPTools(mcpEnabled);
-		console.log(mcpEnabled, mcpTools, "allTools");
+		// Load MCP tools with a safe fallback so chat continues even if MCP fails
+		let mcpTools: ToolSet | undefined = undefined;
+		try {
+			const { tools } = await loadMCPTools(mcpEnabled);
+			mcpTools = tools;
+		} catch (e) {
+			console.warn("MCP tools load failed, continuing without tools:", e);
+		}
+		console.log(
+			"MCP enabled:",
+			mcpEnabled,
+			"Loaded tools:",
+			Object.keys(mcpTools ?? {}),
+		);
 
 		console.log(
 			`Using ${detectedProvider} model: ${modelName || "gpt-4-turbo"}`,
 		);
 		const streamId = nanoid(16);
 
-		// Create a new stream ID in the database
-		// await createStreamId({ streamId, chatId: id });
+		// Local tool set that's always available (even when MCP is disabled)
+		const localTools: ToolSet = {
+			createDocument: createDocumentTool,
+			updateDocument: updateDocumentTool,
+		};
 
-		const stream = createDataStream({
-			execute: (dataStream) => {
+		// Create a UI message stream for better handling
+		const stream = createUIMessageStream({
+			execute: ({ writer: dataStream }) => {
 				const result = streamText({
-					model: modelConfig,
+					model: modelConfig as LanguageModel,
 					system: systemPrompt,
-					messages: messages,
-					tools: {
-						...mcpTools,
-						createDocument: createDocumentTool(dataStream, userId, chatId),
-						updateDocument: updateDocumentTool(dataStream, userId, chatId),
-					} as ToolSet,
-
+					messages: coreMessages,
+					tools: { ...(localTools as ToolSet), ...(mcpTools ?? {}) } as ToolSet,
+					// Enable multi-step loop so that tool calls are executed and the
+					// model can produce a follow-up answer considering tool results.
+					stopWhen: stepCountIs(5),
+					experimental_context: { userId, chatId },
 					experimental_transform: smoothStream({ chunking: "word" }),
-					maxSteps: 10,
 					providerOptions: {
 						openai: {
 							reasoningEffort: "low",
 							reasoningSummary: "detailed",
 						},
 					},
-					toolCallStreaming: true,
-					onFinish: async (result) => {
-						const responseMessages = result.response.messages;
-
-						const assistantId = getTrailingMessageId({
-							messages: responseMessages.filter(
-								(message) => message.role === "assistant",
-							),
-						});
-						if (!assistantId) {
-							console.error("No assistant message found in response");
-							throw new Error("No assistant message found in response");
-						}
-
-						const [, lastMessage] = appendResponseMessages({
-							messages: [message],
-							responseMessages: responseMessages,
-						});
-						if (!lastMessage) {
-							console.error("No last message found in response");
-							throw new Error("No last message found in response");
-						}
-						await saveMessages(chatId, [
-							{
-								id: assistantId,
-								role: lastMessage.role,
-								parts: lastMessage.parts ?? [],
-								createdAt: new Date(),
-								content: lastMessage.content,
-								experimental_attachments:
-									lastMessage.experimental_attachments ?? [],
-							},
-						]);
-					},
-					onError: async (error) => {
-						console.error("Stream error:", error);
-
-						// 检查是否是类型验证错误
-						const errorObj =
-							error instanceof Error
-								? error
-								: error && typeof error === "object" && "error" in error
-									? (error as { error: Error }).error
-									: null;
-
-						if (
-							errorObj?.name === "AI_TypeValidationError" ||
-							errorObj?.message?.includes("Type validation failed")
-						) {
-							console.warn(
-								"Type validation error - continuing with stream:",
-								errorObj.message,
-							);
-							return;
-						}
-
-						// 检查是否是 API 调用错误
-						if (errorObj?.name === "AI_APICallError") {
-							const apiError = errorObj as Error & {
-								statusCode?: number;
-								responseBody?: string;
-							};
-							if (apiError.statusCode === 403) {
-								console.error(
-									"API access forbidden - check API key and region:",
-									apiError.responseBody,
-								);
-							} else if (apiError.statusCode === 401) {
-								console.error("API authentication failed - check API key");
-							} else {
-								console.error(
-									"API call failed:",
-									apiError.statusCode,
-									apiError.responseBody,
-								);
-							}
-						}
+					experimental_telemetry: {
+						isEnabled: process.env.NODE_ENV === "production",
+						functionId: "stream-text",
 					},
 				});
 
 				result.consumeStream();
-				result.mergeIntoDataStream(dataStream, {
-					sendReasoning: true,
-				});
+
+				dataStream.merge(
+					result.toUIMessageStream({
+						sendReasoning: true,
+					}),
+				);
+			},
+			generateId: () => nanoid(),
+			onFinish: async ({ messages }) => {
+				// Save all new messages from the stream
+				const messagesToSave = messages
+					.filter((msg) => msg.role === "assistant")
+					.map(
+						(message) =>
+							({
+								id: message.id,
+								role: message.role,
+								parts: message.parts,
+								chatId: chatId,
+							}) as UIMessage,
+					);
+
+				if (messagesToSave.length > 0) {
+					await saveMessages(chatId, messagesToSave);
+				}
+			},
+			onError: (error) => {
+				console.error("Stream error:", error);
+				return "Oops, an error occurred while processing your request!";
 			},
 		});
 
-		const streamContext = getStreamContext(); // not achieved
-
-		if (streamContext) {
-			return new Response(
-				await streamContext.resumableStream(streamId, () => stream),
-			);
-		}
-		return new Response(stream);
+		return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
 	} catch (error) {
-		console.error("Error processing request:", JSON.stringify(error));
-		// Return a proper error response instead of nothing
-		return Response.json(
-			{
-				error: "Error processing request",
-				details: error instanceof Error ? error.message : "Unknown error",
-			},
-			{ status: 500 },
-		);
+		console.error("Chat API error:", error);
+		return Response.json({ error: "Internal server error" }, { status: 500 });
 	}
 }

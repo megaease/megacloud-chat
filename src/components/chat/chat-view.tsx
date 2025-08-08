@@ -7,7 +7,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "./chat-message";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
-import type { Message } from "@ai-sdk/react";
+import type { UIMessage } from "ai";
 import { ChatInput } from "./chat-input";
 import { EditConfirmationDialog } from "./edit-confirmation-dialog";
 import { Thinking } from "./thinking";
@@ -20,7 +20,7 @@ interface Model {
 }
 
 interface ChatViewProps {
-  messages: Message[];
+  messages: UIMessage[];
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (

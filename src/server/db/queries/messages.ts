@@ -8,14 +8,25 @@ import type { UIMessage } from "ai";
 function convertToDBMessages(messages: UIMessage[], chatId: string) {
 	return messages.map((message) => {
 		const messageId = message.id || nanoid(16);
+
+		// Extract content from AI SDK 5 message format
+		let content = "";
+		if ("parts" in message && Array.isArray(message.parts)) {
+			const textParts = message.parts
+				.filter((part: any) => part?.type === "text")
+				.map((part: any) => part.text)
+				.filter(Boolean);
+			content = textParts.join("");
+		}
+
 		return {
 			id: messageId,
 			createdAt: new Date(),
 			chatId: chatId,
-			content: message.content,
+			content: content,
 			parts: message.parts || null,
 			role: message.role,
-			attachments: message.experimental_attachments || [],
+			attachments: [], // TODO: Handle attachments in AI SDK 5
 		};
 	});
 }
@@ -37,11 +48,11 @@ export async function saveMessages(chatId: string, messages: UIMessage[]) {
 		console.error("Error saving messages:", error);
 
 		// If it's a duplicate key error, try with new IDs
-		if (error instanceof Error && error.message.includes('duplicate key')) {
+		if (error instanceof Error && error.message.includes("duplicate key")) {
 			console.log("Duplicate key detected, retrying with new IDs...");
 
 			// Generate new IDs for all messages
-			const retryMessages = dbMessages.map(msg => ({
+			const retryMessages = dbMessages.map((msg) => ({
 				...msg,
 				id: nanoid(16), // Force new ID
 			}));
@@ -70,7 +81,7 @@ export async function updateMessage(
 	messageId: string,
 	content: string,
 	editReason?: string,
-	userId?: string
+	userId?: string,
 ) {
 	if (!messageId) {
 		throw new Error("Message ID is required");
@@ -96,7 +107,7 @@ export async function updateMessage(
 		if (!currentMessage) {
 			throw new Error("Message not found");
 		}
-		
+
 		const previousContent = currentMessage.content;
 
 		// Don't update if content is the same

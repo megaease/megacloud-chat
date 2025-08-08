@@ -33,7 +33,7 @@ export interface StepStartPart {
 
 export interface ReasoningPart {
 	type: "reasoning";
-	reasoning: string;
+	reasoningText: string;
 	details?: TextPart[];
 }
 
