@@ -18,7 +18,11 @@ export interface ToolState {
 	isSuccessful: boolean;
 	isDocumentTool: boolean;
 	// Allow structured objects for AI SDK v5 tool outputs
-	result: Array<ResultContent | string> | string | Record<string, unknown> | null;
+	result:
+		| Array<ResultContent | string>
+		| string
+		| Record<string, unknown>
+		| null;
 }
 
 export interface ToolTheme {

@@ -23,10 +23,8 @@ import { CopyButton } from "../copy-button";
 import type {
   MessagePart,
   ToolInvocationPart as ToolInvocationPartType,
-  ResultContent,
-  FilePart,
-  ReasoningPart as ReasoningPartType,
 } from "@/types/tool-invocation";
+import { adaptToToolInvocationPart } from "@/lib/ai/tool-part-utils";
 import { ChatItem } from "./chat-item";
 import { MessageEditor } from "./message-editor";
 import { ReasoningPart } from "./reasoning-part";
@@ -62,7 +60,8 @@ type MaybeAttachmentsMessage = {
 
 // Helper function to get message content safely
 function getMessageContent(message: UIMessage): string {
-  const msgWithContent = message as unknown as MaybeContentMessage & MaybePartsMessage;
+  const msgWithContent = message as unknown as MaybeContentMessage &
+    MaybePartsMessage;
   // Try to get content from the legacy content field first
   if (typeof msgWithContent.content !== "undefined") {
     const c = msgWithContent.content;
@@ -106,59 +105,9 @@ function renderMessagePart(
     return <Markdown key={key} content={part} />;
   }
 
-  // Handle AI SDK streams emitting named tool parts like { type: "tool-createDocument", input, output }
-  const maybeType = (part as { type?: string }).type;
-  if (
-    maybeType &&
-    typeof maybeType === "string" &&
-    maybeType.startsWith("tool-") &&
-    maybeType !== "tool-call" &&
-    maybeType !== "tool-result" &&
-    maybeType !== "tool-invocation"
-  ) {
-    const toolName = maybeType.slice("tool-".length);
-    const rawInput = (part as { input?: unknown }).input;
-    const rawOutput = (part as { output?: unknown }).output;
-    const rawState = (part as { state?: string }).state;
-
-    // Normalize args
-    let args: Record<string, unknown> = {};
-    if (typeof rawInput === "string") {
-      try { args = JSON.parse(rawInput); } catch { args = { value: rawInput }; }
-    } else if (rawInput && typeof rawInput === "object") {
-      args = rawInput as Record<string, unknown>;
-    }
-
-    // Normalize result
-    let result: Record<string, unknown> | { content: string } | undefined;
-    if (typeof rawOutput === "string") {
-      try {
-        const parsed = JSON.parse(rawOutput);
-        result = parsed as Record<string, unknown>;
-      } catch {
-        result = { content: rawOutput };
-      }
-    } else if (rawOutput && typeof rawOutput === "object") {
-      result = rawOutput as Record<string, unknown>;
-    }
-
-    // Map state
-    const mappedState: "call" | "partial-call" | "processing" | "result" =
-      rawState === "output-available" || result != null
-        ? "result"
-        : rawState === "call-created" || rawState === "created"
-          ? "call"
-          : "processing";
-
-    const adapted: ToolInvocationPartType = {
-      type: "tool-invocation",
-      toolInvocation: {
-        toolName,
-        args,
-        state: mappedState,
-        ...(result ? { result } : {}),
-      },
-    };
+  // Centralized tool part adaptation (supports tool-call, tool-result, tool-<name>, tool-invocation)
+  const adapted = adaptToToolInvocationPart(part as { type?: string });
+  if (adapted) {
     return (
       <ToolInvocationPart
         key={key}
@@ -174,82 +123,7 @@ function renderMessagePart(
     case "text":
       return <Markdown key={key} content={part.text} />;
 
-  // AI SDK v5 tool calling parts -> adapt to our ToolInvocationPart format
-    case "tool-call": {
-      const call = part as unknown as {
-        type: "tool-call";
-        toolName: string;
-        input?: unknown;
-      };
-      let args: Record<string, unknown> = {};
-      try {
-        if (typeof call.input === "string") {
-          args = JSON.parse(call.input);
-        } else if (call.input && typeof call.input === "object") {
-          args = call.input as Record<string, unknown>;
-        }
-      } catch {
-        // ignore parse errors
-      }
-      const adapted: ToolInvocationPartType = {
-        type: "tool-invocation",
-        toolInvocation: {
-          toolName: call.toolName,
-          args,
-          state: "call",
-        },
-      };
-      return (
-        <ToolInvocationPart
-          key={key}
-          part={adapted}
-          isLoading={isLoading}
-          isCompact={isCompact}
-        />
-      );
-    }
-    case "tool-result": {
-      const result = part as unknown as {
-        type: "tool-result";
-        toolName: string;
-        output?: unknown;
-      };
-      // Prefer preserving structured outputs so downstream UI can extract ids/versions
-      let normalizedOutput: unknown = undefined;
-      if (typeof result.output === "string") {
-        try {
-          normalizedOutput = JSON.parse(result.output);
-        } catch {
-          normalizedOutput = result.output; // keep as plain string if not JSON
-        }
-      } else if (result.output && typeof result.output === "object") {
-        normalizedOutput = result.output;
-      } else {
-        normalizedOutput = "";
-      }
-      const adapted: ToolInvocationPartType = {
-        type: "tool-invocation",
-        toolInvocation: {
-          toolName: result.toolName,
-          args: {},
-          state: "result",
-          // Expose structured fields (e.g., id, documentId, version, success, etc.)
-          // If it's a string, place it under content for rendering
-          result:
-            typeof normalizedOutput === "string"
-              ? { content: normalizedOutput }
-              : (normalizedOutput as Record<string, unknown>),
-        },
-      };
-      return (
-        <ToolInvocationPart
-          key={key}
-          part={adapted}
-          isLoading={isLoading}
-          isCompact={isCompact}
-        />
-      );
-    }
+    // tool-call/tool-result cases are covered by adaptation above
 
     case "tool-invocation":
       return (
@@ -341,7 +215,7 @@ export function ChatMessage({
     if (!message.id) return;
 
     try {
-  // 使用父组件的保存函数（包含数据库保存和状态管理）
+      // 使用父组件的保存函数（包含数据库保存和状态管理）
       if (onSaveEdit) {
         await onSaveEdit(message.id, content);
       } else {
@@ -413,15 +287,16 @@ export function ChatMessage({
 
   // Render attachments if present
   const renderAttachments = () => {
-  const m = message as unknown as MaybeAttachmentsMessage;
-  const attachments: Attachment[] = m.experimental_attachments || m.attachments || [];
+    const m = message as unknown as MaybeAttachmentsMessage;
+    const attachments: Attachment[] =
+      m.experimental_attachments || m.attachments || [];
     if (!attachments || attachments.length === 0) {
       return null;
     }
 
     return (
       <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2">
-    {attachments.map((attachment: Attachment) => {
+        {attachments.map((attachment: Attachment) => {
           const uniqueKey = `${message.id}-${attachment.name || ""}-${
             attachment.url
           }`;
@@ -523,7 +398,8 @@ export function ChatMessage({
 
   // Get message content for copying
   const getMessageContentForCopy = () => {
-    const msgWith = message as unknown as MaybeContentMessage & MaybePartsMessage;
+    const msgWith = message as unknown as MaybeContentMessage &
+      MaybePartsMessage;
     if (typeof msgWith.content !== "undefined") {
       const c = msgWith.content;
       if (typeof c === "string") return c;
@@ -536,7 +412,9 @@ export function ChatMessage({
 
     if (Array.isArray(msgWith.parts)) {
       const textParts = msgWith.parts
-        .filter((part): part is { type?: string; text?: string } => Boolean(part))
+        .filter((part): part is { type?: string; text?: string } =>
+          Boolean(part)
+        )
         .filter((part) => part.type === "text" && typeof part.text === "string")
         .map((part) => part.text as string)
         .filter(Boolean);

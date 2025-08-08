@@ -409,7 +409,10 @@ function ChatContent({
         editingMessageId={editingMessageId}
       />
 
-  <DataStreamHandler chatId={effectiveChatId} messages={effectiveMessages} />
+      <DataStreamHandler
+        chatId={effectiveChatId}
+        messages={effectiveMessages}
+      />
       <ArtifactModal
         chatPanel={
           <ArtifactChatPanel

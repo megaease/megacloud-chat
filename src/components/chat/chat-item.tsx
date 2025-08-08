@@ -217,27 +217,23 @@ export function ChatItem({
       >
         <div
           className={cn(
-            "rounded-[var(--radius)] px-4 py-3 text-left min-w-0 transition-all duration-200", // 添加 min-w-0 和过渡动画
-            // 在紧凑模式下优化显示
+            "rounded-[var(--radius)] px-4 py-3 text-left min-w-0 transition-all duration-200",
+            // 在紧凑模式下优化显示（保留原有布局行为）
             isCompact
               ? isUser
                 ? hasError
-                  ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 border border-red-300 dark:border-red-800 shadow-[var(--shadow-xs)] max-w-full break-words"
-                  : "inline-block bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300  max-w-full break-words"
-                : "block bg-transparent text-card-foreground w-full overflow-hidden"
+                  ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 max-w-full break-words"
+                  : "inline-block bg-white text-gray-900 dark:text-gray-900 max-w-full break-words"
+                : "block bg-white text-gray-900 dark:text-gray-900 w-full overflow-hidden"
               : isUser
               ? hasError
-                ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 border border-red-300 dark:border-red-800 shadow-[var(--shadow-xs)] w-auto"
-                : "inline-block bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300  w-auto"
-              : "inline-block bg-transparent text-card-foreground w-full",
-            // 编辑状态的简洁样式
+                ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 w-auto"
+                : "inline-block bg-white text-gray-900 dark:text-gray-900 w-auto"
+              : "inline-block bg-white text-gray-900 dark:text-gray-900 w-full",
+            // 编辑状态的简洁样式（叠加在白底上）
             isEditing && "bg-muted/20",
-            // 添加链接样式修复
-            "[&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-2",
-            // 为用户消息中的链接使用对比色
-            isUser
-              ? "[&_a]:text-primary-foreground/90 [&_a:hover]:text-primary-foreground"
-              : "[&_a]:text-blue-600 [&_a:hover]:text-blue-800 dark:[&_a]:text-blue-400 dark:[&_a:hover]:text-blue-300"
+            // 统一链接样式
+            "[&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-2 [&_a]:text-blue-600 [&_a:hover]:text-blue-800 dark:[&_a]:text-blue-700 dark:[&_a:hover]:text-blue-600"
           )}
         >
           {children}

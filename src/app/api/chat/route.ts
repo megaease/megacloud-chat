@@ -123,20 +123,24 @@ export async function POST(req: Request) {
 			} as UIMessage;
 		});
 
-	const coreMessages = convertToModelMessages(uiMessages);
+		const coreMessages = convertToModelMessages(uiMessages);
 
 		// Heuristic: if the latest user message strongly implies creating a document,
 		// nudge the model to pick the createDocument tool first to validate the tool chain.
-		const lastUser = uiMessages.slice().reverse().find((m) => m.role === "user");
+		const lastUser = uiMessages
+			.slice()
+			.reverse()
+			.find((m) => m.role === "user");
 		type Part = { type?: string; text?: string };
 		const userParts = (lastUser?.parts ?? []) as Part[];
 		const lastText = userParts
 			.filter((p) => p?.type === "text" && typeof p.text === "string")
 			.map((p) => p.text as string)
 			.join("\n");
-		const forceCreateDoc = /create\s+document|create\s+doc|新建文档|创建文档|生成文档|生成笔记|写.*文档/i.test(
-			lastText,
-		);
+		const forceCreateDoc =
+			/create\s+document|create\s+doc|新建文档|创建文档|生成文档|生成笔记|写.*文档/i.test(
+				lastText,
+			);
 
 		// Load MCP tools using the extracted utility function
 		// Load MCP tools with a safe fallback so chat continues even if MCP fails
@@ -193,7 +197,10 @@ export async function POST(req: Request) {
 				// Prefer the createDocument tool when strongly hinted by the user.
 				const result = streamText(
 					forceCreateDoc
-						? { ...baseOpts, toolChoice: { type: "tool", toolName: "createDocument" } }
+						? {
+								...baseOpts,
+								toolChoice: { type: "tool", toolName: "createDocument" },
+							}
 						: baseOpts,
 				);
 

@@ -65,7 +65,7 @@ export function ToolInvocationPart({
         status={status}
         theme={theme}
         isLoading={isLoading || status === "executing"}
-  part={part}
+        part={part}
       />
     );
   }
@@ -79,7 +79,7 @@ export function ToolInvocationPart({
       isExpanded={isExpanded}
       onToggleExpanded={toggleExpanded}
       isCompact={false}
-  part={part}
+      part={part}
     />
   );
 }
