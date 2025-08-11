@@ -2,11 +2,21 @@ import { useCallback } from "react";
 import { useArtifact } from "@/context/artifact-provider-context";
 import type { ToolInvocationPart } from "@/types/tool-invocation";
 
+// AI SDK 5 dynamic-tool type
+type DynamicToolPart = {
+	type: "dynamic-tool";
+	toolName: string;
+	toolCallId: string;
+	state: string;
+	input?: unknown;
+	output?: unknown;
+};
+
 /**
  * 专门处理文档工具交互的 Hook
  *
  * 职责：
- * 1. 从工具结果中提取文档信息
+ * 1. 从工具结果中提取文档信息 (支持 AI SDK 5 dynamic-tool 和 legacy ToolInvocationPart)
  * 2. 提供统一的版本切换接口
  * 3. 防止 streaming 时的数据冲突
  * 4. 确保数据流向清晰
@@ -15,32 +25,63 @@ export function useDocumentToolAction() {
 	const { loadAndShowArtifact, showArtifact, artifact } = useArtifact();
 
 	/**
-	 * 从工具调用结果中提取文档信息
+	 * 从工具调用结果中提取文档信息 (支持 AI SDK 5 dynamic-tool 格式)
 	 */
-	const extractDocumentInfo = useCallback((part?: ToolInvocationPart) => {
-		if (!part?.toolInvocation?.result) {
-			return null;
-		}
+	const extractDocumentInfo = useCallback(
+		(part?: ToolInvocationPart | DynamicToolPart) => {
+			if (!part) return null;
 
-		const result = part.toolInvocation.result;
+			// Handle AI SDK 5 dynamic-tool format
+			if ((part as { type?: string }).type === "dynamic-tool") {
+				const dynamicTool = part as DynamicToolPart;
+				if (!dynamicTool.output || typeof dynamicTool.output !== "object") {
+					return null;
+				}
 
-		if (typeof result !== "object") {
-			return null;
-		}
+				const result = dynamicTool.output as Record<string, unknown>;
+				const info = {
+					documentId: (result.documentId || result.id) as string | undefined,
+					title: result.title as string | undefined,
+					version: result.version as number | undefined,
+					kind: result.kind as string | undefined,
+				};
 
-		const resultObj = result as Record<string, unknown>;
-		const info = {
-			documentId: (resultObj.documentId || resultObj.id) as string | undefined,
-			title: resultObj.title as string | undefined,
-			version: resultObj.version as number | undefined,
-			kind: resultObj.kind as string | undefined,
-		};
-		if (process.env.NODE_ENV !== "production") {
-			// eslint-disable-next-line no-console
-			console.debug("[Artifact] extractDocumentInfo", info);
-		}
-		return info;
-	}, []);
+				if (process.env.NODE_ENV !== "production") {
+					// eslint-disable-next-line no-console
+					console.debug("[Artifact] extractDocumentInfo (dynamic-tool)", info);
+				}
+				return info;
+			}
+
+			// Handle legacy ToolInvocationPart format
+			const toolPart = part as ToolInvocationPart;
+			if (!toolPart?.toolInvocation?.result) {
+				return null;
+			}
+
+			const result = toolPart.toolInvocation.result;
+
+			if (typeof result !== "object") {
+				return null;
+			}
+
+			const resultObj = result as Record<string, unknown>;
+			const info = {
+				documentId: (resultObj.documentId || resultObj.id) as
+					| string
+					| undefined,
+				title: resultObj.title as string | undefined,
+				version: resultObj.version as number | undefined,
+				kind: resultObj.kind as string | undefined,
+			};
+			if (process.env.NODE_ENV !== "production") {
+				// eslint-disable-next-line no-console
+				console.debug("[Artifact] extractDocumentInfo (legacy)", info);
+			}
+			return info;
+		},
+		[],
+	);
 
 	/**
 	 * 处理文档工具的点击事件

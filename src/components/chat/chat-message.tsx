@@ -1,37 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
 import type { UIMessage } from "ai";
 import { cn } from "@/lib/utils";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import {
   IconFileText,
   IconDownload,
   IconFileTypography,
   IconAlertCircle,
 } from "@tabler/icons-react";
-import { Loader } from "@/components/prompt-kit/loader";
 import { MessageContent } from "@/components/prompt-kit/message";
 import { CopyButton } from "../copy-button";
-import type {
-  MessagePart,
-  ToolInvocationPart as ToolInvocationPartType,
-} from "@/types/tool-invocation";
-import { adaptToToolInvocationPart } from "@/lib/ai/tool-part-utils";
+// (no explicit MessagePart import; we operate on unknown with runtime guards)
 import { ChatItem } from "./chat-item";
 import { MessageEditor } from "./message-editor";
 import { ReasoningPart } from "./reasoning-part";
 import { FilePreviewDialog } from "@/components/ui/file-preview-dialog";
-import { ToolInvocationPart } from "./tool-invocation-part";
-import { Button } from "@/components/ui/button";
-import { ImagePreviewDialog } from "@/components/ui/image-preview-dialog";
+import { Tool } from "@/components/prompt-kit/tool";
+import { Loader } from "@/components/prompt-kit/loader";
 import { useEditMessage } from "@/hooks/use-edit-message";
+import type { ReasoningPart as ReasoningPartType } from "@/types/tool-invocation";
 
 interface ChatMessageProps {
   message: UIMessage | UIMessage;
@@ -57,87 +45,31 @@ type MaybeAttachmentsMessage = {
   attachments?: Attachment[];
 };
 
-// Helper function to get message content safely
-function getMessageContent(message: UIMessage): string {
-  const msgWithContent = message as unknown as MaybeContentMessage &
-    MaybePartsMessage;
-  // Try to get content from the legacy content field first
-  if (typeof msgWithContent.content !== "undefined") {
-    const c = msgWithContent.content;
-    if (typeof c === "string") return c;
-    try {
-      return JSON.stringify(c);
-    } catch {
-      return String(c);
-    }
+// Note: message rendering strictly relies on message.parts per new format.
+
+// 生成稳定的分片 key
+function getPartKey(part: unknown): string {
+  try {
+    const str = JSON.stringify(part);
+    return str ?? "unknown";
+  } catch {
+    // 退化为使用对象引用字符串
+    return String(part);
   }
-
-  // Try to extract text from parts
-  const parts = msgWithContent.parts;
-  if (Array.isArray(parts)) {
-    const textParts = parts
-      .filter((part): part is { type?: string; text?: string } => Boolean(part))
-      .filter((part) => part.type === "text" && typeof part.text === "string")
-      .map((part) => part.text as string)
-      .filter(Boolean);
-
-    if (textParts.length > 0) {
-      return textParts.join("");
-    }
-  }
-
-  return "";
 }
 
-// Render different types of message parts
-function renderMessagePart(
-  part: MessagePart,
+// 渲染非工具的富媒体分片
+function renderRichPart(
+  part: unknown,
   key: string | number,
-  isLoading: boolean,
-  isCompact: boolean,
   setPreviewAttachment: (
     attachment: { url: string; type: string; name?: string } | null
-  ) => void
+  ) => void,
+  isLoading: boolean
 ) {
-  // If it's a string or no type specified
-  if (!part || typeof part === "string") {
-    return (
-      <MessageContent key={key} markdown>{part}</MessageContent>
-    );
-  }
-
-  // Centralized tool part adaptation (supports tool-call, tool-result, tool-<name>, tool-invocation)
-  const adapted = adaptToToolInvocationPart(part as { type?: string });
-  if (adapted) {
-    return (
-      <ToolInvocationPart
-        key={key}
-        part={adapted}
-        isLoading={isLoading}
-        isCompact={isCompact}
-      />
-    );
-  }
-
-  // Handle different part types
-  switch (part.type) {
-    case "text":
-  return <MessageContent key={key} markdown>{part.text}</MessageContent>;
-
-    // tool-call/tool-result cases are covered by adaptation above
-
-    case "tool-invocation":
-      return (
-        <ToolInvocationPart
-          key={key}
-          part={part}
-          isLoading={isLoading}
-          isCompact={isCompact}
-        />
-      );
-    case "reasoning":
-      return <ReasoningPart key={key} part={part} isLoading={isLoading} />;
-
+  const p = part as { type?: string } | null | undefined;
+  const type = p?.type;
+  switch (type) {
     case "image":
       return (
         <div key={key} className="my-2">
@@ -146,15 +78,15 @@ function renderMessagePart(
             className="relative border rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
             onClick={() =>
               setPreviewAttachment({
-                url: part.src,
+                url: (part as { src: string }).src,
                 type: "image",
-                name: part.alt || "Image",
+                name: (part as { alt?: string }).alt || "Image",
               })
             }
           >
             <img
-              src={part.src}
-              alt={part.alt || "Image"}
+              src={(part as { src: string }).src}
+              alt={(part as { alt?: string }).alt || "Image"}
               className="object-cover object-center overflow-hidden rounded-md h-full max-h-96 max-w-64 w-fit transition-opacity duration-300 opacity-100"
             />
           </button>
@@ -165,7 +97,7 @@ function renderMessagePart(
         <div key={key} className="my-2">
           <div className="border rounded-md overflow-hidden">
             <iframe
-              src={part.src}
+              src={(part as { src: string }).src}
               className="overflow-hidden rounded-md h-full max-h-96 max-w-64 w-fit transition-opacity duration-300 opacity-100"
               title="PDF Document"
             />
@@ -178,14 +110,26 @@ function renderMessagePart(
           <div className="flex items-center gap-2 p-3 rounded-md bg-muted/40 mb-2">
             <IconFileText size={20} className="text-primary" />
             <div className="flex-1 truncate">
-              {part.name && <p className="font-medium text-sm">{part.name}</p>}
+              {(part as { name?: string }).name && (
+                <p className="font-medium text-sm">
+                  {(part as { name?: string }).name}
+                </p>
+              )}
             </div>
-            <CopyButton text={part.content} />
+            <CopyButton text={(part as { content: string }).content} />
           </div>
           <pre className="bg-muted/40 p-4 rounded-md overflow-x-auto">
-            <code>{part.content}</code>
+            <code>{(part as { content: string }).content}</code>
           </pre>
         </div>
+      );
+    case "reasoning":
+      return (
+        <ReasoningPart
+          key={key}
+          part={part as unknown as ReasoningPartType}
+          isLoading={isLoading}
+        />
       );
     default:
       return null;
@@ -206,8 +150,6 @@ export function ChatMessage({
   onSaveEdit,
   isEditing = false,
 }: ChatMessageProps) {
-  const t = useTranslations("Chat");
-  const tCommon = useTranslations("Common");
   const { editMessage, isLoading: isEditLoading } = useEditMessage();
   const isUser = message.role === "user";
 
@@ -245,45 +187,136 @@ export function ChatMessage({
 
   // Handle message content display
   const renderContent = () => {
-    // If message has parts array
-    if (message.parts && Array.isArray(message.parts)) {
-      // Filter out parts that would render as null (like step-start)
-      const validParts = message.parts.map((part, index) => {
-        const convertedPart = part as MessagePart;
-        const partLoading =
-          isLoading && !isUser && index === (message.parts?.length ?? 0) - 1;
-        return renderMessagePart(
-          convertedPart,
-          `message-part-${index}`,
-          partLoading,
-          isCompact,
-          setPreviewAttachment
-        );
-      });
+    const parts = (message as { parts?: Array<Record<string, unknown>> }).parts;
+    if (!Array.isArray(parts) || parts.length === 0) return null;
+    return (
+      <>
+        {/* 顺序遍历所有分片，按类型渲染（严格保持顺序） */}
+        {parts.map((part, idx) => {
+          const t = (part as { type?: string }).type;
+          const key = `${message.id}-part-${idx}-${t || "unknown"}`;
 
-      // If we have valid parts, render them
-      if (validParts.length > 0) {
-        return validParts;
-      }
-    }
+          if (t === "file") {
+            const f = part as {
+              type: string;
+              url: string;
+              name?: string;
+              mediaType?: string;
+              filename?: string;
+            };
+            const contentType = f.mediaType || "";
+            const fileName = f.name || f.filename || "file";
 
-    // If only has regular content, or if parts are empty during streaming
-    const content = getMessageContent(message);
-    if (content && content.trim().length > 0) {
-      return <MessageContent markdown>{content}</MessageContent>;
-    }
+            if (contentType.startsWith("image/")) {
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className="border rounded-md overflow-hidden group relative cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() =>
+                    setPreviewAttachment({
+                      url: f.url,
+                      type: contentType,
+                      name: fileName,
+                    })
+                  }
+                  aria-label={`Preview image: ${fileName}`}
+                >
+                  <img
+                    src={f.url}
+                    alt={fileName}
+                    className="object-cover object-center overflow-hidden rounded-lg h-full max-h-96 max-w-64 w-fit"
+                  />
+                </button>
+              );
+            }
 
-    // If we're loading and there's no content yet, show a loading indicator
-    if (isLoading && !isUser) {
-      return (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader variant="typing" size="sm" />
-          <span>Thinking...</span>
-        </div>
-      );
-    }
+            if (contentType.startsWith("application/pdf")) {
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className="border rounded-md overflow-hidden group relative hover:shadow-md transition-shadow cursor-pointer bg-gray-50 dark:bg-gray-800 p-3 text-xs"
+                  onClick={() =>
+                    setPreviewAttachment({
+                      url: f.url,
+                      type: contentType,
+                      name: fileName,
+                    })
+                  }
+                >
+                  📄 {fileName}
+                </button>
+              );
+            }
 
-    return null;
+            return (
+              <div
+                key={key}
+                className="flex items-center gap-2 p-2 rounded-md bg-muted/40 text-xs"
+              >
+                <IconFileTypography size={16} className="text-primary" />
+                <span className="truncate max-w-40" title={fileName}>
+                  {fileName}
+                </span>
+              </div>
+            );
+          }
+          if (t === "text") {
+            const text = (part as { text?: string }).text || "";
+            return text ? (
+              <MessageContent key={key} markdown>
+                {text}
+              </MessageContent>
+            ) : null;
+          }
+          if (t === "reasoning") {
+            return (
+              <ReasoningPart
+                key={key}
+                part={part as unknown as ReasoningPartType}
+                isLoading={isLoading}
+              />
+            );
+          }
+          // 使用 prompt-kit 的 <Tool> 展示 AI SDK 5 工具调用
+          if (t === "dynamic-tool") {
+            return (
+              <Tool
+                key={key}
+                toolPart={part as Record<string, unknown>}
+                isLoading={isLoading}
+                compact={isCompact}
+              />
+            );
+          }
+
+          // 支持 tool-createDocument, tool-updateDocument 等格式
+          if (t?.startsWith("tool-")) {
+            return (
+              <Tool
+                key={key}
+                toolPart={part as Record<string, unknown>}
+                isLoading={isLoading}
+                compact={isCompact}
+              />
+            );
+          }
+
+          // 其它富媒体分片
+          const rich = renderRichPart(
+            part,
+            key,
+            setPreviewAttachment,
+            isLoading && !isUser
+          );
+          if (rich) return rich;
+
+          // 跳过未知类型的分片
+          return null;
+        })}
+      </>
+    );
   };
 
   // Render attachments if present

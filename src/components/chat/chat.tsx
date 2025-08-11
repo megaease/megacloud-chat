@@ -169,7 +169,7 @@ function ChatContent({
             apiKey: currentProvider.apiKey,
             modelName: currentModel,
             baseUrl: currentProvider.baseUrl,
-            mcpEnabled,
+            mcpEnabled: mcpEnabled,
             providerType: currentProvider.providerType,
             ...body,
           },

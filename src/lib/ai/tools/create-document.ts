@@ -26,7 +26,7 @@ export const createDocumentInputSchema = z.object({
 
 export const createDocumentTool = tool({
 	description:
-		"Create a new artifact/document with the provided type and initial content.",
+		"Create a new artifact/document with substantial content ONLY when the user explicitly requests to create content (code/html/text/sheet/image). Do NOT use for general Q&A, explanations, or tasks like checking time/weather/searching — use appropriate tools instead.",
 	inputSchema: createDocumentInputSchema,
 	execute: async (
 		{ kind, language, content, title },

@@ -101,7 +101,6 @@ export function ArtifactChat(props: ArtifactChatProps) {
           toggleMcpEnabled={props.toggleMcpEnabled}
           status={props.status}
           isUploading={props.isUploading}
-          className="max-w-none"
         />
       </div>
     </div>

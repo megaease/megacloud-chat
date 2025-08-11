@@ -2,8 +2,6 @@
 
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "./chat-message";
 import {
@@ -14,7 +12,8 @@ import {
 import type { UIMessage } from "ai";
 import { ChatInput } from "./chat-input";
 import { EditConfirmationDialog } from "./edit-confirmation-dialog";
-import { Thinking } from "./thinking";
+import { Loader } from "@/components/prompt-kit/loader";
+import { ScrollButton } from "@/components/prompt-kit/scroll-button";
 // import { Artifact } from "../artifact/Artifact"; // 已删除
 
 // Define the Model interface
@@ -138,7 +137,7 @@ export function ChatView({
       ) : (
         <div className="flex-1 relative min-h-0">
           <ChatContainerRoot className="h-full px-2 sm:px-4">
-            <ChatContainerContent className="w-full max-w-4xl mx-auto flex flex-col gap-2 py-4">
+            <ChatContainerContent className="w/full max-w-4xl mx-auto flex flex-col gap-2 py-4">
               {messages.map((message, index) => {
                 const isLastMessage = index === messages.length - 1;
                 const isEditing = editingMessageId === message.id;
@@ -159,14 +158,17 @@ export function ChatView({
                   />
                 );
               })}
+              {status === "submitted" && (
+                <div className="mx-auto w-full max-w-4xl shrink-0 px-3 pb-3 md:px-5 md:pb-5">
+                  <Loader variant="loading-dots" size="sm" />
+                </div>
+              )}
               <ChatContainerScrollAnchor />
             </ChatContainerContent>
+            <div className="pointer-events-none absolute bottom-4 right-6">
+              <ScrollButton />
+            </div>
           </ChatContainerRoot>
-        </div>
-      )}
-      {status === "submitted" && (
-        <div className="flex-shrink-0 relative">
-          <Thinking />
         </div>
       )}
       {/* Chat input - 固定在底部 */}

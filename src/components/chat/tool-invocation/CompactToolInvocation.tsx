@@ -8,6 +8,8 @@ import {
   IconPhoto,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { Markdown } from "@/components/prompt-kit/markdown";
+import { CodeBlock, CodeBlockCode } from "@/components/prompt-kit/code-block";
 import { useDocumentToolAction } from "@/hooks/useDocumentToolAction";
 import type { ToolState, ToolStatus, ToolTheme } from "./types";
 import type {
@@ -42,7 +44,7 @@ const getDocumentIcon = (kind?: string) => {
   }
 };
 
-// 渲染工具调用结果
+// 渲染工具调用结果（使用 prompt-kit 组件统一风格）
 const renderResult = (
   result:
     | Array<ResultContent | string>
@@ -67,13 +69,13 @@ const renderResult = (
           <div
             key={key}
             className={cn(
-              "text-xs font-mono whitespace-pre-wrap break-words",
-              isCompact
-                ? "max-h-20 overflow-y-auto"
-                : "max-h-32 overflow-y-auto"
+              isCompact ? "max-h-20" : "max-h-32",
+              "overflow-y-auto"
             )}
           >
-            {item}
+            <CodeBlock>
+              <CodeBlockCode code={item} language="text" theme="github-light" />
+            </CodeBlock>
           </div>
         );
       }
@@ -82,13 +84,11 @@ const renderResult = (
           <div
             key={key}
             className={cn(
-              "text-xs whitespace-pre-wrap break-words",
-              isCompact
-                ? "max-h-20 overflow-y-auto"
-                : "max-h-32 overflow-y-auto"
+              isCompact ? "max-h-20" : "max-h-32",
+              "overflow-y-auto"
             )}
           >
-            {item.text}
+            <Markdown className="prose-sm">{item.text}</Markdown>
           </div>
         );
       }
@@ -97,13 +97,17 @@ const renderResult = (
           <div
             key={key}
             className={cn(
-              "text-xs font-mono whitespace-pre-wrap break-words bg-gray-100 dark:bg-gray-800 rounded p-2",
-              isCompact
-                ? "max-h-20 overflow-y-auto"
-                : "max-h-32 overflow-y-auto"
+              isCompact ? "max-h-20" : "max-h-32",
+              "overflow-y-auto"
             )}
           >
-            {item.text}
+            <CodeBlock>
+              <CodeBlockCode
+                code={item.text}
+                language="tsx"
+                theme="github-light"
+              />
+            </CodeBlock>
           </div>
         );
       }
@@ -112,13 +116,11 @@ const renderResult = (
           <div
             key={key}
             className={cn(
-              "text-xs whitespace-pre-wrap break-words",
-              isCompact
-                ? "max-h-20 overflow-y-auto"
-                : "max-h-32 overflow-y-auto"
+              isCompact ? "max-h-20" : "max-h-32",
+              "overflow-y-auto"
             )}
           >
-            {item.text}
+            <Markdown className="prose-sm">{item.text}</Markdown>
           </div>
         );
       }
@@ -130,12 +132,11 @@ const renderResult = (
   if (typeof result === "string") {
     return (
       <div
-        className={cn(
-          "text-xs font-mono whitespace-pre-wrap break-words",
-          isCompact ? "max-h-20 overflow-y-auto" : "max-h-32 overflow-y-auto"
-        )}
+        className={cn(isCompact ? "max-h-20" : "max-h-32", "overflow-y-auto")}
       >
-        {result}
+        <CodeBlock>
+          <CodeBlockCode code={result} language="text" theme="github-light" />
+        </CodeBlock>
       </div>
     );
   }
@@ -145,12 +146,11 @@ const renderResult = (
     const json = JSON.stringify(result, null, 2);
     return (
       <div
-        className={cn(
-          "text-[11px] font-mono whitespace-pre overflow-x-auto rounded bg-gray-100 dark:bg-gray-800 p-2 border border-gray-200/60 dark:border-gray-700/50",
-          isCompact ? "max-h-24" : "max-h-40"
-        )}
+        className={cn(isCompact ? "max-h-24" : "max-h-40", "overflow-y-auto")}
       >
-        {json}
+        <CodeBlock>
+          <CodeBlockCode code={json} language="json" theme="github-light" />
+        </CodeBlock>
       </div>
     );
   }
@@ -335,18 +335,15 @@ export function CompactToolInvocation({
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-md border overflow-hidden",
-        isCompact ? "my-1" : "my-2",
-        theme.borderColor,
-        theme.backgroundColor
+        "my-2 rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden",
+        isCompact && "my-1"
       )}
     >
-      {/* Compact tool header */}
-      <div
+      {/* Header */}
+      <button
         className={cn(
-          "flex items-center cursor-pointer transition-colors",
-          isCompact ? "gap-1.5 px-2 py-1.5" : "gap-2 px-3 py-2",
-          theme.hoverBackgroundColor
+          "flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors",
+          isCompact && "gap-1.5 px-2 py-1.5"
         )}
         onClick={onToggleExpanded}
         onKeyDown={(e) => {
@@ -355,12 +352,13 @@ export function CompactToolInvocation({
             onToggleExpanded();
           }
         }}
+        type="button"
       >
-        {/* Tool icon */}
+        {/* Status dot */}
         <div
           className={cn(
-            "flex items-center justify-center rounded flex-shrink-0 text-white text-xs font-medium",
-            isCompact ? "w-4 h-4" : "w-5 h-5",
+            "flex items-center justify-center rounded-full text-white flex-shrink-0",
+            isCompact ? "w-4 h-4 text-[10px]" : "w-5 h-5 text-[11px]",
             status === "success"
               ? "bg-blue-500"
               : status === "error"
@@ -379,126 +377,96 @@ export function CompactToolInvocation({
             : "⋅"}
         </div>
 
-        {/* Tool name and status */}
-        <div className="flex-1 min-w-0 flex items-center justify-between">
-          <div className="flex-1 min-w-0 flex items-center">
-            <span
-              className={cn(
-                "font-medium text-gray-900 dark:text-gray-100 truncate",
-                isCompact ? "text-xs" : "text-sm"
-              )}
-            >
-              {toolState.toolName}
-            </span>
-            <span
-              className={cn(
-                "text-gray-400 flex-shrink-0",
-                isCompact ? "mx-1" : "mx-2"
-              )}
-            >
-              →
-            </span>
-          </div>
+        {/* Tool name */}
+        <div className="flex-1 min-w-0">
           <span
             className={cn(
-              "flex-shrink-0",
-              isCompact ? "text-xs" : "text-sm",
-              status === "executing"
-                ? "text-amber-600 dark:text-amber-400"
-                : status === "success"
-                ? "text-blue-600 dark:text-blue-400"
-                : status === "error"
-                ? "text-red-600 dark:text-red-400"
-                : "text-gray-600 dark:text-gray-400"
+              "font-medium truncate",
+              isCompact ? "text-xs" : "text-sm"
             )}
           >
-            {status === "executing"
-              ? "Executing..."
-              : status === "success"
-              ? "Completed"
-              : status === "error"
-              ? "Failed"
-              : "Completed"}
+            {toolState.toolName}
           </span>
         </div>
 
-        {/* Status indicator */}
-        <div className="flex items-center gap-2">
-          {status === "executing" && (
-            <div
-              className={cn(
-                "rounded-full bg-amber-500 animate-pulse",
-                isCompact ? "w-1.5 h-1.5" : "w-2 h-2"
-              )}
-            />
+        {/* Status badge */}
+        <span
+          className={cn(
+            "inline-flex items-center rounded-full border px-2 py-0.5 text-xs",
+            status === "executing"
+              ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800/40"
+              : status === "success"
+              ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800/40"
+              : status === "error"
+              ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800/40"
+              : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950/30 dark:text-gray-300 dark:border-gray-800/40"
           )}
-          {(status === "success" || status === "error") && (
-            <IconChevronDown
-              size={isCompact ? 10 : 12}
-              className={cn(
-                "transition-transform text-gray-400",
-                isExpanded && "rotate-180"
-              )}
-            />
-          )}
-        </div>
-      </div>
+        >
+          {status === "executing"
+            ? "Running"
+            : status === "success"
+            ? "Completed"
+            : status === "error"
+            ? "Error"
+            : "Info"}
+        </span>
 
-      {/* Expandable content area (compact version) */}
+        {(status === "success" || status === "error") && (
+          <IconChevronDown
+            size={isCompact ? 10 : 12}
+            className={cn(
+              "ml-1 text-muted-foreground transition-transform",
+              isExpanded && "rotate-180"
+            )}
+          />
+        )}
+      </button>
+
+      {/* Details */}
       {isExpanded && (status === "success" || status === "error") && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          className="border-t border-gray-200/50 dark:border-gray-700/50"
+          className="border-t"
         >
           <div
-            className={cn(
-              "bg-gray-50/30 dark:bg-gray-900/10",
-              isCompact ? "px-2 py-1.5" : "px-3 py-2"
-            )}
+            className={cn(isCompact ? "px-2 py-1.5" : "px-3 py-2", "space-y-2")}
           >
-            {/* Error message */}
+            {/* Error */}
             {toolState.hasError && toolState.errorMessage && (
-              <div
-                className={cn(
-                  "bg-red-50 dark:bg-red-950/20 rounded border border-red-200 dark:border-red-800/40",
-                  isCompact ? "mb-1.5 p-1.5" : "mb-2 p-2"
-                )}
-              >
-                <div className="text-xs font-medium text-red-800 dark:text-red-200 mb-1">
-                  Error
-                </div>
-                <div className="text-xs text-red-700 dark:text-red-300 font-mono">
+              <div className="rounded-md border border-red-200 bg-red-50 p-2 text-red-700 dark:border-red-800/40 dark:bg-red-950/20 dark:text-red-300">
+                <div className="text-xs font-medium mb-1">Error</div>
+                <div className="text-xs font-mono whitespace-pre-wrap break-words">
                   {toolState.errorMessage}
                 </div>
               </div>
             )}
 
-            {/* Result display */}
+            {/* Output */}
             {toolState.result && status === "success" && (
-              <div className={cn(isCompact ? "mb-1.5" : "mb-2")}>
-                <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Result
+              <div>
+                <div className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
+                  Output
                 </div>
-                <div className="bg-white dark:bg-gray-900/40 rounded border px-2 py-1 text-gray-600 dark:text-gray-400">
+                <div className="rounded-md border bg-background px-2 py-1">
                   {renderResult(toolState.result, isCompact)}
                 </div>
               </div>
             )}
 
-            {/* Simplified parameter display */}
+            {/* Input */}
             {Object.keys(toolState.args).length > 0 && (
               <div>
-                <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Parameters
+                <div className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
+                  Input
                 </div>
                 <div
                   className={cn(
-                    "bg-white dark:bg-gray-900/40 rounded border font-mono text-gray-600 dark:text-gray-400",
+                    "rounded-md border bg-background text-xs font-mono",
                     isCompact
-                      ? "px-1.5 py-1 text-xs max-h-16 overflow-y-auto"
-                      : "px-2 py-1 text-xs"
+                      ? "px-1.5 py-1 max-h-16 overflow-y-auto"
+                      : "px-2 py-1"
                   )}
                 >
                   {JSON.stringify(toolState.args, null, isCompact ? 1 : 2)}

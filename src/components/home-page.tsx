@@ -52,7 +52,7 @@ export function HomePage() {
             apiKey: currentProvider?.apiKey,
             modelName: currentModel || "gpt-4o-mini",
             baseUrl: currentProvider?.baseUrl,
-            mcpEnabled,
+            mcpEnabled: mcpEnabled,
             providerType: currentProvider?.providerType,
             ...body,
           },

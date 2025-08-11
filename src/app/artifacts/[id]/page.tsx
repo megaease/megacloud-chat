@@ -3,21 +3,21 @@ import { ArtifactDetail } from "@/components/artifacts/ArtifactDetail";
 import { Loader } from "@/components/prompt-kit/loader";
 
 interface ArtifactDetailPageProps {
-	params: Promise<{
-		id: string;
-	}>;
+  params: Promise<{
+    id: string;
+  }>;
 }
 
 export default async function ArtifactDetailPage({
-	params,
+  params,
 }: ArtifactDetailPageProps) {
-	const { id } = await params;
-	
-	return (
-		<div className="space-y-6">
-			<Suspense fallback={<Loader />}>
-				<ArtifactDetail artifactId={id} />
-			</Suspense>
-		</div>
-	);
+  const { id } = await params;
+
+  return (
+    <div className="space-y-6">
+      <Suspense fallback={<Loader />}>
+        <ArtifactDetail artifactId={id} />
+      </Suspense>
+    </div>
+  );
 }

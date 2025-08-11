@@ -14,7 +14,7 @@ export const updateDocumentInputSchema = z.object({
 
 export const updateDocumentTool = tool({
 	description:
-		"Update an existing document's content with an optional change note.",
+		"Update an existing document's content when the user asks to modify previously created content. Do NOT use for questions, time/weather queries, or searches — use specialized tools instead.",
 	inputSchema: updateDocumentInputSchema,
 	execute: async ({ documentId, content, note }, { experimental_context }) => {
 		const ctx = (experimental_context || {}) as { userId?: string };

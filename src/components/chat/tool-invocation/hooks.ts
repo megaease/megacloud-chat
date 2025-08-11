@@ -1,6 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import type { ToolInvocationPart as ToolInvocationPartType } from "@/types/tool-invocation";
 import type { ToolState, ToolStatus } from "./types";
+import type { ResultContent } from "@/types/tool-invocation";
+
+// Helper function to determine if a tool is a document tool
+function isDocumentToolName(toolName: string): boolean {
+	return toolName === "createDocument" || toolName === "updateDocument";
+}
 
 export function useToolInvocationState(part: ToolInvocationPartType) {
 	const { toolInvocation } = part;
@@ -14,12 +20,28 @@ export function useToolInvocationState(part: ToolInvocationPartType) {
 			? toolInvocation.result?.error || "Unknown error"
 			: null;
 
-		const isDocumentTool =
-			toolName === "createDocument" || toolName === "updateDocument";
+		const isDocumentTool = isDocumentToolName(toolName);
 		const isSuccessful = state === "result" && !hasError;
 
-		// Extract result content
-		const result = toolInvocation.result?.content || null;
+		// Extract result content; if content missing, fallback to the whole result object
+		let result: ToolState["result"] = null;
+		if (toolInvocation.result) {
+			if ("content" in toolInvocation.result) {
+				const c = (toolInvocation.result as { content?: unknown }).content;
+				if (Array.isArray(c)) {
+					result = c as Array<string | ResultContent>;
+				} else if (typeof c === "string") {
+					result = c as string;
+				} else if (c && typeof c === "object") {
+					result = c as Record<string, unknown>;
+				} else {
+					result = null;
+				}
+			} else {
+				// no content field; fallback to whole result object
+				result = toolInvocation.result as unknown as Record<string, unknown>;
+			}
+		}
 
 		return {
 			toolName,

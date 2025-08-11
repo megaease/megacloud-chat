@@ -150,44 +150,75 @@ export function DocumentToolInvocation({
       initial={{ opacity: 0, y: 8, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      onClick={handleOpenArtifact}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleOpenArtifact();
-        }
-      }}
-      role="button"
-      tabIndex={0}
       className={cn(
-        "group relative rounded-lg border my-6 overflow-hidden transition-all duration-300",
+        "group relative rounded-xl border my-6 overflow-hidden transition-all duration-300",
+        // 更突出的样式设计
         isCreating
-          ? "bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/30 border-amber-200/60 dark:border-amber-800/40 hover:shadow-amber-200/25 dark:hover:shadow-amber-900/25"
-          : "bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-950/40 dark:to-indigo-950/30 border-blue-200/60 dark:border-blue-800/40 hover:shadow-blue-200/25 dark:hover:shadow-blue-900/25",
-        "cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+          ? "bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-950/60 dark:via-yellow-950/50 dark:to-orange-950/50 border-amber-300 dark:border-amber-700 shadow-amber-200/50 dark:shadow-amber-900/30"
+          : "bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-emerald-950/60 dark:via-green-950/50 dark:to-teal-950/50 border-emerald-300 dark:border-emerald-700 shadow-emerald-200/50 dark:shadow-emerald-900/30",
+        // 增强的悬停效果
+        "cursor-pointer hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]",
+        // 发光效果
+        isCreating
+          ? "hover:shadow-amber-300/40 dark:hover:shadow-amber-800/40"
+          : "hover:shadow-emerald-300/40 dark:hover:shadow-emerald-800/40",
+        // 边框动画效果
+        "relative before:absolute before:inset-0 before:rounded-xl before:border-2 before:border-transparent",
+        isCreating
+          ? "before:bg-gradient-to-r before:from-amber-400 before:via-yellow-400 before:to-orange-400"
+          : "before:bg-gradient-to-r before:from-emerald-400 before:via-green-400 before:to-teal-400",
+        "before:opacity-0 hover:before:opacity-20 before:transition-opacity before:duration-300"
       )}
     >
-      {/* Document Header */}
+      {/* 顶部装饰条 */}
       <div
         className={cn(
-          "flex items-center gap-4 p-5 backdrop-blur-sm border-b",
+          "h-1 w-full",
           isCreating
-            ? "bg-white/60 dark:bg-gray-900/40 border-amber-200/30 dark:border-amber-800/30"
-            : "bg-white/60 dark:bg-gray-900/40 border-blue-200/30 dark:border-blue-800/30"
+            ? "bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400"
+            : "bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400"
         )}
+      />
+
+      {/* Document Header */}
+      <button
+        className={cn(
+          "flex items-center gap-4 p-5 backdrop-blur-sm w-full",
+          isCreating
+            ? "bg-white/80 dark:bg-gray-900/60"
+            : "bg-white/80 dark:bg-gray-900/60"
+        )}
+        type="button"
+        onClick={handleOpenArtifact}
       >
-        {/* Document Icon */}
+        {/* Document Icon with enhanced styling */}
         <div
           className={cn(
-            "flex items-center justify-center w-10 h-10 rounded-lg shadow-lg flex-shrink-0",
-            isCreating ? "bg-amber-500 text-white" : "bg-blue-500 text-white"
+            "flex items-center justify-center w-12 h-12 rounded-xl shadow-lg flex-shrink-0 relative",
+            "transition-transform duration-200 group-hover:scale-110",
+            isCreating
+              ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white"
+              : "bg-gradient-to-br from-emerald-500 to-teal-500 text-white",
+            // 内部发光效果
+            "before:absolute before:inset-0 before:rounded-xl before:shadow-inner",
+            isCreating
+              ? "before:shadow-amber-300/50"
+              : "before:shadow-emerald-300/50"
           )}
         >
           {isCreating ? (
-            <IconLoader2 size={20} className="animate-spin" />
+            <IconLoader2 size={24} className="animate-spin" />
           ) : (
-            <IconComponent size={20} />
+            <IconComponent size={24} />
           )}
+
+          {/* 状态指示器 */}
+          <div
+            className={cn(
+              "absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white",
+              isCreating ? "bg-amber-400 animate-pulse" : "bg-emerald-400"
+            )}
+          />
         </div>
 
         {/* Document Info */}
@@ -219,7 +250,7 @@ export function DocumentToolInvocation({
             {subtitle}
           </p>
         </div>
-      </div>
+      </button>
 
       {/* Content Preview */}
       {(contentPreview || isCreating) && (

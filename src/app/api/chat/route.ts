@@ -2,6 +2,7 @@ import {
 	generateTitle,
 	getChatById,
 	saveToChatsTable,
+	updateChatTitle,
 } from "@/server/db/queries/chats";
 import { saveMessages } from "@/server/db/queries/messages";
 import {
@@ -14,11 +15,10 @@ import {
 	type UIMessage,
 	type LanguageModel,
 } from "ai";
-import { loadMCPTools, type MCPClient } from "@/lib/mcp-utils";
+import { loadMCPTools } from "@/lib/mcp-utils";
 import { nanoid } from "nanoid";
 import { detectAndCreateAIModel } from "@/lib/ai-providers";
 import { getChatMessageById } from "@/server/db/queries/chat";
-import { getTrailingMessageId } from "@/lib/utils";
 import { systemPrompt } from "@/lib/prompt";
 import { createDocumentTool } from "@/lib/ai/tools/create-document";
 import { updateDocumentTool } from "@/lib/ai/tools/update-document";
@@ -85,18 +85,24 @@ export async function POST(req: Request) {
 		const chat = await getChatById({ chatId, userId });
 		console.log(chat, "chat");
 		if (!chat) {
-			const title = await generateTitle(
-				chatId,
-				[message],
-				modelConfig as LanguageModel,
-			);
-
-			await saveToChatsTable({
-				userId,
-				chatId,
-				title,
-			});
-			console.log("New chat created with title:", title);
+			// Ensure chat row exists immediately to satisfy FK on messages
+			await saveToChatsTable({ userId, chatId, title: "New Chat" });
+			// Generate a better title in background and update the chat
+			Promise.resolve()
+				.then(async () => {
+					const title = await generateTitle(
+						chatId,
+						[message],
+						modelConfig as LanguageModel,
+					);
+					if (title?.trim()) {
+						await updateChatTitle({ userId, chatId, title });
+						console.log("Chat title updated:", title);
+					}
+				})
+				.catch((err) =>
+					console.warn("Background title generation failed:", err),
+				);
 		}
 
 		// Fetch existing messages or create a new chat if it doesn't exist
@@ -123,33 +129,57 @@ export async function POST(req: Request) {
 			} as UIMessage;
 		});
 
-		const coreMessages = convertToModelMessages(uiMessages);
-
-		// Heuristic: if the latest user message strongly implies creating a document,
-		// nudge the model to pick the createDocument tool first to validate the tool chain.
-		const lastUser = uiMessages
-			.slice()
-			.reverse()
-			.find((m) => m.role === "user");
-		type Part = { type?: string; text?: string };
-		const userParts = (lastUser?.parts ?? []) as Part[];
-		const lastText = userParts
-			.filter((p) => p?.type === "text" && typeof p.text === "string")
-			.map((p) => p.text as string)
-			.join("\n");
-		const forceCreateDoc =
-			/create\s+document|create\s+doc|新建文档|创建文档|生成文档|生成笔记|写.*文档/i.test(
-				lastText,
+		// Sanitize history: remove tool-related parts that the model conversion cannot accept
+		const sanitizedUiMessages: UIMessage[] = uiMessages
+			.map((msg) => {
+				const parts = (msg as { parts?: Array<unknown> }).parts;
+				if (!Array.isArray(parts)) return msg;
+				const filtered = parts.filter((p: any) => {
+					if (typeof p === "string") return true; // keep plain text
+					const t = p?.type as string | undefined;
+					if (!t) return true;
+					const isToolLike =
+						t === "tool" ||
+						t === "tool-invocation" ||
+						t === "tool-call" ||
+						t === "tool-result" ||
+						t === "step-start" ||
+						t === "reasoning" ||
+						(t?.startsWith("tool-") ?? false);
+					return !isToolLike;
+				});
+				return { ...(msg as UIMessage), parts: filtered } as UIMessage;
+			})
+			// drop messages that end up with no parts
+			.filter(
+				(m) => Array.isArray((m as any).parts) && (m as any).parts.length > 0,
 			);
 
-		// Load MCP tools using the extracted utility function
-		// Load MCP tools with a safe fallback so chat continues even if MCP fails
+		const coreMessages = convertToModelMessages(sanitizedUiMessages);
+
+		// Load MCP tools with opt-in and timeout so requests never hang
 		let mcpTools: ToolSet | undefined = undefined;
-		try {
-			const { tools } = await loadMCPTools(mcpEnabled);
-			mcpTools = tools;
-		} catch (e) {
-			console.warn("MCP tools load failed, continuing without tools:", e);
+		if (mcpEnabled) {
+			try {
+				console.time("mcpToolsLoad");
+				const mcpLoad = loadMCPTools(true);
+				const timeout = new Promise<{ tools?: ToolSet }>((resolve) =>
+					setTimeout(() => resolve({ tools: undefined }), 5000),
+				);
+				const { tools } = await Promise.race([
+					mcpLoad as unknown as Promise<{ tools?: ToolSet }>,
+					timeout,
+				]);
+				mcpTools = tools;
+				console.timeEnd("mcpToolsLoad");
+			} catch (e) {
+				console.warn(
+					"MCP tools load failed or timed out, continuing without tools:",
+					e,
+				);
+			}
+		} else {
+			console.log("MCP disabled; skipping MCP tool loading");
 		}
 		console.log(
 			"MCP enabled:",
@@ -161,7 +191,7 @@ export async function POST(req: Request) {
 		console.log(
 			`Using ${detectedProvider} model: ${modelName || "gpt-4-turbo"}`,
 		);
-		const streamId = nanoid(16);
+		// const streamId = nanoid(16); // no longer used
 
 		// Local tool set that's always available (even when MCP is disabled)
 		const localTools: ToolSet = {
@@ -194,15 +224,8 @@ export async function POST(req: Request) {
 					},
 				};
 
-				// Prefer the createDocument tool when strongly hinted by the user.
-				const result = streamText(
-					forceCreateDoc
-						? {
-								...baseOpts,
-								toolChoice: { type: "tool", toolName: "createDocument" },
-							}
-						: baseOpts,
-				);
+				// Let the model choose tools freely; never force a specific tool.
+				const result = streamText(baseOpts);
 
 				result.consumeStream();
 

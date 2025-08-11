@@ -288,7 +288,14 @@ class MCPConnectionManager {
 
 				for (const [toolName, toolImpl] of Object.entries(serverTools)) {
 					const prefixedToolName = `${cleanServerName}_${toolName}`;
+					// Always register the prefixed tool name to avoid collisions
 					allTools[prefixedToolName] = toolImpl;
+
+					// Also provide a plain alias (original name) if it's not already taken
+					// This improves LLM usability (e.g., it can call 'getTime').
+					if (!(toolName in allTools)) {
+						allTools[toolName] = toolImpl;
+					}
 				}
 			} catch (error) {
 				console.error(
