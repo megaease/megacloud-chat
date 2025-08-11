@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ArtifactCard } from "./ArtifactCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/spinner";
+import { Loader } from "@/components/prompt-kit/loader";
 import { Grid, List, RefreshCw } from "lucide-react";
 import type { Artifact } from "@/server/db/schema";
 
@@ -30,7 +30,7 @@ export function ArtifactList({
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center py-12 w-full h-full">
-				<Spinner />
+				<Loader />
 			</div>
 		);
 	}

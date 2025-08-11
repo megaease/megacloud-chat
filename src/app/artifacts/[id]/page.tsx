@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { ArtifactDetail } from "@/components/artifacts/ArtifactDetail";
-import { Spinner } from "@/components/spinner";
+import { Loader } from "@/components/prompt-kit/loader";
 
 interface ArtifactDetailPageProps {
 	params: Promise<{
@@ -15,7 +15,7 @@ export default async function ArtifactDetailPage({
 	
 	return (
 		<div className="space-y-6">
-			<Suspense fallback={<Spinner />}>
+			<Suspense fallback={<Loader />}>
 				<ArtifactDetail artifactId={id} />
 			</Suspense>
 		</div>

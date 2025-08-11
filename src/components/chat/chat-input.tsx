@@ -15,7 +15,13 @@ import {
   IconMusic,
   IconFile,
 } from "@tabler/icons-react";
-import { Textarea } from "@/components/ui/textarea";
+// Replaced raw Textarea with Prompt Kit PromptInput
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputActions,
+  PromptInputAction,
+} from "@/components/prompt-kit/prompt-input";
 import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
@@ -88,28 +94,18 @@ export function ChatInput({
     return contentType.startsWith("image/");
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (input?.trim() || uploadedFiles.length > 0) {
-        const event = new Event("submit", {
-          cancelable: true,
-          bubbles: true,
-        }) as unknown as React.FormEvent<HTMLFormElement>;
-
-        // 将已上传的文件转换为附件格式
-        const attachments = uploadedFiles;
-        handleSubmit(event, {
-          experimental_attachments: attachments as unknown as FileList,
-        });
-
-        // 清空已上传的文件
-        setUploadedFiles([]);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      }
-    }
+  const submitIfPossible = () => {
+    if (!(input?.trim() || uploadedFiles.length > 0)) return;
+    const event = new Event("submit", {
+      cancelable: true,
+      bubbles: true,
+    }) as unknown as React.FormEvent<HTMLFormElement>;
+    const attachments = uploadedFiles;
+    handleSubmit(event, {
+      experimental_attachments: attachments as unknown as FileList,
+    });
+    setUploadedFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,7 +213,15 @@ export function ChatInput({
         }}
         className="relative"
       >
-        <div className="relative rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white/90 dark:bg-gray-800/90 shadow-sm transition-all duration-300 ease-in-out focus-within:shadow-md focus-within:border-primary/50 hover:shadow-md group backdrop-blur-sm">
+        <PromptInput
+          className="relative rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white/90 dark:bg-gray-800/90 shadow-sm transition-all duration-300 ease-in-out focus-within:shadow-md focus-within:border-primary/50 hover:shadow-md group backdrop-blur-sm"
+          isLoading={status === "submitted" || status === "streaming"}
+          value={input}
+          onValueChange={(v) => handleInputChange({
+            target: { value: v },
+          } as unknown as React.ChangeEvent<HTMLTextAreaElement>)}
+          onSubmit={submitIfPossible}
+        >
           <input
             type="file"
             ref={fileInputRef}
@@ -350,14 +354,10 @@ export function ChatInput({
               ))}
             </div>
           ) : null}
-          <Textarea
+          <PromptInputTextarea
             ref={inputRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
             placeholder={t("placeholder")}
-            className="min-h-30 w-full resize-none border-0 bg-transparent px-4 py-4 pr-14 focus-visible:ring-0 
-						focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 selection:bg-primary/20 pb-14 text-sm leading-relaxed"
+            className="min-h-30 w-full border-0 bg-transparent px-4 py-4 pr-14 placeholder:text-muted-foreground/70 selection:bg-primary/20 pb-14 text-sm leading-relaxed"
             rows={2}
             autoFocus
           />
@@ -411,7 +411,7 @@ export function ChatInput({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            ) : (
+      ) : (
               <TooltipProvider>
                 <Tooltip delayDuration={300}>
                   <TooltipTrigger asChild>
@@ -435,7 +435,7 @@ export function ChatInput({
               </TooltipProvider>
             )}
           </div>
-        </div>
+    </PromptInput>
       </form>
 
       {/* 文件预览对话框 */}

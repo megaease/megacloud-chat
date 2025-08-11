@@ -3,7 +3,7 @@
 
 import { motion } from "framer-motion";
 import type { UIArtifact } from "@/lib/artifact-types";
-import { Markdown } from "../markdown";
+import { Markdown } from "@/components/prompt-kit/markdown";
 
 interface TextArtifactProps {
   content: string;
@@ -38,7 +38,7 @@ export function TextArtifact({
               transition={{ delay: 0.1, duration: 0.3, ease: "easeOut" }}
               className="p-6 relative bg-background"
             >
-              <Markdown content={content} />
+              <Markdown>{content}</Markdown>
             </motion.div>
           </div>
         </motion.div>

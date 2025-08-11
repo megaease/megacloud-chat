@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import type { UIMessage } from "ai";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Accordion,
   AccordionContent,
@@ -17,8 +16,8 @@ import {
   IconFileTypography,
   IconAlertCircle,
 } from "@tabler/icons-react";
-import { Spinner } from "../spinner";
-import { Markdown } from "../markdown";
+import { Loader } from "@/components/prompt-kit/loader";
+import { MessageContent } from "@/components/prompt-kit/message";
 import { CopyButton } from "../copy-button";
 import type {
   MessagePart,
@@ -102,7 +101,9 @@ function renderMessagePart(
 ) {
   // If it's a string or no type specified
   if (!part || typeof part === "string") {
-    return <Markdown key={key} content={part} />;
+    return (
+      <MessageContent key={key} markdown>{part}</MessageContent>
+    );
   }
 
   // Centralized tool part adaptation (supports tool-call, tool-result, tool-<name>, tool-invocation)
@@ -121,7 +122,7 @@ function renderMessagePart(
   // Handle different part types
   switch (part.type) {
     case "text":
-      return <Markdown key={key} content={part.text} />;
+  return <MessageContent key={key} markdown>{part.text}</MessageContent>;
 
     // tool-call/tool-result cases are covered by adaptation above
 
@@ -269,14 +270,14 @@ export function ChatMessage({
     // If only has regular content, or if parts are empty during streaming
     const content = getMessageContent(message);
     if (content && content.trim().length > 0) {
-      return <Markdown content={content} />;
+      return <MessageContent markdown>{content}</MessageContent>;
     }
 
     // If we're loading and there's no content yet, show a loading indicator
     if (isLoading && !isUser) {
       return (
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Spinner className="h-4 w-4" />
+          <Loader variant="typing" size="sm" />
           <span>Thinking...</span>
         </div>
       );
@@ -448,7 +449,7 @@ export function ChatMessage({
       >
         {isLoading && !isUser && (
           <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-            <Spinner variant="ellipsis" />
+            <Loader variant="loading-dots" size="sm" />
           </div>
         )}
         {/* Error indicator for failed messages */}

@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "./chat-message";
-import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
+import {
+  ChatContainerRoot,
+  ChatContainerContent,
+  ChatContainerScrollAnchor,
+} from "@/components/prompt-kit/chat-container";
 import type { UIMessage } from "ai";
 import { ChatInput } from "./chat-input";
 import { EditConfirmationDialog } from "./edit-confirmation-dialog";
@@ -123,14 +127,7 @@ export function ChatView({
     setEditedMessageData(null);
   };
 
-  // Use the enhanced scroll-to-bottom hook
-  const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
-    useScrollToBottom({
-      behavior: "smooth",
-      bottomThreshold: 50,
-      scrollOnMount: true,
-      forceScrollOnNewContent: false,
-    });
+  // Prompt Kit chat container manages scroll stickiness; no custom hook needed
 
   return (
     <div className={cn("flex flex-col h-full transition-all relative")}>
@@ -140,12 +137,8 @@ export function ChatView({
         </div>
       ) : (
         <div className="flex-1 relative min-h-0">
-          <div
-            className="h-full overflow-y-auto px-2 sm:px-4 space-y-4"
-            ref={scrollAreaRef}
-            id="scrollable-chat"
-          >
-            <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 py-4">
+          <ChatContainerRoot className="h-full px-2 sm:px-4">
+            <ChatContainerContent className="w-full max-w-4xl mx-auto flex flex-col gap-2 py-4">
               {messages.map((message, index) => {
                 const isLastMessage = index === messages.length - 1;
                 const isEditing = editingMessageId === message.id;
@@ -166,24 +159,9 @@ export function ChatView({
                   />
                 );
               })}
-            </div>
-            {/* Invisible element to mark the bottom for scrolling */}
-            <div ref={endRef} />
-          </div>
-
-          {/* 滚动到底部按钮 */}
-          {!isAtBottom && (
-            <div className="absolute bottom-4 right-4 z-10">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={scrollToBottom}
-                className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+              <ChatContainerScrollAnchor />
+            </ChatContainerContent>
+          </ChatContainerRoot>
         </div>
       )}
       {status === "submitted" && (

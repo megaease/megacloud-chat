@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/spinner";
+import { Loader } from "@/components/prompt-kit/loader";
 import {
 	FileText,
 	Code,
@@ -80,7 +80,7 @@ export function ArtifactDetail({ artifactId }: ArtifactDetailProps) {
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center py-12">
-				<Spinner />
+			<Loader />
 			</div>
 		);
 	}
