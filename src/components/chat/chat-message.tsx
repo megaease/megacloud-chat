@@ -287,6 +287,7 @@ export function ChatMessage({
                 toolPart={part as Record<string, unknown>}
                 isLoading={isLoading}
                 compact={isCompact}
+                className="w-full"
               />
             );
           }
@@ -299,6 +300,7 @@ export function ChatMessage({
                 toolPart={part as Record<string, unknown>}
                 isLoading={isLoading}
                 compact={isCompact}
+                className="w-full"
               />
             );
           }

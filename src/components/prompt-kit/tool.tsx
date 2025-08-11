@@ -3,7 +3,8 @@ import type {
   ToolInvocationPart as ToolInvocationPartType,
   ToolInvocationResult,
 } from "@/types/tool-invocation";
-import { ToolInvocationPart as ToolInvocationRenderer } from "@/components/chat/tool-invocation-part";
+import { Tool as PromptKitTool } from "@/components/ui/tool";
+import type { ToolPart as PromptKitToolPart } from "@/components/ui/tool";
 import { ModernDocumentTool } from "@/components/chat/tool-invocation/ModernDocumentTool";
 
 // AI SDK 5 dynamic-tool type
@@ -31,27 +32,31 @@ export type ToolProps = {
   isLoading?: boolean;
   compact?: boolean;
   className?: string;
+  defaultOpen?: boolean;
 };
 
-function mapAISDK5State(
+function mapAISDK5StateToPromptKit(
   state?: string
-): "call" | "partial-call" | "processing" | "result" {
+): "input-streaming" | "input-available" | "output-available" | "output-error" {
   switch (state) {
     case "output-available":
-      return "result";
+      return "output-available";
     case "input-available":
     case "call-created":
     case "created":
-      return "call";
+      return "input-available";
     case "input-streaming":
     case "partial-call":
-      return "partial-call";
+      return "input-streaming";
     case "processing":
     case "running":
     case "executing":
-      return "processing";
+      return "input-streaming";
+    case "error":
+    case "failed":
+      return "output-error";
     default:
-      return "processing";
+      return "input-available";
   }
 }
 
@@ -67,29 +72,15 @@ function isDocumentTool(toolName: string): boolean {
 
 /**
  * Tool (prompt-kit)
- * Directly renders AI SDK 5 dynamic-tool parts without adaptation layer
+ * Uses the official prompt-kit Tool component with special handling for document tools
  */
 export function Tool({
   toolPart,
   isLoading = false,
   compact = false,
+  className,
+  defaultOpen = false,
 }: ToolProps) {
-  // Already normalized ToolInvocationPart
-  if (
-    typeof toolPart === "object" &&
-    toolPart !== null &&
-    "type" in toolPart &&
-    (toolPart as { type?: string }).type === "tool-invocation"
-  ) {
-    return (
-      <ToolInvocationRenderer
-        part={toolPart as ToolInvocationPartType}
-        isLoading={isLoading}
-        isCompact={compact}
-      />
-    );
-  }
-
   // Normalize different tool formats to a common structure
   let normalizedTool: DynamicToolPart | null = null;
 
@@ -124,39 +115,76 @@ export function Tool({
       output: (toolPart as { output?: unknown }).output,
     };
   }
+  // Legacy tool-invocation format
+  else if (
+    typeof toolPart === "object" &&
+    toolPart !== null &&
+    "type" in toolPart &&
+    (toolPart as { type?: string }).type === "tool-invocation"
+  ) {
+    const legacyTool = toolPart as ToolInvocationPartType;
+    const toolInvocation = legacyTool.toolInvocation;
+    
+    // Convert legacy state to AI SDK 5 state
+    let state = "input-available";
+    switch (toolInvocation.state) {
+      case "result":
+        state = "output-available";
+        break;
+      case "call":
+        state = "input-available";
+        break;
+      case "partial-call":
+        state = "input-streaming";
+        break;
+      case "processing":
+        state = "input-streaming";
+        break;
+    }
+
+    normalizedTool = {
+      type: "dynamic-tool",
+      toolName: toolInvocation.toolName,
+      toolCallId: `legacy-${Date.now()}`,
+      state: state,
+      input: toolInvocation.args,
+      output: toolInvocation.result,
+    };
+  }
 
   // If we have a normalized tool, render it
   if (normalizedTool) {
     // Use special document tool component for document operations
     if (isDocumentTool(normalizedTool.toolName)) {
       return (
-        <ModernDocumentTool
-          part={normalizedTool}
-          isLoading={isLoading}
-          compact={compact}
-        />
+        <div className={className}>
+          <ModernDocumentTool
+            part={normalizedTool}
+            isLoading={isLoading}
+            compact={compact}
+          />
+        </div>
       );
     }
 
-    // For non-document tools, use the standard renderer
-    const normalized: ToolInvocationPartType = {
-      type: "tool-invocation",
-      toolInvocation: {
-        toolName: normalizedTool.toolName,
-        args: normalizeArgs(normalizedTool.input),
-        state: mapAISDK5State(normalizedTool.state),
-        ...(normalizedTool.output
-          ? { result: normalizedTool.output as ToolInvocationResult }
-          : {}),
-      },
+    // For non-document tools, use the official prompt-kit Tool component
+    const promptKitToolPart: PromptKitToolPart = {
+      type: normalizedTool.toolName,
+      state: mapAISDK5StateToPromptKit(normalizedTool.state),
+      input: normalizeArgs(normalizedTool.input),
+      output: normalizedTool.output && typeof normalizedTool.output === "object" 
+        ? normalizedTool.output as Record<string, unknown>
+        : undefined,
+      toolCallId: normalizedTool.toolCallId,
     };
 
     return (
-      <ToolInvocationRenderer
-        part={normalized}
-        isLoading={isLoading}
-        isCompact={compact}
-      />
+      <div className={className}>
+        <PromptKitTool
+          toolPart={promptKitToolPart}
+          defaultOpen={defaultOpen}
+        />
+      </div>
     );
   }
 
