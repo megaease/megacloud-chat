@@ -65,7 +65,8 @@ function renderRichPart(
   setPreviewAttachment: (
     attachment: { url: string; type: string; name?: string } | null
   ) => void,
-  isLoading: boolean
+  isLoading: boolean,
+  status?: "error" | "submitted" | "streaming" | "ready"
 ) {
   const p = part as { type?: string } | null | undefined;
   const type = p?.type;
@@ -125,11 +126,12 @@ function renderRichPart(
       );
     case "reasoning":
       return (
-        <ReasoningPart
-          key={key}
-          part={part as unknown as ReasoningPartType}
-          isLoading={isLoading}
-        />
+        <div key={key} className="my-3">
+          <ReasoningPart
+            part={part as unknown as ReasoningPartType}
+            isStreaming={status === "streaming"}
+          />
+        </div>
       );
     default:
       return null;
@@ -209,99 +211,111 @@ export function ChatMessage({
 
             if (contentType.startsWith("image/")) {
               return (
-                <button
-                  key={key}
-                  type="button"
-                  className="border rounded-md overflow-hidden group relative cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() =>
-                    setPreviewAttachment({
-                      url: f.url,
-                      type: contentType,
-                      name: fileName,
-                    })
-                  }
-                  aria-label={`Preview image: ${fileName}`}
-                >
-                  <img
-                    src={f.url}
-                    alt={fileName}
-                    className="object-cover object-center overflow-hidden rounded-lg h-full max-h-96 max-w-64 w-fit"
-                  />
-                </button>
+                <div key={key} className="my-3">
+                  <button
+                    type="button"
+                    className="border rounded-md overflow-hidden group relative cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() =>
+                      setPreviewAttachment({
+                        url: f.url,
+                        type: contentType,
+                        name: fileName,
+                      })
+                    }
+                    aria-label={`Preview image: ${fileName}`}
+                  >
+                    <img
+                      src={f.url}
+                      alt={fileName}
+                      className="object-cover object-center overflow-hidden rounded-lg h-full max-h-96 max-w-64 w-fit"
+                    />
+                  </button>
+                </div>
               );
             }
 
             if (contentType.startsWith("application/pdf")) {
               return (
-                <button
-                  key={key}
-                  type="button"
-                  className="border rounded-md overflow-hidden group relative hover:shadow-md transition-shadow cursor-pointer bg-gray-50 dark:bg-gray-800 p-3 text-xs"
-                  onClick={() =>
-                    setPreviewAttachment({
-                      url: f.url,
-                      type: contentType,
-                      name: fileName,
-                    })
-                  }
-                >
-                  📄 {fileName}
-                </button>
+                <div key={key} className="my-3">
+                  <button
+                    type="button"
+                    className="border rounded-md overflow-hidden group relative hover:shadow-md transition-shadow cursor-pointer bg-gray-50 dark:bg-gray-800 p-3 text-xs"
+                    onClick={() =>
+                      setPreviewAttachment({
+                        url: f.url,
+                        type: contentType,
+                        name: fileName,
+                      })
+                    }
+                  >
+                    📄 {fileName}
+                  </button>
+                </div>
               );
             }
 
             return (
-              <div
-                key={key}
-                className="flex items-center gap-2 p-2 rounded-md bg-muted/40 text-xs"
-              >
-                <IconFileTypography size={16} className="text-primary" />
-                <span className="truncate max-w-40" title={fileName}>
-                  {fileName}
-                </span>
+              <div key={key} className="my-3">
+                <div className="flex items-center gap-2 p-2 rounded-md bg-muted/40 text-xs">
+                  <IconFileTypography size={16} className="text-primary" />
+                  <span className="truncate max-w-40" title={fileName}>
+                    {fileName}
+                  </span>
+                </div>
               </div>
             );
           }
           if (t === "text") {
             const text = (part as { text?: string }).text || "";
             return text ? (
-              <MessageContent key={key} markdown>
+              <MessageContent
+                key={key}
+                markdown
+                className={
+                  isUser
+                    ? "bg-muted/40 p-4 rounded-md text-end w-fit"
+                    : "bg-transparent p-0 "
+                }
+              >
                 {text}
               </MessageContent>
             ) : null;
           }
           if (t === "reasoning") {
             return (
-              <ReasoningPart
-                key={key}
-                part={part as unknown as ReasoningPartType}
-                isLoading={isLoading}
-              />
+              <div key={key} className="my-3">
+                <ReasoningPart
+                  part={part as unknown as ReasoningPartType}
+                  isStreaming={status === "streaming"}
+                />
+              </div>
             );
           }
           // 使用 prompt-kit 的 <Tool> 展示 AI SDK 5 工具调用
           if (t === "dynamic-tool") {
             return (
-              <Tool
-                key={key}
-                toolPart={part as Record<string, unknown>}
-                isLoading={isLoading}
-                compact={isCompact}
-                className="w-full"
-              />
+              <div key={key} className="my-3">
+                <Tool
+                  toolPart={part as Record<string, unknown>}
+                  isLoading={isLoading}
+                  compact={isCompact}
+                  className="w-full"
+                />
+              </div>
             );
           }
 
           // 支持 tool-createDocument, tool-updateDocument 等格式
           if (t?.startsWith("tool-")) {
             return (
-              <Tool
-                key={key}
-                toolPart={part as Record<string, unknown>}
-                isLoading={isLoading}
-                compact={isCompact}
-                className="w-full"
-              />
+              <div key={key} className="my-3">
+                <Tool
+                  toolPart={part as Record<string, unknown>}
+                  isLoading={isLoading}
+                  compact={isCompact}
+                  className="w-full"
+                />
+              </div>
             );
           }
 
@@ -310,7 +324,8 @@ export function ChatMessage({
             part,
             key,
             setPreviewAttachment,
-            isLoading && !isUser
+            isLoading && !isUser,
+            status
           );
           if (rich) return rich;
 

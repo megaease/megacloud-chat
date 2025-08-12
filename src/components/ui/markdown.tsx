@@ -15,8 +15,18 @@ export type MarkdownProps = {
 };
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
-  const tokens = marked.lexer(markdown);
-  return tokens.map((token) => token.raw);
+  // 添加空值检查
+  if (!markdown || typeof markdown !== "string") {
+    return [];
+  }
+
+  try {
+    const tokens = marked.lexer(markdown);
+    return tokens.map((token) => token.raw);
+  } catch (error) {
+    console.warn("Failed to parse markdown:", error);
+    return [markdown]; // 返回原始字符串作为备用方案
+  }
 }
 
 function extractLanguage(className?: string): string {
@@ -96,7 +106,7 @@ function MarkdownComponent({
     <div className={className}>
       {blocks.map((block, index) => (
         <MemoizedMarkdownBlock
-          key={`${blockId}-block-${index}`}
+          key={`${blockId}-${block.slice(0, 20).replace(/\s/g, "")}-${index}`}
           content={block}
           components={components}
         />

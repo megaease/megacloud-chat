@@ -124,7 +124,7 @@ export function Tool({
   ) {
     const legacyTool = toolPart as ToolInvocationPartType;
     const toolInvocation = legacyTool.toolInvocation;
-    
+
     // Convert legacy state to AI SDK 5 state
     let state = "input-available";
     switch (toolInvocation.state) {
@@ -172,18 +172,16 @@ export function Tool({
       type: normalizedTool.toolName,
       state: mapAISDK5StateToPromptKit(normalizedTool.state),
       input: normalizeArgs(normalizedTool.input),
-      output: normalizedTool.output && typeof normalizedTool.output === "object" 
-        ? normalizedTool.output as Record<string, unknown>
-        : undefined,
+      output:
+        normalizedTool.output && typeof normalizedTool.output === "object"
+          ? (normalizedTool.output as Record<string, unknown>)
+          : undefined,
       toolCallId: normalizedTool.toolCallId,
     };
 
     return (
       <div className={className}>
-        <PromptKitTool
-          toolPart={promptKitToolPart}
-          defaultOpen={defaultOpen}
-        />
+        <PromptKitTool toolPart={promptKitToolPart} defaultOpen={defaultOpen} />
       </div>
     );
   }

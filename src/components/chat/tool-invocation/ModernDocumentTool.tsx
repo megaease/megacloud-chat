@@ -105,9 +105,13 @@ export function ModernDocumentTool({
   // 处理点击打开
   const handleOpenArtifact = () => {
     if (process.env.NODE_ENV !== "production") {
-      console.log("ModernDocumentTool clicked", { documentId, version, output });
+      console.log("ModernDocumentTool clicked", {
+        documentId,
+        version,
+        output,
+      });
     }
-    
+
     if (documentId) {
       loadAndShowArtifact(
         documentId,

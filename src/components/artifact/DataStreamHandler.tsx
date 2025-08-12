@@ -56,9 +56,10 @@ export function DataStreamHandler({
       output?: unknown;
       isNew: boolean;
     }[] = [];
-    
+
     // 检查是否有新消息（消息数量增加且不是初始加载）
-    const isNewMessages = messages.length > lastMessageCountRef.current && !initialLoadRef.current;
+    const isNewMessages =
+      messages.length > lastMessageCountRef.current && !initialLoadRef.current;
 
     for (const m of messages) {
       if (m.role !== "assistant") continue;
@@ -100,13 +101,13 @@ export function DataStreamHandler({
 
         const version = info?.version;
         const key = `${documentId}:${version ?? "latest"}`;
-        out.push({ 
-          key, 
-          documentId, 
-          version, 
-          toolName, 
+        out.push({
+          key,
+          documentId,
+          version,
+          toolName,
           output: output,
-          isNew: isNewMessages
+          isNew: isNewMessages,
         });
       }
     }
@@ -123,10 +124,10 @@ export function DataStreamHandler({
 
     // 更新消息计数
     lastMessageCountRef.current = messages.length;
-    
+
     for (const item of latestDocParts) {
       const { key, documentId: docId, version, isNew } = item;
-      
+
       // 如果已经打开过，跳过
       if (openedRef.current.has(key)) {
         if (process.env.NODE_ENV !== "production") {
@@ -140,7 +141,9 @@ export function DataStreamHandler({
       if (!isNew) {
         if (process.env.NODE_ENV !== "production") {
           // eslint-disable-next-line no-console
-          console.debug("[Artifact] skip auto-open for existing message", { key });
+          console.debug("[Artifact] skip auto-open for existing message", {
+            key,
+          });
         }
         continue;
       }
@@ -156,7 +159,7 @@ export function DataStreamHandler({
         },
         version
       );
-      
+
       if (process.env.NODE_ENV !== "production") {
         // eslint-disable-next-line no-console
         console.debug("[Artifact] open from tool", {
@@ -166,5 +169,6 @@ export function DataStreamHandler({
       }
       openedRef.current.add(key);
     }
-  }, [latestDocParts, loadAndShowArtifact, messages.length]);  return null;
+  }, [latestDocParts, loadAndShowArtifact, messages.length]);
+  return null;
 }

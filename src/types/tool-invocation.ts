@@ -49,8 +49,8 @@ export interface StepStartPart {
 
 export interface ReasoningPart {
 	type: "reasoning";
-	reasoningText: string;
-	details?: TextPart[];
+	text: string;
+	state?: string;
 }
 
 export interface SourcePart {

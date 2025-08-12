@@ -70,21 +70,15 @@ export function ChatItem({
   const hasError = isLastMessage && error && status === "error";
 
   return (
-    <Message
-      className={cn(
-        "group text-sm py-4",
-        isUser ? "flex-row-reverse pr-1" : "pl-1",
-        isCompact && isUser && "gap-0 pr-0"
-      )}
-    >
-      {/* Avatar */}
+    <Message className={cn("group", isUser ? "justify-end" : "justify-start")}>
+      {/* Avatar - AI messages on the left */}
       {!isUser && (
         <MessageAvatar
           src={""}
           alt={"AI"}
           fallback={"AI"}
           className={cn(
-            "mt-0.5 shadow-[var(--shadow-xs)]",
+            "mt-1.5 shadow-[var(--shadow-xs)] flex-shrink-0",
             isCompact && isUser && "hidden"
           )}
         />
@@ -93,44 +87,21 @@ export function ChatItem({
       {/* Content */}
       <div
         className={cn(
-          "flex-1 space-y-2 min-w-0",
-          isUser ? "text-right" : "text-left",
-          isCompact ? "max-w-full" : "max-w-[89%]"
+          "flex w-full flex-col gap-2",
+          isUser ? "items-end" : "items-start"
         )}
       >
-        <div
-          className={cn(
-            "rounded-[var(--radius)] px-4 py-3 text-left min-w-0 transition-all duration-200",
-            isCompact
-              ? isUser
-                ? hasError
-                  ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 max-w-full break-words"
-                  : "inline-block bg-muted text-primary max-w-full break-words"
-                : "block bg-white text-gray-900 dark:text-gray-900 w-full overflow-hidden"
-              : isUser
-              ? hasError
-                ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 w-auto"
-                : "inline-block bg-muted text-primary w-auto"
-              : "inline-block bg-white text-gray-900 dark:text-gray-900 w-full",
-            isEditing && "bg-muted/20",
-            "[&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-2 [&_a]:text-blue-600 [&_a:hover]:text-blue-800 dark:[&_a]:text-blue-700 dark:[&_a:hover]:text-blue-600"
-          )}
-        >
-          {children ? (
-            // children 由上层（ChatMessage）按需使用 MessageContent 或其他 prompt-kit 组件渲染
-            <>{children}</>
-          ) : messageContent ? (
-            <MessageContent markdown className="bg-transparent p-0">
-              {messageContent}
-            </MessageContent>
-          ) : null}
-        </div>
+        {children ? (
+          // children 由上层（ChatMessage）按需使用 MessageContent 或其他 prompt-kit 组件渲染
+
+          <>{children}</>
+        ) : null}
 
         {/* Actions */}
         <MessageActions
           className={cn(
             "py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-            isUser ? "justify-end" : "justify-start pl-4"
+            isUser ? "justify-end" : "justify-start"
           )}
         >
           {/* Copy */}
