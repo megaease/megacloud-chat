@@ -145,7 +145,7 @@ export function ChatView({
                   <ChatMessage
                     key={message.id}
                     message={message}
-                    isLoading={status === "streaming" && isLastMessage}
+                    isLoading={(status === "streaming" || status === "submitted") && isLastMessage}
                     isLastMessage={isLastMessage}
                     error={error}
                     status={status}
@@ -158,11 +158,6 @@ export function ChatView({
                   />
                 );
               })}
-              {status === "submitted" && (
-                <div className="mx-auto w-full max-w-4xl shrink-0 px-3 pb-3 md:px-5 md:pb-5">
-                  <Loader variant="loading-dots" size="sm" />
-                </div>
-              )}
               <ChatContainerScrollAnchor />
             </ChatContainerContent>
             <div className="pointer-events-none absolute bottom-4 right-6">

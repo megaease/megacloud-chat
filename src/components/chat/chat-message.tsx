@@ -497,9 +497,15 @@ export function ChatMessage({
         onEdit={onEdit}
         isEditing={isEditing}
       >
-        {isLoading && !isUser && (
-          <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-            <Loader variant="loading-dots" size="sm" />
+        {(status === "submitted" || status === "streaming") && !isUser && (
+          <div className="flex items-center gap-2 mb-2 text-xs text-foreground justify-start">
+            {status === "streaming" ? (
+              <Loader variant="dots" size="sm" className="[&>div]:!bg-foreground" />
+            ) : status === "submitted" ? (
+              <Loader variant="text-shimmer" size="sm" text="正在处理..." />
+            ) : (
+              <Loader variant="text-shimmer" size="sm" text="正在处理..." />
+            )}
           </div>
         )}
         {/* Error indicator for failed messages */}

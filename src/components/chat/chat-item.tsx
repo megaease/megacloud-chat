@@ -70,17 +70,19 @@ export function ChatItem({
   const hasError = isLastMessage && error && status === "error";
 
   return (
-    <Message className={cn("group", isUser ? "justify-end" : "justify-start")}>
+    <Message
+      className={cn(
+        "group items-start",
+        isUser ? "justify-end" : "justify-start"
+      )}
+    >
       {/* Avatar - AI messages on the left */}
       {!isUser && (
         <MessageAvatar
           src={""}
           alt={"AI"}
           fallback={"AI"}
-          className={cn(
-            "mt-1.5 shadow-[var(--shadow-xs)] flex-shrink-0",
-            isCompact && isUser && "hidden"
-          )}
+          className={cn(isCompact && isUser && "hidden")}
         />
       )}
 
