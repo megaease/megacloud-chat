@@ -3,9 +3,12 @@
 import type { UIMessage } from "ai";
 import { ArtifactMessage } from "./ArtifactMessage";
 import { ChatInput } from "@/components/chat/chat-input";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
+import {
+  ChatContainerRoot,
+  ChatContainerContent,
+  ChatContainerScrollAnchor,
+} from "@/components/prompt-kit/chat-container";
+import { ScrollButton } from "@/components/prompt-kit/scroll-button";
 
 interface ChatMessageProps {
   message: UIMessage | UIMessage;
@@ -43,14 +46,6 @@ interface ArtifactChatProps {
 }
 
 export function ArtifactChat(props: ArtifactChatProps) {
-  const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
-    useScrollToBottom({
-      behavior: "smooth",
-      bottomThreshold: 50,
-      scrollOnMount: true,
-      forceScrollOnNewContent: false,
-    });
-
   return (
     <div
       className={`flex flex-col h-full min-h-0 bg-white dark:bg-white ${
@@ -58,11 +53,8 @@ export function ArtifactChat(props: ArtifactChatProps) {
       }`}
     >
       <div className="flex-1 relative min-h-0">
-        <div
-          className="h-full overflow-y-auto px-2 sm:px-3 space-y-3"
-          ref={scrollAreaRef}
-        >
-          <div className="w-full mx-auto flex flex-col gap-2 py-3">
+        <ChatContainerRoot className="h-full px-2 sm:px-3">
+          <ChatContainerContent className="w-full mx-auto flex flex-col gap-2 py-3">
             {props.messages.map((message, index) => (
               <ArtifactMessage
                 key={message.id}
@@ -73,22 +65,12 @@ export function ArtifactChat(props: ArtifactChatProps) {
                 }
               />
             ))}
-          </div>
-          <div ref={endRef} />
-        </div>
-
-        {!isAtBottom && (
+            <ChatContainerScrollAnchor />
+          </ChatContainerContent>
           <div className="absolute bottom-3 right-3 z-10">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={scrollToBottom}
-              className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
+            <ScrollButton />
           </div>
-        )}
+        </ChatContainerRoot>
       </div>
 
       <div className="flex-shrink-0 border-t">

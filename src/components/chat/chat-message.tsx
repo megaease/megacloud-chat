@@ -500,7 +500,11 @@ export function ChatMessage({
         {(status === "submitted" || status === "streaming") && !isUser && (
           <div className="flex items-center gap-2 mb-2 text-xs text-foreground justify-start">
             {status === "streaming" ? (
-              <Loader variant="dots" size="sm" className="[&>div]:!bg-foreground" />
+              <Loader
+                variant="dots"
+                size="md"
+                className="[&>div]:!bg-foreground"
+              />
             ) : status === "submitted" ? (
               <Loader variant="text-shimmer" size="sm" text="正在处理..." />
             ) : (

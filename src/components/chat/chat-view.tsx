@@ -72,6 +72,7 @@ export function ChatView({
   editingMessageId,
 }: ChatViewProps) {
   const tCommon = useTranslations("Common");
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Edit state management (now handled by parent component)
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
@@ -135,8 +136,14 @@ export function ChatView({
           <p className="text-primary">Start a conversation</p>
         </div>
       ) : (
-        <div className="flex-1 relative min-h-0">
-          <ChatContainerRoot className="h-full px-2 sm:px-4">
+        <div
+          className="flex-1 relative min-h-0  overflow-auto"
+          ref={scrollContainerRef}
+        >
+          <ChatContainerRoot
+            className="h-full px-2 sm:px-4"
+            data-scroll-container
+          >
             <ChatContainerContent className="w/full max-w-4xl mx-auto flex flex-col gap-2 py-4">
               {messages.map((message, index) => {
                 const isLastMessage = index === messages.length - 1;
@@ -145,7 +152,10 @@ export function ChatView({
                   <ChatMessage
                     key={message.id}
                     message={message}
-                    isLoading={(status === "streaming" || status === "submitted") && isLastMessage}
+                    isLoading={
+                      (status === "streaming" || status === "submitted") &&
+                      isLastMessage
+                    }
                     isLastMessage={isLastMessage}
                     error={error}
                     status={status}
@@ -160,12 +170,19 @@ export function ChatView({
               })}
               <ChatContainerScrollAnchor />
             </ChatContainerContent>
-            <div className="pointer-events-none absolute bottom-4 right-6">
-              <ScrollButton />
+            {/* ScrollButton 在 ChatContainerRoot 内部，按照参考代码结构 */}
+            {/* 自定义 ScrollButton - 总是显示，功能完整 */}
+            <div className="absolute right-6 bottom-4 z-50">
+              <ScrollButton
+                containerRef={
+                  scrollContainerRef as React.RefObject<HTMLElement>
+                }
+              />
             </div>
           </ChatContainerRoot>
         </div>
       )}
+
       {/* Chat input - 固定在底部 */}
       <div className="flex-shrink-0">
         <ChatInput

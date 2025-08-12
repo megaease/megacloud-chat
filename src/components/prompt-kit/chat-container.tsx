@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { StickToBottom } from "use-stick-to-bottom";
+import { forwardRef } from "react";
 
 export type ChatContainerRootProps = {
   children: React.ReactNode;
