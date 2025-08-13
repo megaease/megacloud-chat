@@ -1,12 +1,12 @@
 // components/artifact/ArtifactContentPanel.tsx
 "use client";
 
-import { memo, useMemo } from "react";
-import { useTranslations } from "next-intl";
 import { useArtifact } from "@/context/artifact-provider-context";
-import { ArtifactContent } from "./ArtifactContent";
-import { ArtifactActions } from "./ArtifactActions";
 import type { ArtifactKind } from "@/lib/artifact-types";
+import { useTranslations } from "next-intl";
+import { memo, useMemo } from "react";
+import { ArtifactActions } from "./ArtifactActions";
+import { ArtifactContent } from "./ArtifactContent";
 
 // 根据文档类型生成简洁的默认标题（不包含状态信息）
 function getDefaultTitle(

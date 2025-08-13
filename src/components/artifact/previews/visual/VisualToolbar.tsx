@@ -1,23 +1,7 @@
 "use client";
 
-import { useState, type RefObject } from "react";
-import { motion } from "framer-motion";
-import {
-	ZoomIn,
-	ZoomOut,
-	RotateCw,
-	RotateCcw,
-	Maximize2,
-	Download,
-	Copy,
-	Check,
-	MoreHorizontal,
-	ImageIcon,
-	FileText,
-	BarChart3,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -26,6 +10,22 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import {
+	BarChart3,
+	Check,
+	Copy,
+	Download,
+	FileText,
+	ImageIcon,
+	Maximize2,
+	MoreHorizontal,
+	RotateCcw,
+	RotateCw,
+	ZoomIn,
+	ZoomOut,
+} from "lucide-react";
+import { type RefObject, useState } from "react";
 import type { VisualContentType, VisualState } from "../VisualPreview";
 
 interface VisualToolbarProps {

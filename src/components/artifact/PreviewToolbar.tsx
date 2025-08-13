@@ -1,10 +1,10 @@
 // components/artifact/PreviewToolbar.tsx
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, Download, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Check, Copy, Download, RefreshCw } from "lucide-react";
+import { useState } from "react";
 
 interface PreviewToolbarProps {
 	content: string;

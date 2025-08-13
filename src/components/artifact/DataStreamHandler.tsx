@@ -1,174 +1,105 @@
-// components/artifact/DataStreamHandler.tsx
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
-import type { UIMessage } from "ai";
-import type { ToolInvocationPart } from "@/types/tool-invocation";
-import { useDocumentToolAction } from "@/hooks/useDocumentToolAction";
 import { useArtifact } from "@/context/artifact-provider-context";
+import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
+import { useEffect, useRef } from "react";
+
+export interface DataStreamDelta {
+	type: string;
+	data: unknown;
+}
 
 interface DataStreamHandlerProps {
-  chatId: string;
-  messages?: UIMessage[];
+	dataStream?: DataStreamDelta[];
 }
 
 /**
- * Bridges AI SDK v5 streamed messages to Artifact UI:
- * - Watches assistant tool results
- * - When a document tool returns id/version, auto-opens the Artifact panel
- * - Debounced with a guard to avoid repeated openings
+ * Simplified DataStreamHandler that processes AI SDK v5 dataStream deltas
+ * Handles artifact creation/update streaming data
  */
-export function DataStreamHandler({
-  chatId,
-  messages = [],
-}: DataStreamHandlerProps) {
-  const { extractDocumentInfo } = useDocumentToolAction();
-  const { loadAndShowArtifact } = useArtifact();
-  const openedRef = useRef(new Set<string>());
-  const lastMessageCountRef = useRef(0);
-  const lastChatIdRef = useRef(chatId);
-  const initialLoadRef = useRef(true);
+export function DataStreamHandler({ dataStream = [] }: DataStreamHandlerProps) {
+	const { setArtifact, showArtifact } = useArtifact();
+	const lastProcessedIndex = useRef(-1);
+	const currentArtifactRef = useRef<{
+		id?: string;
+		kind?: string;
+		title?: string;
+		language?: string;
+		content?: string;
+	}>({});
 
-  // 当切换聊天时，重置状态
-  useEffect(() => {
-    if (lastChatIdRef.current !== chatId) {
-      openedRef.current.clear();
-      lastMessageCountRef.current = 0;
-      lastChatIdRef.current = chatId;
-      initialLoadRef.current = true; // 标记为初始加载
-    }
-  }, [chatId]);
+	useEffect(() => {
+		if (!dataStream?.length) return;
 
-  // Extract tool parts that create/update documents
-  const latestDocParts = useMemo((): {
-    key: string;
-    documentId: string;
-    version?: number;
-    toolName: string;
-    output?: unknown;
-    isNew: boolean; // 标记是否为新消息
-  }[] => {
-    const out: {
-      key: string;
-      documentId: string;
-      version?: number;
-      toolName: string;
-      output?: unknown;
-      isNew: boolean;
-    }[] = [];
+		const newDeltas = dataStream.slice(lastProcessedIndex.current + 1);
+		lastProcessedIndex.current = dataStream.length - 1;
 
-    // 检查是否有新消息（消息数量增加且不是初始加载）
-    const isNewMessages =
-      messages.length > lastMessageCountRef.current && !initialLoadRef.current;
+		for (const delta of newDeltas) {
+			const current = currentArtifactRef.current;
 
-    for (const m of messages) {
-      if (m.role !== "assistant") continue;
-      const mParts = (m.parts || []) as unknown[];
+			switch (delta.type) {
+				case "data-id":
+					current.id = delta.data as string;
+					break;
 
-      for (const raw of mParts) {
-        const part = raw as {
-          type?: string;
-          toolName?: string;
-          output?: unknown;
-        };
+				case "data-kind":
+					current.kind = delta.data as string;
+					break;
 
-        // Process both dynamic-tool and tool-* formats
-        let toolName: string | undefined;
-        let output: unknown;
+				case "data-title":
+					current.title = delta.data as string;
+					break;
 
-        if (part.type === "dynamic-tool") {
-          toolName = part.toolName;
-          output = part.output;
-        } else if (part.type?.startsWith("tool-")) {
-          toolName = part.type.replace("tool-", "");
-          output = part.output;
-        } else {
-          continue;
-        }
+				case "data-language":
+					current.language = delta.data as string;
+					break;
 
-        if (toolName !== "createDocument" && toolName !== "updateDocument")
-          continue;
+				case "data-clear":
+					current.content = "";
+					break;
 
-        const info = extractDocumentInfo({
-          type: "dynamic-tool",
-          toolName: toolName,
-          toolCallId: `auto-${Date.now()}`,
-          state: "output-available",
-          output: output,
-        });
-        const documentId = info?.documentId;
-        if (!documentId) continue;
+				case "data-content":
+					current.content = delta.data as string;
+					break;
 
-        const version = info?.version;
-        const key = `${documentId}:${version ?? "latest"}`;
-        out.push({
-          key,
-          documentId,
-          version,
-          toolName,
-          output: output,
-          isNew: isNewMessages,
-        });
-      }
-    }
-    return out;
-  }, [messages, extractDocumentInfo]);
+				case "data-finish":
+					// When streaming finishes, update artifact state and open UI
+					if (current.id && current.content) {
+						setArtifact({
+							documentId: current.id,
+							kind: (current.kind as ArtifactKind) || "text",
+							title: current.title || "Untitled",
+							language: current.language as ArtifactLanguage,
+							content: current.content,
+							status: "idle",
+							isVisible: false,
+							boundingBox: {
+								top: 0,
+								left: 0,
+								width: 520,
+								height: 360,
+							},
+						});
 
-  useEffect(() => {
-    // 如果是初始加载，更新消息计数后标记加载完成
-    if (initialLoadRef.current) {
-      lastMessageCountRef.current = messages.length;
-      initialLoadRef.current = false;
-      return; // 初始加载时不自动打开任何 artifact
-    }
+						// Auto-open artifact panel
+						showArtifact({
+							top: window.innerHeight / 2 - 180,
+							left: window.innerWidth - 560,
+							width: 520,
+							height: 360,
+						});
 
-    // 更新消息计数
-    lastMessageCountRef.current = messages.length;
+						// Reset for next artifact
+						currentArtifactRef.current = {};
+					}
+					break;
 
-    for (const item of latestDocParts) {
-      const { key, documentId: docId, version, isNew } = item;
+				default:
+					// Ignore unknown delta types
+					break;
+			}
+		}
+	}, [dataStream, setArtifact, showArtifact]);
 
-      // 如果已经打开过，跳过
-      if (openedRef.current.has(key)) {
-        if (process.env.NODE_ENV !== "production") {
-          // eslint-disable-next-line no-console
-          console.debug("[Artifact] skip duplicate open (tool)", { key });
-        }
-        continue;
-      }
-
-      // 只有新消息才自动打开，避免切换聊天时自动打开
-      if (!isNew) {
-        if (process.env.NODE_ENV !== "production") {
-          // eslint-disable-next-line no-console
-          console.debug("[Artifact] skip auto-open for existing message", {
-            key,
-          });
-        }
-        continue;
-      }
-
-      // Open the artifact panel directly using documentId and version
-      loadAndShowArtifact(
-        docId,
-        {
-          top: window.innerHeight / 2 - 180,
-          left: window.innerWidth - 560,
-          width: 520,
-          height: 360,
-        },
-        version
-      );
-
-      if (process.env.NODE_ENV !== "production") {
-        // eslint-disable-next-line no-console
-        console.debug("[Artifact] open from tool", {
-          documentId: docId,
-          version,
-        });
-      }
-      openedRef.current.add(key);
-    }
-  }, [latestDocParts, loadAndShowArtifact, messages.length]);
-  return null;
+	return null;
 }

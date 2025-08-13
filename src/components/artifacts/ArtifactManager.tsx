@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { getArtifacts } from "@/lib/artifact-actions";
+import type { Artifact } from "@/server/db/schema";
+import { Plus } from "lucide-react";
 import { nanoid } from "nanoid";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { ArtifactFilters, type Filters } from "./ArtifactFilters";
 import { ArtifactList } from "./ArtifactList";
 import { ArtifactSearch } from "./ArtifactSearch";
-import { ArtifactFilters, type Filters } from "./ArtifactFilters";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { getArtifacts } from "@/lib/artifact-actions";
-import { toast } from "sonner";
-import type { Artifact } from "@/server/db/schema";
 
 interface ArtifactManagerProps {
 	initialArtifacts: Artifact[];

@@ -1,9 +1,9 @@
 import "server-only";
+import type { UIMessage } from "ai";
+import { desc, eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { db } from "..";
 import { chatMessages, messageEditHistory } from "../schema";
-import { nanoid } from "nanoid";
-import { eq, desc } from "drizzle-orm";
-import type { UIMessage } from "ai";
 
 function convertToDBMessages(messages: UIMessage[], chatId: string) {
 	return messages.map((message) => {

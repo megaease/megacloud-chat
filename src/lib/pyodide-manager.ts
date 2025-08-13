@@ -8,7 +8,10 @@ interface PyodideGlobals {
 
 interface PyodideFS {
 	writeFile: (path: string, data: string | Uint8Array) => void;
-	readFile: (path: string, options?: { encoding: string }) => string | Uint8Array;
+	readFile: (
+		path: string,
+		options?: { encoding: string },
+	) => string | Uint8Array;
 }
 
 interface PyodideInstance {
@@ -204,7 +207,7 @@ export async function executePythonCode(code: string): Promise<{
 	traceback?: string;
 }> {
 	const pyodide = await initializePyodide();
-	
+
 	try {
 		// 使用安全执行函数
 		const result = pyodide.runPython(`safe_exec(${JSON.stringify(code)})`);
@@ -236,9 +239,11 @@ export async function evaluatePythonExpression(expression: string): Promise<{
 	traceback?: string;
 }> {
 	const pyodide = await initializePyodide();
-	
+
 	try {
-		const result = pyodide.runPython(`safe_eval(${JSON.stringify(expression)})`);
+		const result = pyodide.runPython(
+			`safe_eval(${JSON.stringify(expression)})`,
+		);
 		return result as {
 			success: boolean;
 			output: string;
@@ -264,7 +269,7 @@ export async function installPythonPackage(packageName: string): Promise<{
 	message: string;
 }> {
 	const manager = getGlobalManager();
-	
+
 	// 检查是否已安装
 	if (manager.installedPackages.has(packageName)) {
 		return {
@@ -310,12 +315,12 @@ export function getPyodideStatus(): {
  */
 export async function preloadCommonPackages(): Promise<void> {
 	const commonPackages = ["numpy", "pandas", "matplotlib"];
-	
+
 	try {
 		const pyodide = await initializePyodide();
 		// 并行安装常用包
 		await Promise.allSettled(
-			commonPackages.map(pkg => installPythonPackage(pkg))
+			commonPackages.map((pkg) => installPythonPackage(pkg)),
 		);
 	} catch (error) {
 		console.warn("Failed to preload some packages:", error);

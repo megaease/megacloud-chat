@@ -1,10 +1,10 @@
 import "server-only";
 import { db } from "@/server/db";
 import { chatMessages, chats } from "@/server/db/schema";
-import { and, eq, or, like, desc, sql } from "drizzle-orm";
-import { generateObject, type LanguageModel, type UIMessage } from "ai"; // Updated for AI SDK 5
-import { z } from "zod";
 import { deepseek } from "@ai-sdk/deepseek";
+import { type LanguageModel, type UIMessage, generateObject } from "ai"; // Updated for AI SDK 5
+import { and, desc, eq, like, or, sql } from "drizzle-orm";
+import { z } from "zod";
 
 export async function generateTitle(
 	chatId: string,

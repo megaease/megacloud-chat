@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
 	Table,
 	TableBody,
@@ -13,24 +17,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import {
-	DropdownMenu,
-	DropdownMenuCheckboxItem,
-	DropdownMenuContent,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-	Search,
-	Download,
-	Grid3X3,
-	SortAsc,
-	SortDesc,
-	Settings2,
-	ChevronLeft,
-	ChevronRight,
-	ChevronsLeft,
-	ChevronsRight,
-} from "lucide-react";
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
@@ -43,6 +29,20 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
+import {
+	ChevronLeft,
+	ChevronRight,
+	ChevronsLeft,
+	ChevronsRight,
+	Download,
+	Grid3X3,
+	Search,
+	Settings2,
+	SortAsc,
+	SortDesc,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useCallback, useMemo, useState } from "react";
 
 interface TablePreviewProps {
 	content: string;

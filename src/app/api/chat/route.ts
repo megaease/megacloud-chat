@@ -1,3 +1,9 @@
+import { detectAndCreateAIModel } from "@/lib/ai-providers";
+import { createDocumentTool } from "@/lib/ai/tools/create-document";
+import { updateDocumentTool } from "@/lib/ai/tools/update-document";
+import { loadMCPTools } from "@/lib/mcp-utils";
+import { systemPrompt } from "@/lib/prompt";
+import { getChatMessageById } from "@/server/db/queries/chat";
 import {
 	generateTitle,
 	getChatById,
@@ -6,23 +12,17 @@ import {
 } from "@/server/db/queries/chats";
 import { saveMessages } from "@/server/db/queries/messages";
 import {
-	convertToModelMessages,
-	smoothStream,
-	streamText,
-	createUIMessageStream,
 	JsonToSseTransformStream,
+	type LanguageModel,
 	type ToolSet,
 	type UIMessage,
-	type LanguageModel,
+	convertToModelMessages,
+	createUIMessageStream,
+	smoothStream,
+	streamText,
 } from "ai";
-import { loadMCPTools } from "@/lib/mcp-utils";
-import { nanoid } from "nanoid";
-import { detectAndCreateAIModel } from "@/lib/ai-providers";
-import { getChatMessageById } from "@/server/db/queries/chat";
-import { systemPrompt } from "@/lib/prompt";
-import { createDocumentTool } from "@/lib/ai/tools/create-document";
-import { updateDocumentTool } from "@/lib/ai/tools/update-document";
 import { stepCountIs } from "ai";
+import { nanoid } from "nanoid";
 
 export const maxDuration = 30;
 

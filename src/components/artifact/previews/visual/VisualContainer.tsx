@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useRef, useEffect } from "react";
-import type { ReactNode } from "react";
-import { motion } from "framer-motion";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import type { VisualState, VisualContentType } from "../VisualPreview";
+import { motion } from "framer-motion";
+import { useCallback, useEffect, useRef } from "react";
+import type { ReactNode } from "react";
+import type { VisualContentType, VisualState } from "../VisualPreview";
 
 interface VisualContainerProps {
 	children: ReactNode;
@@ -20,21 +20,27 @@ export function VisualContainer({
 	visualState,
 	updateVisualState,
 	contentType = "unknown",
-	className
+	className,
 }: VisualContainerProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { zoom, rotation, isFullscreen } = visualState;
 
 	// 滚轮缩放 - 仅对图片和 SVG 有效
-	const handleWheel = useCallback((e: WheelEvent) => {
-		if (contentType !== "chart" && (e.ctrlKey || e.metaKey)) {
-			e.preventDefault();
-			const delta = -e.deltaY;
-			const zoomStep = 10;
-			const newZoom = Math.max(25, Math.min(500, zoom + (delta > 0 ? zoomStep : -zoomStep)));
-			updateVisualState({ zoom: newZoom });
-		}
-	}, [zoom, updateVisualState, contentType]);
+	const handleWheel = useCallback(
+		(e: WheelEvent) => {
+			if (contentType !== "chart" && (e.ctrlKey || e.metaKey)) {
+				e.preventDefault();
+				const delta = -e.deltaY;
+				const zoomStep = 10;
+				const newZoom = Math.max(
+					25,
+					Math.min(500, zoom + (delta > 0 ? zoomStep : -zoomStep)),
+				);
+				updateVisualState({ zoom: newZoom });
+			}
+		},
+		[zoom, updateVisualState, contentType],
+	);
 
 	// 绑定滚轮事件
 	useEffect(() => {
@@ -88,14 +94,12 @@ export function VisualContainer({
 				"bg-background transition-colors duration-200",
 				contentType === "chart" ? "p-0" : "p-4",
 				isFullscreen && "h-screen bg-black/95 p-8",
-				className
+				className,
 			)}
 		>
 			{contentType === "chart" ? (
 				// 图表不需要缩放和旋转变换，直接占满容器
-				<div className="w-full h-full">
-					{children}
-				</div>
+				<div className="w-full h-full">{children}</div>
 			) : (
 				// 图片和 SVG 应用缩放和旋转变换
 				<motion.div
@@ -106,7 +110,7 @@ export function VisualContainer({
 					transition={{
 						type: "spring",
 						stiffness: 300,
-						damping: 30
+						damping: 30,
 					}}
 				>
 					{children}
@@ -118,11 +122,11 @@ export function VisualContainer({
 	// 全屏模式
 	if (isFullscreen) {
 		return (
-			<Dialog 
-				open={isFullscreen} 
+			<Dialog
+				open={isFullscreen}
 				onOpenChange={(open) => updateVisualState({ isFullscreen: open })}
 			>
-				<DialogContent 
+				<DialogContent
 					className="max-w-none h-screen p-0 bg-black/95 border-none"
 					showCloseButton={false}
 				>

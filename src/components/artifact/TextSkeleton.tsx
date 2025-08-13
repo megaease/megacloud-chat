@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 interface TextSkeletonProps {
@@ -18,7 +18,11 @@ export function TextSkeleton({ className }: TextSkeletonProps) {
 				<motion.div
 					className="h-8 bg-muted rounded w-2/3"
 					animate={{ opacity: [0.3, 0.7, 0.3] }}
-					transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+					transition={{
+						duration: 2,
+						repeat: Number.POSITIVE_INFINITY,
+						ease: "easeInOut",
+					}}
 				/>
 
 				{/* 段落骨架 */}
@@ -27,7 +31,7 @@ export function TextSkeleton({ className }: TextSkeletonProps) {
 						{ lines: [90, 85, 70], spacing: "mb-6" },
 						{ lines: [95, 80, 88, 60], spacing: "mb-6" },
 						{ lines: [75, 90, 85], spacing: "mb-6" },
-						{ lines: [88, 92, 78, 85, 45], spacing: "mb-4" }
+						{ lines: [88, 92, 78, 85, 45], spacing: "mb-4" },
 					].map((paragraph, pIndex) => (
 						<div key={pIndex} className={`space-y-3 ${paragraph.spacing}`}>
 							{paragraph.lines.map((width, lIndex) => (
@@ -36,11 +40,11 @@ export function TextSkeleton({ className }: TextSkeletonProps) {
 									className="h-4 bg-muted rounded"
 									style={{ width: `${width}%` }}
 									animate={{ opacity: [0.4, 0.8, 0.4] }}
-									transition={{ 
-										duration: 1.8, 
-										repeat: Infinity, 
+									transition={{
+										duration: 1.8,
+										repeat: Number.POSITIVE_INFINITY,
 										ease: "easeInOut",
-										delay: (pIndex * paragraph.lines.length + lIndex) * 0.1 
+										delay: (pIndex * paragraph.lines.length + lIndex) * 0.1,
 									}}
 								/>
 							))}
@@ -57,11 +61,11 @@ export function TextSkeleton({ className }: TextSkeletonProps) {
 								className="h-4 bg-muted rounded"
 								style={{ width: `${width}%` }}
 								animate={{ opacity: [0.3, 0.7, 0.3] }}
-								transition={{ 
-									duration: 2.2, 
-									repeat: Infinity, 
+								transition={{
+									duration: 2.2,
+									repeat: Number.POSITIVE_INFINITY,
 									ease: "easeInOut",
-									delay: i * 0.15 
+									delay: i * 0.15,
 								}}
 							/>
 						))}
@@ -75,22 +79,22 @@ export function TextSkeleton({ className }: TextSkeletonProps) {
 							<motion.div
 								className="w-2 h-2 bg-muted rounded-full mt-2"
 								animate={{ opacity: [0.4, 0.8, 0.4] }}
-								transition={{ 
-									duration: 1.5, 
-									repeat: Infinity, 
+								transition={{
+									duration: 1.5,
+									repeat: Number.POSITIVE_INFINITY,
 									ease: "easeInOut",
-									delay: i * 0.2 
+									delay: i * 0.2,
 								}}
 							/>
 							<motion.div
 								className="h-4 bg-muted rounded flex-1"
 								style={{ width: `${85 - i * 10}%` }}
 								animate={{ opacity: [0.4, 0.8, 0.4] }}
-								transition={{ 
-									duration: 1.8, 
-									repeat: Infinity, 
+								transition={{
+									duration: 1.8,
+									repeat: Number.POSITIVE_INFINITY,
 									ease: "easeInOut",
-									delay: i * 0.2 + 0.1 
+									delay: i * 0.2 + 0.1,
 								}}
 							/>
 						</div>
@@ -106,11 +110,11 @@ export function TextSkeleton({ className }: TextSkeletonProps) {
 								className="h-4 bg-muted rounded"
 								style={{ width: `${width}%` }}
 								animate={{ opacity: [0.3, 0.7, 0.3] }}
-								transition={{ 
-									duration: 2, 
-									repeat: Infinity, 
+								transition={{
+									duration: 2,
+									repeat: Number.POSITIVE_INFINITY,
 									ease: "easeInOut",
-									delay: i * 0.1 
+									delay: i * 0.1,
 								}}
 							/>
 						))}
@@ -123,15 +127,15 @@ export function TextSkeleton({ className }: TextSkeletonProps) {
 						<motion.div
 							key={i}
 							className="w-2 h-2 bg-primary/40 rounded-full"
-							animate={{ 
+							animate={{
 								scale: [1, 1.2, 1],
-								opacity: [0.3, 1, 0.3] 
+								opacity: [0.3, 1, 0.3],
 							}}
-							transition={{ 
-								duration: 1.2, 
-								repeat: Infinity, 
+							transition={{
+								duration: 1.2,
+								repeat: Number.POSITIVE_INFINITY,
 								ease: "easeInOut",
-								delay: i * 0.2 
+								delay: i * 0.2,
 							}}
 						/>
 					))}
@@ -144,12 +148,20 @@ export function TextSkeleton({ className }: TextSkeletonProps) {
 					<motion.div
 						className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
 						animate={{ rotate: 360 }}
-						transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+						transition={{
+							duration: 1,
+							repeat: Number.POSITIVE_INFINITY,
+							ease: "linear",
+						}}
 					/>
 					<motion.span
 						className="text-sm text-muted-foreground"
 						animate={{ opacity: [0.6, 1, 0.6] }}
-						transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+						transition={{
+							duration: 1.5,
+							repeat: Number.POSITIVE_INFINITY,
+							ease: "easeInOut",
+						}}
 					>
 						{t("generating")}
 					</motion.span>

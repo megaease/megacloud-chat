@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 interface CodeSkeletonProps {
@@ -14,7 +14,12 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 
 	if (mode === "code") {
 		return (
-			<div className={cn("h-full bg-background border rounded-lg overflow-hidden", className)}>
+			<div
+				className={cn(
+					"h-full bg-background border rounded-lg overflow-hidden",
+					className,
+				)}
+			>
 				{/* 代码编辑器头部 */}
 				<div className="flex items-center justify-between px-4 py-2 border-b bg-muted/20">
 					<div className="flex items-center gap-2">
@@ -23,11 +28,11 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 								key={i}
 								className="w-3 h-3 rounded-full bg-muted"
 								animate={{ opacity: [0.3, 0.8, 0.3] }}
-								transition={{ 
-									duration: 1.5, 
-									repeat: Infinity, 
+								transition={{
+									duration: 1.5,
+									repeat: Number.POSITIVE_INFINITY,
 									ease: "easeInOut",
-									delay: i * 0.2 
+									delay: i * 0.2,
 								}}
 							/>
 						))}
@@ -35,7 +40,11 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 					<motion.div
 						className="h-4 bg-muted rounded w-20"
 						animate={{ opacity: [0.4, 0.8, 0.4] }}
-						transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+						transition={{
+							duration: 1.8,
+							repeat: Number.POSITIVE_INFINITY,
+							ease: "easeInOut",
+						}}
 					/>
 				</div>
 
@@ -51,18 +60,18 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 						{ width: "85%", delay: 0.6 },
 						{ width: "30%", delay: 0.7 },
 						{ width: "75%", delay: 0.8 },
-						{ width: "95%", delay: 0.9 }
+						{ width: "95%", delay: 0.9 },
 					].map((line, i) => (
 						<div key={i} className="flex items-center gap-4">
 							{/* 行号 */}
 							<motion.div
 								className="w-6 h-4 bg-muted/60 rounded text-right"
 								animate={{ opacity: [0.3, 0.7, 0.3] }}
-								transition={{ 
-									duration: 2, 
-									repeat: Infinity, 
+								transition={{
+									duration: 2,
+									repeat: Number.POSITIVE_INFINITY,
 									ease: "easeInOut",
-									delay: line.delay 
+									delay: line.delay,
 								}}
 							/>
 							{/* 代码内容 */}
@@ -70,11 +79,11 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 								className="h-4 bg-muted rounded"
 								style={{ width: line.width }}
 								animate={{ opacity: [0.4, 0.8, 0.4] }}
-								transition={{ 
-									duration: 1.8, 
-									repeat: Infinity, 
+								transition={{
+									duration: 1.8,
+									repeat: Number.POSITIVE_INFINITY,
 									ease: "easeInOut",
-									delay: line.delay + 0.1 
+									delay: line.delay + 0.1,
 								}}
 							/>
 						</div>
@@ -87,12 +96,20 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 						<motion.div
 							className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
 							animate={{ rotate: 360 }}
-							transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+							transition={{
+								duration: 1,
+								repeat: Number.POSITIVE_INFINITY,
+								ease: "linear",
+							}}
 						/>
 						<motion.span
 							className="text-xs text-muted-foreground"
 							animate={{ opacity: [0.6, 1, 0.6] }}
-							transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+							transition={{
+								duration: 1.5,
+								repeat: Number.POSITIVE_INFINITY,
+								ease: "easeInOut",
+							}}
 						>
 							{t("generating")}
 						</motion.span>
@@ -104,13 +121,22 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 
 	// Preview mode skeleton
 	return (
-		<div className={cn("h-full bg-background border rounded-lg overflow-hidden", className)}>
+		<div
+			className={cn(
+				"h-full bg-background border rounded-lg overflow-hidden",
+				className,
+			)}
+		>
 			{/* 预览头部 */}
 			<div className="flex items-center justify-between px-4 py-3 border-b bg-muted/20">
 				<motion.div
 					className="h-5 bg-muted rounded w-32"
 					animate={{ opacity: [0.4, 0.8, 0.4] }}
-					transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+					transition={{
+						duration: 1.8,
+						repeat: Number.POSITIVE_INFINITY,
+						ease: "easeInOut",
+					}}
 				/>
 				<div className="flex items-center gap-2">
 					{[1, 2].map((i) => (
@@ -118,11 +144,11 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 							key={i}
 							className="w-8 h-8 bg-muted rounded"
 							animate={{ opacity: [0.3, 0.7, 0.3] }}
-							transition={{ 
-								duration: 1.5, 
-								repeat: Infinity, 
+							transition={{
+								duration: 1.5,
+								repeat: Number.POSITIVE_INFINITY,
 								ease: "easeInOut",
-								delay: i * 0.1 
+								delay: i * 0.1,
 							}}
 						/>
 					))}
@@ -136,7 +162,11 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 					<motion.div
 						className="h-8 bg-muted rounded w-2/3"
 						animate={{ opacity: [0.3, 0.7, 0.3] }}
-						transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+						transition={{
+							duration: 2,
+							repeat: Number.POSITIVE_INFINITY,
+							ease: "easeInOut",
+						}}
 					/>
 					<div className="grid grid-cols-2 gap-4">
 						{[1, 2].map((i) => (
@@ -144,11 +174,11 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 								key={i}
 								className="aspect-video bg-muted rounded-lg"
 								animate={{ opacity: [0.2, 0.6, 0.2] }}
-								transition={{ 
-									duration: 2.5, 
-									repeat: Infinity, 
+								transition={{
+									duration: 2.5,
+									repeat: Number.POSITIVE_INFINITY,
 									ease: "easeInOut",
-									delay: i * 0.3 
+									delay: i * 0.3,
 								}}
 							/>
 						))}
@@ -160,11 +190,11 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 								className="h-4 bg-muted rounded"
 								style={{ width: `${width}%` }}
 								animate={{ opacity: [0.4, 0.8, 0.4] }}
-								transition={{ 
-									duration: 1.8, 
-									repeat: Infinity, 
+								transition={{
+									duration: 1.8,
+									repeat: Number.POSITIVE_INFINITY,
 									ease: "easeInOut",
-									delay: i * 0.2 
+									delay: i * 0.2,
 								}}
 							/>
 						))}
@@ -178,12 +208,20 @@ export function CodeSkeleton({ className, mode = "code" }: CodeSkeletonProps) {
 					<motion.div
 						className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
 						animate={{ rotate: 360 }}
-						transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+						transition={{
+							duration: 1,
+							repeat: Number.POSITIVE_INFINITY,
+							ease: "linear",
+						}}
 					/>
 					<motion.span
 						className="text-xs text-muted-foreground"
 						animate={{ opacity: [0.6, 1, 0.6] }}
-						transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+						transition={{
+							duration: 1.5,
+							repeat: Number.POSITIVE_INFINITY,
+							ease: "easeInOut",
+						}}
 					>
 						{t("generating")}
 					</motion.span>

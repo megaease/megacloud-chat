@@ -2,23 +2,7 @@
 
 import type React from "react";
 
-import { useState, useMemo } from "react";
-import { useTranslations } from "next-intl";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ProviderForm } from "@/components/provider/provider-form";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -30,27 +14,43 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApiProvider } from "@/context/api-provider-context";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { ApiProvider } from "@/types/api-provider";
 import {
-	IconCheck,
-	IconEdit,
-	IconDots,
-	IconStar,
-	IconTrash,
-	IconRefresh,
-	IconSearch,
-	IconPlus,
 	IconAlertCircle,
+	IconCheck,
 	IconCircleCheck,
 	IconClock,
-	IconSettings,
 	IconCopy,
+	IconDots,
+	IconEdit,
+	IconPlus,
+	IconRefresh,
+	IconSearch,
+	IconSettings,
+	IconStar,
+	IconTrash,
 } from "@tabler/icons-react";
-import { cn } from "@/lib/utils";
-import { ProviderForm } from "@/components/provider/provider-form";
+import { useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { getProviderTypeInfo } from "./utils";
 
 export function ProviderManagementModal() {
@@ -490,7 +490,7 @@ export function ProviderManagementModal() {
 			</AlertDialog>
 			{/* Add/Edit Provider Form Dialog */}
 			<Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-				<DialogContent 
+				<DialogContent
 					className="max-w-md"
 					onPointerDownOutside={(e) => e.preventDefault()}
 					onEscapeKeyDown={(e) => e.preventDefault()}

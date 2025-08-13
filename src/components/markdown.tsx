@@ -1,10 +1,10 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { cn } from "@/lib/utils";
-import { CopyButton } from "./copy-button";
 import { CodeEditor } from "./code-editor";
+import { CopyButton } from "./copy-button";
 
 interface MarkdownProps {
 	content: string;

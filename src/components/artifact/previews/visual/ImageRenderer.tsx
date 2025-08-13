@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, type RefObject } from "react";
 import { motion } from "framer-motion";
-import { ImageIcon, AlertCircle } from "lucide-react";
+import { AlertCircle, ImageIcon } from "lucide-react";
 import Image from "next/image";
+import { type RefObject, useState } from "react";
 import type { VisualState } from "../VisualPreview";
 
 interface ImageRendererProps {
@@ -19,7 +19,7 @@ export function ImageRenderer({
 	title,
 	visualState,
 	updateVisualState,
-	imageRef
+	imageRef,
 }: ImageRendererProps) {
 	const [imageError, setImageError] = useState(false);
 	const { loaded, error } = visualState;
@@ -70,18 +70,18 @@ export function ImageRenderer({
 				<div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center">
 					<motion.div
 						animate={{ rotate: 360 }}
-						transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+						transition={{
+							duration: 2,
+							repeat: Number.POSITIVE_INFINITY,
+							ease: "linear",
+						}}
 					>
 						<ImageIcon className="w-8 h-8 text-muted-foreground" />
 					</motion.div>
 				</div>
 				<div className="space-y-2">
-					<h3 className="text-lg font-semibold text-foreground">
-						加载中...
-					</h3>
-					<p className="text-sm text-muted-foreground">
-						正在加载图片
-					</p>
+					<h3 className="text-lg font-semibold text-foreground">加载中...</h3>
+					<p className="text-sm text-muted-foreground">正在加载图片</p>
 				</div>
 			</motion.div>
 		);

@@ -1,13 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import {
 	Select,
 	SelectContent,
@@ -16,14 +11,19 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useApiProvider } from "@/context/api-provider-context";
-import { toast } from "sonner";
-import { IconLoader2, IconCheck } from "@tabler/icons-react";
 import type { ProviderType } from "@/lib/ai-providers";
 import {
 	getDefaultUrlForProvider,
 	isKnownDefaultUrl,
 } from "@/lib/ai-providers";
 import type { ApiProvider } from "@/types/api-provider";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconCheck, IconLoader2 } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const providerSchema = z.object({
 	name: z.string().min(1, { message: "nameRequired" }),

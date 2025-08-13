@@ -1,14 +1,14 @@
-import { useState, useCallback } from "react";
-import { useTranslations } from "next-intl";
-import type React from "react";
 import {
+	getFilePreviewInfo,
+	isSupportedFileType,
 	uploadFile,
 	uploadFiles,
 	validateFile,
-	getFilePreviewInfo,
-	isSupportedFileType,
 } from "@/lib/file-upload";
 import type { UploadResponse } from "@/types/file-upload";
+import { useTranslations } from "next-intl";
+import { useCallback, useState } from "react";
+import type React from "react";
 
 interface FileUploadProps {
 	multiple?: boolean;

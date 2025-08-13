@@ -1,23 +1,23 @@
 import { db } from "@/server/db";
-import { chats, chatMessages } from "@/server/db/schema";
-import { eq, and } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { updateChatTitle } from "@/server/db/queries/chats";
+import { chatMessages, chats } from "@/server/db/schema";
+import { and, eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 // Validation schema for chat title update
 const updateChatTitleSchema = z.object({
-  title: z.string().min(1, "Chat title is required").max(100, "Chat title is too long"),
+	title: z
+		.string()
+		.min(1, "Chat title is required")
+		.max(100, "Chat title is too long"),
 });
 
 interface RouteContext {
-  params: Promise<{ id: string }>;
+	params: Promise<{ id: string }>;
 }
 
-export async function GET(
-	request: Request,
-	{ params }: RouteContext,
-) {
+export async function GET(request: Request, { params }: RouteContext) {
 	try {
 		const userId = request.headers.get("userId");
 
@@ -69,10 +69,7 @@ export async function GET(
 }
 
 // PATCH /api/chats/[id] - Update chat title
-export async function PATCH(
-	request: Request,
-	{ params }: RouteContext,
-) {
+export async function PATCH(request: Request, { params }: RouteContext) {
 	try {
 		const { id: chatId } = await params;
 		const userId = request.headers.get("userId");
@@ -124,7 +121,10 @@ export async function PATCH(
 
 		// Handle known errors from updateChatTitle function
 		if (error instanceof Error) {
-			if (error.message === "Chat not found or you don't have permission to update it") {
+			if (
+				error.message ===
+				"Chat not found or you don't have permission to update it"
+			) {
 				return NextResponse.json(
 					{ error: "Chat not found or you don't have permission to update it" },
 					{ status: 404 },

@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 interface TableSkeletonProps {
@@ -18,12 +18,21 @@ export function TableSkeleton({ className }: TableSkeletonProps) {
 				<motion.div
 					className="h-6 bg-muted rounded w-1/3 mb-2"
 					animate={{ opacity: [0.3, 0.7, 0.3] }}
-					transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+					transition={{
+						duration: 2,
+						repeat: Number.POSITIVE_INFINITY,
+						ease: "easeInOut",
+					}}
 				/>
 				<motion.div
 					className="h-4 bg-muted rounded w-1/2"
 					animate={{ opacity: [0.4, 0.8, 0.4] }}
-					transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+					transition={{
+						duration: 1.8,
+						repeat: Number.POSITIVE_INFINITY,
+						ease: "easeInOut",
+						delay: 0.2,
+					}}
 				/>
 			</div>
 
@@ -37,11 +46,11 @@ export function TableSkeleton({ className }: TableSkeletonProps) {
 								key={i}
 								className="h-5 bg-muted rounded"
 								animate={{ opacity: [0.4, 0.8, 0.4] }}
-								transition={{ 
-									duration: 1.5, 
-									repeat: Infinity, 
+								transition={{
+									duration: 1.5,
+									repeat: Number.POSITIVE_INFINITY,
 									ease: "easeInOut",
-									delay: i * 0.1 
+									delay: i * 0.1,
 								}}
 							/>
 						))}
@@ -56,15 +65,15 @@ export function TableSkeleton({ className }: TableSkeletonProps) {
 								<motion.div
 									key={col}
 									className="h-4 bg-muted rounded"
-									style={{ 
-										width: `${Math.random() * 40 + 60}%` 
+									style={{
+										width: `${Math.random() * 40 + 60}%`,
 									}}
 									animate={{ opacity: [0.3, 0.7, 0.3] }}
-									transition={{ 
-										duration: 2.2, 
-										repeat: Infinity, 
+									transition={{
+										duration: 2.2,
+										repeat: Number.POSITIVE_INFINITY,
 										ease: "easeInOut",
-										delay: (row * 4 + col) * 0.05 
+										delay: (row * 4 + col) * 0.05,
 									}}
 								/>
 							))}
@@ -78,7 +87,11 @@ export function TableSkeleton({ className }: TableSkeletonProps) {
 				<motion.div
 					className="h-4 bg-muted rounded w-32"
 					animate={{ opacity: [0.4, 0.8, 0.4] }}
-					transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+					transition={{
+						duration: 1.8,
+						repeat: Number.POSITIVE_INFINITY,
+						ease: "easeInOut",
+					}}
 				/>
 				<div className="flex items-center gap-2">
 					{[1, 2, 3].map((i) => (
@@ -86,11 +99,11 @@ export function TableSkeleton({ className }: TableSkeletonProps) {
 							key={i}
 							className="w-8 h-8 bg-muted rounded"
 							animate={{ opacity: [0.3, 0.7, 0.3] }}
-							transition={{ 
-								duration: 1.5, 
-								repeat: Infinity, 
+							transition={{
+								duration: 1.5,
+								repeat: Number.POSITIVE_INFINITY,
 								ease: "easeInOut",
-								delay: i * 0.1 
+								delay: i * 0.1,
 							}}
 						/>
 					))}
@@ -103,12 +116,20 @@ export function TableSkeleton({ className }: TableSkeletonProps) {
 					<motion.div
 						className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full"
 						animate={{ rotate: 360 }}
-						transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+						transition={{
+							duration: 1,
+							repeat: Number.POSITIVE_INFINITY,
+							ease: "linear",
+						}}
 					/>
 					<motion.span
 						className="text-sm text-muted-foreground"
 						animate={{ opacity: [0.6, 1, 0.6] }}
-						transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+						transition={{
+							duration: 1.5,
+							repeat: Number.POSITIVE_INFINITY,
+							ease: "easeInOut",
+						}}
 					>
 						{t("generating")}
 					</motion.span>

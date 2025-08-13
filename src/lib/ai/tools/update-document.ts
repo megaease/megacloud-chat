@@ -1,52 +1,97 @@
-import { tool } from "ai";
+import { getArtifactById, updateArtifact } from "@/server/db/queries/artifacts";
+import { type UIMessageStreamWriter, tool } from "ai";
 import { z } from "zod";
-import { updateArtifact } from "@/server/db/queries/artifacts";
 
-// Update an existing document (logical no-op for now; returns structured result)
 export const updateDocumentInputSchema = z.object({
 	documentId: z.string().min(1).describe("The ID of the document to update"),
+	description: z
+		.string()
+		.min(1)
+		.describe("Description of changes that need to be made"),
 	content: z
 		.string()
 		.min(1)
 		.describe("The full new content to replace the document with"),
-	note: z.string().optional().describe("Optional note describing the change"),
 });
 
-export const updateDocumentTool = tool({
-	description:
-		"Update an existing document's content when the user asks to modify previously created content. Do NOT use for questions, time/weather queries, or searches — use specialized tools instead.",
-	inputSchema: updateDocumentInputSchema,
-	execute: async ({ documentId, content, note }, { experimental_context }) => {
-		const ctx = (experimental_context || {}) as { userId?: string };
-		if (!ctx.userId) {
+interface UpdateDocumentProps {
+	userId: string;
+	dataStream: UIMessageStreamWriter;
+}
+
+export const updateDocumentTool = ({
+	userId,
+	dataStream,
+}: UpdateDocumentProps) =>
+	tool({
+		description:
+			"Update an existing document's content when the user asks to modify previously created content. Do NOT use for questions, time/weather queries, or searches — use specialized tools instead.",
+		inputSchema: updateDocumentInputSchema,
+		execute: async ({ documentId, description, content }) => {
+			if (!userId) {
+				throw new Error("Missing userId for document update");
+			}
+
+			// Check if document exists and user has permission
+			const document = await getArtifactById(documentId, userId);
+			if (!document) {
+				return {
+					success: false,
+					action: "update-document",
+					documentId,
+					error: "Document not found",
+				} as const;
+			}
+
+			if (document.userId !== userId) {
+				return {
+					success: false,
+					action: "update-document",
+					documentId,
+					error: "Permission denied",
+				} as const;
+			}
+
+			// Stream update metadata
+			dataStream.write({
+				type: "data-id",
+				data: documentId,
+			});
+
+			dataStream.write({
+				type: "data-clear",
+				data: null,
+			});
+
+			// Stream new content
+			dataStream.write({
+				type: "data-content",
+				data: content,
+			});
+
+			// Update in database
+			const updated = await updateArtifact({
+				artifactId: documentId,
+				userId,
+				content,
+				changeDescription: description,
+			});
+
+			dataStream.write({
+				type: "data-finish",
+				data: null,
+			});
+
 			return {
-				success: false,
+				success: true,
 				action: "update-document",
 				documentId,
-				error: "Missing userId context for persistence.",
-				preview: content.slice(0, 500),
-				contentLength: content.length,
-				note: note ?? null,
+				version: updated?.version,
+				title: document.title,
+				kind: document.kind,
+				content: "The document has been updated successfully.",
 			} as const;
-		}
-
-		const updated = await updateArtifact({
-			artifactId: documentId,
-			userId: ctx.userId,
-			content,
-			changeDescription: note ?? "updateDocument invoked",
-		});
-
-		return {
-			success: updated != null,
-			action: "update-document",
-			documentId,
-			version: updated?.version,
-			preview: content.slice(0, 500),
-			contentLength: content.length,
-			note: note ?? null,
-		} as const;
-	},
-});
+		},
+	});
 
 export type UpdateDocumentParams = z.infer<typeof updateDocumentInputSchema>;

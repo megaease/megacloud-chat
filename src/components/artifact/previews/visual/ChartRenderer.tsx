@@ -1,24 +1,24 @@
 "use client";
 
-import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { BarChart3, AlertCircle, TrendingUp } from "lucide-react";
+import { AlertCircle, BarChart3, TrendingUp } from "lucide-react";
+import { useMemo } from "react";
 import {
-	AreaChart,
 	Area,
-	BarChart,
+	AreaChart,
 	Bar,
-	LineChart,
-	Line,
-	PieChart,
-	Pie,
+	BarChart,
+	CartesianGrid,
 	Cell,
+	Legend,
+	Line,
+	LineChart,
+	Pie,
+	PieChart,
+	ResponsiveContainer,
+	Tooltip,
 	XAxis,
 	YAxis,
-	CartesianGrid,
-	Tooltip,
-	Legend,
-	ResponsiveContainer
 } from "recharts";
 import type { VisualState } from "../VisualPreview";
 
@@ -41,16 +41,28 @@ interface ChartData {
 
 // 默认颜色方案
 const DEFAULT_COLORS = [
-	"#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#00ff00",
-	"#ff00ff", "#00ffff", "#ffff00", "#ff0000", "#0000ff"
+	"#8884d8",
+	"#82ca9d",
+	"#ffc658",
+	"#ff7300",
+	"#00ff00",
+	"#ff00ff",
+	"#00ffff",
+	"#ffff00",
+	"#ff0000",
+	"#0000ff",
 ];
 
-export function ChartRenderer({ content, visualState, updateVisualState }: ChartRendererProps) {
+export function ChartRenderer({
+	content,
+	visualState,
+	updateVisualState,
+}: ChartRendererProps) {
 	// 解析图表数据
 	const chartData = useMemo((): ChartData | null => {
 		try {
 			const parsed = JSON.parse(content);
-			
+
 			// 检查数据格式
 			if (!parsed || (!parsed.data && !parsed.datasets && !parsed.series)) {
 				return null;
@@ -69,24 +81,24 @@ export function ChartRenderer({ content, visualState, updateVisualState }: Chart
 					xKey: parsed.xKey || "name",
 					yKey: parsed.yKey || "value",
 					colors: parsed.colors || DEFAULT_COLORS,
-					title: parsed.title
+					title: parsed.title,
 				};
 			} else if (parsed.datasets) {
 				// Chart.js 格式：{ datasets: [...], labels: [...] }
 				const labels = parsed.labels || [];
 				const dataset = parsed.datasets[0] || {};
-				
+
 				processedData = labels.map((label: string, index: number) => ({
 					name: label,
-					value: dataset.data?.[index] || 0
+					value: dataset.data?.[index] || 0,
 				}));
-				
+
 				chartType = dataset.type || parsed.type || "bar";
 				config = {
 					xKey: "name",
 					yKey: "value",
 					colors: dataset.backgroundColor || DEFAULT_COLORS,
-					title: parsed.title || dataset.label
+					title: parsed.title || dataset.label,
 				};
 			} else if (parsed.series) {
 				// 其他格式：{ series: [...] }
@@ -97,7 +109,7 @@ export function ChartRenderer({ content, visualState, updateVisualState }: Chart
 					xKey: parsed.xKey || "name",
 					yKey: parsed.yKey || "value",
 					colors: series.colors || DEFAULT_COLORS,
-					title: parsed.title || series.name
+					title: parsed.title || series.name,
 				};
 			}
 
@@ -109,7 +121,7 @@ export function ChartRenderer({ content, visualState, updateVisualState }: Chart
 			return {
 				type: chartType,
 				data: processedData,
-				config
+				config,
 			};
 		} catch (error) {
 			console.error("Chart data parsing failed:", error);
@@ -134,7 +146,8 @@ export function ChartRenderer({ content, visualState, updateVisualState }: Chart
 						图表数据无效
 					</h3>
 					<p className="text-sm text-muted-foreground max-w-md">
-						无法解析提供的图表数据。请确保数据格式正确，包含有效的 data、datasets 或 series 字段。
+						无法解析提供的图表数据。请确保数据格式正确，包含有效的
+						data、datasets 或 series 字段。
 					</p>
 				</div>
 			</motion.div>
@@ -144,7 +157,11 @@ export function ChartRenderer({ content, visualState, updateVisualState }: Chart
 	// 渲染不同类型的图表
 	const renderChart = () => {
 		const { type, data, config } = chartData;
-		const { xKey = "name", yKey = "value", colors = DEFAULT_COLORS } = config || {};
+		const {
+			xKey = "name",
+			yKey = "value",
+			colors = DEFAULT_COLORS,
+		} = config || {};
 
 		switch (type) {
 			case "area":
@@ -215,10 +232,7 @@ export function ChartRenderer({ content, visualState, updateVisualState }: Chart
 						<YAxis />
 						<Tooltip />
 						<Legend />
-						<Bar
-							dataKey={yKey}
-							fill={colors[0]}
-						/>
+						<Bar dataKey={yKey} fill={colors[0]} />
 					</BarChart>
 				);
 		}

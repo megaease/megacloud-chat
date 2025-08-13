@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { apiProviders } from "@/server/db/schema";
-import { eq, and } from "drizzle-orm";
 import type { CreateApiProviderData } from "@/types/api-provider";
+import { and, eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
 	try {

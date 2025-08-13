@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FileText, AlertTriangle } from "lucide-react";
+import { AlertTriangle, FileText } from "lucide-react";
 import type { VisualState } from "../VisualPreview";
 
 interface SvgRendererProps {
@@ -13,10 +13,12 @@ export function SvgRenderer({ content, visualState }: SvgRendererProps) {
 	// 检查 SVG 内容是否有效
 	const isSvgValid = () => {
 		if (!content) return false;
-		
+
 		// 基本的 SVG 格式检查
 		const trimmedContent = content.trim();
-		return trimmedContent.startsWith("<svg") && trimmedContent.includes("</svg>");
+		return (
+			trimmedContent.startsWith("<svg") && trimmedContent.includes("</svg>")
+		);
 	};
 
 	const isValid = isSvgValid();

@@ -1,10 +1,10 @@
 // components/TriggerButton.tsx
 import { Button } from "@/components/ui/button";
-import { IconSettings, IconChevronDown } from "@tabler/icons-react";
-import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { getProviderTypeInfo } from "../utils";
 import type { ApiProvider } from "@/types/api-provider";
+import { IconChevronDown, IconSettings } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
+import { getProviderTypeInfo } from "../utils";
 
 interface TriggerButtonProps {
 	currentProvider: ApiProvider | null;

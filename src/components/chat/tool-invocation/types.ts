@@ -1,6 +1,6 @@
 import type {
-	ToolInvocationPart as ToolInvocationPartType,
 	ResultContent,
+	ToolInvocationPart as ToolInvocationPartType,
 } from "@/types/tool-invocation";
 
 export interface ToolInvocationProps {

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { IconServer, IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	Sheet,
 	SheetContent,
@@ -11,11 +9,13 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
-import { ServerList } from "./server-list";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { AddServerDialog } from "./add-server-dialog";
-import { useQueryClient } from "@tanstack/react-query";
 import { useMCPDrawer } from "@/context/mcp-drawer-context";
+import { IconPlus, IconServer } from "@tabler/icons-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { AddServerDialog } from "./add-server-dialog";
+import { ServerList } from "./server-list";
 
 interface MCPDrawerProps {
 	children?: React.ReactNode;

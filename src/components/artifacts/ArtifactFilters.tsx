@@ -6,7 +6,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Filter, X, FileText, Code, Table, Image, Check } from "lucide-react";
+import { Check, Code, FileText, Filter, Image, Table, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface Filters {

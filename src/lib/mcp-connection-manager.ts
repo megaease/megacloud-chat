@@ -1,8 +1,8 @@
 // 服务器端 MCP 连接管理器
 // 此文件只能在服务器端使用，不能在客户端导入
 import "server-only";
+import { type McpServer, TypeEnum } from "@/server/db/schema";
 import type { ToolSet } from "ai";
-import { TypeEnum, type McpServer } from "@/server/db/schema";
 
 export type MCPClient = {
 	tools: () => Promise<ToolSet>;

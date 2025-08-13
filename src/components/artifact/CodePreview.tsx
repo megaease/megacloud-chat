@@ -1,38 +1,39 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
 import { CodeEditor } from "@/components/code-editor";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import {
-	Code2,
-	Eye,
-	Copy,
+	ResizableHandle,
+	ResizablePanel,
+	ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import {
 	Check,
+	Code2,
+	Copy,
 	Download,
+	Eye,
 	Globe,
+	Loader2,
 	Monitor,
+	Package,
+	Play,
 	Smartphone,
 	Tablet,
-	Play,
-	Loader2,
-	Package,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { HtmlPreview, ReactPreview } from "./previews";
 import {
 	getLanguage,
-	getPreviewType,
 	getLanguageDisplayName,
+	getPreviewType,
 	isPreviewSupported,
 } from "./utils/language-detector";
-import {
-	HtmlPreview,
-	ReactPreview,
-} from "./previews";
-import type { ArtifactLanguage, ArtifactKind } from "@/lib/artifact-types";
 
 // Pyodide 类型定义
 interface PyodideInterface {
@@ -65,7 +66,7 @@ export function CodePreview({
 	const tCommon = useTranslations("Common");
 	// 默认显示代码，在流式传输时强制显示代码视图
 	const [viewMode, setViewMode] = useState<"code" | "preview">("code");
-	
+
 	// 在流式传输时强制切换到代码视图
 	useEffect(() => {
 		if (status === "streaming" && viewMode === "preview") {
@@ -79,7 +80,7 @@ export function CodePreview({
 	const [isExecuting, setIsExecuting] = useState(false);
 	const [consoleOutput, setConsoleOutput] = useState<string>("");
 	const [consoleError, setConsoleError] = useState<string>("");
-	
+
 	// Python 特定状态
 	const [pyodideReady, setPyodideReady] = useState(false);
 	const [isInitializing, setIsInitializing] = useState(false);
@@ -89,14 +90,14 @@ export function CodePreview({
 	const finalLanguage = getLanguage(language, content);
 	const previewType = getPreviewType(finalLanguage);
 	const canPreview = isPreviewSupported(finalLanguage);
-	
+
 	// 修复滚动问题：直接使用原始内容，避免影响CodeMirror的滚动
 	const displayContent = content;
 
 	// Python Pyodide 懒加载 - 不自动预加载
 	useEffect(() => {
 		if (previewType !== "python") return;
-		
+
 		// 只检查是否已经存在现成的 Pyodide 实例
 		if (window.pyodide || pyodideRef.current) {
 			setPyodideReady(true);
@@ -183,7 +184,8 @@ sys.stderr = _output_capture
 		try {
 			await pyodideRef.current.loadPackage([packageName]);
 			setConsoleOutput(
-				(prev) => `${prev ? `${prev}\n` : ""}✅ ${tArtifact("packageInstalled")}: ${packageName}`,
+				(prev) =>
+					`${prev ? `${prev}\n` : ""}✅ ${tArtifact("packageInstalled")}: ${packageName}`,
 			);
 		} catch (err) {
 			setConsoleError(
@@ -200,7 +202,7 @@ sys.stderr = _output_capture
 			setIsExecuting(true);
 			setConsoleOutput("");
 			setConsoleError("");
-			
+
 			try {
 				if (previewType === "javascript") {
 					// JavaScript 执行逻辑
@@ -224,10 +226,14 @@ sys.stderr = _output_capture
 					console.log = originalLog;
 
 					if (result !== undefined) {
-						logs.push(`${tArtifact("returnValue")}: ${typeof result === "object" ? JSON.stringify(result, null, 2) : String(result)}`);
+						logs.push(
+							`${tArtifact("returnValue")}: ${typeof result === "object" ? JSON.stringify(result, null, 2) : String(result)}`,
+						);
 					}
 
-					setConsoleOutput(logs.join("\n") || tArtifact("codeExecutionComplete"));
+					setConsoleOutput(
+						logs.join("\n") || tArtifact("codeExecutionComplete"),
+					);
 				} else if (previewType === "python") {
 					// Python 执行逻辑
 					if (!pyodideRef.current) {
@@ -259,7 +265,9 @@ sys.stderr = _output_capture
 					setConsoleOutput(finalOutput || tArtifact("codeExecutionComplete"));
 				}
 			} catch (error) {
-				setConsoleError(`${tArtifact("executionError")}: ${error instanceof Error ? error.message : String(error)}`);
+				setConsoleError(
+					`${tArtifact("executionError")}: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			} finally {
 				setIsExecuting(false);
 			}
@@ -371,8 +379,9 @@ sys.stderr = _output_capture
 										{tArtifact("codeExecutionInCodeView")}
 									</p>
 									<p className="text-xs text-muted-foreground/80 max-w-xs mx-auto leading-relaxed">
-										{tArtifact("switchToCodeView", { 
-											language: previewType === "python" ? "Python" : "JavaScript" 
+										{tArtifact("switchToCodeView", {
+											language:
+												previewType === "python" ? "Python" : "JavaScript",
 										})}
 									</p>
 								</motion.div>
@@ -539,9 +548,14 @@ sys.stderr = _output_capture
 									<Code2 className="w-4 h-4 mr-1.5" />
 									<span className="hidden sm:inline">{tArtifact("code")}</span>
 								</TabsTrigger>
-								<TabsTrigger value="preview" disabled={!canPreview || status === "streaming"}>
+								<TabsTrigger
+									value="preview"
+									disabled={!canPreview || status === "streaming"}
+								>
 									<Eye className="w-4 h-4 mr-1.5" />
-									<span className="hidden sm:inline">{tArtifact("preview")}</span>
+									<span className="hidden sm:inline">
+										{tArtifact("preview")}
+									</span>
 								</TabsTrigger>
 							</TabsList>
 						</Tabs>
@@ -554,10 +568,22 @@ sys.stderr = _output_capture
 							<Button
 								variant="outline"
 								size="sm"
-								onClick={previewType === "python" && !pyodideReady ? initializePyodide : handleExecute}
-								disabled={isExecuting || (previewType === "python" && isInitializing) || status === "streaming"}
+								onClick={
+									previewType === "python" && !pyodideReady
+										? initializePyodide
+										: handleExecute
+								}
+								disabled={
+									isExecuting ||
+									(previewType === "python" && isInitializing) ||
+									status === "streaming"
+								}
 								className="h-8 px-3 text-sm font-medium gap-1.5 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
-								title={previewType === "python" && !pyodideReady ? tArtifact("initializePythonEnvironment") : tArtifact("executeCode")}
+								title={
+									previewType === "python" && !pyodideReady
+										? tArtifact("initializePythonEnvironment")
+										: tArtifact("executeCode")
+								}
 							>
 								{isExecuting || isInitializing ? (
 									<Loader2 className="h-4 w-4 animate-spin" />
@@ -565,13 +591,13 @@ sys.stderr = _output_capture
 									<Play className="h-4 w-4" />
 								)}
 								<span className="hidden sm:inline">
-									{isExecuting 
-										? tArtifact("executing") 
-										: isInitializing 
-										? tArtifact("initializing") 
-										: previewType === "python" && !pyodideReady 
-										? tArtifact("initialize") 
-										: tArtifact("execute")}
+									{isExecuting
+										? tArtifact("executing")
+										: isInitializing
+											? tArtifact("initializing")
+											: previewType === "python" && !pyodideReady
+												? tArtifact("initialize")
+												: tArtifact("execute")}
 								</span>
 							</Button>
 						)}
@@ -618,7 +644,7 @@ sys.stderr = _output_capture
 			{/* 内容区域 */}
 			<div className="flex-1 overflow-hidden flex flex-col">
 				{/* 对于 Python/JavaScript 直接显示代码，不使用 Tabs */}
-				{(previewType === "python" || previewType === "javascript") ? (
+				{previewType === "python" || previewType === "javascript" ? (
 					<motion.div
 						className="h-full flex flex-col"
 						initial={{ opacity: 0 }}
@@ -638,9 +664,9 @@ sys.stderr = _output_capture
 									/>
 								</div>
 							</ResizablePanel>
-							
+
 							<ResizableHandle withHandle />
-							
+
 							<ResizablePanel defaultSize={30} minSize={20}>
 								<div className="h-full bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-sm flex flex-col border-t border-slate-200 dark:border-slate-800">
 									{/* Console 头部 */}
@@ -655,16 +681,20 @@ sys.stderr = _output_capture
 											{(consoleOutput || consoleError) && (
 												<div className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
 													<div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-													<span className="text-xs text-green-700 dark:text-green-400 font-medium">{tArtifact("active")}</span>
+													<span className="text-xs text-green-700 dark:text-green-400 font-medium">
+														{tArtifact("active")}
+													</span>
 												</div>
 											)}
-											
+
 											{/* Python 特定状态 */}
 											{previewType === "python" && !pyodideReady && (
 												<div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-800">
 													<div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
 													<span className="text-xs text-yellow-700 dark:text-yellow-400 font-medium">
-														{isInitializing ? `${tArtifact("initializing")} ${preloadProgress}%` : tArtifact("notReady")}
+														{isInitializing
+															? `${tArtifact("initializing")} ${preloadProgress}%`
+															: tArtifact("notReady")}
 													</span>
 												</div>
 											)}
@@ -689,7 +719,7 @@ sys.stderr = _output_capture
 													))}
 												</div>
 											)}
-											
+
 											<Button
 												variant="ghost"
 												size="sm"
@@ -704,18 +734,24 @@ sys.stderr = _output_capture
 											</Button>
 										</div>
 									</div>
-									
+
 									{/* Console 内容 */}
 									<div className="flex-1 p-4 overflow-auto bg-gradient-to-br from-slate-50/50 to-white/50 dark:from-slate-950/50 dark:to-slate-900/50">
 										{consoleError && (
 											<div className="mb-3 p-3 bg-gradient-to-r from-red-50 to-red-25 dark:from-red-950/50 dark:to-red-900/30 border border-red-200 dark:border-red-800/50 rounded-lg text-red-700 dark:text-red-400 text-sm shadow-sm">
 												<div className="flex items-start gap-2">
 													<div className="w-4 h-4 rounded-full bg-red-500 flex-shrink-0 mt-0.5 flex items-center justify-center">
-														<span className="text-white text-xs font-bold">!</span>
+														<span className="text-white text-xs font-bold">
+															!
+														</span>
 													</div>
 													<div className="flex-1">
-														<div className="text-xs font-semibold mb-1 text-red-800 dark:text-red-300">{tArtifact("executionError")}</div>
-														<pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{consoleError}</pre>
+														<div className="text-xs font-semibold mb-1 text-red-800 dark:text-red-300">
+															{tArtifact("executionError")}
+														</div>
+														<pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed">
+															{consoleError}
+														</pre>
 													</div>
 												</div>
 											</div>
@@ -726,9 +762,13 @@ sys.stderr = _output_capture
 													<div className="w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
 														<div className="w-1 h-1 rounded-full bg-white" />
 													</div>
-													<span className="text-xs text-gray-400 font-mono font-semibold tracking-wide">OUTPUT</span>
+													<span className="text-xs text-gray-400 font-mono font-semibold tracking-wide">
+														OUTPUT
+													</span>
 												</div>
-												<pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">{consoleOutput}</pre>
+												<pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
+													{consoleOutput}
+												</pre>
 											</div>
 										)}
 										{!consoleOutput && !consoleError && (
@@ -740,14 +780,16 @@ sys.stderr = _output_capture
 																<div className="text-2xl">🐍</div>
 															</div>
 															<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-																{pyodideReady ? tArtifact("pythonEnvironmentReady") : tArtifact("pythonEnvironment")}
+																{pyodideReady
+																	? tArtifact("pythonEnvironmentReady")
+																	: tArtifact("pythonEnvironment")}
 															</p>
 															<p className="text-xs text-slate-500 dark:text-slate-500">
-																{pyodideReady 
-																	? tArtifact("clickExecuteToRun") 
-																	: isInitializing 
-																	? `${tArtifact("initializing")}... ${preloadProgress}%`
-																	: tArtifact("clickInitializeToStart")}
+																{pyodideReady
+																	? tArtifact("clickExecuteToRun")
+																	: isInitializing
+																		? `${tArtifact("initializing")}... ${preloadProgress}%`
+																		: tArtifact("clickInitializeToStart")}
 															</p>
 														</>
 													) : (
@@ -755,8 +797,12 @@ sys.stderr = _output_capture
 															<div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center">
 																<div className="text-2xl">⚡</div>
 															</div>
-															<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{tArtifact("ready")}</p>
-															<p className="text-xs text-slate-500 dark:text-slate-500">{tArtifact("clickExecuteToViewOutput")}</p>
+															<p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+																{tArtifact("ready")}
+															</p>
+															<p className="text-xs text-slate-500 dark:text-slate-500">
+																{tArtifact("clickExecuteToViewOutput")}
+															</p>
 														</>
 													)}
 												</div>
@@ -770,7 +816,10 @@ sys.stderr = _output_capture
 				) : (
 					/* 对于其他类型使用 Tabs 组件 */
 					<Tabs value={viewMode} className="flex-1 h-full">
-						<TabsContent value="code" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+						<TabsContent
+							value="code"
+							className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col"
+						>
 							<motion.div
 								className="flex-1 overflow-hidden"
 								initial={{ opacity: 0 }}
@@ -788,7 +837,10 @@ sys.stderr = _output_capture
 							</motion.div>
 						</TabsContent>
 
-						<TabsContent value="preview" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+						<TabsContent
+							value="preview"
+							className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col"
+						>
 							<motion.div
 								className="flex-1 overflow-hidden"
 								initial={{ opacity: 0 }}

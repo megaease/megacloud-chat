@@ -1,8 +1,6 @@
 // components/artifact/UnifiedArtifactToolbar.tsx
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -10,22 +8,24 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-	X,
-	MessageSquare,
-	RefreshCw,
-	Maximize2,
-	Minimize2,
-	ChevronDown,
-	Copy,
-	Check,
-	Download,
-	MoreHorizontal,
-} from "lucide-react";
-import type { ArtifactKind, UIArtifact } from "@/lib/artifact-types";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { useArtifactVersions } from "@/hooks/use-artifact-versions";
+import type { ArtifactKind, UIArtifact } from "@/lib/artifact-types";
 import { cn } from "@/lib/utils";
+import {
+	Check,
+	ChevronDown,
+	Copy,
+	Download,
+	Maximize2,
+	MessageSquare,
+	Minimize2,
+	MoreHorizontal,
+	RefreshCw,
+	X,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 interface UnifiedArtifactToolbarProps {
 	// 基础 Artifact 功能
@@ -80,7 +80,9 @@ export function UnifiedArtifactToolbar({
 	// 获取版本数据，只在 artifact 不是流式传输状态且有 documentId 时才启用
 	const { data: versions = [], isLoading: versionsLoading } =
 		useArtifactVersions(
-			artifact.status !== "streaming" && artifact.documentId ? artifact.documentId : undefined
+			artifact.status !== "streaming" && artifact.documentId
+				? artifact.documentId
+				: undefined,
 		);
 
 	// 通过内容匹配找到当前显示的版本

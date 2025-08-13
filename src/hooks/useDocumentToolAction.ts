@@ -1,6 +1,6 @@
-import { useCallback } from "react";
 import { useArtifact } from "@/context/artifact-provider-context";
 import type { ToolInvocationPart } from "@/types/tool-invocation";
+import { useCallback } from "react";
 
 // AI SDK 5 dynamic-tool type
 type DynamicToolPart = {

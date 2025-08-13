@@ -1,6 +1,6 @@
+import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
 // hooks/use-artifact-versions.ts
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
 
 export interface ArtifactVersion {
 	id: string;

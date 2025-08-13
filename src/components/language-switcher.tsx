@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -9,8 +8,9 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Globe } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const languages = [
 	{ code: "en", name: "English", flag: "🇺🇸" },

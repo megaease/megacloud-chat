@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -13,20 +11,22 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import type { Artifact } from "@/server/db/schema";
 import {
-	FileText,
 	Code,
-	Table,
+	ExternalLink,
+	Eye,
+	FileText,
 	Image,
 	MoreHorizontal,
-	Eye,
+	Table,
 	Trash2,
-	ExternalLink,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
-import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
-import type { Artifact } from "@/server/db/schema";
 
 // 简单的时间格式化函数
 function formatDistanceToNow(date: Date): string {
@@ -70,7 +70,11 @@ const kindColors = {
 		"bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
 };
 
-export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps) {
+export function ArtifactCard({
+	artifact,
+	viewMode,
+	onUpdate,
+}: ArtifactCardProps) {
 	const t = useTranslations("ArtifactManager");
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -79,23 +83,26 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 
 	const handleAction = async (action: string) => {
 		setIsMenuOpen(false);
-		
+
 		switch (action) {
 			case "view":
 				// 跳转到聊天页面并自动打开 Artifact modal
 				router.push(`/chat/${artifact.chatId}?openArtifact=${artifact.id}`);
 				break;
-				
+
 			case "open":
 				// 在新窗口打开聊天页面并显示 Artifact
-				window.open(`/chat/${artifact.chatId}?openArtifact=${artifact.id}`, "_blank");
+				window.open(
+					`/chat/${artifact.chatId}?openArtifact=${artifact.id}`,
+					"_blank",
+				);
 				break;
-				
+
 			case "delete":
 				// 显示删除确认对话框
 				setShowDeleteDialog(true);
 				break;
-				
+
 			default:
 				console.log(`Unknown action: ${action}`);
 		}
@@ -103,10 +110,13 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 
 	const handleConfirmDelete = async () => {
 		try {
-			const response = await fetch(`/api/artifacts/${artifact.id}?userId=user-id`, {
-				method: "DELETE",
-			});
-			
+			const response = await fetch(
+				`/api/artifacts/${artifact.id}?userId=user-id`,
+				{
+					method: "DELETE",
+				},
+			);
+
 			if (response.ok) {
 				toast.success(t("deleteSuccess"));
 				onUpdate?.(true); // 静默刷新列表
@@ -122,7 +132,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 	if (viewMode === "list") {
 		return (
 			<>
-				<Card 
+				<Card
 					className="hover:shadow-md transition-shadow cursor-pointer"
 					onClick={() => handleAction("view")}
 				>
@@ -162,8 +172,8 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 								)}
 								<DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
 									<DropdownMenuTrigger asChild>
-										<Button 
-											variant="ghost" 
+										<Button
+											variant="ghost"
 											size="sm"
 											onClick={(e) => e.stopPropagation()}
 										>
@@ -193,7 +203,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 						</div>
 					</CardContent>
 				</Card>
-				
+
 				<DeleteConfirmDialog
 					open={showDeleteDialog}
 					onOpenChange={setShowDeleteDialog}
@@ -207,7 +217,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 
 	return (
 		<>
-			<Card 
+			<Card
 				className="hover:shadow-md transition-shadow cursor-pointer group"
 				onClick={() => handleAction("view")}
 			>
@@ -273,7 +283,7 @@ export function ArtifactCard({ artifact, viewMode, onUpdate }: ArtifactCardProps
 					</div>
 				</CardContent>
 			</Card>
-			
+
 			<DeleteConfirmDialog
 				open={showDeleteDialog}
 				onOpenChange={setShowDeleteDialog}

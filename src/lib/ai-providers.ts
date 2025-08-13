@@ -1,7 +1,7 @@
-import { openai, createOpenAI } from "@ai-sdk/openai";
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createDeepSeek } from "@ai-sdk/deepseek";
+import { createOpenAI, openai } from "@ai-sdk/openai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 export type ProviderType =
 	| "openai"
 	| "deepseek"
@@ -31,7 +31,6 @@ export function createAIModelConfig(
 	config: ProviderConfig,
 ) {
 	const { apiKey, baseUrl, modelName } = config;
-
 
 	switch (providerType) {
 		case "openai": {
@@ -109,7 +108,6 @@ export function detectAndCreateAIModel(config: {
 }) {
 	const { apiKey, modelName, baseUrl, providerType } = config;
 
-
 	if (providerType) {
 		// Use provider-specific default model names
 		let defaultModel = "gpt-4-turbo"; // Default for OpenAI
@@ -120,8 +118,7 @@ export function detectAndCreateAIModel(config: {
 		} else if (providerType === "openrouter") {
 			defaultModel = "openai/gpt-4o-mini";
 		}
-		
-		
+
 		return {
 			model: createAIModelConfig(providerType as ProviderType, {
 				apiKey,

@@ -5,7 +5,9 @@ import type { ArtifactLanguage } from "@/lib/artifact-types";
  * @param content 代码内容
  * @returns 检测到的语言类型，如果无法确定则返回 undefined
  */
-export const detectLanguage = (content: string): ArtifactLanguage | undefined => {
+export const detectLanguage = (
+	content: string,
+): ArtifactLanguage | undefined => {
 	const lowerContent = content.toLowerCase().trim();
 
 	// 如果内容为空，返回 undefined
@@ -33,8 +35,12 @@ export const detectLanguage = (content: string): ArtifactLanguage | undefined =>
 		lowerContent.includes("usestate") ||
 		lowerContent.includes("useeffect") ||
 		lowerContent.includes("jsx") ||
-		(lowerContent.includes("export default function") && lowerContent.includes("return")) ||
-		(lowerContent.includes("const") && lowerContent.includes("=>") && lowerContent.includes("return") && lowerContent.includes("<"))
+		(lowerContent.includes("export default function") &&
+			lowerContent.includes("return")) ||
+		(lowerContent.includes("const") &&
+			lowerContent.includes("=>") &&
+			lowerContent.includes("return") &&
+			lowerContent.includes("<"))
 	) {
 		return "react";
 	}
@@ -104,11 +110,13 @@ export const getLanguage = (
  * @param language 语言类型
  * @returns 预览类型，如果 language 为 undefined 则返回 "code"
  */
-export const getPreviewType = (language: ArtifactLanguage | undefined): string => {
+export const getPreviewType = (
+	language: ArtifactLanguage | undefined,
+): string => {
 	if (!language) {
 		return "code";
 	}
-	
+
 	switch (language) {
 		case "html":
 			return "html";
@@ -128,11 +136,13 @@ export const getPreviewType = (language: ArtifactLanguage | undefined): string =
  * @param language 语言类型
  * @returns 显示名称，如果 language 为 undefined 则返回 "Code"
  */
-export const getLanguageDisplayName = (language: ArtifactLanguage | undefined): string => {
+export const getLanguageDisplayName = (
+	language: ArtifactLanguage | undefined,
+): string => {
 	if (!language) {
 		return "Code";
 	}
-	
+
 	const displayNames: Record<ArtifactLanguage, string> = {
 		html: "HTML",
 		react: "React",
@@ -148,7 +158,9 @@ export const getLanguageDisplayName = (language: ArtifactLanguage | undefined): 
  * @param language 语言类型
  * @returns 是否支持预览，如果 language 为 undefined 则返回 false
  */
-export const isPreviewSupported = (language: ArtifactLanguage | undefined): boolean => {
+export const isPreviewSupported = (
+	language: ArtifactLanguage | undefined,
+): boolean => {
 	if (!language) {
 		return false;
 	}

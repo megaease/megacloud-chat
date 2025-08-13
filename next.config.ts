@@ -3,17 +3,16 @@
  * for Docker builds.
  */
 import "./src/env.js";
-import createNextIntlPlugin from 'next-intl/plugin';
-import type { NextConfig } from 'next'
+import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 /** @type {import("next").NextConfig} */
 const config: NextConfig = {
-    experimental: {
-    reactCompiler: true,
-  },
+	experimental: {
+		reactCompiler: true,
+	},
 };
 
 const withNextIntl = createNextIntlPlugin();
 
 export default withNextIntl(config);
- 

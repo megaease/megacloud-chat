@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import type { Artifact } from "@/server/db/schema";
+import { useEffect, useState } from "react";
 
 // 模拟数据
 const mockArtifacts: Artifact[] = [
@@ -131,7 +131,7 @@ export function useArtifacts(options: UseArtifactsOptions = {}) {
 
 	useEffect(() => {
 		setLoading(true);
-		
+
 		// 模拟 API 延迟
 		const timer = setTimeout(() => {
 			let filtered = [...mockArtifacts];
@@ -143,18 +143,22 @@ export function useArtifacts(options: UseArtifactsOptions = {}) {
 					(artifact) =>
 						artifact.title.toLowerCase().includes(query) ||
 						artifact.content.toLowerCase().includes(query) ||
-						artifact.tags?.some((tag) => tag.toLowerCase().includes(query))
+						artifact.tags?.some((tag) => tag.toLowerCase().includes(query)),
 				);
 			}
 
 			// 类型过滤
 			if (options.filters?.kind) {
-				filtered = filtered.filter((artifact) => artifact.kind === options.filters?.kind);
+				filtered = filtered.filter(
+					(artifact) => artifact.kind === options.filters?.kind,
+				);
 			}
 
 			// 语言过滤
 			if (options.filters?.language) {
-				filtered = filtered.filter((artifact) => artifact.language === options.filters?.language);
+				filtered = filtered.filter(
+					(artifact) => artifact.language === options.filters?.language,
+				);
 			}
 
 			// 可见性过滤

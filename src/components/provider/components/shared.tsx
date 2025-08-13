@@ -1,7 +1,7 @@
+import { cn } from "@/lib/utils";
+import { IconCornerDownLeft } from "@tabler/icons-react";
 // components/shared.tsx - Shared utility components
 import type React from "react";
-import { IconCornerDownLeft } from "@tabler/icons-react";
-import { cn } from "@/lib/utils";
 
 export function CommandMenuKbd({
 	className,

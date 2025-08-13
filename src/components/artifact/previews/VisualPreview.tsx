@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { VisualSkeleton } from "../VisualSkeleton";
 // 子组件导入
 import { VisualToolbar } from "./visual";
 import { ImageRenderer } from "./visual";
 import { SvgRenderer } from "./visual";
 import { ChartRenderer } from "./visual";
 import { VisualContainer } from "./visual";
-import { VisualSkeleton } from "../VisualSkeleton";
 
 // 类型定义
 export type VisualContentType = "image" | "svg" | "chart" | "none" | "unknown";

@@ -1,8 +1,6 @@
 // components/artifact/ArtifactActions.tsx
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -10,23 +8,25 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-	X,
-	MessageSquare,
-	RefreshCw,
-	Maximize2,
-	Minimize2,
-	ChevronDown,
-	Copy,
-	Check,
-	Download,
-	MoreHorizontal,
-	FileText,
-} from "lucide-react";
-import type { ArtifactKind, UIArtifact } from "@/lib/artifact-types";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { useArtifactVersions } from "@/hooks/use-artifact-versions";
+import type { ArtifactKind, UIArtifact } from "@/lib/artifact-types";
 import { cn } from "@/lib/utils";
+import {
+	Check,
+	ChevronDown,
+	Copy,
+	Download,
+	FileText,
+	Maximize2,
+	MessageSquare,
+	Minimize2,
+	MoreHorizontal,
+	RefreshCw,
+	X,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 interface ArtifactActionsProps {
 	title: string;

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
 import { IconCheck, IconCopy } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
@@ -12,6 +11,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export function CopyButton({
 	text,

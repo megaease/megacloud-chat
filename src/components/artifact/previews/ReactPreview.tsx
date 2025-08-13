@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Code2, AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import * as Babel from "@babel/standalone";
+import { AlertCircle, Code2, RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useState } from "react";
 import { PreviewToolbar } from "../PreviewToolbar";
 
 interface ReactPreviewProps {
