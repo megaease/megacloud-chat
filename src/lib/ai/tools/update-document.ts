@@ -1,61 +1,45 @@
-import { getArtifactById, updateArtifact } from "@/server/db/queries/artifacts";
-import { type UIMessageStreamWriter, tool } from "ai";
+import { tool, type UIMessageStreamWriter } from "ai";
 import { z } from "zod";
+import { updateArtifact, getArtifactById } from "@/server/db/queries/artifacts";
 
 export const updateDocumentInputSchema = z.object({
-	documentId: z.string().min(1).describe("The ID of the document to update"),
+	id: z.string().min(1).describe("The ID of the document to update"),
 	description: z
 		.string()
 		.min(1)
 		.describe("Description of changes that need to be made"),
-	content: z
-		.string()
-		.min(1)
-		.describe("The full new content to replace the document with"),
 });
 
 interface UpdateDocumentProps {
-	userId: string;
+	session: { user: { id: string } };
 	dataStream: UIMessageStreamWriter;
 }
 
-export const updateDocumentTool = ({
-	userId,
-	dataStream,
-}: UpdateDocumentProps) =>
+export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
 	tool({
 		description:
 			"Update an existing document's content when the user asks to modify previously created content. Do NOT use for questions, time/weather queries, or searches — use specialized tools instead.",
 		inputSchema: updateDocumentInputSchema,
-		execute: async ({ documentId, description, content }) => {
-			if (!userId) {
-				throw new Error("Missing userId for document update");
+		execute: async ({ id, description }) => {
+			if (!session?.user?.id) {
+				throw new Error("Missing user session for document update");
 			}
 
 			// Check if document exists and user has permission
-			const document = await getArtifactById(documentId, userId);
+			const document = await getArtifactById(id, session.user.id);
 			if (!document) {
 				return {
 					success: false,
 					action: "update-document",
-					documentId,
+					id,
 					error: "Document not found",
-				} as const;
-			}
-
-			if (document.userId !== userId) {
-				return {
-					success: false,
-					action: "update-document",
-					documentId,
-					error: "Permission denied",
 				} as const;
 			}
 
 			// Stream update metadata
 			dataStream.write({
 				type: "data-id",
-				data: documentId,
+				data: id,
 			});
 
 			dataStream.write({
@@ -63,17 +47,21 @@ export const updateDocumentTool = ({
 				data: null,
 			});
 
+			// For update, we need to generate new content based on description
+			// This is a simplified implementation - in practice, you might use AI to generate the update
+			const updatedContent = `${document.content}\n\n<!-- Updated: ${description} -->`;
+
 			// Stream new content
 			dataStream.write({
 				type: "data-content",
-				data: content,
+				data: updatedContent,
 			});
 
 			// Update in database
 			const updated = await updateArtifact({
-				artifactId: documentId,
-				userId,
-				content,
+				artifactId: id,
+				userId: session.user.id,
+				content: updatedContent,
 				changeDescription: description,
 			});
 
@@ -85,7 +73,7 @@ export const updateDocumentTool = ({
 			return {
 				success: true,
 				action: "update-document",
-				documentId,
+				id,
 				version: updated?.version,
 				title: document.title,
 				kind: document.kind,

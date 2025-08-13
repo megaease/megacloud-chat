@@ -1,6 +1,6 @@
 import { detectAndCreateAIModel } from "@/lib/ai-providers";
-import { createDocumentTool } from "@/lib/ai/tools/create-document";
-import { updateDocumentTool } from "@/lib/ai/tools/update-document";
+import { createDocument } from "@/lib/ai/tools/create-document";
+import { updateDocument } from "@/lib/ai/tools/update-document";
 import { loadMCPTools } from "@/lib/mcp-utils";
 import { systemPrompt } from "@/lib/prompt";
 import { getChatMessageById } from "@/server/db/queries/chat";
@@ -193,15 +193,18 @@ export async function POST(req: Request) {
 		);
 		// const streamId = nanoid(16); // no longer used
 
-		// Local tool set that's always available (even when MCP is disabled)
-		const localTools: ToolSet = {
-			createDocument: createDocumentTool,
-			updateDocument: updateDocumentTool,
-		};
-
 		// Create a UI message stream for better handling
 		const stream = createUIMessageStream({
 			execute: ({ writer: dataStream }) => {
+				// Create session object for tools
+				const session = { user: { id: userId } };
+
+				// Local tool set that's always available (even when MCP is disabled)
+				const localTools: ToolSet = {
+					createDocument: createDocument({ session, dataStream }),
+					updateDocument: updateDocument({ session, dataStream }),
+				};
+
 				const baseOpts = {
 					model: modelConfig as LanguageModel,
 					system: systemPrompt,

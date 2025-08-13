@@ -1,25 +1,23 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useArtifact } from "@/context/artifact-provider-context";
 import type { ArtifactKind, ArtifactLanguage } from "@/lib/artifact-types";
-import { useEffect, useRef } from "react";
-
-export interface DataStreamDelta {
-	type: string;
-	data: unknown;
-}
+import type { UIMessage } from "ai";
 
 interface DataStreamHandlerProps {
-	dataStream?: DataStreamDelta[];
+	chatId: string;
+	messages?: UIMessage[];
 }
 
 /**
- * Simplified DataStreamHandler that processes AI SDK v5 dataStream deltas
- * Handles artifact creation/update streaming data
+ * DataStreamHandler that processes AI SDK v5 messages and extracts data events
+ * Handles artifact creation/update streaming data from messages
  */
-export function DataStreamHandler({ dataStream = [] }: DataStreamHandlerProps) {
+export function DataStreamHandler({ chatId, messages = [] }: DataStreamHandlerProps) {
 	const { setArtifact, showArtifact } = useArtifact();
 	const lastProcessedIndex = useRef(-1);
+	const lastChatIdRef = useRef(chatId);
 	const currentArtifactRef = useRef<{
 		id?: string;
 		kind?: string;
@@ -28,13 +26,46 @@ export function DataStreamHandler({ dataStream = [] }: DataStreamHandlerProps) {
 		content?: string;
 	}>({});
 
+	// Reset state when switching chats
 	useEffect(() => {
-		if (!dataStream?.length) return;
+		if (lastChatIdRef.current !== chatId) {
+			lastProcessedIndex.current = -1;
+			lastChatIdRef.current = chatId;
+			currentArtifactRef.current = {};
+		}
+	}, [chatId]);
 
-		const newDeltas = dataStream.slice(lastProcessedIndex.current + 1);
-		lastProcessedIndex.current = dataStream.length - 1;
+	useEffect(() => {
+		if (!messages?.length) return;
 
-		for (const delta of newDeltas) {
+		// Extract data events from new messages
+		const dataEvents: Array<{ type: string; data: unknown }> = [];
+		
+		for (let i = lastProcessedIndex.current + 1; i < messages.length; i++) {
+			const message = messages[i];
+			if (!message || message.role !== "assistant") continue;
+
+			// Look for data events in message parts
+			const parts = (message.parts || []) as Array<{
+				type?: string;
+				data?: unknown;
+				[key: string]: unknown;
+			}>;
+
+			for (const part of parts) {
+				if (part.type?.startsWith("data-")) {
+					dataEvents.push({
+						type: part.type,
+						data: part.data,
+					});
+				}
+			}
+		}
+
+		lastProcessedIndex.current = messages.length - 1;
+
+		// Process the data events
+		for (const delta of dataEvents) {
 			const current = currentArtifactRef.current;
 
 			switch (delta.type) {
@@ -99,7 +130,7 @@ export function DataStreamHandler({ dataStream = [] }: DataStreamHandlerProps) {
 					break;
 			}
 		}
-	}, [dataStream, setArtifact, showArtifact]);
+	}, [messages, setArtifact, showArtifact]);
 
 	return null;
 }
