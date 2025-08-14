@@ -1,8 +1,8 @@
 import { CopyButton } from "@/components/copy-button";
 import {
-	CodeBlock,
-	CodeBlockCode,
-	CodeBlockGroup,
+  CodeBlock,
+  CodeBlockCode,
+  CodeBlockGroup,
 } from "@/components/prompt-kit/code-block";
 import { cn } from "@/lib/utils";
 import { marked } from "marked";
@@ -13,108 +13,138 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 
 export type MarkdownProps = {
-	children: string;
-	id?: string;
-	className?: string;
-	components?: Partial<Components>;
+  children: string;
+  id?: string;
+  className?: string;
+  components?: Partial<Components>;
 };
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
-	const tokens = marked.lexer(markdown);
-	return tokens.map((token) => token.raw);
+  if (!markdown || typeof markdown !== "string") {
+    return [];
+  }
+
+  try {
+    const tokens = marked.lexer(markdown);
+    // 改进块分割逻辑，确保代码块不会被错误分割
+    const blocks: string[] = [];
+    let currentBlock = "";
+
+    for (const token of tokens) {
+      // 如果是代码块，单独作为一个块
+      if (token.type === "code") {
+        if (currentBlock.trim()) {
+          blocks.push(currentBlock);
+          currentBlock = "";
+        }
+        blocks.push(token.raw);
+      } else {
+        currentBlock += token.raw;
+      }
+    }
+
+    if (currentBlock.trim()) {
+      blocks.push(currentBlock);
+    }
+
+    return blocks.length > 0 ? blocks : [markdown];
+  } catch (error) {
+    console.warn("Failed to parse markdown:", error);
+    return [markdown];
+  }
 }
 
 function extractLanguage(className?: string): string {
-	if (!className) return "plaintext";
-	const match = className.match(/language-(\w+)/);
-	return match?.[1] ?? "plaintext";
+  if (!className) return "plaintext";
+  const match = className.match(/language-(\w+)/);
+  return match?.[1] ?? "plaintext";
 }
 
 const INITIAL_COMPONENTS: Partial<Components> = {
-	code: function CodeComponent({ className, children, ...props }) {
-		const isInline =
-			!props.node?.position?.start.line ||
-			props.node?.position?.start.line === props.node?.position?.end.line;
+  code: function CodeComponent({ className, children, ...props }) {
+    const isInline =
+      !props.node?.position?.start.line ||
+      props.node?.position?.start.line === props.node?.position?.end.line;
 
-		if (isInline) {
-			return (
-				<span
-					className={cn(
-						"bg-primary-foreground rounded-sm px-1 font-mono text-sm",
-						className,
-					)}
-					{...props}
-				>
-					{children}
-				</span>
-			);
-		}
+    if (isInline) {
+      return (
+        <span
+          className={cn(
+            "bg-primary-foreground rounded-sm px-1 font-mono text-sm",
+            className
+          )}
+          {...props}
+        >
+          {children}
+        </span>
+      );
+    }
 
-		const language = extractLanguage(className);
+    const language = extractLanguage(className);
 
-		const code = String(children);
-		return (
-			<CodeBlock className={className}>
-				<div className="flex items-center justify-between border-b bg-muted/40 px-3 py-1.5 text-xs">
-					<span className="uppercase text-muted-foreground">{language}</span>
-					<CodeBlockGroup>
-						<CopyButton text={code} />
-					</CodeBlockGroup>
-				</div>
-				<CodeBlockCode code={code} language={language} />
-			</CodeBlock>
-		);
-	},
-	pre: function PreComponent({ children }) {
-		return <>{children}</>;
-	},
+    const code = String(children);
+    return (
+      <CodeBlock className={className}>
+        <div className="flex items-center justify-between border-b bg-muted/40 px-3 py-1.5 text-xs">
+          <span className="uppercase text-muted-foreground">{language}</span>
+          <CodeBlockGroup>
+            <CopyButton text={code} />
+          </CodeBlockGroup>
+        </div>
+        <CodeBlockCode code={code} language={language} />
+      </CodeBlock>
+    );
+  },
+  pre: function PreComponent({ children }) {
+    return <>{children}</>;
+  },
 };
 
 const MemoizedMarkdownBlock = memo(
-	function MarkdownBlock({
-		content,
-		components = INITIAL_COMPONENTS,
-	}: {
-		content: string;
-		components?: Partial<Components>;
-	}) {
-		return (
-			<ReactMarkdown
-				remarkPlugins={[remarkGfm, remarkBreaks]}
-				components={components}
-			>
-				{content}
-			</ReactMarkdown>
-		);
-	},
-	function propsAreEqual(prevProps, nextProps) {
-		return prevProps.content === nextProps.content;
-	},
+  function MarkdownBlock({
+    content,
+    components = INITIAL_COMPONENTS,
+  }: {
+    content: string;
+    components?: Partial<Components>;
+  }) {
+    return (
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkBreaks]}
+        components={components}
+      >
+        {content}
+      </ReactMarkdown>
+    );
+  },
+  function propsAreEqual(prevProps, nextProps) {
+    return prevProps.content === nextProps.content;
+  }
 );
 
 MemoizedMarkdownBlock.displayName = "MemoizedMarkdownBlock";
 
 function MarkdownComponent({
-	children,
-	id,
-	className,
-	components = INITIAL_COMPONENTS,
+  children,
+  id,
+  className,
+  components = INITIAL_COMPONENTS,
 }: MarkdownProps) {
-	const generatedId = useId();
-	const blockId = id ?? generatedId;
-	const blocks = useMemo(() => parseMarkdownIntoBlocks(children), [children]);
+  const generatedId = useId();
+  const blockId = id ?? generatedId;
+  const blocks = useMemo(() => parseMarkdownIntoBlocks(children), [children]);
 
-	return (
-		<div className={className}>
-			{blocks.map((block, idx) => (
-				<MemoizedMarkdownBlock
-					key={`${blockId}-${idx}-${block.length}-${block.slice(0, 16)}`}
-					content={block}
-					components={components}
-				/>
-			))}
-		</div>
-	);
+  return (
+    <div className={className}>
+      {blocks.map((block, idx) => (
+        <MemoizedMarkdownBlock
+          key={`${blockId}-${block.slice(0, 20).replace(/\s/g, "")}-${idx}`}
+          content={block}
+          components={components}
+        />
+      ))}
+    </div>
+  );
 }
 
 const Markdown = memo(MarkdownComponent);

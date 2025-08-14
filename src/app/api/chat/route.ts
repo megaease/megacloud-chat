@@ -1,6 +1,6 @@
 import { detectAndCreateAIModel } from "@/lib/ai-providers";
-import { createDocument } from "@/lib/ai/tools/create-document";
-import { updateDocument } from "@/lib/ai/tools/update-document";
+import { createArtifactTool } from "@/lib/ai/tools/create-artifact-tool";
+import { updateArtifactTool } from "@/lib/ai/tools/update-artifact-tool";
 import { loadMCPTools } from "@/lib/mcp-utils";
 import { systemPrompt } from "@/lib/prompt";
 import { getChatMessageById } from "@/server/db/queries/chat";
@@ -201,8 +201,26 @@ export async function POST(req: Request) {
 
 				// Local tool set that's always available (even when MCP is disabled)
 				const localTools: ToolSet = {
-					createDocument: createDocument({ session, dataStream }),
-					updateDocument: updateDocument({ session, dataStream }),
+					createArtifactTool: createArtifactTool({ 
+						session, 
+						dataStream,
+						modelConfig: {
+							apiKey,
+							modelName: modelName || "gpt-4-turbo",
+							baseUrl,
+							providerType,
+						}
+					}),
+					updateArtifactTool: updateArtifactTool({ 
+						session, 
+						dataStream,
+						modelConfig: {
+							apiKey,
+							modelName: modelName || "gpt-4-turbo",
+							baseUrl,
+							providerType,
+						}
+					}),
 				};
 
 				const baseOpts = {

@@ -73,7 +73,7 @@ export function ArtifactChat(props: ArtifactChatProps) {
         </ChatContainerRoot>
       </div>
 
-      <div className="flex-shrink-0 border-t">
+      <div className="flex-shrink-0">
         <ChatInput
           input={props.input}
           handleInputChange={props.handleInputChange}

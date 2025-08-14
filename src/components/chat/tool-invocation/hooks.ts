@@ -2,12 +2,9 @@ import type { ToolInvocationPart as ToolInvocationPartType } from "@/types/tool-
 import type { ResultContent } from "@/types/tool-invocation";
 import { useEffect, useMemo, useState } from "react";
 import type { ToolState, ToolStatus } from "./types";
-
-// Helper function to determine if a tool is a document tool
 function isDocumentToolName(toolName: string): boolean {
-	return toolName === "createDocument" || toolName === "updateDocument";
+	return toolName === "createArtifactTool" || toolName === "updateArtifactTool";
 }
-
 export function useToolInvocationState(part: ToolInvocationPartType) {
 	const { toolInvocation } = part;
 	const { toolName, state, args } = toolInvocation;
