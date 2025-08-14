@@ -1,4 +1,5 @@
 // Removed legacy Tooltip imports; MessageAction provides its own tooltip
+import { Loader } from "@/components/prompt-kit/loader";
 import {
   Message,
   MessageAction,
@@ -9,6 +10,7 @@ import {
 import { useCopy } from "@/hooks/use-copy";
 import { cn } from "@/lib/utils";
 import {
+  IconAlertCircle,
   IconCheck,
   IconCopy,
   IconEdit,
@@ -93,9 +95,29 @@ export function ChatItem({
           isUser ? "items-end" : "items-start"
         )}
       >
+        {/* streaming 时显示（只在当前消息上） */}
+        {status === "streaming" && !isUser && isLastMessage && (
+          <div className="flex items-center gap-2 mb-2 text-xs text-foreground">
+            <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+              <Loader
+                variant="dots"
+                size="lg"
+                className="[&>div]:!bg-foreground"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Error indicator for failed messages */}
+        {isLastMessage && error && status === "error" && (
+          <div className="flex items-center gap-2 mb-2 text-xs text-red-600 bg-red-50 dark:bg-red-950/20 dark:text-red-400 px-2 py-1 rounded-md border border-red-200 dark:border-red-800">
+            <IconAlertCircle className="w-3 h-3" />
+            <span>消息发送失败</span>
+          </div>
+        )}
+
         {children ? (
           // children 由上层（ChatMessage）按需使用 MessageContent 或其他 prompt-kit 组件渲染
-
           <>{children}</>
         ) : null}
 

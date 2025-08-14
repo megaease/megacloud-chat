@@ -480,7 +480,12 @@ export function ChatMessage({
   const content = renderContent();
   const hasContent = content !== null && content !== undefined;
 
-  return hasContent ? (
+  // Only render if there's actual content
+  if (!hasContent) {
+    return null;
+  }
+
+  return (
     <>
       <ChatItem
         isUser={isUser}
@@ -495,28 +500,6 @@ export function ChatMessage({
         onEdit={onEdit}
         isEditing={isEditing}
       >
-        {(status === "submitted" || status === "streaming") && !isUser && (
-          <div className="flex items-center gap-2 mb-2 text-xs text-foreground justify-start">
-            {status === "streaming" ? (
-              <Loader
-                variant="dots"
-                size="md"
-                className="[&>div]:!bg-foreground"
-              />
-            ) : status === "submitted" ? (
-              <Loader variant="text-shimmer" size="sm" text="正在处理..." />
-            ) : (
-              <Loader variant="text-shimmer" size="sm" text="正在处理..." />
-            )}
-          </div>
-        )}
-        {/* Error indicator for failed messages */}
-        {isLastMessage && error && status === "error" && (
-          <div className="flex items-center gap-2 mb-2 text-xs text-red-600 bg-red-50 dark:bg-red-950/20 dark:text-red-400 px-2 py-1 rounded-md border border-red-200 dark:border-red-800">
-            <IconAlertCircle className="w-3 h-3" />
-            <span>消息发送失败</span>
-          </div>
-        )}
         {renderAttachments()}
 
         {/* Conditional rendering: MessageEditor for editing, normal content otherwise */}
@@ -553,5 +536,5 @@ export function ChatMessage({
         fileType={previewAttachment?.type || ""}
       />
     </>
-  ) : null;
+  );
 }

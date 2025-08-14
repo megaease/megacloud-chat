@@ -14,6 +14,7 @@ import { useRef, useState } from "react";
 import { ChatInput } from "./chat-input";
 import { ChatMessage } from "./chat-message";
 import { EditConfirmationDialog } from "./edit-confirmation-dialog";
+import { ChatItem } from "./chat-item";
 // import { Artifact } from "../artifact/Artifact"; // 已删除
 
 // Define the Model interface
@@ -168,6 +169,22 @@ export function ChatView({
                   />
                 );
               })}
+
+              {/* Show submitted loading for AI message when there's no content yet */}
+              {status === "submitted" && messages.length > 0 && (
+                <ChatItem isUser={false}>
+                  {/* Loading content */}
+
+                  <div className="flex items-center justify-center pt-1">
+                    <Loader
+                      variant="text-shimmer"
+                      text="Thinking..."
+                      size="lg"
+                    />
+                  </div>
+                </ChatItem>
+              )}
+
               <ChatContainerScrollAnchor />
             </ChatContainerContent>
 
