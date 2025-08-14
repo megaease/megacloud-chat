@@ -121,75 +121,81 @@ export function ChatItem({
           <>{children}</>
         ) : null}
 
-        {/* Actions */}
-        <MessageActions
-          className={cn(
-            "py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-            isUser ? "justify-end" : "justify-start"
-          )}
-        >
-          {/* Copy */}
-          <MessageAction tooltip={<p>{copied ? t("copied") : t("copy")}</p>}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCopy}
-              className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
-            >
-              {copied ? (
-                <IconCheck className="w-3.5 h-3.5 text-green-600" />
-              ) : (
-                <IconCopy className="w-3.5 h-3.5" />
-              )}
-            </Button>
-          </MessageAction>
-
-          {/* Edit */}
-          {isUser && messageId && onEdit && !isEditing && (
-            <MessageAction tooltip={<p>{t("edit")}</p>}>
+        {/* Actions - only show when message is completed */}
+        {(status === "ready" || status === "error") && (
+          <MessageActions
+            className={cn(
+              "py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+              isUser ? "justify-end" : "justify-start"
+            )}
+          >
+            {/* Copy */}
+            <MessageAction tooltip={<p>{copied ? t("copied") : t("copy")}</p>}>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleEdit}
+                onClick={handleCopy}
                 className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
               >
-                <IconEdit className="w-3.5 h-3.5" />
+                {copied ? (
+                  <IconCheck className="w-3.5 h-3.5 text-green-600" />
+                ) : (
+                  <IconCopy className="w-3.5 h-3.5" />
+                )}
               </Button>
             </MessageAction>
-          )}
 
-          {/* Retry */}
-          {isLastMessage && isUser && error && status === "error" && retry && (
-            <MessageAction tooltip={<p>{t("retry")}</p>}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={retry}
-                className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
-              >
-                <IconRefresh className="w-3.5 h-3.5" />
-              </Button>
-            </MessageAction>
-          )}
-
-          {/* Regenerate */}
-          {isLastMessage &&
-            !isUser &&
-            !error &&
-            status === "ready" &&
-            regenerate && (
-              <MessageAction tooltip={<p>{tArtifact("regenerate")}</p>}>
+            {/* Edit */}
+            {isUser && messageId && onEdit && !isEditing && (
+              <MessageAction tooltip={<p>{t("edit")}</p>}>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={regenerate}
+                  onClick={handleEdit}
                   className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
                 >
-                  <IconReload className="w-3.5 h-3.5" />
+                  <IconEdit className="w-3.5 h-3.5" />
                 </Button>
               </MessageAction>
             )}
-        </MessageActions>
+
+            {/* Retry */}
+            {isLastMessage &&
+              isUser &&
+              error &&
+              status === "error" &&
+              retry && (
+                <MessageAction tooltip={<p>{t("retry")}</p>}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={retry}
+                    className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
+                  >
+                    <IconRefresh className="w-3.5 h-3.5" />
+                  </Button>
+                </MessageAction>
+              )}
+
+            {/* Regenerate */}
+            {isLastMessage &&
+              !isUser &&
+              !error &&
+              status === "ready" &&
+              regenerate && (
+                <MessageAction tooltip={<p>{tArtifact("regenerate")}</p>}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={regenerate}
+                    className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
+                  >
+                    <IconReload className="w-3.5 h-3.5" />
+                  </Button>
+                </MessageAction>
+              )}
+          </MessageActions>
+        )}
       </div>
     </Message>
   );
