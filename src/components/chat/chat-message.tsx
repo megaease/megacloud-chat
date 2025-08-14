@@ -271,11 +271,9 @@ export function ChatMessage({
               <MessageContent
                 key={key}
                 markdown
-                className={
-                  isUser
-                    ? "p-4 rounded-md text-end w-fit"
-                    : "bg-transparent p-0 "
-                }
+                className={cn(
+                  isUser ? "bg-muted px-4 py-2 rounded-md" : "bg-transparent"
+                )}
               >
                 {text}
               </MessageContent>
@@ -294,7 +292,7 @@ export function ChatMessage({
           // 使用 prompt-kit 的 <Tool> 展示 AI SDK 5 工具调用
           if (t === "dynamic-tool") {
             return (
-              <div key={key} className="my-3">
+              <div key={key} className="my-3 w-full">
                 <Tool
                   toolPart={part as Record<string, unknown>}
                   isLoading={isLoading}
@@ -308,7 +306,7 @@ export function ChatMessage({
           // 支持 tool-createDocument, tool-updateDocument 等格式
           if (t?.startsWith("tool-")) {
             return (
-              <div key={key} className="my-3">
+              <div key={key} className="my-3 w-full">
                 <Tool
                   toolPart={part as Record<string, unknown>}
                   isLoading={isLoading}
@@ -533,8 +531,9 @@ export function ChatMessage({
         ) : (
           <div
             className={cn(
-              "transition-all duration-200",
-              isEditing && "opacity-50 pointer-events-none"
+              "transition-all duration-200 w-full",
+              isEditing && "opacity-50 pointer-events-none",
+              isUser ? "flex justify-end" : ""
             )}
           >
             {content}

@@ -116,10 +116,10 @@ export function ModernDocumentTool({
       loadAndShowArtifact(
         documentId,
         {
-          top: window.innerHeight / 2 - 180,
-          left: window.innerWidth - 560,
-          width: 520,
-          height: 360,
+          top: window.innerHeight / 2 - 200,
+          left: window.innerWidth - 700,
+          width: 680,
+          height: 400,
         },
         version
       );
@@ -224,7 +224,7 @@ export function ModernDocumentTool({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        "group relative rounded-xl border my-6 overflow-hidden transition-all duration-300 w-full max-w-none",
+        "group relative rounded-xl border my-6 overflow-hidden transition-all duration-300 w-full",
         // 更突出的样式设计
         isCreating
           ? "bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-950/60 dark:via-yellow-950/50 dark:to-orange-950/50 border-amber-300 dark:border-amber-700 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/30"

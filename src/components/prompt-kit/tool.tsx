@@ -5,6 +5,7 @@ import type {
   ToolInvocationPart as ToolInvocationPartType,
   ToolInvocationResult,
 } from "@/types/tool-invocation";
+import { cn } from "@/lib/utils";
 import React from "react";
 
 // AI SDK 5 dynamic-tool type
@@ -157,7 +158,7 @@ export function Tool({
     // Use special document tool component for document operations
     if (isDocumentTool(normalizedTool.toolName)) {
       return (
-        <div className={className}>
+        <div className={cn("w-full", className)}>
           <ModernDocumentTool
             part={normalizedTool}
             isLoading={isLoading}
