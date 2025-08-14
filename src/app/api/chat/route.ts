@@ -110,52 +110,13 @@ export async function POST(req: Request) {
 		console.log(existingChatMessages, "existingChatMessages");
 
 		// Manually append the new message to existing messages (AI SDK 5 pattern)
-		const allMessages = [...(existingChatMessages || []), message];
+		const allMessages = [
+			...(existingChatMessages || []),
+			message,
+		] as UIMessage[];
 		await saveMessages(chatId, [message]);
 
-		// Convert to core messages for the AI model
-		// Filter and convert existing DB messages to UIMessage format
-		const uiMessages: UIMessage[] = allMessages.map((msg) => {
-			if ("parts" in msg && Array.isArray(msg.parts)) {
-				// This is already a UIMessage
-				return msg as UIMessage;
-			}
-			// This is a DB message, convert it
-			const dbMsg = msg as { id: string; role: string; content: string };
-			return {
-				id: dbMsg.id,
-				role: dbMsg.role,
-				parts: [{ type: "text" as const, text: dbMsg.content }],
-			} as UIMessage;
-		});
-
-		// Sanitize history: remove tool-related parts that the model conversion cannot accept
-		const sanitizedUiMessages: UIMessage[] = uiMessages
-			.map((msg) => {
-				const parts = (msg as { parts?: Array<unknown> }).parts;
-				if (!Array.isArray(parts)) return msg;
-				const filtered = parts.filter((p: any) => {
-					if (typeof p === "string") return true; // keep plain text
-					const t = p?.type as string | undefined;
-					if (!t) return true;
-					const isToolLike =
-						t === "tool" ||
-						t === "tool-invocation" ||
-						t === "tool-call" ||
-						t === "tool-result" ||
-						t === "step-start" ||
-						t === "reasoning" ||
-						(t?.startsWith("tool-") ?? false);
-					return !isToolLike;
-				});
-				return { ...(msg as UIMessage), parts: filtered } as UIMessage;
-			})
-			// drop messages that end up with no parts
-			.filter(
-				(m) => Array.isArray((m as any).parts) && (m as any).parts.length > 0,
-			);
-
-		const coreMessages = convertToModelMessages(sanitizedUiMessages);
+		const coreMessages = convertToModelMessages(allMessages);
 
 		// Load MCP tools with opt-in and timeout so requests never hang
 		let mcpTools: ToolSet | undefined = undefined;
@@ -201,25 +162,25 @@ export async function POST(req: Request) {
 
 				// Local tool set that's always available (even when MCP is disabled)
 				const localTools: ToolSet = {
-					createArtifactTool: createArtifactTool({ 
-						session, 
+					createArtifactTool: createArtifactTool({
+						session,
 						dataStream,
 						modelConfig: {
 							apiKey,
 							modelName: modelName || "gpt-4-turbo",
 							baseUrl,
 							providerType,
-						}
+						},
 					}),
-					updateArtifactTool: updateArtifactTool({ 
-						session, 
+					updateArtifactTool: updateArtifactTool({
+						session,
 						dataStream,
 						modelConfig: {
 							apiKey,
 							modelName: modelName || "gpt-4-turbo",
 							baseUrl,
 							providerType,
-						}
+						},
 					}),
 				};
 

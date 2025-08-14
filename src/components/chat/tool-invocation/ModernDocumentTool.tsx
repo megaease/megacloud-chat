@@ -138,7 +138,7 @@ export function ModernDocumentTool({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.2 }}
         className={cn(
-          "group relative rounded-lg border my-3 overflow-hidden transition-all duration-200",
+          "group relative rounded-lg border my-3 overflow-hidden transition-all duration-200 w-full",
           // 紧凑模式样式
           isCreating
             ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border-amber-300/50 dark:border-amber-700/50"
