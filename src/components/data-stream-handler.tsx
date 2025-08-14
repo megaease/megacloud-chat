@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useArtifact } from "@/context/artifact-provider-context";
 import { useDataStream } from "./data-stream-provider";
+import { useQueryClient } from "@tanstack/react-query";
 import type { StreamDelta } from "@/types/stream-delta";
 import type { ArtifactLanguage } from "@/lib/artifact-types";
 
@@ -10,6 +11,7 @@ export function DataStreamHandler() {
   const { dataStream } = useDataStream();
   console.log("dataStream", dataStream);
   const { artifact, setArtifact } = useArtifact();
+  const queryClient = useQueryClient();
   const lastProcessedIndex = useRef(-1);
 
   useEffect(() => {
@@ -58,6 +60,12 @@ export function DataStreamHandler() {
             };
 
           case "data-finish":
+            // 当新版本生成完成后，刷新版本列表缓存
+            if (draftArtifact.documentId) {
+              queryClient.invalidateQueries({
+                queryKey: ["artifact-versions", draftArtifact.documentId],
+              });
+            }
             return {
               ...draftArtifact,
               status: "idle" as const,
@@ -102,7 +110,7 @@ export function DataStreamHandler() {
         }
       });
     }
-  }, [dataStream, setArtifact]);
+  }, [dataStream, setArtifact, queryClient]);
 
   return null;
 }

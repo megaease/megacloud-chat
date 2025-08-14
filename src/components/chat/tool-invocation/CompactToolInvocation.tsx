@@ -245,9 +245,6 @@ export function CompactToolInvocation({
 
     // Determine if this is an update or create based on documentId
     const isUpdate = !!args.documentId;
-    const executingTitle = isUpdate
-      ? "Updating Document..."
-      : "Creating Document...";
 
     // 从工具结果中获取标题（如果可用）
     const getResultTitle = () => {
@@ -277,7 +274,7 @@ export function CompactToolInvocation({
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          "my-3 rounded-lg border overflow-hidden transition-colors",
+          "my-3 rounded-lg border overflow-hidden transition-colors w-full",
           status === "executing"
             ? "border-amber-200/60 dark:border-amber-800/40 bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/30"
             : "border-blue-200/60 dark:border-blue-800/40 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-950/40 dark:to-indigo-950/30",
@@ -310,7 +307,7 @@ export function CompactToolInvocation({
         }
       >
         {/* Compact document header */}
-        <div className="flex items-center gap-3 p-3 relative">
+        <div className="flex items-center gap-3 p-3 relative w-full">
           <div
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-md text-white flex-shrink-0",
