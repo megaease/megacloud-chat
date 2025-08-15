@@ -177,10 +177,10 @@ export function ModernDocumentTool({
 
           {/* 文档信息 */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
               <h4
                 className={cn(
-                  "font-semibold text-sm truncate",
+                  "font-semibold text-sm truncate whitespace-nowrap flex-1 min-w-0 max-w-[120px] sm:max-w-[150px] md:max-w-[180px]",
                   isCreating
                     ? "text-amber-700 dark:text-amber-300"
                     : "text-emerald-700 dark:text-emerald-300"
@@ -189,7 +189,7 @@ export function ModernDocumentTool({
                 {title}
               </h4>
               {version && (
-                <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-mono">
+                <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-mono flex-shrink-0">
                   v{version}
                 </span>
               )}
@@ -276,11 +276,11 @@ export function ModernDocumentTool({
         </div>
 
         {/* Document Info with enhanced typography */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="flex flex-wrap items-center gap-3 mb-2 min-w-0">
             <h3
               className={cn(
-                "font-bold text-xl text-gray-900 dark:text-gray-100 truncate",
+                "font-bold text-xl text-gray-900 dark:text-gray-100 truncate whitespace-nowrap flex-1 min-w-0 max-w-[150px] sm:max-w-[200px] md:max-w-[250px]",
                 // 添加渐变文字效果
                 isCreating
                   ? "bg-gradient-to-r from-amber-700 to-orange-700 dark:from-amber-300 dark:to-orange-300 bg-clip-text text-transparent"
@@ -293,7 +293,7 @@ export function ModernDocumentTool({
             {typeLabel && (
               <span
                 className={cn(
-                  "text-xs px-3 py-1 rounded-full font-semibold shadow-sm",
+                  "text-xs px-3 py-1 rounded-full font-semibold shadow-sm flex-shrink-0",
                   isCreating
                     ? "bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/60 dark:to-orange-900/60 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-700"
                     : "bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/60 dark:to-teal-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700"
@@ -305,7 +305,7 @@ export function ModernDocumentTool({
 
             {/* 版本标签 */}
             {version && (
-              <span className="text-xs px-2 py-1 rounded-md font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+              <span className="text-xs px-2 py-1 rounded-md font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 flex-shrink-0">
                 v{version}
               </span>
             )}
