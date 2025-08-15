@@ -85,6 +85,12 @@ async function generateUpdatedContent({
 - **DIRECTLY EXECUTABLE**: The updated code must be directly copy-paste executable without any modifications
 - **PRESERVE FUNCTIONALITY**: All existing features and functionality must be maintained
 
+**CONTEXT AWARENESS - IMPORTANT:**
+- **HTML Pages**: If updating an HTML page or if the update request mentions "page", "webpage", "website", etc., maintain the COMPLETE HTML document structure with DOCTYPE, html, head, and body tags
+- **React Components**: If updating a React component, maintain the React structure and only update the specific parts requested
+- **Type Consistency**: Maintain the same file type and structure as the original code
+- **Language Detection**: Preserve the original programming language and framework
+
 **CODE UPDATE PRINCIPLES:**
 - **Functionality**: Preserve all existing functionality and features
 - **Improvement**: Enhance code quality, performance, and maintainability

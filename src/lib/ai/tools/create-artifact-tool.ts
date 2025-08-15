@@ -13,9 +13,11 @@ export const createArtifactInputSchema = z.object({
 			"The artifact type. Use 'sheet' for any tabular/CSV/row-column data.",
 		),
 	language: z
-		.string()
+		.enum(["html", "react", "javascript", "python", "css", "markdown"])
 		.default("markdown")
-		.describe("Language or format hint (e.g., markdown, typescript)"),
+		.describe(
+			"Language or format hint (e.g., html, react, javascript, python, css, markdown)",
+		),
 	title: z.string().min(1).describe("Title for the artifact"),
 });
 
@@ -83,6 +85,12 @@ async function generateArtifactContent({
 - **Error Handling**: Include appropriate error handling and edge cases
 - **Performance**: Write efficient code that considers performance implications
 - **Security**: Follow security best practices and avoid common vulnerabilities
+
+**IMPORTANT: TYPE DETECTION & CONTEXT AWARENESS:**
+- **HTML Pages**: If the request is for a "page", "webpage", "website", or similar terms, generate a COMPLETE HTML document with DOCTYPE, html, head, and body tags
+- **React Components**: Only generate React components when explicitly requested or when the context clearly indicates React development
+- **Standalone Files**: Generate standalone files that can be directly executed or used without additional setup
+- **Language Selection**: Choose the most appropriate language based on the request context
 
 **TECHNICAL REQUIREMENTS:**
 - Use modern language features and syntax appropriately
@@ -177,6 +185,26 @@ Please write a complete, polished article that readers will find valuable and en
 - **NO MARKDOWN**: Do NOT wrap the code in triple backticks (\`\`\`) or any markdown formatting
 - **NO EXPLANATIONS**: Do NOT include any explanations, comments about the code, or additional text
 - **DIRECTLY EXECUTABLE**: The code must be directly copy-paste executable without any modifications
+
+**CONTEXT AWARENESS - IMPORTANT:**
+- **For "page" requests**: If the title contains words like "page", "webpage", "website", "homepage", "landing page", etc., generate a COMPLETE HTML document with:
+  - DOCTYPE declaration
+  - Full HTML structure with <html>, <head>, and <body> tags
+  - Proper meta tags and title in the head
+  - Complete content in the body
+  - Inline CSS or internal stylesheet for styling
+  - Make it a standalone HTML file that can be opened directly in browser
+
+- **For React components**: If the title contains words like "component", "react component", "react", or when explicitly requesting React functionality, generate a React component with:
+  - Proper React imports (import React, useState, useEffect, etc.)
+  - Component function or class definition
+  - JSX syntax with proper return statement
+  - Export default statement
+  - Make it a standalone React component file
+
+- **For JavaScript**: Generate plain JavaScript code when no specific framework is mentioned
+- **For Python**: Generate Python scripts when Python-specific functionality is requested
+- **For CSS**: Generate CSS stylesheets when styling-related requests are made
 
 **TECHNICAL STANDARDS:**
 - Provide a full, working solution that can be used immediately
@@ -307,6 +335,59 @@ export const createArtifactTool = ({
 
 			const id = generateId();
 
+			// 智能检测 language - 根据标题自动设置合适的语言
+			let detectedLanguage = language;
+			if (kind === "code" && language === "markdown") {
+				const lowerTitle = title.toLowerCase();
+
+				// 检测页面请求
+				if (
+					lowerTitle.includes("page") ||
+					lowerTitle.includes("webpage") ||
+					lowerTitle.includes("website") ||
+					lowerTitle.includes("homepage") ||
+					lowerTitle.includes("landing page")
+				) {
+					detectedLanguage = "html";
+				}
+				// 检测 React 组件请求
+				else if (
+					lowerTitle.includes("component") ||
+					lowerTitle.includes("react component") ||
+					lowerTitle.includes("react") ||
+					lowerTitle.includes("jsx") ||
+					lowerTitle.includes("tsx")
+				) {
+					detectedLanguage = "react";
+				}
+				// 检测 JavaScript 请求
+				else if (
+					lowerTitle.includes("javascript") ||
+					lowerTitle.includes("js") ||
+					lowerTitle.includes("script") ||
+					lowerTitle.includes("function")
+				) {
+					detectedLanguage = "javascript";
+				}
+				// 检测 Python 请求
+				else if (
+					lowerTitle.includes("python") ||
+					lowerTitle.includes("py") ||
+					lowerTitle.includes("python script")
+				) {
+					detectedLanguage = "python";
+				}
+				// 检测 CSS 请求
+				else if (
+					lowerTitle.includes("css") ||
+					lowerTitle.includes("stylesheet") ||
+					lowerTitle.includes("style") ||
+					lowerTitle.includes("styling")
+				) {
+					detectedLanguage = "css";
+				}
+			}
+
 			// 步骤 1: 发送文档基础信息
 			dataStream.write({
 				type: "data-id",
@@ -328,7 +409,7 @@ export const createArtifactTool = ({
 
 			dataStream.write({
 				type: "data-language",
-				data: language,
+				data: detectedLanguage,
 				transient: true,
 			});
 
@@ -352,7 +433,7 @@ export const createArtifactTool = ({
 				title,
 				content: generatedContent,
 				kind,
-				language,
+				language: detectedLanguage,
 				userId: session.user.id,
 				chatId: ctx.chatId,
 				tags: [],

@@ -15,31 +15,41 @@ export const detectLanguage = (
 		return undefined;
 	}
 
-	// HTML 检测 - 明确的 HTML 标识
+	// HTML 检测 - 明确的 HTML 标识（优先级最高）
 	if (
 		lowerContent.includes("<!doctype html") ||
 		lowerContent.includes("<html") ||
-		lowerContent.includes("<head>") ||
-		lowerContent.includes("<body>") ||
-		(lowerContent.includes("<div") && lowerContent.includes("</div>")) ||
-		(lowerContent.includes("<span") && lowerContent.includes("</span>"))
+		(lowerContent.includes("<head>") && lowerContent.includes("</head>")) ||
+		(lowerContent.includes("<body>") && lowerContent.includes("</body>")) ||
+		// 完整的 HTML 结构
+		(lowerContent.includes("<html>") && lowerContent.includes("</html>"))
 	) {
 		return "html";
 	}
 
-	// React/JSX 检测 - 明确的 React 标识
+	// React/JSX 检测 - 明确的 React 标识（中等优先级）
 	if (
 		lowerContent.includes("import react") ||
 		lowerContent.includes("from 'react'") ||
 		lowerContent.includes('from "react"') ||
 		lowerContent.includes("usestate") ||
 		lowerContent.includes("useeffect") ||
+		lowerContent.includes("useref") ||
+		lowerContent.includes("usecontext") ||
 		lowerContent.includes("jsx") ||
+		// React 组件模式
 		(lowerContent.includes("export default function") &&
-			lowerContent.includes("return")) ||
-		(lowerContent.includes("const") &&
+			lowerContent.includes("return") &&
+			lowerContent.includes("<")) ||
+		(lowerContent.includes("export const") &&
 			lowerContent.includes("=>") &&
 			lowerContent.includes("return") &&
+			lowerContent.includes("<")) ||
+		// React Hooks 模式
+		(lowerContent.includes("const [") && lowerContent.includes("] = use")) ||
+		// JSX 语法特征
+		(lowerContent.includes("{") &&
+			lowerContent.includes("}") &&
 			lowerContent.includes("<"))
 	) {
 		return "react";
@@ -52,7 +62,7 @@ export const detectLanguage = (
 		lowerContent.includes("if __name__") ||
 		(lowerContent.includes("import ") && !lowerContent.includes("from ")) ||
 		lowerContent.includes("elif ") ||
-		content.includes("    ") // Python 缩进特征
+		(lowerContent.includes(":") && content.includes("    ")) // Python 缩进特征
 	) {
 		return "python";
 	}
@@ -64,20 +74,26 @@ export const detectLanguage = (
 		lowerContent.includes("@import") ||
 		lowerContent.includes("@keyframes") ||
 		(lowerContent.includes("color:") && lowerContent.includes("}")) ||
-		(lowerContent.includes("display:") && lowerContent.includes("}"))
+		(lowerContent.includes("display:") && lowerContent.includes("}")) ||
+		(lowerContent.includes("background:") && lowerContent.includes("}"))
 	) {
 		return "css";
 	}
 
-	// JavaScript 检测 - 明确的 JavaScript 语法（更严格的检测）
+	// JavaScript 检测 - 明确的 JavaScript 语法（排除 React 相关的）
 	if (
-		lowerContent.includes("function ") ||
-		lowerContent.includes("const ") ||
-		lowerContent.includes("let ") ||
-		lowerContent.includes("var ") ||
-		lowerContent.includes("console.log") ||
-		lowerContent.includes("=>") ||
-		(lowerContent.includes("document.") && lowerContent.includes("("))
+		(lowerContent.includes("function ") &&
+			!lowerContent.includes("export default")) ||
+		(lowerContent.includes("const ") && !lowerContent.includes("= () =>")) ||
+		(lowerContent.includes("let ") && !lowerContent.includes("= () =>")) ||
+		(lowerContent.includes("var ") && !lowerContent.includes("= () =>")) ||
+		(lowerContent.includes("console.log") && !lowerContent.includes("react")) ||
+		(lowerContent.includes("=>") &&
+			!lowerContent.includes("return") &&
+			!lowerContent.includes("<")) ||
+		(lowerContent.includes("document.") &&
+			lowerContent.includes("(") &&
+			!lowerContent.includes("react"))
 	) {
 		return "javascript";
 	}
