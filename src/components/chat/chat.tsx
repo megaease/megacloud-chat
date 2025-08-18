@@ -16,7 +16,7 @@ import { DefaultChatTransport } from "ai";
 import type { UIMessage, DataUIPart } from "ai";
 import { nanoid } from "nanoid";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DataStreamProvider } from "../data-stream-provider";
 import { DataStreamHandler } from "../data-stream-handler";
@@ -142,6 +142,60 @@ function ChatContent({
 
   const { setDataStream } = useDataStream();
 
+  // 使用 ref 来保存最新的模型和提供者信息
+  const providerRef = useRef({
+    currentProvider,
+    currentModel,
+    mcpEnabled,
+  });
+
+  // 当模型或提供者改变时更新 ref
+  useEffect(() => {
+    providerRef.current = {
+      currentProvider,
+      currentModel,
+      mcpEnabled,
+    };
+  }, [currentProvider, currentModel, mcpEnabled]);
+
+  // 创建 prepareSendMessagesRequest 函数
+  const prepareSendMessagesRequest = ({
+    messages,
+    id,
+    body,
+  }: {
+    messages: UIMessage[];
+    id: string;
+    body?: Record<string, unknown>;
+  }) => {
+    // 从 ref 中获取最新的提供者和模型信息
+    const { currentProvider, currentModel, mcpEnabled } = providerRef.current;
+
+    // Check if provider and model are configured
+    if (!currentProvider) {
+      throw new Error("Please configure API provider first");
+    }
+
+    if (!currentModel) {
+      throw new Error("Please select a model");
+    }
+
+    return {
+      body: {
+        id,
+        message: messages.at(-1),
+        chatId: chatId || randomChatId,
+        userId: "user-id",
+        apiKey: currentProvider.apiKey,
+        modelName: currentModel,
+        baseUrl: currentProvider.baseUrl,
+        mcpEnabled,
+        providerType: currentProvider.providerType,
+        ...body,
+      },
+    };
+  };
+
   // Use AI chat hooks - AI SDK 5 compatible
   const chat = useChat({
     id: chatId || randomChatId,
@@ -149,39 +203,7 @@ function ChatContent({
     messages: chatMessages,
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      prepareSendMessagesRequest: ({
-        messages,
-        id,
-        body,
-      }: {
-        messages: UIMessage[];
-        id: string;
-        body?: Record<string, unknown>;
-      }) => {
-        // Check if provider and model are configured
-        if (!currentProvider) {
-          throw new Error("Please configure API provider first");
-        }
-
-        if (!currentModel) {
-          throw new Error("Please select a model");
-        }
-
-        return {
-          body: {
-            id,
-            message: messages.at(-1),
-            chatId: chatId || randomChatId,
-            userId: "user-id",
-            apiKey: currentProvider.apiKey,
-            modelName: currentModel,
-            baseUrl: currentProvider.baseUrl,
-            mcpEnabled: mcpEnabled,
-            providerType: currentProvider.providerType,
-            ...body,
-          },
-        };
-      },
+      prepareSendMessagesRequest,
     }),
     onData: (dataPart) => {
       console.log("Received data part:", dataPart);
