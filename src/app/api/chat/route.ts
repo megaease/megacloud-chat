@@ -190,7 +190,7 @@ export async function POST(req: Request) {
 					system: systemPrompt,
 					messages: coreMessages,
 					tools: isGLM
-						? null
+						? undefined
 						: ({ ...(localTools as ToolSet), ...(mcpTools ?? {}) } as ToolSet),
 					// Enable multi-step loop so that tool calls are executed and the
 					// model can produce a follow-up answer considering tool results.
@@ -201,6 +201,9 @@ export async function POST(req: Request) {
 						openai: {
 							reasoningEffort: "low",
 							reasoningSummary: "detailed",
+						},
+						zhipu: {
+							thinking: "disabled",
 						},
 					},
 					experimental_telemetry: {

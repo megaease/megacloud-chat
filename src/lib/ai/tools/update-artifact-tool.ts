@@ -202,6 +202,11 @@ Please generate a complete, polished updated version that successfully incorpora
 		model: artifactModel,
 		system: systemPrompt,
 		messages: [{ role: "user", content: userPrompt as string }],
+		providerOptions: {
+			zhipu: {
+				thinking: "disabled",
+			},
+		},
 	});
 
 	let updatedContent = "";

@@ -262,6 +262,11 @@ Please generate a complete, detailed visual description that can be used to crea
 		model: artifactModel,
 		system: systemPrompt,
 		prompt: userPrompt,
+		providerOptions: {
+			zhipu: {
+				thinking: "disabled",
+			},
+		},
 	});
 	let generatedContent = "";
 
