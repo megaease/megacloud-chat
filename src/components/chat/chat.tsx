@@ -68,31 +68,39 @@ function useChatMessages(chatId: string | undefined) {
         }
       }
 
-      const res = await fetch(`/api/chats/${chatId}`, {
-        headers: {
-          userId: "user-id",
-        },
-      });
+      try {
+        const res = await fetch(`/api/chats/${chatId}`, {
+          headers: {
+            userId: "user-id",
+          },
+        });
 
-      // Handle 404 for new chats that don't exist yet
-      if (!res.ok) {
-        if (res.status === 404) {
+        // Handle 404 for new chats that don't exist yet
+        if (!res.ok) {
+          if (res.status === 404) {
+            return []; // Return empty array for new chats
+          }
+          throw new Error(`Failed to fetch chat: ${res.status}`);
+        }
+
+        const data = await res.json();
+        const uiMessages = data.chat.messages.map((message: DBMessage) => ({
+          id: message.id,
+          role: message.role,
+          content: message.content,
+          createdAt: new Date(message.createdAt),
+          experimental_attachments: message.attachments || [],
+          parts: message.parts || [],
+        })) as UIMessage[];
+
+        return uiMessages;
+      } catch (error) {
+        // If there's a network error or other issue, check if it's a 404
+        if (error instanceof Error && error.message.includes("404")) {
           return []; // Return empty array for new chats
         }
-        throw new Error(`Failed to fetch chat: ${res.status}`);
+        throw error; // Re-throw other errors
       }
-
-      const data = await res.json();
-      const uiMessages = data.chat.messages.map((message: DBMessage) => ({
-        id: message.id,
-        role: message.role,
-        content: message.content,
-        createdAt: new Date(message.createdAt),
-        experimental_attachments: message.attachments || [],
-        parts: message.parts || [],
-      })) as UIMessage[];
-
-      return uiMessages;
     },
     staleTime: 1000 * 60 * 2,
     enabled: !!chatId, // Only fetch when chatId exists
