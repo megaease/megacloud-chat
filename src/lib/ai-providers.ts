@@ -2,11 +2,13 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createOpenAI, openai } from "@ai-sdk/openai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { createZhipu } from "zhipu-ai-provider";
 export type ProviderType =
 	| "openai"
 	| "deepseek"
 	| "openrouter"
 	| "anthropic"
+	| "glm"
 	| "custom";
 
 interface ProviderConfig {
@@ -81,6 +83,14 @@ export function createAIModelConfig(
 			return openRouter(modelName || "openai/gpt-4o-mini"); // 修正模型名称
 		}
 
+		case "glm": {
+			const glmAI = createZhipu({
+				apiKey: apiKey || "",
+				baseURL: baseUrl || "https://open.bigmodel.cn/api/paas/v4",
+			});
+			return glmAI(modelName || "glm-4.5-air");
+		}
+
 		case "custom": {
 			const compatibleAI = createOpenAI({
 				baseURL: baseUrl || "https://api.openai.com/v1",
@@ -117,6 +127,8 @@ export function detectAndCreateAIModel(config: {
 			defaultModel = "claude-3-5-sonnet-20241022";
 		} else if (providerType === "openrouter") {
 			defaultModel = "openai/gpt-4o-mini";
+		} else if (providerType === "glm") {
+			defaultModel = "glm-4.5-air";
 		}
 
 		return {
@@ -138,6 +150,12 @@ export function detectAndCreateAIModel(config: {
 			detectedProvider = "anthropic";
 		} else if (baseUrl.includes("openrouter")) {
 			detectedProvider = "openrouter";
+		} else if (
+			baseUrl.includes("bigmodel") ||
+			baseUrl.includes("glm") ||
+			modelName?.includes("glm")
+		) {
+			detectedProvider = "glm";
 		} else if (!isOpenAI(baseUrl)) {
 			detectedProvider = "custom";
 		}
@@ -149,6 +167,8 @@ export function detectAndCreateAIModel(config: {
 			detectedProvider = "anthropic";
 		} else if (modelName.includes("openrouter")) {
 			detectedProvider = "openrouter";
+		} else if (modelName.includes("glm")) {
+			detectedProvider = "glm";
 		}
 	}
 
@@ -160,6 +180,8 @@ export function detectAndCreateAIModel(config: {
 		defaultModel = "claude-3-5-sonnet-20241022";
 	} else if (detectedProvider === "openrouter") {
 		defaultModel = "openai/gpt-4o-mini";
+	} else if (detectedProvider === "glm") {
+		defaultModel = "glm-4.5-air";
 	}
 
 	return {
@@ -177,6 +199,7 @@ const providerUrlMapping: Record<ProviderType, string> = {
 	deepseek: "https://api.deepseek.com",
 	openrouter: "https://openrouter.ai/api/v1",
 	anthropic: "https://api.anthropic.com",
+	glm: "https://open.bigmodel.cn/api/paas/v4",
 	custom: "https://api.openai.com/v1",
 };
 

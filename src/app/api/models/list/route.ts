@@ -1,9 +1,10 @@
 import { isOpenAI } from "@/lib/ai-providers";
+import { GLM_MODELS } from "@/lib/glm-models";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
 	try {
-		const { apiKey, baseUrl } = await req.json();
+		const { apiKey, baseUrl, providerType } = await req.json();
 
 		if (!apiKey || !baseUrl) {
 			return NextResponse.json(
@@ -16,7 +17,21 @@ export async function POST(req: Request) {
 			? baseUrl.slice(0, -1)
 			: baseUrl || "https://api.openai.com/v1";
 
-		// Fetch model list
+		// For GLM provider, return model list from dedicated file since it doesn't have /models endpoint
+		if (providerType === "glm") {
+			console.log(`Returning GLM model list for ${formattedBaseUrl}`);
+
+			return NextResponse.json(
+				{
+					success: true,
+					models: GLM_MODELS,
+					totalCount: GLM_MODELS.length,
+				},
+				{ status: 200 },
+			);
+		}
+
+		// For other providers, fetch model list
 		console.log(
 			`Fetching model list from ${formattedBaseUrl}/models using key ${apiKey.substring(0, 4)}***`,
 		);

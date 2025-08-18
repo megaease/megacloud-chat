@@ -23,6 +23,7 @@ import {
 } from "ai";
 import { stepCountIs } from "ai";
 import { nanoid } from "nanoid";
+import { createZhipu, zhipu } from "zhipu-ai-provider";
 
 export const maxDuration = 30;
 
@@ -183,12 +184,14 @@ export async function POST(req: Request) {
 						},
 					}),
 				};
-
+				const isGLM = detectedProvider === "glm";
 				const baseOpts = {
 					model: modelConfig as LanguageModel,
 					system: systemPrompt,
 					messages: coreMessages,
-					tools: { ...(localTools as ToolSet), ...(mcpTools ?? {}) } as ToolSet,
+					tools: isGLM
+						? null
+						: ({ ...(localTools as ToolSet), ...(mcpTools ?? {}) } as ToolSet),
 					// Enable multi-step loop so that tool calls are executed and the
 					// model can produce a follow-up answer considering tool results.
 					stopWhen: stepCountIs(5),

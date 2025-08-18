@@ -1,4 +1,5 @@
 import { isOpenAI } from "@/lib/ai-providers";
+import { GLM_MODELS } from "@/lib/glm-models";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -16,7 +17,46 @@ export async function POST(req: Request) {
 			? baseUrl.slice(0, -1)
 			: baseUrl || "https://api.openai.com/v1";
 
-		// Fetch model list to verify connection
+		// For GLM provider, use hardcoded model list since it doesn't have /models endpoint
+		if (providerType === "glm") {
+			console.log(
+				`Testing GLM connection to ${formattedBaseUrl} using key ${apiKey.substring(0, 4)}***`,
+			);
+
+			// Test connection with a simple chat completion request
+			const testResponse = await fetch(`${formattedBaseUrl}/chat/completions`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${apiKey}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					model: "glm-4.5-air",
+					messages: [{ role: "user", content: "test" }],
+					max_tokens: 1,
+				}),
+			});
+
+			if (!testResponse.ok) {
+				const errorData = await testResponse.json().catch(() => ({}));
+				throw new Error(
+					errorData.error?.message ||
+						`API returned ${testResponse.status}: ${testResponse.statusText}`,
+				);
+			}
+
+			return NextResponse.json(
+				{
+					success: true,
+					message: "Connection successful - API key is valid",
+					models: GLM_MODELS,
+					totalCount: GLM_MODELS.length,
+				},
+				{ status: 200 },
+			);
+		}
+
+		// For other providers, fetch model list to verify connection
 		console.log(
 			`Testing connection to ${formattedBaseUrl}/models using key ${apiKey.substring(0, 4)}***`,
 		);
