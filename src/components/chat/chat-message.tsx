@@ -126,7 +126,7 @@ function renderRichPart(
       );
     case "reasoning":
       return (
-        <div key={key} className="my-3">
+        <div key={key} className="">
           <ReasoningPart
             part={part as unknown as ReasoningPartType}
             isStreaming={status === "streaming"}
@@ -281,7 +281,7 @@ export function ChatMessage({
           }
           if (t === "reasoning") {
             return (
-              <div key={key} className="my-3">
+              <div key={key} className="my-1">
                 <ReasoningPart
                   part={part as unknown as ReasoningPartType}
                   isStreaming={status === "streaming"}
