@@ -126,25 +126,13 @@ export function ArtifactContent() {
     }
 
     switch (displayData.kind) {
-      case "code":
-        // Use old CodePreview implementation for Python, new implementation for others
-        if (displayData.language === "python") {
-          return (
-            <motion.div
-              className="h-full"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-            >
-              <CodePreview
-                content={displayData.content}
-                language={displayData.language}
-                className="h-full"
-                status={displayStatus}
-              />
-            </motion.div>
-          );
-        }
+      case "code": // Use new CodePreview implementation for all languages including Python
+      {
+        const canExecute =
+          displayData.language === "javascript" ||
+          displayData.language === "python";
+        const canPreview =
+          displayData.language === "html" || displayData.language === "react";
         return (
           <motion.div
             className="h-full"
@@ -159,15 +147,17 @@ export function ArtifactContent() {
                     content={displayData.content}
                     language={displayData.language || "javascript"}
                     className="h-full"
-                    initialViewMode="split"
-                    canExecute={displayData.language === "javascript"}
-                    showViewModeSelector={true}
+                    initialViewMode="code"
+                    canExecute={canExecute}
+                    canPreview={canPreview}
+                    showViewModeSelector={canPreview}
                   />
                 </ExecutionProvider>
               </PreviewProvider>
             </PreviewPluginProvider>
           </motion.div>
         );
+      }
 
       case "text":
         return (
