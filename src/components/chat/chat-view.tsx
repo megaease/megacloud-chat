@@ -17,6 +17,40 @@ import { EditConfirmationDialog } from "./edit-confirmation-dialog";
 import { ChatItem } from "./chat-item";
 // import { Artifact } from "../artifact/Artifact"; // 已删除
 
+// Helper function to check if a message has content
+function hasMessageContent(message: UIMessage): boolean {
+  // Check if message has parts with text content
+  if (message.parts && Array.isArray(message.parts)) {
+    const textParts = message.parts
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .filter(Boolean);
+    return (
+      textParts.length > 0 && textParts.some((text) => text.trim().length > 0)
+    );
+  }
+
+  // Check legacy content field
+  if ((message as unknown as Record<string, unknown>).content) {
+    const content = (message as unknown as Record<string, unknown>).content;
+    if (typeof content === "string") {
+      return content.trim().length > 0;
+    }
+    try {
+      const jsonString = JSON.stringify(content);
+      return (
+        jsonString.trim().length > 0 &&
+        jsonString !== "{}" &&
+        jsonString !== "[]"
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 // Define the Model interface
 interface Model {
   id: string;
@@ -171,19 +205,25 @@ export function ChatView({
               })}
 
               {/* Show submitted loading for AI message when there's no content yet */}
-              {status === "submitted" && messages.length > 0 && (
-                <ChatItem isUser={false}>
-                  {/* Loading content */}
+              {(() => {
+                const lastMessage =
+                  messages.length > 0 ? messages[messages.length - 1] : null;
+                return status === "submitted" &&
+                  lastMessage &&
+                  !hasMessageContent(lastMessage) ? (
+                  <ChatItem isUser={false}>
+                    {/* Loading content */}
 
-                  <div className="flex items-center justify-center pt-1">
-                    <Loader
-                      variant="text-shimmer"
-                      text="Thinking..."
-                      size="lg"
-                    />
-                  </div>
-                </ChatItem>
-              )}
+                    <div className="flex items-center justify-center pt-1">
+                      <Loader
+                        variant="text-shimmer"
+                        text="Thinking..."
+                        size="lg"
+                      />
+                    </div>
+                  </ChatItem>
+                ) : null;
+              })()}
 
               <ChatContainerScrollAnchor />
             </ChatContainerContent>
