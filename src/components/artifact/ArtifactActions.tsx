@@ -126,9 +126,9 @@ function ArtifactActions({
   const isTextKind = kind === "text";
   const shouldShowPreviewTools = showPreviewTools || isTextKind;
 
-  // 在 streaming 状态下禁用所有可能导致数据混乱的操作
+  // 允许在 streaming 状态下关闭 artifact，用户应该有完全控制权
   const isStreaming = artifact.status === "streaming";
-  const isDisabled = isStreaming;
+  const isDisabled = false; // 移除 streaming 时的禁用限制
 
   // 预览工具栏功能
   const handleCopy = async () => {
