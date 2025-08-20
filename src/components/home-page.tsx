@@ -110,6 +110,11 @@ export function HomePage() {
         body: JSON.stringify({
           userId: "user-id",
           title: "New Chat",
+          message: input,
+          modelName: currentModel,
+          apiKey: currentProvider?.apiKey,
+          baseUrl: currentProvider?.baseUrl,
+          providerType: currentProvider?.providerType,
         }),
       });
 
@@ -133,10 +138,16 @@ export function HomePage() {
           : undefined,
       });
 
-      router.push(`/chat/${newChatId}`, { scroll: false });
+      // Immediately refresh the chat list to show the new chat
+      queryClient.invalidateQueries({
+        queryKey: ["chats", "user-id", "recent"],
+      });
 
-      // Clear the input after scheduling navigation
+      // Clear the input before navigation
       setInput("");
+
+      // Navigate to the new chat
+      router.push(`/chat/${newChatId}`, { scroll: false });
     } catch (error) {
       toast.error("Failed to process request", {
         description: error instanceof Error ? error.message : "Unknown error",
