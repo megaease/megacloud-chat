@@ -10,7 +10,7 @@ import type { ArtifactLanguage } from "@/lib/artifact-types";
 export function DataStreamHandler() {
   const { dataStream } = useDataStream();
   console.log("dataStream", dataStream);
-  const { artifact, setArtifact } = useArtifact();
+  const { artifact, setArtifact, userIntentToHide, setUserIntentToHide } = useArtifact();
   const queryClient = useQueryClient();
   const lastProcessedIndex = useRef(-1);
 
@@ -25,6 +25,8 @@ export function DataStreamHandler() {
       setArtifact((draftArtifact) => {
         switch (delta.type) {
           case "data-id":
+            // 新内容开始时，重置用户隐藏意图
+            setUserIntentToHide(false);
             return {
               ...draftArtifact,
               documentId: delta.data as string,
@@ -82,21 +84,24 @@ export function DataStreamHandler() {
               const newContent = draftArtifact.content + (delta.data as string);
               const isFirstContent = draftArtifact.content.length === 0;
 
-              // 智能判断显示时机 - 在 AI 开始生成内容时就显示
-              let shouldShow = false;
+              // 智能判断显示时机 - 只有在用户没有主动隐藏时才自动显示
+              let shouldShow = draftArtifact.isVisible; // 保持当前状态
 
-              if (draftArtifact.kind === "text") {
-                // 文本类型：在 stream 过程中尽早显示
-                shouldShow = newContent.length > 0;
-              } else if (draftArtifact.kind === "code") {
-                // 代码类型：有内容就显示
-                shouldShow = newContent.length > 0;
-              } else if (draftArtifact.kind === "sheet") {
-                // 表格类型：有内容就显示
-                shouldShow = newContent.length > 0;
-              } else if (draftArtifact.kind === "image") {
-                // 图片类型：有内容就显示
-                shouldShow = newContent.length > 0;
+              // 只有在用户没有主动隐藏时，才考虑自动显示
+              if (!userIntentToHide) {
+                if (draftArtifact.kind === "text") {
+                  // 文本类型：在 stream 过程中尽早显示
+                  shouldShow = newContent.length > 0;
+                } else if (draftArtifact.kind === "code") {
+                  // 代码类型：有内容就显示
+                  shouldShow = newContent.length > 0;
+                } else if (draftArtifact.kind === "sheet") {
+                  // 表格类型：有内容就显示
+                  shouldShow = newContent.length > 0;
+                } else if (draftArtifact.kind === "image") {
+                  // 图片类型：有内容就显示
+                  shouldShow = newContent.length > 0;
+                }
               }
 
               return {

@@ -40,6 +40,10 @@ interface ArtifactContextType {
   }) => void;
   hideArtifact: () => void;
 
+  // 用户意图标记
+  userIntentToHide: boolean;
+  setUserIntentToHide: (intent: boolean) => void;
+
   // 重置 - 保留，因为是全局状态清理
   reset: () => void;
 }
@@ -59,6 +63,7 @@ const defaultArtifact: UIArtifact = {
 
 export function ArtifactProvider({ children }: { children: ReactNode }) {
   const [artifact, setArtifactInternal] = useState<UIArtifact>(defaultArtifact);
+  const [userIntentToHide, setUserIntentToHide] = useState(false);
   const queryClient = useQueryClient();
 
   // 包装 setArtifact 以添加调试信息
@@ -209,6 +214,7 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
       width: number;
       height: number;
     }) => {
+      setUserIntentToHide(false);
       setArtifact((prev) => ({
         ...prev,
         isVisible: true,
@@ -220,6 +226,7 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 
   // 隐藏 artifact - DataStreamHandler 会自动处理状态，无需额外逻辑
   const hideArtifact = useCallback(() => {
+    setUserIntentToHide(true);
     setArtifact((prev) => ({
       ...prev,
       isVisible: false,
@@ -228,6 +235,7 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 
   // 重置 artifact
   const reset = useCallback(() => {
+    setUserIntentToHide(false);
     setArtifact(defaultArtifact);
   }, [setArtifact]);
 
@@ -238,6 +246,8 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
     switchToVersion,
     showArtifact,
     hideArtifact,
+    userIntentToHide,
+    setUserIntentToHide,
     reset,
   };
 
