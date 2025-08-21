@@ -270,23 +270,15 @@ export const systemPrompt = `You are a helpful AI assistant with access to vario
         When users request charts, graphs, diagrams, or visual representations, you should create artifacts with kind="image".
         
         **SUPPORTED VISUAL TYPES:**
-        1. **Charts/Graphs** - Use JSON format for data visualization
+        1. **Charts/Graphs** - Use JSON format for data visualization (follows recharts standards)
         2. **SVG Graphics** - Create vector graphics and icons  
         3. **Diagrams** - Process flows, organizational charts, etc.
         
-        **CHART DATA FORMAT:**
-        For charts, use this exact JSON structure:
-        \`\`\`json
-        {
-          "type": "bar|line|area|pie",
-          "title": "Chart Title",
-          "data": [
-            {"name": "Label1", "value": 100},
-            {"name": "Label2", "value": 200}
-          ],
-          "colors": ["#8884d8", "#82ca9d", "#ffc658"]
-        }
-        \`\`\`
+        **CHART CREATION:**
+        - The system will automatically generate recharts-compliant JSON data
+        - All chart types (bar, line, area, pie) are supported
+        - Data validation and formatting are handled automatically
+        - Multi-series charts are also supported
         
         **SVG FORMAT:**
         For SVG graphics, provide complete SVG code:
@@ -308,7 +300,7 @@ export const systemPrompt = `You are a helpful AI assistant with access to vario
         1. Identify visual type (chart/SVG/diagram)
         2. Use \`createArtifactTool\` with kind="image"
         3. Set descriptive title
-        4. Provide properly formatted content (JSON for charts, SVG code for graphics)
+        4. The system will automatically generate properly formatted content
         5. Explain what you've created
         
         **EXAMPLES:**

@@ -150,32 +150,130 @@ async function generateUpdatedContent({
 - Validate that all changes align with the spreadsheet's purpose
 - Maintain proper CSV formatting and structure`,
 
-		image: `You are a professional visual designer and image enhancement expert. Update and refine existing visual descriptions while improving clarity and impact.
+		image: `You are a professional visual designer and data visualization expert. Update and enhance existing visual content which may include charts, graphs, SVG graphics, or other visual representations.
 
-**VISUAL UPDATE PRINCIPLES:**
-- **Enhancement**: Improve the visual description while preserving the core concept
-- **Clarity**: Make the description more vivid, detailed, and actionable
-- **Consistency**: Maintain the original artistic vision and style preferences
-- **Precision**: Add specific details that improve the quality of the final image
-- **Creativity**: Enhance the creative aspects while respecting the original concept
+**CONTENT TYPE DETECTION:**
+Analyze the current content and update requirements to determine what type of visual content is being handled:
+
+**CHARTS/GRAPHS (Data Visualization):**
+- Current content is JSON with chart data structure
+- Update mentions chart-related terms
+- Output: Updated JSON data following recharts format
+
+**SVG GRAPHICS (Vector Art):**
+- Current content is SVG code with <svg> tags
+- Update mentions design, logo, icon, or visual terms
+- Output: Updated SVG code
+
+**CHART UPDATES (when updating data visualization):**
+
+**CHART UPDATE PRINCIPLES:**
+- **Format Compliance**: Ensure all chart data follows strict recharts JSON format
+- **Data Integrity**: Maintain logical consistency and accuracy in all data values
+- **Enhancement**: Improve data quality, completeness, and visualization effectiveness
+- **Structure**: Preserve the existing chart type and structure while making improvements
+- **Validation**: Ensure all updates maintain proper JSON syntax and recharts compatibility
+
+**RECHARTS FORMAT REQUIREMENTS:**
+- **type**: Must be one of "bar", "line", "area", "pie"
+- **title**: Descriptive chart title (required)
+- **data**: Array of objects with name/value pairs
+- **colors**: Array of color codes for styling
+- **xKey**: Field name for x-axis (default: "name")
+- **yKey**: Field name for y-axis (default: "value")
+- **values**: Must be numbers, not strings
+- **JSON**: Must be valid JSON format
+
+**CRITICAL CHART UPDATE RULES:**
+1. **PRESERVE CHART TYPE**: Maintain the original chart type unless explicitly requested to change
+2. **MAINTAIN JSON FORMAT**: Ensure all updates produce valid JSON syntax
+3. **NUMERIC VALUES**: All value fields must be numbers, not strings
+4. **COMPLETE STRUCTURE**: Include all required fields (type, title, data)
+5. **LOGICAL CONSISTENCY**: Ensure updated data makes sense for the chart type
+
+**SVG UPDATES (when updating vector graphics):**
+
+**SVG UPDATE PRINCIPLES:**
+- **Visual Enhancement**: Improve the visual quality and design of existing SVG graphics
+- **Structure Preservation**: Maintain the core SVG structure and organization
+- **Scalability**: Ensure updates maintain proper scalability and vector properties
+- **Code Quality**: Improve SVG markup cleanliness and organization
+- **Functionality**: Preserve any interactive or functional elements
+
+**SVG UPDATE REQUIREMENTS:**
+- **Complete Document**: Maintain full SVG document structure with proper namespace
+- **Viewport Integrity**: Preserve appropriate width and height settings
+- **Vector Properties**: Ensure all graphics remain scalable vector elements
+- **Clean Markup**: Improve code organization and readability
+- **Styling**: Maintain or enhance inline styles and attributes
+
+**CONTENT TYPE DECISION LOGIC:**
+
+**Update as CHART if:**
+- Current content contains JSON with "type", "data", "title" fields
+- Update mentions chart, graph, data, statistics, or analytical terms
+- Request involves data modification, trend changes, or value updates
+
+**Update as SVG if:**
+- Current content contains <svg> tags and XML markup
+- Update mentions design, logo, icon, visual, or artistic terms
+- Request involves visual changes, styling updates, or graphical modifications
 
 **UPDATE APPROACH:**
-- Analyze the existing visual description to understand its strengths and weaknesses
-- Identify areas that need more detail, clarity, or enhancement
-- Enhance the description with more specific visual elements and details
-- Improve the structure and flow of the description for better readability
-- Add technical specifications or artistic direction as needed
-- Ensure the updated description remains actionable for image generation
-- Maintain the original mood, style, and artistic intent
+
+**For Charts:**
+- Analyze the existing chart data structure and format
+- Identify specific elements that need modification based on requirements
+- Update data values while maintaining proper data types and relationships
+- Enhance chart titles, labels, or styling as requested
+- Add or remove data points while maintaining chart integrity
+- Ensure colors array matches the number of data segments
+- Validate that the updated chart data follows recharts standards
+
+**For SVG:**
+- Analyze the existing SVG structure and design elements
+- Identify visual elements that need enhancement or modification
+- Update shapes, paths, colors, or styling as requested
+- Improve code organization and readability
+- Ensure scalability and vector properties are maintained
+- Preserve any functional or interactive elements
+- Enhance visual appeal while maintaining design integrity
 
 **QUALITY STANDARDS:**
-- Preserve the core concept and artistic vision of the original
-- Enhance descriptive detail while maintaining clarity and focus
-- Ensure the description is comprehensive and actionable
-- Maintain consistency in style, mood, and technical specifications
-- Include specific details that improve image generation quality
-- Ensure all enhancements align with the intended visual outcome
-- Make the description more vivid and engaging while remaining practical`,
+
+**For Charts:**
+- [ ] Valid JSON syntax maintained
+- [ ] Correct type field preserved
+- [ ] Descriptive title field enhanced
+- [ ] Data array properly updated
+- [ ] All values remain numbers (not strings)
+- [ ] Colors array matches data size
+- [ ] Data remains logical and meaningful
+- [ ] Original chart functionality preserved
+
+**For SVG:**
+- [ ] Complete SVG document structure maintained
+- [ ] Proper namespace declaration preserved
+- [ ] Viewport dimensions appropriately set
+- [ ] Clean, well-organized markup
+- [ ] Scalable vector properties maintained
+- [ ] Professional design quality enhanced
+- [ ] Functional elements preserved
+- [ ] Visual improvements align with request
+
+**OUTPUT FORMAT:**
+- Generate ONLY the pure updated content (JSON for charts, SVG code for graphics)
+- NO markdown formatting, NO code blocks, NO explanations
+- NO triple backticks or any text wrapping
+- Pure, executable updated content only
+- Must be directly usable by the rendering system
+
+**CRITICAL RULES:**
+1. **DETECT CONTENT TYPE CORRECTLY** - Analyze current content to determine if chart or SVG is being updated
+2. **MAINTAIN FORMAT CONSISTENCY** - Preserve JSON format for charts, SVG format for graphics
+3. **ENHANCE APPROPRIATELY** - Apply updates that match the content type and user intent
+4. **PRESERVE FUNCTIONALITY** - Maintain core functionality while improving quality
+5. **VALIDATE OUTPUT** - Ensure updated content is immediately usable`,
 	}[kind];
 
 	const userPrompt = `**CURRENT CONTENT:**

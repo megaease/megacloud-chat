@@ -134,32 +134,120 @@ async function generateArtifactContent({
 - Include quotes around text values containing commas or special characters
 - Make data realistic and useful for the given context`,
 
-		image: `You are a creative visual designer and AI art expert. Generate detailed, descriptive prompts for creating high-quality images and visualizations.
+		image: `You are a professional visual designer and data visualization expert. Generate high-quality visual content that may include charts, graphs, SVG graphics, or other visual representations.
 
-**VISUAL DESCRIPTION STANDARDS:**
-- **Detail**: Provide comprehensive descriptions covering all visual elements
-- **Clarity**: Use precise, vivid language that clearly communicates the visual concept
-- **Structure**: Organize descriptions logically (subject, setting, style, mood, etc.)
-- **Creativity**: Include artistic direction and stylistic preferences
-- **Technical**: Specify technical aspects like composition, lighting, and perspective
-- **Usability**: Ensure descriptions are actionable for AI image generation
+**CONTENT TYPE DETECTION:**
+Analyze the request title "${title}" to determine what type of visual content to generate:
 
-**DESCRIPTION ELEMENTS:**
-- **Subject**: Main focus and key elements of the image
-- **Composition**: Layout, framing, and arrangement of elements
-- **Style**: Artistic style, medium, and visual treatment
-- **Color**: Color palette, mood, and lighting effects
-- **Setting**: Background, environment, and context
-- **Technical**: Resolution, aspect ratio, and technical specifications
+**CHARTS/GRAPHS (Data Visualization):**
+- Trigger words: "chart", "graph", "plot", "diagram", "data", "statistics", "analytics", "comparison", "trend", "bar", "line", "pie", "area"
+- Output: JSON data following recharts format
 
-**OUTPUT FORMAT:**
-- Start with a clear overview of the image concept
-- Describe the main subject and focal points in detail
-- Specify the artistic style and visual treatment
-- Include color palette and lighting preferences
-- Describe the setting and background elements
-- Add any technical specifications or requirements
-- Ensure the description is comprehensive and actionable`,
+**SVG GRAPHICS (Vector Art):**
+- Trigger words: "logo", "icon", "symbol", "vector", "svg", "graphic", "design", "illustration", "art", "visual", "image"
+- Output: Complete SVG code
+
+**CHART GENERATION (when data visualization is requested):**
+
+**RECHARTS FORMAT REQUIREMENTS:**
+- **type**: Must be one of "bar", "line", "area", "pie"
+- **title**: Descriptive chart title (required)
+- **data**: Array of objects with name/value pairs
+- **colors**: Array of color codes for styling
+- **xKey**: Field name for x-axis (default: "name")
+- **yKey**: Field name for y-axis (default: "value")
+- **values**: Must be numbers, not strings
+- **JSON**: Must be valid JSON format
+
+**SUPPORTED CHART TYPES:**
+
+**BAR CHARTS:**
+- Use for comparing discrete categories
+- Data format: [{"name": "Category", "value": number}]
+- Colors: Single color or array for multiple series
+
+**LINE CHARTS:**
+- Use for showing trends over time
+- Data format: [{"name": "Time", "value": number}]
+- Colors: Single color for the line
+
+**AREA CHARTS:**
+- Use for showing cumulative values over time
+- Data format: [{"name": "Time", "value": number}]
+- Colors: Single color with transparency
+
+**PIE CHARTS:**
+- Use for showing parts of a whole
+- Data format: [{"name": "Category", "value": number}]
+- Colors: Array of colors for each segment
+- Values should sum to meaningful total (100 for percentages)
+
+**CHART OUTPUT FORMAT:**
+- Generate ONLY the pure JSON chart data object
+- NO markdown formatting, NO code blocks, NO explanations
+- NO triple backticks or any text wrapping
+- Pure, executable JSON only
+- Must be directly parseable by JSON.parse()
+
+**SVG GENERATION (when graphics/art is requested):**
+
+**SVG FORMAT REQUIREMENTS:**
+- **Complete SVG document**: Include <svg> tags with proper namespace
+- **Viewport**: Set appropriate width and height
+- **Scalable**: Use vector graphics that scale properly
+- **Clean code**: Well-structured, readable SVG markup
+- **Styling**: Include inline styles or appropriate attributes
+
+**SVG OUTPUT FORMAT:**
+- Generate ONLY the complete SVG code
+- NO markdown formatting, NO code blocks, NO explanations
+- NO triple backticks or any text wrapping
+- Pure, executable SVG code only
+- Must be directly renderable by browsers
+
+**CONTENT TYPE DECISION LOGIC:**
+
+**Generate CHART if title contains:**
+- "chart", "graph", "plot", "diagram"
+- "data", "statistics", "analytics"
+- "comparison", "trend", "analysis"
+- "bar", "line", "pie", "area"
+- "sales", "revenue", "growth", "market share"
+
+**Generate SVG if title contains:**
+- "logo", "icon", "symbol", "emblem"
+- "vector", "svg", "graphic"
+- "design", "illustration", "art"
+- "visual", "image", "picture"
+- "brand", "identity", "badge"
+
+**QUALITY STANDARDS:**
+
+**For Charts:**
+- [ ] Valid JSON syntax
+- [ ] Contains correct type field
+- [ ] Contains descriptive title field
+- [ ] Contains data array with appropriate items
+- [ ] Data items have name and value fields
+- [ ] All values are numbers (not strings)
+- [ ] Chart type matches data structure
+- [ ] Data is logical and meaningful
+
+**For SVG:**
+- [ ] Complete SVG document structure
+- [ ] Proper namespace declaration
+- [ ] Appropriate viewport dimensions
+- [ ] Clean, well-organized markup
+- [ ] Scalable vector graphics
+- [ ] Professional design quality
+- [ ] Suitable for the requested purpose
+
+**CRITICAL RULES:**
+1. **DETECT CONTENT TYPE CORRECTLY** - Analyze title to determine if chart or SVG is needed
+2. **USE CORRECT FORMAT** - JSON for charts, SVG code for graphics
+3. **NO MARKDOWN WRAPPING** - Output pure content only
+4. **VALID OUTPUT** - Ensure generated content is immediately usable
+5. **MATCH REQUEST** - Generated content must match the user's intent`,
 	}[kind];
 
 	const userPrompt = {
@@ -241,20 +329,111 @@ Generate ONLY the pure code implementation without any formatting or explanation
 
 Please create a complete CSV-formatted spreadsheet with headers and realistic sample data.`,
 
-		image: `Generate a detailed, comprehensive description for creating an image of: "${title}"
+		image: `Generate high-quality visual content for: "${title}"
 
-**Requirements:**
-- Provide a vivid, detailed description covering all visual elements
-- Specify the artistic style, composition, and mood
-- Include color palette, lighting, and technical specifications
-- Describe the main subject, background, and setting
-- Make the description actionable for AI image generation
-- Include specific details about style, medium, and visual treatment
-- Ensure the description is comprehensive and clear
+**CRITICAL REQUIREMENTS:**
+- **OUTPUT PURE CONTENT ONLY**: Generate ONLY the actual content without any markdown formatting, code blocks, or explanations
+- **NO MARKDOWN**: Do NOT wrap the content in triple backticks (\`\`\`) or any markdown formatting
+- **NO EXPLANATIONS**: Do NOT include any explanations, comments about the content, or additional text
+- **DIRECTLY EXECUTABLE**: The content must be directly usable without any modifications
 
-**Image Concept:** ${title}
+**CONTENT TYPE DETECTION:**
+Analyze the title "${title}" to determine what type of visual content to generate:
 
-Please generate a complete, detailed visual description that can be used to create a high-quality image.`,
+**Generate CHART (JSON format) if title contains:**
+- "chart", "graph", "plot", "diagram"
+- "data", "statistics", "analytics"
+- "comparison", "trend", "analysis"
+- "bar", "line", "pie", "area"
+- "sales", "revenue", "growth", "market share"
+
+**Generate SVG (SVG code) if title contains:**
+- "logo", "icon", "symbol", "emblem"
+- "vector", "svg", "graphic"
+- "design", "illustration", "art"
+- "visual", "image", "picture"
+- "brand", "identity", "badge"
+
+**FOR CHART GENERATION (when data visualization is detected):**
+
+**CHART TYPE DETECTION:**
+- If the title contains "bar", "column", "comparison", use type: "bar"
+- If the title contains "line", "trend", "growth", "time", use type: "line"
+- If the title contains "area", "cumulative", "filled", use type: "area"
+- If the title contains "pie", "donut", "share", "percentage", "part", use type: "pie"
+
+**RECHARTS FORMAT REQUIREMENTS:**
+- **type**: Must be one of "bar", "line", "area", "pie"
+- **title**: Descriptive chart title based on "${title}"
+- **data**: Array of objects with name/value pairs
+- **colors**: Array of color codes for styling
+- **xKey**: "name" (default)
+- **yKey**: "value" (default)
+- **values**: Must be numbers, not strings
+- **JSON**: Must be valid JSON format
+
+**DATA GENERATION RULES:**
+1. **Generate realistic data** that makes sense for the chart type and title
+2. **Use appropriate values**: numbers that are logical and meaningful
+3. **Include sufficient data points**: 3-8 items for most charts
+4. **For pie charts**: ensure values sum to a meaningful total (100 for percentages)
+5. **For time-based charts**: use logical time periods (months, quarters, years)
+6. **For comparison charts**: use comparable value ranges
+
+**CHART OUTPUT FORMAT:**
+- Generate ONLY the pure JSON chart data object
+- NO markdown formatting, NO code blocks, NO explanations
+- NO triple backticks or any text wrapping
+- Pure, executable JSON only
+- Must be directly parseable by JSON.parse()
+
+**FOR SVG GENERATION (when graphics/art is detected):**
+
+**SVG FORMAT REQUIREMENTS:**
+- **Complete SVG document**: Include <svg> tags with proper namespace
+- **Viewport**: Set appropriate width and height
+- **Scalable**: Use vector graphics that scale properly
+- **Clean code**: Well-structured, readable SVG markup
+- **Styling**: Include inline styles or appropriate attributes
+
+**SVG DESIGN PRINCIPLES:**
+1. **Match the purpose**: Create SVG that matches the requested use (logo, icon, symbol, etc.)
+2. **Keep it simple**: Use clean, minimalist design unless complexity is specifically requested
+3. **Ensure scalability**: Design should look good at any size
+4. **Use appropriate colors**: Choose colors that fit the purpose and brand
+5. **Maintain clarity**: Ensure the design is clear and recognizable
+
+**SVG OUTPUT FORMAT:**
+- Generate ONLY the complete SVG code
+- NO markdown formatting, NO code blocks, NO explanations
+- NO triple backticks or any text wrapping
+- Pure, executable SVG code only
+- Must be directly renderable by browsers
+
+**QUALITY STANDARDS:**
+
+**For Charts:**
+- [ ] Valid JSON syntax
+- [ ] Contains correct type field
+- [ ] Contains descriptive title field
+- [ ] Contains data array with appropriate items
+- [ ] Data items have name and value fields
+- [ ] All values are numbers (not strings)
+- [ ] Chart type matches data structure
+- [ ] Data is logical and meaningful
+
+**For SVG:**
+- [ ] Complete SVG document structure
+- [ ] Proper namespace declaration
+- [ ] Appropriate viewport dimensions
+- [ ] Clean, well-organized markup
+- [ ] Scalable vector graphics
+- [ ] Professional design quality
+- [ ] Suitable for the requested purpose
+
+**Visual Content Topic:** ${title}
+
+Generate ONLY the pure visual content (JSON for charts, SVG code for graphics) without any formatting or explanations.`,
 	}[kind];
 
 	// 流式生成内容
