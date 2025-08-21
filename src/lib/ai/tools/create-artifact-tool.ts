@@ -504,7 +504,7 @@ export const createArtifactTool = ({
 }: CreateArtifactProps) =>
 	tool({
 		description:
-			"Create a new artifact with substantial content ONLY when the user explicitly requests to create content (code/html/text/sheet/image). Do NOT use for general Q&A, explanations, or tasks like checking time/weather/searching — use appropriate tools instead.",
+			"Create artifacts ONLY when user explicitly uses action verbs like 'create', 'generate', 'build', 'make', 'write' + content type (code/app/page/chart/document/table). Do NOT use for: questions, explanations, analysis, discussions, comparisons, or any Q&A conversation. User must clearly request content creation with specific verbs.",
 		inputSchema: createArtifactInputSchema,
 		execute: async ({ kind, language, title }, { experimental_context }) => {
 			if (!session?.user?.id) {

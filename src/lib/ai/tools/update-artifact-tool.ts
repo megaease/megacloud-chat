@@ -364,7 +364,7 @@ export const updateArtifactTool = ({
 }: UpdateArtifactProps) =>
 	tool({
 		description:
-			"Update an existing artifact's content when the user asks to modify previously created content. Do NOT use for questions, time/weather queries, or searches — use specialized tools instead.",
+			"Update existing artifacts ONLY when user explicitly uses modification verbs like 'update', 'modify', 'change', 'convert', 'make it', 'turn into', 'add to', 'improve' + existing artifact reference. Do NOT use for: questions, explanations, analysis, discussions, or any Q&A conversation. User must clearly request content modification with specific verbs.",
 		inputSchema: updateArtifactInputSchema,
 		execute: async ({ id, description }, { experimental_context }) => {
 			if (!session?.user?.id) {
