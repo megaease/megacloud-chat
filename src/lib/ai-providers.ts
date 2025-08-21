@@ -84,7 +84,9 @@ export function createAIModelConfig(
 		}
 
 		case "glm": {
-			const glmAI = createZhipu({
+			console.log("Creating AI model for provider:", "glm");
+			// deepseek provider can handle GLM models
+			const glmAI = createDeepSeek({
 				apiKey: apiKey || "",
 				baseURL: baseUrl || "https://open.bigmodel.cn/api/paas/v4",
 			});
