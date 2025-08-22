@@ -5,7 +5,7 @@ import { useArtifact } from "@/context/artifact-provider-context";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { TextArtifact } from "./TextArtifact";
-import { TablePreview } from "./previews";
+import { TablePreview } from "./new-preview/TablePreview";
 import { NewCodePreview } from "./new-preview/NewCodePreview";
 import { NewImagePreview } from "./new-preview/NewImagePreview";
 import { PreviewPluginProvider } from "./new-preview/PreviewPluginRegistry";
@@ -182,11 +182,15 @@ export function ArtifactContent() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <TablePreview
-              content={displayData.content}
-              status={displayStatus}
-              showToolbar={true}
-            />
+            <PreviewPluginProvider>
+              <PreviewProvider>
+                <TablePreview
+                  content={displayData.content}
+                  status={displayStatus}
+                  showToolbar={true}
+                />
+              </PreviewProvider>
+            </PreviewPluginProvider>
           </motion.div>
         );
 
