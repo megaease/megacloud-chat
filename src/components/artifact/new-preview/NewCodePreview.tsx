@@ -665,7 +665,7 @@ sys.stderr = _output_capture
 
   return (
     <div
-      className={`rounded-xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 h-full flex flex-col ${className}`}
+      className={`overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 h-full flex flex-col ${className}`}
     >
       {/* Modern header */}
       <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800">

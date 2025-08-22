@@ -4,7 +4,6 @@
 import { useArtifact } from "@/context/artifact-provider-context";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { CodePreview } from "./CodePreview";
 import { TextArtifact } from "./TextArtifact";
 import { TablePreview } from "./previews";
 import { NewCodePreview } from "./new-preview/NewCodePreview";
