@@ -7,7 +7,6 @@ import { useTranslations } from "next-intl";
 import { CodePreview } from "./CodePreview";
 import { TextArtifact } from "./TextArtifact";
 import { TablePreview } from "./previews";
-import { VisualPreview } from "./previews/VisualPreview";
 import { NewCodePreview } from "./new-preview/NewCodePreview";
 import { NewImagePreview } from "./new-preview/NewImagePreview";
 import { PreviewPluginProvider } from "./new-preview/PreviewPluginRegistry";
@@ -127,7 +126,8 @@ export function ArtifactContent() {
     }
 
     switch (displayData.kind) {
-      case "code": { // Use new CodePreview implementation for all languages including Python
+      case "code": {
+        // Use new CodePreview implementation for all languages including Python
         const canExecute =
           displayData.language === "javascript" ||
           displayData.language === "python";
