@@ -302,7 +302,7 @@ export function NewImagePreview({
   const renderImageContent = () => {
     if (contentType === "chart") {
       return (
-        <Card className="p-8 h-full flex items-center justify-center">
+        <Card className="p-8 h-full flex items-center justify-center bg-white dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600">
           <div className="text-center text-muted-foreground">
             <Palette className="w-12 h-12 mx-auto mb-4" />
             <p className="text-lg font-medium mb-2">Chart Preview</p>
@@ -316,59 +316,63 @@ export function NewImagePreview({
 
     if (contentType === "svg") {
       return (
-        <div
-          className="w-full h-full flex items-center justify-center"
-          style={{
-            transform: `scale(${imageState.zoom / 100}) rotate(${
-              imageState.rotation
-            }deg)`,
-            transition: "transform 0.3s ease",
-          }}
-        >
+        <div className="w-full h-full flex items-center justify-center p-4">
           <div
-            className="max-w-full max-h-full"
-            dangerouslySetInnerHTML={{ __html: content }}
-            suppressHydrationWarning
-          />
+            className="max-w-full max-h-full bg-white dark:bg-slate-900 rounded border-2 border-slate-200 dark:border-slate-600 p-4"
+            style={{
+              transform: `scale(${imageState.zoom / 100}) rotate(${
+                imageState.rotation
+              }deg)`,
+              transition: "transform 0.3s ease",
+            }}
+          >
+            <div
+              className="max-w-full max-h-full"
+              dangerouslySetInnerHTML={{ __html: content }}
+              suppressHydrationWarning
+            />
+          </div>
         </div>
       );
     }
 
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center p-4">
         {!imageState.loaded && (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-slate-800 rounded">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         )}
 
-        <img
-          ref={imageRef}
-          src={imageSrc}
-          alt={title || "Preview"}
-          className={cn(
-            "max-w-full max-h-full object-contain transition-opacity duration-300",
-            imageState.loaded ? "opacity-100" : "opacity-0"
-          )}
-          style={{
-            transform: `scale(${imageState.zoom / 100}) rotate(${
-              imageState.rotation
-            }deg)`,
-            transition: "transform 0.3s ease, opacity 0.3s ease",
-          }}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
+        <div className="relative bg-white dark:bg-slate-900 rounded border-2 border-slate-200 dark:border-slate-600 overflow-hidden">
+          <img
+            ref={imageRef}
+            src={imageSrc}
+            alt={title || "Preview"}
+            className={cn(
+              "max-w-full max-h-full object-contain transition-opacity duration-300",
+              imageState.loaded ? "opacity-100" : "opacity-0"
+            )}
+            style={{
+              transform: `scale(${imageState.zoom / 100}) rotate(${
+                imageState.rotation
+              }deg)`,
+              transition: "transform 0.3s ease, opacity 0.3s ease",
+            }}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
 
-        {imageState.error && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <ImageIcon className="w-12 h-12 mx-auto mb-4" />
-              <p className="text-lg font-medium mb-2">Failed to load image</p>
-              <p className="text-sm">The image could not be loaded.</p>
+          {imageState.error && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-slate-900 rounded">
+              <div className="text-center text-muted-foreground">
+                <ImageIcon className="w-12 h-12 mx-auto mb-4" />
+                <p className="text-lg font-medium mb-2">Failed to load image</p>
+                <p className="text-sm">The image could not be loaded.</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   };
@@ -510,7 +514,7 @@ export function NewImagePreview({
     <div
       ref={containerRef}
       className={cn(
-        "rounded-xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 h-full flex flex-col",
+        "overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 h-full flex flex-col",
         className
       )}
     >
@@ -526,7 +530,7 @@ export function NewImagePreview({
             </div>
 
             {/* View mode selector */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded p-1">
               <Button
                 variant={
                   imageState.viewMode === "preview" ? "default" : "ghost"
@@ -638,8 +642,10 @@ export function NewImagePreview({
       {/* Main content area */}
       <div className="flex-1 min-h-0">
         {imageState.viewMode === "preview" ? (
-          <div className="h-full bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
-            {renderImageContent()}
+          <div className="h-full bg-gradient-to-br from-slate-100 to-white dark:from-slate-900 dark:to-slate-950 p-4">
+            <div className="h-full bg-white dark:bg-slate-800 rounded border-2 border-slate-200 dark:border-slate-600 overflow-hidden">
+              {renderImageContent()}
+            </div>
           </div>
         ) : (
           renderInfoPanel()
