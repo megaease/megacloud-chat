@@ -9,6 +9,7 @@ import { TextArtifact } from "./TextArtifact";
 import { TablePreview } from "./previews";
 import { VisualPreview } from "./previews/VisualPreview";
 import { NewCodePreview } from "./new-preview/NewCodePreview";
+import { NewImagePreview } from "./new-preview/NewImagePreview";
 import { PreviewPluginProvider } from "./new-preview/PreviewPluginRegistry";
 import { PreviewProvider } from "./new-preview/PreviewContext";
 import { ExecutionProvider } from "./new-preview/ExecutionContext";
@@ -126,8 +127,7 @@ export function ArtifactContent() {
     }
 
     switch (displayData.kind) {
-      case "code": // Use new CodePreview implementation for all languages including Python
-      {
+      case "code": { // Use new CodePreview implementation for all languages including Python
         const canExecute =
           displayData.language === "javascript" ||
           displayData.language === "python";
@@ -199,13 +199,16 @@ export function ArtifactContent() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            {" "}
-            <VisualPreview
+            <NewImagePreview
               content={displayData.content}
               title={displayData.title}
               className="h-full"
               status={displayStatus}
               showToolbar={true}
+              canZoom={true}
+              canRotate={true}
+              canFullscreen={true}
+              initialViewMode="preview"
             />
           </motion.div>
         );
