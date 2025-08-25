@@ -214,8 +214,6 @@ function ChatContent({
       prepareSendMessagesRequest,
     }),
     onData: (dataPart) => {
-      console.log("Received data part:", dataPart);
-
       setDataStream((ds) => [...ds, dataPart]);
     },
     onFinish: (message) => {

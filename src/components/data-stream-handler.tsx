@@ -9,8 +9,9 @@ import type { ArtifactLanguage } from "@/lib/artifact-types";
 
 export function DataStreamHandler() {
   const { dataStream } = useDataStream();
-  console.log("dataStream", dataStream);
-  const { artifact, setArtifact, userIntentToHide, setUserIntentToHide } = useArtifact();
+
+  const { artifact, setArtifact, userIntentToHide, setUserIntentToHide } =
+    useArtifact();
   const queryClient = useQueryClient();
   const lastProcessedIndex = useRef(-1);
 

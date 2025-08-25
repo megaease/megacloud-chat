@@ -1,4 +1,4 @@
-import { ModernDocumentTool } from "@/components/chat/tool-invocation/ModernDocumentTool";
+import { ModernDocumentTool } from "@/components/chat/ModernDocumentTool";
 import { Tool as PromptKitTool } from "@/components/ui/tool";
 import type { ToolPart as PromptKitToolPart } from "@/components/ui/tool";
 import type {

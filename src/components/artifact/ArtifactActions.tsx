@@ -109,19 +109,6 @@ function ArtifactActions({
   const canSwitchVersions =
     artifact.status !== "streaming" && !!artifact.documentId;
 
-  // 调试信息
-  console.log("🔍 版本选择器调试信息：", {
-    artifactStatus: artifact.status,
-    artifactDocumentId: artifact.documentId,
-    canSwitchVersions,
-    versionsLength: versions.length,
-    versionsLoading,
-    versionsError: versionsError?.message,
-    displayCurrentVersion,
-    artifactTitle: artifact.title,
-    artifactContent: `${artifact.content?.substring(0, 50)}...`,
-  });
-
   // 对于文本类型，启用预览工具栏
   const isTextKind = kind === "text";
   const shouldShowPreviewTools = showPreviewTools || isTextKind;
