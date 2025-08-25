@@ -29,57 +29,44 @@ import type { ToolInvocationProps } from "./types";
  */
 
 export function ToolInvocationPart({
-	part,
-	isLoading,
-	isCompact = false,
+  part,
+  isLoading,
+  isCompact = false,
 }: ToolInvocationProps) {
-	const { toolState, status, isExpanded, toggleExpanded } =
-		useToolInvocationState(part);
+  const { toolState, status, isExpanded, toggleExpanded } =
+    useToolInvocationState(part);
 
-	const theme = TOOL_THEMES[status];
+  const theme = TOOL_THEMES[status];
 
-	// 确定内容是否会被显示
-	const hasExpandableContent =
-		(status === "success" || status === "error") && isExpanded;
+  // 确定内容是否会被显示
+  const hasExpandableContent =
+    (status === "success" || status === "error") && isExpanded;
 
-	// 如果是紧凑模式，使用专门的紧凑组件
-	if (isCompact) {
-		return (
-			<CompactToolInvocation
-				toolState={toolState}
-				status={status}
-				theme={theme}
-				isExpanded={isExpanded}
-				onToggleExpanded={toggleExpanded}
-				isCompact={true}
-				part={part}
-			/>
-		);
-	}
+  // 如果是紧凑模式，使用专门的紧凑组件
+  if (isCompact) {
+    return (
+      <CompactToolInvocation
+        toolState={toolState}
+        status={status}
+        theme={theme}
+        isExpanded={isExpanded}
+        onToggleExpanded={toggleExpanded}
+        isCompact={true}
+        part={part}
+      />
+    );
+  }
 
-	// 如果是 document 工具，使用特殊的文档样式（无论是否成功）
-	if (toolState.isDocumentTool) {
-		return (
-			<DocumentToolInvocation
-				toolState={toolState}
-				status={status}
-				theme={theme}
-				isLoading={isLoading || status === "executing"}
-				part={part}
-			/>
-		);
-	}
-
-	// 默认的工具调用样式（用于普通工具）- 使用简洁的单行风格
-	return (
-		<CompactToolInvocation
-			toolState={toolState}
-			status={status}
-			theme={theme}
-			isExpanded={isExpanded}
-			onToggleExpanded={toggleExpanded}
-			isCompact={false}
-			part={part}
-		/>
-	);
+  // 默认的工具调用样式（用于普通工具）- 使用简洁的单行风格
+  return (
+    <CompactToolInvocation
+      toolState={toolState}
+      status={status}
+      theme={theme}
+      isExpanded={isExpanded}
+      onToggleExpanded={toggleExpanded}
+      isCompact={false}
+      part={part}
+    />
+  );
 }
