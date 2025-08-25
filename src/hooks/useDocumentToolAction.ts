@@ -95,7 +95,7 @@ export function useDocumentToolAction() {
 	 */
 	const handleDocumentClick = useCallback(
 		(
-			part?: ToolInvocationPart,
+			part?: ToolInvocationPart | DynamicToolPart,
 			args?: {
 				title?: string;
 				content?: string;
@@ -176,7 +176,7 @@ export function useDocumentToolAction() {
 	 */
 	const canOpenArtifact = useCallback(
 		(
-			part?: ToolInvocationPart,
+			part?: ToolInvocationPart | DynamicToolPart,
 			args?: {
 				title?: string;
 				content?: string;
@@ -191,7 +191,13 @@ export function useDocumentToolAction() {
 			}
 
 			// 执行中状态，如果有标题、documentId 或者 kind 都可以打开
-			if (status === "executing") {
+			// DynamicToolPart 的状态包括：input-streaming, input-available, output-available, output-error, running, processing, call-created, created, partial-call, requires-action
+			if (
+				status === "input-streaming" ||
+				status === "processing" ||
+				status === "running" ||
+				status === "partial-call"
+			) {
 				return !!(args?.title || args?.documentId || args?.kind);
 			}
 
@@ -213,7 +219,7 @@ export function useDocumentToolAction() {
 	 */
 	const shouldDisableVersionSwitch = useCallback(
 		(
-			part?: ToolInvocationPart,
+			part?: ToolInvocationPart | DynamicToolPart,
 			args?: {
 				title?: string;
 				content?: string;

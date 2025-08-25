@@ -109,31 +109,6 @@ export function ModernDocumentTool({
   const contentPreview =
     content.length > 100 ? `${content.substring(0, 100)}...` : content;
 
-  // 将 DynamicToolPart 转换为 ToolInvocationPart 格式
-  const convertToToolInvocationPart = (
-    dynamicPart: DynamicToolPart
-  ): ToolInvocationPart => {
-    // 将 state 映射到 ToolInvocation 的 state 类型
-    const mapState = (
-      state: string
-    ): "result" | "processing" | "partial-call" | "call" => {
-      if (state === "output-available") return "result";
-      if (state === "executing") return "processing";
-      if (state === "requires-action") return "partial-call";
-      return "call"; // 默认值
-    };
-
-    return {
-      type: "tool-invocation",
-      toolInvocation: {
-        toolName: dynamicPart.toolName,
-        state: mapState(dynamicPart.state),
-        args: dynamicPart.input as Record<string, unknown>,
-        result: dynamicPart.output as ToolInvocationResult,
-      },
-    };
-  };
-
   // 处理点击打开
   const handleOpenArtifact = () => {
     if (process.env.NODE_ENV !== "production") {
@@ -146,14 +121,14 @@ export function ModernDocumentTool({
       });
     }
 
-    // 转换为 ToolInvocationPart 格式
-    const toolPart = convertToToolInvocationPart(part);
+    // 直接使用 DynamicToolPart 格式，无需转换
+    const toolPart = part as ToolInvocationPart | DynamicToolPart;
 
     // 检查是否可以打开
     const canOpen = canOpenArtifact(
       toolPart,
       input,
-      part.state === "output-available" ? "success" : "executing"
+      part.state === "output-available" ? "success" : "input-streaming"
     );
 
     // 检查是否应该禁用
