@@ -122,17 +122,15 @@ export function ModernDocumentTool({
     }
 
     // 直接使用 DynamicToolPart 格式，无需转换
-    const toolPart = part as ToolInvocationPart | DynamicToolPart;
-
     // 检查是否可以打开
     const canOpen = canOpenArtifact(
-      toolPart,
+      part,
       input,
       part.state === "output-available" ? "success" : "input-streaming"
     );
 
     // 检查是否应该禁用
-    const isDisabled = shouldDisableVersionSwitch(toolPart, input);
+    const isDisabled = shouldDisableVersionSwitch(part, input);
 
     if (process.env.NODE_ENV !== "production") {
       console.log("ModernDocumentTool permission check", {
@@ -162,7 +160,7 @@ export function ModernDocumentTool({
       height: 400,
     };
 
-    handleDocumentClick(toolPart, input, boundingBox);
+    handleDocumentClick(part, input, boundingBox);
   };
 
   // Compact mode rendering
