@@ -91,7 +91,11 @@ function PromptInput({
           )}
           onClick={() => textareaRef.current?.focus()}
           onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
+            // Only intercept when the fieldset itself is focused; allow normal typing inside the textarea.
+            if (
+              e.currentTarget === e.target &&
+              (e.key === "Enter" || e.key === " ")
+            ) {
               e.preventDefault();
               textareaRef.current?.focus();
             }
