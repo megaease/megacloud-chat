@@ -1,28 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-	IconEdit,
-	IconTrash,
-	IconServer,
-	IconDots,
-	IconPower,
-	IconCircleOff,
-	IconPlus,
-	IconLoader2,
-} from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ServerStatusBadge } from "@/components/mcp/server-status-badge";
 import { ConnectionInfo } from "@/components/mcp/connection-info";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { EditServerDialog } from "@/components/mcp/edit-server-dialog";
+import { ServerStatusBadge } from "@/components/mcp/server-status-badge";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -33,21 +13,41 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { EditServerDialog } from "@/components/mcp/edit-server-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+	deleteMcpServer,
 	getMcpServers,
 	updateMcpServerStatus,
-	deleteMcpServer,
 } from "@/lib/mcp-server-action";
 import {
 	type McpServer,
+	type ServerStatus,
+	ServerStatusEnum,
 	type Type,
 	TypeEnum,
-	ServerStatusEnum,
-	type ServerStatus,
 } from "@/server/db/schema";
-import { toast } from "sonner";
+import {
+	IconCircleOff,
+	IconDots,
+	IconEdit,
+	IconLoader2,
+	IconPlus,
+	IconPower,
+	IconServer,
+	IconTrash,
+} from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 // import { MCPClientManager } from "@/lib/mcp-client";
 
 interface ServersListProps {

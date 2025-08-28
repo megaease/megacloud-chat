@@ -1,21 +1,24 @@
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Button } from "../ui/button";
+// Removed legacy Tooltip imports; MessageAction provides its own tooltip
+import { Loader } from "@/components/prompt-kit/loader";
 import {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageAvatar,
+  MessageContent,
+} from "@/components/prompt-kit/message";
+import { useCopy } from "@/hooks/use-copy";
+import { cn } from "@/lib/utils";
+import {
+  IconAlertCircle,
+  IconCheck,
+  IconCopy,
+  IconEdit,
   IconRefresh,
   IconReload,
-  IconCopy,
-  IconCheck,
-  IconEdit,
 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
-import { useCopy } from "@/hooks/use-copy";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
+import { Button } from "../ui/button";
 
 interface ChatItemProps {
   children: React.ReactNode;
@@ -63,82 +66,106 @@ export function ChatItem({
     }
   };
 
-  // Render action buttons
-  const renderActionButtons = () => {
-    // Always show copy button for all messages
-    const showCopyButton = true;
+  // Legacy renderActionButtons removed; actions are rendered inline via MessageActions
 
-    // Only show edit button for user messages (not during editing)
-    const showEditButton = isUser && messageId && onEdit && !isEditing;
+  // Determine if this message has an error
+  const hasError = isLastMessage && error && status === "error";
 
-    // Only show retry/regenerate buttons for the last message when request is complete
-    const showRetryButton =
-      isLastMessage && isUser && error && status === "error" && retry;
-    const showRegenerateButton =
-      isLastMessage && !isUser && !error && status === "ready" && regenerate;
+  return (
+    <Message
+      className={cn(
+        "group items-start",
+        isUser ? "justify-end" : "justify-start"
+      )}
+    >
+      {/* Avatar - AI messages on the left */}
+      {!isUser && (
+        <MessageAvatar
+          src={""}
+          alt={"AI"}
+          fallback={"AI"}
+          className={cn(isCompact && isUser && "hidden")}
+        />
+      )}
 
-    // For non-last messages, only show copy and edit buttons
-    // For last message, check if streaming/submitted to hide all buttons temporarily
-    if (isLastMessage && (status === "streaming" || status === "submitted")) {
-      return null; // Hide all buttons during streaming
-    }
+      {/* Content */}
+      <div
+        className={cn(
+          "flex w-full flex-col gap-1",
+          isUser ? "items-end" : "items-start"
+        )}
+      >
+        {/* streaming 时显示（只在当前消息上） */}
+        {status === "streaming" && !isUser && isLastMessage && (
+          <div className="flex items-center gap-2 mb-2 text-xs text-foreground">
+            <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+              <Loader
+                variant="dots"
+                size="lg"
+                className="[&>div]:!bg-foreground"
+              />
+            </div>
+          </div>
+        )}
 
-    if (
-      !showRetryButton &&
-      !showRegenerateButton &&
-      !showCopyButton &&
-      !showEditButton
-    )
-      return null;
+        {/* Error indicator for failed messages */}
+        {isLastMessage && error && status === "error" && (
+          <div className="flex items-center gap-2 mb-2 text-xs text-red-600 bg-red-50 dark:bg-red-950/20 dark:text-red-400 px-2 py-1 rounded-md border border-red-200 dark:border-red-800">
+            <IconAlertCircle className="w-3 h-3" />
+            <span>消息发送失败</span>
+          </div>
+        )}
 
-    return (
-      <TooltipProvider>
-        <div
-          className={cn(
-            "flex gap-1 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-            isUser ? "justify-end" : "justify-start pl-4"
-          )}
-        >
-          <div className="flex gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
+        {children ? (
+          // children 由上层（ChatMessage）按需使用 MessageContent 或其他 prompt-kit 组件渲染
+          <>{children}</>
+        ) : null}
+
+        {/* Actions - only show when message is completed */}
+        {(status === "ready" || status === "error") && (
+          <MessageActions
+            className={cn(
+              "py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+              isUser ? "justify-end" : "justify-start"
+            )}
+          >
+            {/* Copy */}
+            <MessageAction tooltip={<p>{copied ? t("copied") : t("copy")}</p>}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+                className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
+              >
+                {copied ? (
+                  <IconCheck className="w-3.5 h-3.5 text-green-600" />
+                ) : (
+                  <IconCopy className="w-3.5 h-3.5" />
+                )}
+              </Button>
+            </MessageAction>
+
+            {/* Edit */}
+            {isUser && messageId && onEdit && !isEditing && (
+              <MessageAction tooltip={<p>{t("edit")}</p>}>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleCopy}
+                  onClick={handleEdit}
                   className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
                 >
-                  {copied ? (
-                    <IconCheck className="w-3.5 h-3.5 text-green-600" />
-                  ) : (
-                    <IconCopy className="w-3.5 h-3.5" />
-                  )}
+                  <IconEdit className="w-3.5 h-3.5" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{copied ? t("copied") : t("copy")}</p>
-              </TooltipContent>
-            </Tooltip>
-            {showEditButton && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleEdit}
-                    className="h-6 w-6 p-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md"
-                  >
-                    <IconEdit className="w-3.5 h-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t("edit")}</p>
-                </TooltipContent>
-              </Tooltip>
+              </MessageAction>
             )}
-            {showRetryButton && (
-              <Tooltip>
-                <TooltipTrigger asChild>
+
+            {/* Retry */}
+            {isLastMessage &&
+              isUser &&
+              error &&
+              status === "error" &&
+              retry && (
+                <MessageAction tooltip={<p>{t("retry")}</p>}>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -147,15 +174,16 @@ export function ChatItem({
                   >
                     <IconRefresh className="w-3.5 h-3.5" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t("retry")}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {showRegenerateButton && (
-              <Tooltip>
-                <TooltipTrigger asChild>
+                </MessageAction>
+              )}
+
+            {/* Regenerate */}
+            {isLastMessage &&
+              !isUser &&
+              !error &&
+              status === "ready" &&
+              regenerate && (
+                <MessageAction tooltip={<p>{tArtifact("regenerate")}</p>}>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -164,91 +192,11 @@ export function ChatItem({
                   >
                     <IconReload className="w-3.5 h-3.5" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{tArtifact("regenerate")}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        </div>
-      </TooltipProvider>
-    );
-  };
-
-  // Determine if this message has an error
-  const hasError = isLastMessage && error && status === "error";
-
-  return (
-    <div
-      className={cn(
-        "group flex gap-4 text-sm py-4",
-        isUser ? "flex-row-reverse pr-1" : "pl-1",
-        isCompact && isUser && "gap-0 pr-0"
-      )}
-    >
-      {!isUser ? (
-        <Avatar
-          className={cn(
-            "mt-0.5 h-8 w-8 flex-shrink-0 shadow-[var(--shadow-xs)]",
-            // 在紧凑模式下隐藏用户头像
-            isCompact && isUser && "hidden"
-          )}
-        >
-          <AvatarFallback
-            className={cn(
-              "rounded-[var(--radius)]",
-              isUser
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-secondary-foreground"
-            )}
-          >
-            {isUser ? "U" : "AI"}
-          </AvatarFallback>
-        </Avatar>
-      ) : null}
-      <div
-        className={cn(
-          "flex-1 space-y-2 min-w-0", // 添加 min-w-0 防止内容溢出
-          isUser ? "text-right" : "text-left",
-          // 在紧凑模式下优化宽度处理
-          isCompact ? (isUser ? "max-w-full" : "max-w-full") : "max-w-[89%]"
+                </MessageAction>
+              )}
+          </MessageActions>
         )}
-      >
-        <div
-          className={cn(
-            "rounded-[var(--radius)] px-4 py-3 text-left min-w-0 transition-all duration-200", // 添加 min-w-0 和过渡动画
-            // 在紧凑模式下优化显示
-            isCompact
-              ? isUser
-                ? hasError
-                  ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 border border-red-300 dark:border-red-800 shadow-[var(--shadow-xs)] max-w-full break-words"
-                  : "inline-block bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300  max-w-full break-words"
-                : "block bg-transparent text-card-foreground w-full overflow-hidden"
-              : isUser
-              ? hasError
-                ? "inline-block bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-100 border border-red-300 dark:border-red-800 shadow-[var(--shadow-xs)] w-auto"
-                : "inline-block bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300  w-auto"
-              : "inline-block bg-transparent text-card-foreground w-full",
-            // 编辑状态的简洁样式
-            isEditing && "bg-muted/20",
-            // 添加链接样式修复
-            "[&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-2",
-            // 为用户消息中的链接使用对比色
-            isUser
-              ? "[&_a]:text-primary-foreground/90 [&_a:hover]:text-primary-foreground"
-              : "[&_a]:text-blue-600 [&_a:hover]:text-blue-800 dark:[&_a]:text-blue-400 dark:[&_a:hover]:text-blue-300"
-          )}
-        >
-          {children}
-        </div>
-        {renderActionButtons()}
-        {/* {message.createdAt && (
-                <div className="text-xs text-muted-foreground px-2 mt-2">
-                    {new Date(message.createdAt).toLocaleTimeString()}
-                </div>
-            )} */}
       </div>
-    </div>
+    </Message>
   );
 }

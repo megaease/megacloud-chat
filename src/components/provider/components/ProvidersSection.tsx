@@ -1,13 +1,13 @@
-// components/ProvidersSection.tsx
-import { useMemo } from "react";
 import {
 	CommandGroup,
 	CommandItem,
 	CommandSeparator,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { getProviderTypeInfo } from "../utils";
 import type { ApiProvider } from "@/types/api-provider";
+// components/ProvidersSection.tsx
+import { useMemo } from "react";
+import { getProviderTypeInfo } from "../utils";
 import { CommandMenuKbd, EnterKeyIcon } from "./shared";
 
 interface ProvidersSectionProps {

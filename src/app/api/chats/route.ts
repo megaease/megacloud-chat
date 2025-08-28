@@ -17,7 +17,9 @@ export async function GET(request: Request) {
 		// Get limit from query parameters (default to 50, max 100)
 		const { searchParams } = new URL(request.url);
 		const limitParam = searchParams.get("limit");
-		const limit = limitParam ? Math.min(Number.parseInt(limitParam, 10), 100) : 50;
+		const limit = limitParam
+			? Math.min(Number.parseInt(limitParam, 10), 100)
+			: 50;
 
 		const userChats = await db.query.chats.findMany({
 			where: (chats, { eq }) => eq(chats.userId, userId),
@@ -28,7 +30,7 @@ export async function GET(request: Request) {
 		return NextResponse.json({
 			chats: userChats,
 			total: userChats.length,
-			limit: limit
+			limit: limit,
 		});
 	} catch (error) {
 		console.error("Failed to get chat records:", error);

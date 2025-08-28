@@ -1,45 +1,52 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
-/**
- * Custom hook to manage MCP enabled state
- * Persists the setting to localStorage and provides functions to toggle/update the state
- */
+const MCP_ENABLED_KEY = "mcpEnabled";
+
+// 安全读取 localStorage
+function getStoredValue(): boolean {
+	const isClient = typeof window !== "undefined";
+	if (!isClient) return false;
+
+	try {
+		const value = localStorage.getItem(MCP_ENABLED_KEY);
+		return value === "true";
+	} catch {
+		return false;
+	}
+}
+
+// 安全写入 localStorage
+function setStoredValue(value: boolean): void {
+	const isClient = typeof window !== "undefined";
+	if (!isClient) return;
+
+	try {
+		localStorage.setItem(MCP_ENABLED_KEY, String(value));
+	} catch {
+		// 静默失败，不影响功能
+	}
+}
+
 export function useMcpEnabled() {
-	const [enabled, setEnabled] = useState<boolean>(false);
+	const [enabled, setEnabled] = useState<boolean>(getStoredValue);
 
-	// Load from localStorage on initial mount
+	// 状态变化时同步到 localStorage
 	useEffect(() => {
-		// Only run in browser environment
-		if (typeof window !== "undefined") {
-			const storedValue = localStorage.getItem("mcpEnabled");
-			if (storedValue !== null) {
-				setEnabled(storedValue === "true");
-			}
-		}
-	}, []);
+		setStoredValue(enabled);
+	}, [enabled]);
 
-	// Update localStorage when the value changes
-	const updateEnabled = (value: boolean) => {
+	const setMcpEnabled = (value: boolean): boolean => {
 		setEnabled(value);
-		localStorage.setItem("mcpEnabled", value.toString());
-		toast.success(`MCP ${value ? "enabled" : "disabled"}.`, {
-			description: `MCP is now ${value ? "enabled" : "disabled"}.`,
-		});
+		return value;
 	};
 
-	// Toggle function for convenience
-	const toggleEnabled = () => {
+	const toggleMcpEnabled = (): boolean => {
 		const newValue = !enabled;
-		updateEnabled(newValue);
+		setEnabled(newValue);
 		return newValue;
 	};
 
-	return {
-		mcpEnabled: enabled,
-		setMcpEnabled: updateEnabled,
-		toggleMcpEnabled: toggleEnabled,
-	};
+	return { mcpEnabled: enabled, setMcpEnabled, toggleMcpEnabled };
 }

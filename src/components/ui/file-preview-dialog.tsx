@@ -1,8 +1,8 @@
 "use client";
 
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { IconX, IconExternalLink } from "@tabler/icons-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { IconExternalLink, IconX } from "@tabler/icons-react";
 
 interface FilePreviewDialogProps {
 	isOpen: boolean;

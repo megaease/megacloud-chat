@@ -5,7 +5,9 @@ import type { ArtifactLanguage } from "@/lib/artifact-types";
  * @param content 代码内容
  * @returns 检测到的语言类型，如果无法确定则返回 undefined
  */
-export const detectLanguage = (content: string): ArtifactLanguage | undefined => {
+export const detectLanguage = (
+	content: string,
+): ArtifactLanguage | undefined => {
 	const lowerContent = content.toLowerCase().trim();
 
 	// 如果内容为空，返回 undefined
@@ -13,28 +15,42 @@ export const detectLanguage = (content: string): ArtifactLanguage | undefined =>
 		return undefined;
 	}
 
-	// HTML 检测 - 明确的 HTML 标识
+	// HTML 检测 - 明确的 HTML 标识（优先级最高）
 	if (
 		lowerContent.includes("<!doctype html") ||
 		lowerContent.includes("<html") ||
-		lowerContent.includes("<head>") ||
-		lowerContent.includes("<body>") ||
-		(lowerContent.includes("<div") && lowerContent.includes("</div>")) ||
-		(lowerContent.includes("<span") && lowerContent.includes("</span>"))
+		(lowerContent.includes("<head>") && lowerContent.includes("</head>")) ||
+		(lowerContent.includes("<body>") && lowerContent.includes("</body>")) ||
+		// 完整的 HTML 结构
+		(lowerContent.includes("<html>") && lowerContent.includes("</html>"))
 	) {
 		return "html";
 	}
 
-	// React/JSX 检测 - 明确的 React 标识
+	// React/JSX 检测 - 明确的 React 标识（中等优先级）
 	if (
 		lowerContent.includes("import react") ||
 		lowerContent.includes("from 'react'") ||
 		lowerContent.includes('from "react"') ||
 		lowerContent.includes("usestate") ||
 		lowerContent.includes("useeffect") ||
+		lowerContent.includes("useref") ||
+		lowerContent.includes("usecontext") ||
 		lowerContent.includes("jsx") ||
-		(lowerContent.includes("export default function") && lowerContent.includes("return")) ||
-		(lowerContent.includes("const") && lowerContent.includes("=>") && lowerContent.includes("return") && lowerContent.includes("<"))
+		// React 组件模式
+		(lowerContent.includes("export default function") &&
+			lowerContent.includes("return") &&
+			lowerContent.includes("<")) ||
+		(lowerContent.includes("export const") &&
+			lowerContent.includes("=>") &&
+			lowerContent.includes("return") &&
+			lowerContent.includes("<")) ||
+		// React Hooks 模式
+		(lowerContent.includes("const [") && lowerContent.includes("] = use")) ||
+		// JSX 语法特征
+		(lowerContent.includes("{") &&
+			lowerContent.includes("}") &&
+			lowerContent.includes("<"))
 	) {
 		return "react";
 	}
@@ -46,7 +62,7 @@ export const detectLanguage = (content: string): ArtifactLanguage | undefined =>
 		lowerContent.includes("if __name__") ||
 		(lowerContent.includes("import ") && !lowerContent.includes("from ")) ||
 		lowerContent.includes("elif ") ||
-		content.includes("    ") // Python 缩进特征
+		(lowerContent.includes(":") && content.includes("    ")) // Python 缩进特征
 	) {
 		return "python";
 	}
@@ -58,20 +74,26 @@ export const detectLanguage = (content: string): ArtifactLanguage | undefined =>
 		lowerContent.includes("@import") ||
 		lowerContent.includes("@keyframes") ||
 		(lowerContent.includes("color:") && lowerContent.includes("}")) ||
-		(lowerContent.includes("display:") && lowerContent.includes("}"))
+		(lowerContent.includes("display:") && lowerContent.includes("}")) ||
+		(lowerContent.includes("background:") && lowerContent.includes("}"))
 	) {
 		return "css";
 	}
 
-	// JavaScript 检测 - 明确的 JavaScript 语法（更严格的检测）
+	// JavaScript 检测 - 明确的 JavaScript 语法（排除 React 相关的）
 	if (
-		lowerContent.includes("function ") ||
-		lowerContent.includes("const ") ||
-		lowerContent.includes("let ") ||
-		lowerContent.includes("var ") ||
-		lowerContent.includes("console.log") ||
-		lowerContent.includes("=>") ||
-		(lowerContent.includes("document.") && lowerContent.includes("("))
+		(lowerContent.includes("function ") &&
+			!lowerContent.includes("export default")) ||
+		(lowerContent.includes("const ") && !lowerContent.includes("= () =>")) ||
+		(lowerContent.includes("let ") && !lowerContent.includes("= () =>")) ||
+		(lowerContent.includes("var ") && !lowerContent.includes("= () =>")) ||
+		(lowerContent.includes("console.log") && !lowerContent.includes("react")) ||
+		(lowerContent.includes("=>") &&
+			!lowerContent.includes("return") &&
+			!lowerContent.includes("<")) ||
+		(lowerContent.includes("document.") &&
+			lowerContent.includes("(") &&
+			!lowerContent.includes("react"))
 	) {
 		return "javascript";
 	}
@@ -104,11 +126,13 @@ export const getLanguage = (
  * @param language 语言类型
  * @returns 预览类型，如果 language 为 undefined 则返回 "code"
  */
-export const getPreviewType = (language: ArtifactLanguage | undefined): string => {
+export const getPreviewType = (
+	language: ArtifactLanguage | undefined,
+): string => {
 	if (!language) {
 		return "code";
 	}
-	
+
 	switch (language) {
 		case "html":
 			return "html";
@@ -128,11 +152,13 @@ export const getPreviewType = (language: ArtifactLanguage | undefined): string =
  * @param language 语言类型
  * @returns 显示名称，如果 language 为 undefined 则返回 "Code"
  */
-export const getLanguageDisplayName = (language: ArtifactLanguage | undefined): string => {
+export const getLanguageDisplayName = (
+	language: ArtifactLanguage | undefined,
+): string => {
 	if (!language) {
 		return "Code";
 	}
-	
+
 	const displayNames: Record<ArtifactLanguage, string> = {
 		html: "HTML",
 		react: "React",
@@ -148,7 +174,9 @@ export const getLanguageDisplayName = (language: ArtifactLanguage | undefined): 
  * @param language 语言类型
  * @returns 是否支持预览，如果 language 为 undefined 则返回 false
  */
-export const isPreviewSupported = (language: ArtifactLanguage | undefined): boolean => {
+export const isPreviewSupported = (
+	language: ArtifactLanguage | undefined,
+): boolean => {
 	if (!language) {
 		return false;
 	}

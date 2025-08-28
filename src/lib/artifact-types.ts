@@ -6,7 +6,7 @@ export interface UIArtifact {
 	language?: ArtifactLanguage; // Language for code artifacts
 	content: string;
 	isVisible: boolean;
-	status: "idle"  | "streaming" | "error" | "loading";
+	status: "idle" | "streaming" | "error" | "loading";
 	boundingBox: {
 		top: number;
 		left: number;
@@ -26,7 +26,7 @@ export type ArtifactLanguage =
 
 export interface DataStreamDelta {
 	type:
-		| "text-delta"
+		| "text"
 		| "code-delta"
 		| "sheet-delta"
 		| "image-delta"

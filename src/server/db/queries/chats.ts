@@ -1,34 +1,59 @@
 import "server-only";
 import { db } from "@/server/db";
 import { chatMessages, chats } from "@/server/db/schema";
-import { and, eq, or, like, desc, sql } from "drizzle-orm";
-import { generateObject, type LanguageModelV1, type Message } from "ai";
-import { z } from "zod";
 import { deepseek } from "@ai-sdk/deepseek";
+import { type LanguageModel, type UIMessage, generateObject } from "ai"; // Updated for AI SDK 5
+import { and, desc, eq, like, or, sql } from "drizzle-orm";
+import { z } from "zod";
 
 export async function generateTitle(
 	chatId: string,
-	messages: Message[],
-	modelConfig: LanguageModelV1,
+	messages: UIMessage[],
+	modelConfig: LanguageModel, // Updated type for AI SDK 5
 ) {
 	console.log("Creating new chat", chatId);
 	let title = "";
 	if (messages.length === 0) {
 		title = "New Chat";
 	} else if (messages.length === 1) {
-		title = messages[0]?.content?.substring(0, 50) || "Untitled Chat";
+		// Extract content from UI message (AI SDK 5 format)
+		const firstMessage = messages[0];
+		let content = "";
+		if (
+			firstMessage &&
+			"parts" in firstMessage &&
+			Array.isArray(firstMessage.parts)
+		) {
+			const textParts = firstMessage.parts
+				.filter((part: any) => part?.type === "text")
+				.map((part: any) => part.text)
+				.filter(Boolean);
+			content = textParts.join("");
+		}
+		title = content?.substring(0, 50) || "Untitled Chat";
 	} else {
 		const { object } = await generateObject({
-			model: modelConfig,
+			model: modelConfig as any, // TODO: Fix model type for AI SDK 5
 			schema: z.object({
 				title: z.string().min(1).max(50),
 			}),
 			system:
 				"Generate a title for a new chat,the title should be concise and relevant to the conversation.",
-			messages: messages.map((message) => ({
-				role: message.role,
-				content: message.content,
-			})),
+			messages: messages.map((message) => {
+				// Extract content from UI message (AI SDK 5 format)
+				let content = "";
+				if ("parts" in message && Array.isArray(message.parts)) {
+					const textParts = message.parts
+						.filter((part: any) => part?.type === "text")
+						.map((part: any) => part.text)
+						.filter(Boolean);
+					content = textParts.join("");
+				}
+				return {
+					role: message.role,
+					content,
+				};
+			}),
 		});
 		title = object.title;
 	}
@@ -99,7 +124,9 @@ export async function updateChatTitle({
 		// First, check if the chat exists and belongs to the user
 		const existingChat = await getChatById({ chatId, userId });
 		if (!existingChat) {
-			throw new Error("Chat not found or you don't have permission to update it");
+			throw new Error(
+				"Chat not found or you don't have permission to update it",
+			);
 		}
 
 		// Update the chat title
@@ -163,9 +190,9 @@ export async function searchChats({
 					eq(chats.userId, userId),
 					or(
 						sql`LOWER(${chats.title}) LIKE ${searchTerm}`,
-						sql`LOWER(${chatMessages.content}) LIKE ${searchTerm}`
-					)
-				)
+						sql`LOWER(${chatMessages.content}) LIKE ${searchTerm}`,
+					),
+				),
 			)
 			.orderBy(desc(chats.updatedAt), desc(chatMessages.createdAt))
 			.limit(limit * 5); // Get more results to account for multiple messages per chat
@@ -185,7 +212,10 @@ export async function searchChats({
 			}
 
 			// Add matched message if it exists and contains the search term
-			if (result.messageId && result.messageContent?.toLowerCase().includes(query.toLowerCase())) {
+			if (
+				result.messageId &&
+				result.messageContent?.toLowerCase().includes(query.toLowerCase())
+			) {
 				const chat = chatMap.get(result.chatId);
 				chat.matchedMessages.push({
 					id: result.messageId,

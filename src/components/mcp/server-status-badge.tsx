@@ -1,6 +1,6 @@
-import { IconCircle, IconLoader2 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { type ServerStatus, ServerStatusEnum } from "@/server/db/schema";
+import { IconCircle, IconLoader2 } from "@tabler/icons-react";
 
 interface ServerStatusBadgeProps {
 	status: ServerStatus;

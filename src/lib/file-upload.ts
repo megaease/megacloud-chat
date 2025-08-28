@@ -1,9 +1,9 @@
 import {
-	SUPPORTED_FILE_TYPES,
 	FILE_SIZE_LIMITS,
-	type UploadResponse,
-	type UploadError,
+	SUPPORTED_FILE_TYPES,
 	type SupportedFileType,
+	type UploadError,
+	type UploadResponse,
 } from "@/types/file-upload";
 
 const UPLOAD_ENDPOINT = "/api/files/upload";

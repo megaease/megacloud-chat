@@ -1,12 +1,12 @@
+import {
+	deleteArtifact,
+	getArtifactById,
+	getArtifactVersions,
+	updateArtifact,
+} from "@/server/db/queries/artifacts";
 // app/api/artifacts/[id]/route.ts
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import {
-	getArtifactById,
-	updateArtifact,
-	deleteArtifact,
-	getArtifactVersions,
-} from "@/server/db/queries/artifacts";
 import { z } from "zod";
 
 const updateArtifactSchema = z.object({

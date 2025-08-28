@@ -6,7 +6,10 @@ export interface ResultContent {
 export interface ToolInvocationResult {
 	isError?: boolean;
 	error?: string;
-	content?: Array<ResultContent | string> | string;
+	// Allow either plain content or structured object results (e.g., tool outputs)
+	content?: Array<ResultContent | string> | string | Record<string, unknown>;
+	// Additional fields from tool outputs (e.g., id, version, success, etc.)
+	[key: string]: unknown;
 }
 
 export interface ToolInvocation {
@@ -27,14 +30,27 @@ export interface TextPart {
 	text: string;
 }
 
+// AI SDK v5 tool parts (adaptation layer)
+export interface ToolCallPart {
+	type: "tool-call";
+	toolName: string;
+	input?: unknown; // stringified JSON or object
+}
+
+export interface ToolResultPart {
+	type: "tool-result";
+	toolName: string;
+	output?: unknown; // stringified JSON or object
+}
+
 export interface StepStartPart {
 	type: "step-start";
 }
 
 export interface ReasoningPart {
 	type: "reasoning";
-	reasoning: string;
-	details?: TextPart[];
+	text: string;
+	state?: string;
 }
 
 export interface SourcePart {
@@ -70,6 +86,8 @@ export type MessagePart =
 	| string
 	| TextPart
 	| ToolInvocationPart
+	| ToolCallPart
+	| ToolResultPart
 	| StepStartPart
 	| ReasoningPart
 	| SourcePart

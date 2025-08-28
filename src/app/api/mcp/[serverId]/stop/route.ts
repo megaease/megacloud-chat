@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
 import { getMCPConnectionManager } from "@/lib/mcp-connection-manager";
 import { updateMcpServerStatus } from "@/lib/mcp-server-action";
 import { ServerStatusEnum } from "@/server/db/schema";
+import { NextResponse } from "next/server";
 
 export async function POST(
 	request: Request,

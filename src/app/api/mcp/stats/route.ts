@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { getMCPConnectionManager } from "@/lib/mcp-connection-manager";
 import { getMcpServers } from "@/lib/mcp-server-action";
+import { NextResponse } from "next/server";
 
 export async function GET() {
 	try {

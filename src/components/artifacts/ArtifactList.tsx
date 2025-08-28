@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { ArtifactCard } from "./ArtifactCard";
-import { Button } from "@/components/ui/button";
+import { Loader } from "@/components/prompt-kit/loader";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/spinner";
-import { Grid, List, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Artifact } from "@/server/db/schema";
+import { Grid, List, RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { ArtifactCard } from "./ArtifactCard";
 
 interface ArtifactListProps {
 	artifacts: Artifact[];
@@ -30,7 +30,7 @@ export function ArtifactList({
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center py-12 w-full h-full">
-				<Spinner />
+				<Loader />
 			</div>
 		);
 	}
@@ -42,9 +42,7 @@ export function ArtifactList({
 					<Grid className="h-8 w-8 text-muted-foreground" />
 				</div>
 				<h3 className="text-lg font-medium mb-2">{t("noArtifacts")}</h3>
-				<p className="text-muted-foreground mb-4">
-					{t("noArtifactsDesc")}
-				</p>
+				<p className="text-muted-foreground mb-4">{t("noArtifactsDesc")}</p>
 				<Button onClick={onCreateArtifact}>{t("createFirst")}</Button>
 			</div>
 		);
@@ -55,7 +53,9 @@ export function ArtifactList({
 			{/* 工具栏 */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<Badge variant="secondary">{artifacts.length} {t("versions")}</Badge>
+					<Badge variant="secondary">
+						{artifacts.length} {t("versions")}
+					</Badge>
 				</div>
 				<div className="flex items-center gap-2">
 					<div className="flex items-center border rounded-md">

@@ -1,40 +1,55 @@
-# Megacloud MCP Client
+# Megacloud Chat
 
-A modern frontend application for AI chat interactions and Model Context Protocol (MCP) server management.
+A modern, feature-rich AI chat application with comprehensive Model Context Protocol (MCP) server management and artifact system support.
 
 *[查看中文版](./README.zh.md)*
 
 ## ✨ Features
 
-* **AI Chat Interface**: Engage in fluid, interactive conversations with AI models, including DeepSeek and others.
-* **Chat History**: Automatically save and easily browse past conversations for seamless continuity.
-* **MCP Server Management**:
-  * Add and configure SSE or STDIO type MCP servers
-  * Monitor server status in real-time (online, offline, error, connecting)
-  * Start/stop server operations
-  * Customize server configurations (URL, commands, environment variables, headers)
-  * Edit or delete existing servers
-* **Responsive Design**: Adapts to different devices and screen sizes for a consistent user experience.
+### 🤖 AI Chat Capabilities
+
+* **Multi-Model Support**: Seamlessly switch between multiple AI providers including OpenAI, DeepSeek, Anthropic, GLM, OpenRouter, and custom providers
+* **Real-time Streaming**: Experience smooth, real-time conversation streaming with typing indicators
+* **Chat History Management**: Automatically save and organize conversations with easy search and retrieval
+* **Reasoning Display**: View AI model reasoning processes for better understanding of responses
+* **Message Editing**: Edit and regenerate messages for improved conversation flow
+
+### 🎨 Artifact System
+
+* **Dynamic Content Creation**: AI can create and manage various types of content including code, documents, and interactive elements
+* **Version Control**: Track and manage different versions of artifacts with easy rollback capabilities
+* **Multiple Preview Types**: Support for code previews, HTML rendering, React components, and text artifacts
+* **Interactive Actions**: Copy, download, refresh, and fullscreen viewing options for artifacts
+* **Real-time Updates**: Live streaming updates for artifact creation and modification
+
+### 🔧 MCP Server Management
+
+* **Multi-Protocol Support**: Add and configure both SSE (Server-Sent Events) and STDIO type MCP servers
+* **Real-time Status Monitoring**: Track server status with visual indicators (online, offline, error, connecting)
+* **Flexible Configuration**: Customize server settings including URLs, commands, environment variables, and headers
+* **Connection Management**: Start, stop, and restart server operations with ease
+* **Server Organization**: Edit, delete, and organize multiple MCP server configurations
+
+### 🎯 Additional Features
+
+* **Provider Management**: Unified interface for managing multiple AI providers with API key and endpoint configuration
+* **Search Functionality**: Powerful search capabilities across conversations and artifacts
+* **Responsive Design**: Fully responsive interface that adapts seamlessly to desktop, tablet, and mobile devices
+* **Dark/Light Theme**: Built-in theme support with automatic system preference detection
+* **Internationalization**: Full i18n support with English and Chinese language options
+* **Code Editor**: Integrated code editor with syntax highlighting for various programming languages
+* **Tool Integration**: Support for AI tool use and function calling capabilities
 
 ## 🚀 Tech Stack
 
 * **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
 * **Language**: [TypeScript](https://www.typescriptlang.org/)
-* **UI**:
-  * [React 19](https://reactjs.org/)
-  * [Tailwind CSS 4](https://tailwindcss.com/)
-  * [shadcn/ui](https://ui.shadcn.com/) (based on Radix UI)
-* **State Management/Data Fetching**: [TanStack Query](https://tanstack.com/query/latest)
+* **UI**: [React 19](https://reactjs.org/), [Tailwind CSS 4](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/)
+* **State Management**: [TanStack Query](https://tanstack.com/query/latest)
 * **Form Handling**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
-* **Database & ORM**:
-  * PostgreSQL
-  * [Drizzle ORM](https://orm.drizzle.team/)
-* **AI Integration**:
-  * [AI SDK](https://sdk.vercel.ai/)
-  * [DeepSeek Integration](https://www.deepseek.com/)
-* **Development Tools**:
-  * [Biome](https://biomejs.dev/) (code formatting and linting)
-  * [PNPM](https://pnpm.io/) (package manager)
+* **Database**: PostgreSQL + [Drizzle ORM](https://orm.drizzle.team/)
+* **AI Integration**: [AI SDK](https://sdk.vercel.ai/), multiple providers support
+* **Development Tools**: [Biome](https://biomejs.dev/), [PNPM](https://pnpm.io/)
 
 ## 🛠️ Local Development
 
@@ -42,7 +57,7 @@ A modern frontend application for AI chat interactions and Model Context Protoco
 
     ```bash
     git clone <your-repository-url>
-    cd megacloud-mcp-client
+    cd megacloud-chat
     ```
 
 2. **Install dependencies**:
@@ -101,15 +116,6 @@ Multiple deployment options are supported:
 * **Vercel**: Recommended for production environments. [Deployment guide](https://create.t3.gg/en/deployment/vercel)
 * **Netlify**: Offers convenient deployment similar to Vercel. [Deployment guide](https://create.t3.gg/en/deployment/netlify)
 * **Docker**: Suitable for self-hosting scenarios. [Containerization guide](https://create.t3.gg/en/deployment/docker)
-
-## 📝 Development Notes
-
-This project uses the T3 Stack ecosystem and follows modern React and Next.js best practices. When developing, ensure that:
-
-1. Database operations are only performed in server components
-2. TanStack Query is used for client-side data management
-3. Environment variables follow the correct pattern (refer to `src/env.js`)
-4. Type-safe development practices are followed
 
 ## 🤝 Contributing
 

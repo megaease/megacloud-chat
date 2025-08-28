@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { IconSettings } from "@tabler/icons-react";
 import { useApiProvider } from "@/context/api-provider-context";
+import { IconSettings } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
 
 export function ApiProviderSettingsButton() {
 	const t = useTranslations("Settings");

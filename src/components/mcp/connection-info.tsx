@@ -1,8 +1,8 @@
+import { Badge } from "@/components/ui/badge";
 import {
 	type Type as ConnectionType,
 	TypeEnum as ConnectionTypeEnum,
 } from "@/server/db/schema";
-import { Badge } from "@/components/ui/badge";
 
 interface ConnectionInfoProps {
 	connectionType: ConnectionType;

@@ -1,8 +1,15 @@
-import { openai, createOpenAI } from "@ai-sdk/openai";
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createAnthropic } from "@ai-sdk/anthropic";
-export type ProviderType = "openai" | "deepseek" | "openrouter" | "anthropic" | "custom";
+import { createDeepSeek } from "@ai-sdk/deepseek";
+import { createOpenAI, openai } from "@ai-sdk/openai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { createZhipu } from "zhipu-ai-provider";
+export type ProviderType =
+	| "openai"
+	| "deepseek"
+	| "openrouter"
+	| "anthropic"
+	| "glm"
+	| "custom";
 
 interface ProviderConfig {
 	apiKey?: string;
@@ -33,7 +40,6 @@ export function createAIModelConfig(
 			const customOpenAI = createOpenAI({
 				baseURL: baseUrl || "https://api.openai.com/v1",
 				apiKey: apiKey,
-				compatibility: "strict",
 			});
 			return customOpenAI(modelName);
 		}
@@ -53,7 +59,6 @@ export function createAIModelConfig(
 				const compatibleAI = createOpenAI({
 					baseURL: baseUrl,
 					apiKey: apiKey || "",
-					compatibility: "compatible",
 				});
 				return compatibleAI(modelName);
 			}
@@ -70,7 +75,7 @@ export function createAIModelConfig(
 				apiKey: apiKey || "",
 				baseURL: baseUrl || "https://openrouter.ai/api/v1",
 				extraBody: {
-					reasoning: {
+					reasoningText: {
 						max_tokens: 10,
 					},
 				},
@@ -78,19 +83,26 @@ export function createAIModelConfig(
 			return openRouter(modelName || "openai/gpt-4o-mini"); // 修正模型名称
 		}
 
+		case "glm": {
+			console.log("Creating AI model for provider:", "glm");
+			// deepseek provider can handle GLM models
+			const glmAI = createDeepSeek({
+				apiKey: apiKey || "",
+				baseURL: baseUrl || "https://open.bigmodel.cn/api/paas/v4",
+			});
+			return glmAI(modelName || "glm-4.5-air");
+		}
+
 		case "custom": {
 			const compatibleAI = createOpenAI({
 				baseURL: baseUrl || "https://api.openai.com/v1",
 				apiKey: apiKey || "",
-				compatibility: "compatible", // 使用 compatible 模式处理不严格的响应格式
 			});
 			return compatibleAI(modelName);
 		}
 
 		default: {
-			return openai(modelName || "gpt-4-turbo", {
-				structuredOutputs: true,
-			});
+			return openai(modelName || "gpt-4-turbo");
 		}
 	}
 }
@@ -109,11 +121,23 @@ export function detectAndCreateAIModel(config: {
 	const { apiKey, modelName, baseUrl, providerType } = config;
 
 	if (providerType) {
+		// Use provider-specific default model names
+		let defaultModel = "gpt-4-turbo"; // Default for OpenAI
+		if (providerType === "deepseek") {
+			defaultModel = "deepseek-chat";
+		} else if (providerType === "anthropic") {
+			defaultModel = "claude-3-5-sonnet-20241022";
+		} else if (providerType === "openrouter") {
+			defaultModel = "openai/gpt-4o-mini";
+		} else if (providerType === "glm") {
+			defaultModel = "glm-4.5-air";
+		}
+
 		return {
 			model: createAIModelConfig(providerType as ProviderType, {
 				apiKey,
 				baseUrl,
-				modelName: modelName || "gpt-4-turbo",
+				modelName: modelName || defaultModel,
 			}),
 			detectedProvider: providerType,
 		};
@@ -126,6 +150,14 @@ export function detectAndCreateAIModel(config: {
 			detectedProvider = "deepseek";
 		} else if (baseUrl.includes("anthropic") || modelName?.includes("claude")) {
 			detectedProvider = "anthropic";
+		} else if (baseUrl.includes("openrouter")) {
+			detectedProvider = "openrouter";
+		} else if (
+			baseUrl.includes("bigmodel") ||
+			baseUrl.includes("glm") ||
+			modelName?.includes("glm")
+		) {
+			detectedProvider = "glm";
 		} else if (!isOpenAI(baseUrl)) {
 			detectedProvider = "custom";
 		}
@@ -135,14 +167,30 @@ export function detectAndCreateAIModel(config: {
 			detectedProvider = "deepseek";
 		} else if (modelName.includes("claude")) {
 			detectedProvider = "anthropic";
+		} else if (modelName.includes("openrouter")) {
+			detectedProvider = "openrouter";
+		} else if (modelName.includes("glm")) {
+			detectedProvider = "glm";
 		}
+	}
+
+	// Use provider-specific default model names for auto-detected providers
+	let defaultModel = "gpt-4-turbo"; // Default for OpenAI
+	if (detectedProvider === "deepseek") {
+		defaultModel = "deepseek-chat";
+	} else if (detectedProvider === "anthropic") {
+		defaultModel = "claude-3-5-sonnet-20241022";
+	} else if (detectedProvider === "openrouter") {
+		defaultModel = "openai/gpt-4o-mini";
+	} else if (detectedProvider === "glm") {
+		defaultModel = "glm-4.5-air";
 	}
 
 	return {
 		model: createAIModelConfig(detectedProvider, {
 			apiKey,
 			baseUrl,
-			modelName: modelName || "gpt-4-turbo",
+			modelName: modelName || defaultModel,
 		}),
 		detectedProvider,
 	};
@@ -153,6 +201,7 @@ const providerUrlMapping: Record<ProviderType, string> = {
 	deepseek: "https://api.deepseek.com",
 	openrouter: "https://openrouter.ai/api/v1",
 	anthropic: "https://api.anthropic.com",
+	glm: "https://open.bigmodel.cn/api/paas/v4",
 	custom: "https://api.openai.com/v1",
 };
 

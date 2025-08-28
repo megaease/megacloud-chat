@@ -1,8 +1,8 @@
 // 服务器端 MCP 连接管理器
 // 此文件只能在服务器端使用，不能在客户端导入
 import "server-only";
+import { type McpServer, TypeEnum } from "@/server/db/schema";
 import type { ToolSet } from "ai";
-import { TypeEnum, type McpServer } from "@/server/db/schema";
 
 export type MCPClient = {
 	tools: () => Promise<ToolSet>;
@@ -29,6 +29,8 @@ class MCPConnectionManager {
 	private statusListeners = new Set<
 		(serverId: number, status: ConnectionStatus) => void
 	>();
+	private hasInitialized = false;
+	private initializing: Promise<void> | null = null;
 
 	/**
 	 * 简化的命令验证 - 只检查命令是否存在，不实际运行
@@ -45,7 +47,18 @@ class MCPConnectionManager {
 			console.log(`Validating command availability: ${command}`);
 
 			// 对于常见的包管理器，直接返回成功，让实际连接时处理
-			const trustedCommands = ["npx", "uvx", "pnpx", "yarn", "bun", "deno", "node", "python", "python3", "docker"];
+			const trustedCommands = [
+				"npx",
+				"uvx",
+				"pnpx",
+				"yarn",
+				"bun",
+				"deno",
+				"node",
+				"python",
+				"python3",
+				"docker",
+			];
 			if (trustedCommands.includes(command)) {
 				console.log(`Trusted command ${command}, skipping validation`);
 				return { success: true };
@@ -65,7 +78,9 @@ class MCPConnectionManager {
 						hasResolved = true;
 						checkProcess.kill();
 						// 即使检查失败，也允许尝试连接
-						console.log(`Command check timeout for ${command}, allowing connection attempt`);
+						console.log(
+							`Command check timeout for ${command}, allowing connection attempt`,
+						);
 						resolve({ success: true });
 					}
 				}, 3000);
@@ -78,7 +93,9 @@ class MCPConnectionManager {
 							resolve({ success: true });
 						} else {
 							// 命令不存在，但仍然允许尝试连接
-							console.log(`Command ${command} not found in PATH, but allowing connection attempt`);
+							console.log(
+								`Command ${command} not found in PATH, but allowing connection attempt`,
+							);
 							resolve({ success: true });
 						}
 					}
@@ -89,7 +106,9 @@ class MCPConnectionManager {
 					if (!hasResolved) {
 						hasResolved = true;
 						// 检查失败，但仍然允许尝试连接
-						console.log(`Command check failed for ${command}, but allowing connection attempt`);
+						console.log(
+							`Command check failed for ${command}, but allowing connection attempt`,
+						);
 						resolve({ success: true });
 					}
 				});
@@ -269,7 +288,14 @@ class MCPConnectionManager {
 
 				for (const [toolName, toolImpl] of Object.entries(serverTools)) {
 					const prefixedToolName = `${cleanServerName}_${toolName}`;
+					// Always register the prefixed tool name to avoid collisions
 					allTools[prefixedToolName] = toolImpl;
+
+					// Also provide a plain alias (original name) if it's not already taken
+					// This improves LLM usability (e.g., it can call 'getTime').
+					if (!(toolName in allTools)) {
+						allTools[toolName] = toolImpl;
+					}
 				}
 			} catch (error) {
 				console.error(
@@ -438,50 +464,65 @@ class MCPConnectionManager {
 	 * Called at app startup to auto-connect servers marked as ONLINE in database
 	 */
 	async initializeActiveServers(): Promise<void> {
-		try {
-			// 动态导入以避免循环依赖
-			const { getActiveMcpServers, updateMcpServerStatus } = await import(
-				"./mcp-server-action"
-			);
-			const { ServerStatusEnum } = await import("@/server/db/schema");
+		// Idempotent initialization: run only once per server process
+		if (this.hasInitialized) {
+			return;
+		}
+		if (this.initializing) {
+			return this.initializing;
+		}
 
-			const result = await getActiveMcpServers();
-			if (!result.success || !result.data) {
-				console.log("No active MCP servers found in database");
-				return;
-			}
+		this.initializing = (async () => {
+			try {
+				// 动态导入以避免循环依赖
+				const { getActiveMcpServers, updateMcpServerStatus } = await import(
+					"./mcp-server-action"
+				);
+				const { ServerStatusEnum } = await import("@/server/db/schema");
 
-			const activeServers = result.data;
-			console.log(
-				`Found ${activeServers.length} active MCP servers, initializing connections...`,
-			);
+				const result = await getActiveMcpServers();
+				if (!result.success || !result.data) {
+					console.log("No active MCP servers found in database");
+					return;
+				}
 
-			// 并行启动所有活跃的服务器
-			const startPromises = activeServers.map(async (server) => {
-				try {
-					console.log(`Starting MCP server: ${server.name}`);
-					const startResult = await this.startServer(server);
+				const activeServers = result.data;
+				console.log(
+					`Found ${activeServers.length} active MCP servers, initializing connections...`,
+				);
 
-					if (!startResult.success) {
-						console.error(
-							`Failed to start MCP server ${server.name}:`,
-							startResult.error,
-						);
+				// 并行启动所有活跃的服务器
+				const startPromises = activeServers.map(async (server) => {
+					try {
+						console.log(`Starting MCP server: ${server.name}`);
+						const startResult = await this.startServer(server);
+
+						if (!startResult.success) {
+							console.error(
+								`Failed to start MCP server ${server.name}:`,
+								startResult.error,
+							);
+							// Update database status to ERROR
+							await updateMcpServerStatus(server.id, ServerStatusEnum.ERROR);
+						}
+					} catch (error) {
+						console.error(`Error starting MCP server ${server.name}:`, error);
 						// Update database status to ERROR
 						await updateMcpServerStatus(server.id, ServerStatusEnum.ERROR);
 					}
-				} catch (error) {
-					console.error(`Error starting MCP server ${server.name}:`, error);
-					// Update database status to ERROR
-					await updateMcpServerStatus(server.id, ServerStatusEnum.ERROR);
-				}
-			});
+				});
 
-			await Promise.allSettled(startPromises);
-			console.log("MCP servers initialization completed");
-		} catch (error) {
-			console.error("Error during MCP servers initialization:", error);
-		}
+				await Promise.allSettled(startPromises);
+				console.log("MCP servers initialization completed");
+				this.hasInitialized = true;
+			} catch (error) {
+				console.error("Error during MCP servers initialization:", error);
+			} finally {
+				this.initializing = null;
+			}
+		})();
+
+		return this.initializing;
 	}
 
 	/**

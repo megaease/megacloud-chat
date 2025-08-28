@@ -1,9 +1,9 @@
 // components/artifact/TextArtifact.tsx
 "use client";
 
-import { motion } from "framer-motion";
+import { Markdown } from "@/components/prompt-kit/markdown";
 import type { UIArtifact } from "@/lib/artifact-types";
-import { Markdown } from "../markdown";
+import { motion } from "framer-motion";
 
 interface TextArtifactProps {
   content: string;
@@ -38,7 +38,9 @@ export function TextArtifact({
               transition={{ delay: 0.1, duration: 0.3, ease: "easeOut" }}
               className="p-6 relative bg-background"
             >
-              <Markdown content={content} />
+              <Markdown className="prose prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-h5:text-sm prose-h6:text-xs">
+                {content}
+              </Markdown>
             </motion.div>
           </div>
         </motion.div>

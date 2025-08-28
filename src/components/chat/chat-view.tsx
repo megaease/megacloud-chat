@@ -1,17 +1,55 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import {
+  ChatContainerContent,
+  ChatContainerRoot,
+  ChatContainerScrollAnchor,
+} from "@/components/prompt-kit/chat-container";
+import { Loader } from "@/components/prompt-kit/loader";
+import { ScrollButton } from "@/components/prompt-kit/scroll-button";
 import { cn } from "@/lib/utils";
-import { ChatMessage } from "./chat-message";
-import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
-import type { Message } from "@ai-sdk/react";
+import type { UIMessage } from "ai";
+import { useTranslations } from "next-intl";
+import { useRef, useState } from "react";
 import { ChatInput } from "./chat-input";
+import { ChatMessage } from "./chat-message";
 import { EditConfirmationDialog } from "./edit-confirmation-dialog";
-import { Thinking } from "./thinking";
+import { ChatItem } from "./chat-item";
 // import { Artifact } from "../artifact/Artifact"; // 已删除
+
+// Helper function to check if a message has content
+function hasMessageContent(message: UIMessage): boolean {
+  // Check if message has parts with text content
+  if (message.parts && Array.isArray(message.parts)) {
+    const textParts = message.parts
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .filter(Boolean);
+    return (
+      textParts.length > 0 && textParts.some((text) => text.trim().length > 0)
+    );
+  }
+
+  // Check legacy content field
+  if ((message as unknown as Record<string, unknown>).content) {
+    const content = (message as unknown as Record<string, unknown>).content;
+    if (typeof content === "string") {
+      return content.trim().length > 0;
+    }
+    try {
+      const jsonString = JSON.stringify(content);
+      return (
+        jsonString.trim().length > 0 &&
+        jsonString !== "{}" &&
+        jsonString !== "[]"
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
 
 // Define the Model interface
 interface Model {
@@ -20,7 +58,7 @@ interface Model {
 }
 
 interface ChatViewProps {
-  messages: Message[];
+  messages: UIMessage[];
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (
@@ -69,6 +107,7 @@ export function ChatView({
   editingMessageId,
 }: ChatViewProps) {
   const tCommon = useTranslations("Common");
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Edit state management (now handled by parent component)
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
@@ -123,14 +162,7 @@ export function ChatView({
     setEditedMessageData(null);
   };
 
-  // Use the enhanced scroll-to-bottom hook
-  const { scrollAreaRef, endRef, isAtBottom, scrollToBottom } =
-    useScrollToBottom({
-      behavior: "smooth",
-      bottomThreshold: 50,
-      scrollOnMount: true,
-      forceScrollOnNewContent: false,
-    });
+  // Prompt Kit chat container manages scroll stickiness; no custom hook needed
 
   return (
     <div className={cn("flex flex-col h-full transition-all relative")}>
@@ -139,13 +171,15 @@ export function ChatView({
           <p className="text-primary">Start a conversation</p>
         </div>
       ) : (
-        <div className="flex-1 relative min-h-0">
-          <div
-            className="h-full overflow-y-auto px-2 sm:px-4 space-y-4"
-            ref={scrollAreaRef}
-            id="scrollable-chat"
+        <div
+          className="flex-1 relative min-h-0  overflow-auto"
+          ref={scrollContainerRef}
+        >
+          <ChatContainerRoot
+            className="h-full px-2 sm:px-4"
+            data-scroll-container
           >
-            <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 py-4">
+            <ChatContainerContent className="w/full max-w-4xl mx-auto flex flex-col gap-2 py-4">
               {messages.map((message, index) => {
                 const isLastMessage = index === messages.length - 1;
                 const isEditing = editingMessageId === message.id;
@@ -153,7 +187,10 @@ export function ChatView({
                   <ChatMessage
                     key={message.id}
                     message={message}
-                    isLoading={status === "streaming" && isLastMessage}
+                    isLoading={
+                      (status === "streaming" || status === "submitted") &&
+                      isLastMessage
+                    }
                     isLastMessage={isLastMessage}
                     error={error}
                     status={status}
@@ -166,31 +203,38 @@ export function ChatView({
                   />
                 );
               })}
-            </div>
-            {/* Invisible element to mark the bottom for scrolling */}
-            <div ref={endRef} />
-          </div>
 
-          {/* 滚动到底部按钮 */}
-          {!isAtBottom && (
-            <div className="absolute bottom-4 right-4 z-10">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={scrollToBottom}
-                className="rounded-full shadow-lg bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background/90"
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
+              {/* Show submitted loading for AI message when there's no content yet */}
+              {(() => {
+                const lastMessage =
+                  messages.length > 0 ? messages[messages.length - 1] : null;
+                return status === "submitted" &&
+                  lastMessage &&
+                  !hasMessageContent(lastMessage) ? (
+                  <ChatItem isUser={false}>
+                    {/* Loading content */}
+
+                    <div className="flex items-center justify-center pt-1">
+                      <Loader
+                        variant="text-shimmer"
+                        text="Thinking..."
+                        size="lg"
+                      />
+                    </div>
+                  </ChatItem>
+                ) : null;
+              })()}
+
+              <ChatContainerScrollAnchor />
+            </ChatContainerContent>
+
+            <div className="absolute right-6 bottom-4 z-50">
+              <ScrollButton />
             </div>
-          )}
+          </ChatContainerRoot>
         </div>
       )}
-      {status === "submitted" && (
-        <div className="flex-shrink-0 relative">
-          <Thinking />
-        </div>
-      )}
+
       {/* Chat input - 固定在底部 */}
       <div className="flex-shrink-0">
         <ChatInput

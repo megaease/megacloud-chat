@@ -1,13 +1,16 @@
 // components/artifact/ArtifactContent.tsx
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { useArtifact } from "@/context/artifact-provider-context";
+import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { TextArtifact } from "./TextArtifact";
-import { CodePreview } from "./CodePreview";
-import { TablePreview } from "./previews";
-import { VisualPreview } from "./previews/VisualPreview";
-import { useArtifact } from "@/context/artifact-provider-context";
+import { TablePreview } from "./new-preview/TablePreview";
+import { NewCodePreview } from "./new-preview/NewCodePreview";
+import { NewImagePreview } from "./new-preview/NewImagePreview";
+import { PreviewPluginProvider } from "./new-preview/PreviewPluginRegistry";
+import { PreviewProvider } from "./new-preview/PreviewContext";
+import { ExecutionProvider } from "./new-preview/ExecutionContext";
 
 export function ArtifactContent() {
   const { artifact } = useArtifact();
@@ -122,7 +125,13 @@ export function ArtifactContent() {
     }
 
     switch (displayData.kind) {
-      case "code":
+      case "code": {
+        // Use new CodePreview implementation for all languages including Python
+        const canExecute =
+          displayData.language === "javascript" ||
+          displayData.language === "python";
+        const canPreview =
+          displayData.language === "html" || displayData.language === "react";
         return (
           <motion.div
             className="h-full"
@@ -130,15 +139,24 @@ export function ArtifactContent() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            {" "}
-            <CodePreview
-              content={displayData.content}
-              language={displayData.language}
-              className="h-full"
-              status={displayStatus}
-            />
+            <PreviewPluginProvider>
+              <PreviewProvider>
+                <ExecutionProvider>
+                  <NewCodePreview
+                    content={displayData.content}
+                    language={displayData.language || "javascript"}
+                    className="h-full"
+                    initialViewMode="code"
+                    canExecute={canExecute}
+                    canPreview={canPreview}
+                    showViewModeSelector={canPreview}
+                  />
+                </ExecutionProvider>
+              </PreviewProvider>
+            </PreviewPluginProvider>
           </motion.div>
         );
+      }
 
       case "text":
         return (
@@ -164,11 +182,15 @@ export function ArtifactContent() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <TablePreview
-              content={displayData.content}
-              status={displayStatus}
-              showToolbar={true}
-            />
+            <PreviewPluginProvider>
+              <PreviewProvider>
+                <TablePreview
+                  content={displayData.content}
+                  status={displayStatus}
+                  showToolbar={true}
+                />
+              </PreviewProvider>
+            </PreviewPluginProvider>
           </motion.div>
         );
 
@@ -180,13 +202,16 @@ export function ArtifactContent() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            {" "}
-            <VisualPreview
+            <NewImagePreview
               content={displayData.content}
               title={displayData.title}
               className="h-full"
               status={displayStatus}
               showToolbar={true}
+              canZoom={true}
+              canRotate={true}
+              canFullscreen={true}
+              initialViewMode="preview"
             />
           </motion.div>
         );

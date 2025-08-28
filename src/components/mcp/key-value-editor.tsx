@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { IconPlus, IconX, IconArrowRight } from "@tabler/icons-react";
-import { cn } from "@/lib/utils";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { IconArrowRight, IconPlus, IconX } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 interface KeyValueEditorProps {
 	value: Record<string, string>;

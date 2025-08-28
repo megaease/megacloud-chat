@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { apiProviders } from "@/server/db/schema";
-import { eq, and, ne } from "drizzle-orm";
 import type { UpdateApiProviderData } from "@/types/api-provider";
+import { and, eq, ne } from "drizzle-orm";
+import { NextResponse } from "next/server";
 
 export async function PUT(
 	request: Request,

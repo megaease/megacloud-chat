@@ -1,20 +1,20 @@
 // context/artifact-provider-context.tsx
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  type ReactNode,
-} from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import type { ArtifactVersion } from "@/hooks/use-artifact-versions";
 import type {
-  UIArtifact,
   ArtifactKind,
   ArtifactLanguage,
+  UIArtifact,
 } from "@/lib/artifact-types";
-import type { ArtifactVersion } from "@/hooks/use-artifact-versions";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 
 interface ArtifactContextType {
   // 当前 artifact 状态
@@ -40,6 +40,10 @@ interface ArtifactContextType {
   }) => void;
   hideArtifact: () => void;
 
+  // 用户意图标记
+  userIntentToHide: boolean;
+  setUserIntentToHide: (intent: boolean) => void;
+
   // 重置 - 保留，因为是全局状态清理
   reset: () => void;
 }
@@ -59,6 +63,7 @@ const defaultArtifact: UIArtifact = {
 
 export function ArtifactProvider({ children }: { children: ReactNode }) {
   const [artifact, setArtifactInternal] = useState<UIArtifact>(defaultArtifact);
+  const [userIntentToHide, setUserIntentToHide] = useState(false);
   const queryClient = useQueryClient();
 
   // 包装 setArtifact 以添加调试信息
@@ -118,7 +123,7 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
     [queryClient]
   );
 
-  // 加载版本并显示指定版本（可选）
+  // 加载版本并显示指定版本（可选）- 简化版本，DataStreamHandler 会处理状态
   const loadAndShowArtifact = useCallback(
     async (
       documentId: string,
@@ -131,30 +136,13 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
       versionNumber?: number
     ) => {
       try {
-        // 🛡️ 防止 streaming 时的数据冲突
-        const currentArtifact = artifact;
-        if (currentArtifact.status === "streaming") {
-          console.warn("Cannot switch version while streaming content");
-          // 只更新显示状态，不加载新版本
-          setArtifact((prev) => ({
-            ...prev,
-            isVisible: true,
-            boundingBox: boundingBox || prev.boundingBox,
-          }));
-          return;
-        }
-
-        // 优化：只有在没有现有内容时才显示加载状态，避免闪烁
-        setArtifact((prev) => {
-          const hasExistingContent = prev.content && prev.content.trim() !== "";
-          return {
-            ...prev,
-            isVisible: true,
-            boundingBox: boundingBox || prev.boundingBox,
-            // 只有在没有现有内容时才设置 loading 状态
-            status: hasExistingContent ? prev.status : "loading",
-          };
-        });
+        // 简化：直接设置加载状态，DataStreamHandler 会处理后续状态
+        setArtifact((prev) => ({
+          ...prev,
+          isVisible: true,
+          boundingBox: boundingBox || prev.boundingBox,
+          status: "loading",
+        }));
 
         // 加载版本数据，如果没有指定版本则强制刷新获取最新数据
         const forceRefresh = versionNumber === undefined;
@@ -226,6 +214,7 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
       width: number;
       height: number;
     }) => {
+      setUserIntentToHide(false);
       setArtifact((prev) => ({
         ...prev,
         isVisible: true,
@@ -235,8 +224,9 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
     [setArtifact]
   );
 
-  // 隐藏 artifact
+  // 隐藏 artifact - DataStreamHandler 会自动处理状态，无需额外逻辑
   const hideArtifact = useCallback(() => {
+    setUserIntentToHide(true);
     setArtifact((prev) => ({
       ...prev,
       isVisible: false,
@@ -245,6 +235,7 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
 
   // 重置 artifact
   const reset = useCallback(() => {
+    setUserIntentToHide(false);
     setArtifact(defaultArtifact);
   }, [setArtifact]);
 
@@ -255,6 +246,8 @@ export function ArtifactProvider({ children }: { children: ReactNode }) {
     switchToVersion,
     showArtifact,
     hideArtifact,
+    userIntentToHide,
+    setUserIntentToHide,
     reset,
   };
 

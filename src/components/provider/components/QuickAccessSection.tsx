@@ -1,7 +1,7 @@
 // components/QuickAccessSection.tsx
 import { CommandGroup, CommandItem } from "@/components/ui/command";
-import { IconWorld, IconCpu, IconBolt } from "@tabler/icons-react";
 import type { ApiProvider } from "@/types/api-provider";
+import { IconBolt, IconCpu, IconWorld } from "@tabler/icons-react";
 import { CommandMenuKbd, EnterKeyIcon } from "./shared";
 
 interface QuickAccessSectionProps {

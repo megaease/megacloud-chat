@@ -1,29 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader } from "@/components/prompt-kit/loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/spinner";
-import {
-	FileText,
-	Code,
-	Table,
-	Image,
-	ArrowLeft,
-	Edit,
-	Copy,
-	Trash2,
-	ExternalLink,
-	Clock,
-	User,
-	Tag,
-	Globe,
-	Lock,
-} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Artifact } from "@/server/db/schema";
+import {
+	ArrowLeft,
+	Clock,
+	Code,
+	Copy,
+	Edit,
+	ExternalLink,
+	FileText,
+	Globe,
+	Image,
+	Lock,
+	Table,
+	Tag,
+	Trash2,
+	User,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface ArtifactDetailProps {
 	artifactId: string;
@@ -80,7 +80,7 @@ export function ArtifactDetail({ artifactId }: ArtifactDetailProps) {
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center py-12">
-				<Spinner />
+				<Loader />
 			</div>
 		);
 	}

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import AppProviders from "@/components/app-providers";
 import { ReactScanProvider } from "@/components/react-scan-provider";
+import { ChatFlowProvider } from "@/context/chat-flow-context";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -56,7 +57,9 @@ export default async function RootLayout({
 				<ReactScanProvider>
 					<div className="flex h-dvh w-full">
 						<NextIntlClientProvider messages={messages}>
-							<AppProviders>{children}</AppProviders>
+							<ChatFlowProvider>
+								<AppProviders>{children}</AppProviders>
+							</ChatFlowProvider>
 						</NextIntlClientProvider>
 					</div>
 				</ReactScanProvider>

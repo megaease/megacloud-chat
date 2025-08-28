@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -10,13 +9,14 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import type { McpServer } from "@/server/db/schema";
 import {
-	IconLoader2,
+	IconAlertCircle,
 	IconCircleCheck,
 	IconCircleX,
-	IconAlertCircle,
+	IconLoader2,
 } from "@tabler/icons-react";
-import type { McpServer } from "@/server/db/schema";
+import { useState } from "react";
 
 import { toast } from "sonner";
 interface MCPConnectionTestProps {

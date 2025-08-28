@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -13,6 +11,8 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 interface DeleteConfirmDialogProps {
 	open: boolean;
@@ -82,7 +82,11 @@ export function useDeleteConfirm() {
 	const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 	const [itemInfo, setItemInfo] = useState({ name: "", type: "Artifact" });
 
-	const confirm = (action: () => void, itemName: string, itemType = "Artifact") => {
+	const confirm = (
+		action: () => void,
+		itemName: string,
+		itemType = "Artifact",
+	) => {
 		setPendingAction(() => action);
 		setItemInfo({ name: itemName, type: itemType });
 		setIsOpen(true);

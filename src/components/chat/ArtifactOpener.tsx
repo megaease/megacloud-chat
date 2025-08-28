@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useArtifact } from "@/context/artifact-provider-context";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 interface ArtifactOpenerProps {
 	artifactId: string | null;
@@ -18,15 +18,15 @@ export function ArtifactOpener({ artifactId }: ArtifactOpenerProps) {
 			const timeout = setTimeout(async () => {
 				try {
 					await loadAndShowArtifact(artifactId);
-					
+
 					// 清除URL参数，避免刷新时重复打开
-					if (typeof window !== 'undefined') {
+					if (typeof window !== "undefined") {
 						const url = new URL(window.location.href);
-						url.searchParams.delete('openArtifact');
+						url.searchParams.delete("openArtifact");
 						router.replace(url.pathname + url.search, { scroll: false });
 					}
 				} catch (error) {
-					console.error('Failed to open artifact:', error);
+					console.error("Failed to open artifact:", error);
 				}
 			}, 100);
 

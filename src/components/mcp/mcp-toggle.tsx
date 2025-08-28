@@ -1,45 +1,45 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import {
-	IconServer,
-	IconPower,
-	IconCircleOff,
-	IconLoader2,
-	IconPlus,
-	IconEdit,
-	IconTrash,
-} from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+	deleteMcpServer,
 	getMcpServers,
 	updateMcpServerStatus,
-	deleteMcpServer,
 } from "@/lib/mcp-server-action";
-import { AddServerDialog } from "./add-server-dialog";
-import { EditServerDialog } from "./edit-server-dialog";
+import { cn } from "@/lib/utils";
 import {
 	type McpServer,
-	ServerStatusEnum,
 	type ServerStatus,
+	ServerStatusEnum,
 } from "@/server/db/schema";
+import {
+	IconCircleOff,
+	IconEdit,
+	IconLoader2,
+	IconPlus,
+	IconPower,
+	IconServer,
+	IconTrash,
+} from "@tabler/icons-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { AddServerDialog } from "./add-server-dialog";
+import { EditServerDialog } from "./edit-server-dialog";
 
 interface MCPToggleProps {
 	mcpEnabled: boolean;
@@ -61,6 +61,10 @@ export function MCPToggle({
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [editingServerId, setEditingServerId] = useState<number | null>(null);
 	const queryClient = useQueryClient();
+
+	// Avoid hydration mismatches by gating client-only visuals until mounted
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => setMounted(true), []);
 
 	// Fetch servers
 	const { data: serversResult, refetch } = useQuery({
@@ -231,7 +235,7 @@ export function MCPToggle({
 										<IconServer
 											className={cn(
 												"h-4 w-4 transition-colors",
-												mcpEnabled
+												mounted && mcpEnabled
 													? "text-gray-700 dark:text-gray-200"
 													: "text-gray-400 dark:text-gray-500",
 											)}
@@ -242,7 +246,7 @@ export function MCPToggle({
 									</div>
 
 									{/* Badge positioned outside the text area */}
-									{onlineServers.length > 0 && mcpEnabled && (
+									{mounted && onlineServers.length > 0 && mcpEnabled && (
 										<div className="absolute -top-2 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-gradient-to-r from-gray-600 to-slate-600 dark:from-gray-300 dark:to-slate-300 text-white dark:text-gray-800 text-xs font-bold flex items-center justify-center border-2 border-white dark:border-gray-800 shadow-lg z-10">
 											{onlineServers.length > 9 ? "9+" : onlineServers.length}
 										</div>
@@ -257,7 +261,11 @@ export function MCPToggle({
 							<div className="space-y-1">
 								<p className="font-medium ">
 									{mcpEnabled
-										? `MCP System: ${onlineServers.length > 0 ? `${onlineServers.length} servers active` : "Ready for servers"}`
+										? `MCP System: ${
+												onlineServers.length > 0
+													? `${onlineServers.length} servers active`
+													: "Ready for servers"
+											}`
 										: "MCP System: External tools disabled"}
 								</p>
 								<p className="text-xs ">
@@ -324,7 +332,9 @@ export function MCPToggle({
 								</div>
 								<p className="text-green-600/80 dark:text-green-400/80">
 									{onlineServers.length > 0
-										? `AI can now access ${onlineServers.length} MCP server${onlineServers.length !== 1 ? "s" : ""}`
+										? `AI can now access ${onlineServers.length} MCP server${
+												onlineServers.length !== 1 ? "s" : ""
+											}`
 										: "AI ready for MCP servers - configure servers below"}
 								</p>
 							</div>

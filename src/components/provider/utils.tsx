@@ -1,4 +1,11 @@
-import { IconCpu, IconGlobe, IconSettings, IconShield, IconBolt, IconBrain } from "@tabler/icons-react";
+import {
+	IconBolt,
+	IconBrain,
+	IconCpu,
+	IconGlobe,
+	IconSettings,
+	IconShield,
+} from "@tabler/icons-react";
 
 export const getProviderTypeInfo = (type: string) => {
 	const types: Record<

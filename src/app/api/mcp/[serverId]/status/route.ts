@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { getMCPConnectionManager } from "@/lib/mcp-connection-manager";
+import { NextResponse } from "next/server";
 
 export async function GET(
 	request: Request,

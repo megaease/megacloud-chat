@@ -1,9 +1,7 @@
 "use client";
 
-import type React from "react";
-import { useTranslations } from "next-intl";
-import { IconSearch, IconSettings } from "@tabler/icons-react";
 import {
+	Command,
 	CommandDialog,
 	CommandEmpty,
 	CommandGroup,
@@ -11,18 +9,20 @@ import {
 	CommandItem,
 	CommandList,
 	CommandSeparator,
-	Command,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { IconSearch, IconSettings } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
+import type React from "react";
 
-// Hooks and components
-import { useProviderModelSelector } from "./hooks/useProviderModelSelector";
-import { TriggerButton } from "./components/TriggerButton";
-import { QuickAccessSection } from "./components/QuickAccessSection";
+import { CommandFooter } from "./components/CommandFooter";
 import { ModelsSection } from "./components/ModelsSection";
 import { ProvidersSection } from "./components/ProvidersSection";
+import { QuickAccessSection } from "./components/QuickAccessSection";
 import { TipsSection } from "./components/TipsSection";
-import { CommandFooter } from "./components/CommandFooter";
+import { TriggerButton } from "./components/TriggerButton";
+// Hooks and components
+import { useProviderModelSelector } from "./hooks/useProviderModelSelector";
 
 interface UnifiedProviderModelSelectorProps {
 	className?: string;

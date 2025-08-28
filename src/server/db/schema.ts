@@ -1,9 +1,9 @@
 // Example model schema from the Drizzle docs
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
-import { sql, type InferSelectModel } from "drizzle-orm";
-import { nanoid } from "nanoid";
+import { type InferSelectModel, sql } from "drizzle-orm";
 import {
+	boolean,
 	index,
 	integer,
 	json,
@@ -14,9 +14,9 @@ import {
 	timestamp,
 	uuid,
 	varchar,
-	boolean,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 
 /**

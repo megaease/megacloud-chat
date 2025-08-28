@@ -1,18 +1,18 @@
 "use client";
 
-import CodeMirror from "@uiw/react-codemirror";
-import { javascript } from "@codemirror/lang-javascript";
-import { python } from "@codemirror/lang-python";
-import { html } from "@codemirror/lang-html";
+import { cn } from "@/lib/utils";
 import { css } from "@codemirror/lang-css";
+import { html } from "@codemirror/lang-html";
+import { javascript } from "@codemirror/lang-javascript";
 import { json } from "@codemirror/lang-json";
-import { xml } from "@codemirror/lang-xml";
 import { markdown } from "@codemirror/lang-markdown";
+import { python } from "@codemirror/lang-python";
+import { xml } from "@codemirror/lang-xml";
+import type { Extension } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { githubLight } from "@uiw/codemirror-theme-github";
+import CodeMirror from "@uiw/react-codemirror";
 import { useTheme } from "next-themes";
-import type { Extension } from "@codemirror/state";
-import { cn } from "@/lib/utils";
 import { CopyButton } from "./copy-button";
 
 interface CodeEditorProps {

@@ -1,17 +1,17 @@
 "use server";
 
+import { getMCPConnectionManager } from "@/lib/mcp-connection-manager";
+import { db } from "@/server/db";
 import {
-	insertMcpServerSchema,
-	mcpServers,
 	type McpServerUpdate,
 	type ServerStatus,
 	ServerStatusEnum,
+	insertMcpServerSchema,
+	mcpServers,
 } from "@/server/db/schema";
-import { db } from "@/server/db";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { z } from "zod";
-import { getMCPConnectionManager } from "@/lib/mcp-connection-manager";
 
 // Create a new MCP server
 export async function createMcpServer(

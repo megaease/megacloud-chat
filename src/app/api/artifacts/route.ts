@@ -1,13 +1,13 @@
-// app/api/artifacts/route.ts
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 import {
 	createArtifact,
 	getArtifactsByUserId,
-	searchArtifacts,
 	getPublicArtifacts,
+	searchArtifacts,
 } from "@/server/db/queries/artifacts";
 import type { Artifact } from "@/server/db/schema";
+// app/api/artifacts/route.ts
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const createArtifactSchema = z.object({

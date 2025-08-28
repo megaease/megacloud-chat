@@ -1,8 +1,6 @@
 {
-  "extends": [
-    "development"
-  ],
-  "hints": {
-    "axe/structure": "off"
-  }
+	"extends": ["development"],
+	"hints": {
+		"axe/structure": "off"
+	}
 }

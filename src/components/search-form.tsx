@@ -1,5 +1,5 @@
-import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Label } from "@/components/ui/label";
 import {

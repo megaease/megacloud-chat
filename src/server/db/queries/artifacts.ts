@@ -1,7 +1,7 @@
 // server/db/queries/artifacts.ts
 import { db } from "@/server/db";
-import { artifacts, type Artifact } from "@/server/db/schema";
-import { desc, eq, and, max } from "drizzle-orm";
+import { type Artifact, artifacts } from "@/server/db/schema";
+import { and, desc, eq, max } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export interface CreateArtifactParams {
@@ -38,11 +38,11 @@ export async function getOrCreateChatDocumentId(
 ): Promise<string> {
 	// 首先检查是否已有文档
 	const existingArtifact = await getChatArtifact(chatId, userId);
-	
+
 	if (existingArtifact) {
 		return existingArtifact.id;
 	}
-	
+
 	// 如果没有，生成新的文档 ID
 	return nanoid(16);
 }
@@ -195,7 +195,7 @@ export async function getChatArtifact(
 		where: and(eq(artifacts.chatId, chatId), eq(artifacts.userId, userId)),
 		orderBy: [desc(artifacts.version)], // Get latest version
 	});
-	
+
 	return artifact || null;
 }
 
