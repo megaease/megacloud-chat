@@ -87,7 +87,8 @@ export function HomePage() {
     options?: { experimental_attachments?: FileList }
   ) => {
     e.preventDefault();
-    if (!input?.trim() && !options?.experimental_attachments) return;
+    const content = input.trim();
+    if (!content && !options?.experimental_attachments) return;
 
     // Prevent multiple submissions
     if (isStatusLoading || isUploading) {
@@ -110,7 +111,7 @@ export function HomePage() {
         body: JSON.stringify({
           userId: "user-id",
           title: "New Chat",
-          message: input,
+          message: content,
           modelName: currentModel,
           apiKey: currentProvider?.apiKey,
           baseUrl: currentProvider?.baseUrl,
@@ -127,7 +128,7 @@ export function HomePage() {
 
       // Stash pending message into in-memory context, then navigate.
       setPendingMessage(newChatId, {
-        text: input,
+        text: content,
         files: options?.experimental_attachments
           ? Array.from(options.experimental_attachments).map((file) => ({
               type: "file" as const,

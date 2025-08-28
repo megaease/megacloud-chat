@@ -305,7 +305,8 @@ function ChatContent({
     options?: { experimental_attachments?: FileList }
   ) => {
     e.preventDefault();
-    if ((!input || !input.trim()) && !options?.experimental_attachments) return;
+    const content = input.trim();
+    if (!content && !options?.experimental_attachments) return;
 
     // Prevent multiple submissions
     if (isLoading || isUploading) {
@@ -315,7 +316,7 @@ function ChatContent({
     try {
       // Submit the message using AI SDK 5 sendMessage pattern
       sendMessage({
-        text: input,
+        text: content,
         files: options?.experimental_attachments
           ? Array.from(options.experimental_attachments).map((file) => ({
               type: "file" as const,
