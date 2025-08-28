@@ -286,8 +286,11 @@ export function NewImagePreview({
     if (contentType === "svg") {
       extension = "svg";
     } else if (imageSrc.startsWith("data:")) {
-      const mimeType = imageSrc.split(";")[0].split(":")[1];
-      extension = extensions[mimeType || ""] || "png";
+      const parts = imageSrc.split(";")[0];
+      if (parts) {
+        const mimeType = parts.split(":")[1];
+        extension = extensions[mimeType || ""] || "png";
+      }
     }
 
     const link = document.createElement("a");
