@@ -1,10 +1,10 @@
+import { detectAndCreateAIModel } from "@/lib/ai-providers";
 import { db } from "@/server/db";
+import { generateTitle } from "@/server/db/queries/chats";
 import { chats } from "@/server/db/schema";
+import type { LanguageModel, UIMessage } from "ai";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
-import { detectAndCreateAIModel } from "@/lib/ai-providers";
-import { generateTitle } from "@/server/db/queries/chats";
-import type { UIMessage, LanguageModel } from "ai";
 
 export async function POST(request: Request) {
 	try {

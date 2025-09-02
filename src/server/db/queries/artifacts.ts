@@ -8,7 +8,7 @@ export interface CreateArtifactParams {
 	id?: string; // 允许传入预生成的 ID
 	title: string;
 	content: string;
-	kind: "text" | "code" | "sheet" | "image";
+	kind: "text" | "code" | "sheet" | "image" | "react-app";
 	language?: string; // Language for code artifacts
 	userId: string;
 	chatId: string;
@@ -20,7 +20,7 @@ export interface UpdateArtifactParams {
 	artifactId: string;
 	title?: string;
 	content?: string;
-	kind?: "text" | "code" | "sheet" | "image";
+	kind?: "text" | "code" | "sheet" | "image" | "react-app";
 	language?: string; // Language for code artifacts
 	userId: string;
 	changeDescription?: string;

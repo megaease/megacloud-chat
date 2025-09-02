@@ -1,9 +1,9 @@
-import { smoothStream, tool, type UIMessageStreamWriter } from "ai";
-import { z } from "zod";
-import { updateArtifact, getArtifactById } from "@/server/db/queries/artifacts";
 import { detectAndCreateAIModel } from "@/lib/ai-providers";
-import { streamText, type LanguageModel } from "ai";
+import { getArtifactById, updateArtifact } from "@/server/db/queries/artifacts";
 import type { StreamDelta } from "@/types/stream-delta";
+import { type UIMessageStreamWriter, smoothStream, tool } from "ai";
+import { type LanguageModel, streamText } from "ai";
+import { z } from "zod";
 
 export const updateArtifactInputSchema = z.object({
 	id: z.string().min(1).describe("The ID of the artifact to update"),

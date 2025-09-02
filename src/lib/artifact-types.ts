@@ -15,7 +15,7 @@ export interface UIArtifact {
 	};
 }
 
-export type ArtifactKind = "text" | "code" | "sheet" | "image";
+export type ArtifactKind = "text" | "code" | "sheet" | "image" | "react-app";
 
 export type ArtifactLanguage =
 	| "html"
@@ -30,6 +30,7 @@ export interface DataStreamDelta {
 		| "code-delta"
 		| "sheet-delta"
 		| "image-delta"
+		| "react-app-delta"
 		| "title"
 		| "id"
 		| "kind"
@@ -46,4 +47,29 @@ export interface Message {
 	role: "user" | "assistant";
 	content: string;
 	createdAt: Date;
+}
+
+// React App 相关类型定义
+export interface ReactAppFile {
+	path: string;
+	content: string;
+	language:
+		| "json"
+		| "javascript"
+		| "typescript"
+		| "jsx"
+		| "tsx"
+		| "css"
+		| "html";
+}
+
+export interface ReactAppContent {
+	type: "react-app";
+	files: ReactAppFile[];
+	config?: {
+		typescript: boolean;
+		tailwind: boolean;
+		router: boolean;
+	};
+	previewUrl?: string;
 }

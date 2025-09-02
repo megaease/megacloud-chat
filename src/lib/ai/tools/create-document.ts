@@ -1,7 +1,7 @@
-import { tool, type UIMessageStreamWriter } from "ai";
-import { z } from "zod";
-import { generateId } from "ai";
 import { createArtifact } from "@/server/db/queries/artifacts";
+import { type UIMessageStreamWriter, tool } from "ai";
+import { generateId } from "ai";
+import { z } from "zod";
 
 export const createDocumentInputSchema = z.object({
 	kind: z
@@ -13,10 +13,7 @@ export const createDocumentInputSchema = z.object({
 		.string()
 		.default("markdown")
 		.describe("Language or format hint (e.g., markdown, typescript)"),
-	title: z
-		.string()
-		.min(1)
-		.describe("Title for the document"),
+	title: z.string().min(1).describe("Title for the document"),
 	content: z.string().min(1).describe("Initial content of the new document"),
 });
 
@@ -30,7 +27,10 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
 		description:
 			"Create a new artifact/document with substantial content ONLY when the user explicitly requests to create content (code/html/text/sheet/image). Do NOT use for general Q&A, explanations, or tasks like checking time/weather/searching — use appropriate tools instead.",
 		inputSchema: createDocumentInputSchema,
-		execute: async ({ kind, language, title, content }, { experimental_context }) => {
+		execute: async (
+			{ kind, language, title, content },
+			{ experimental_context },
+		) => {
 			if (!session?.user?.id) {
 				throw new Error("Missing user session for artifact creation");
 			}

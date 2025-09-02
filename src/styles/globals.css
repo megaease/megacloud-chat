@@ -325,7 +325,8 @@
 	}
 	100% {
 		color: var(--color-foreground);
-		text-shadow: 0.25em 0 0 var(--color-foreground), 0.5em 0 0 var(--color-foreground);
+		text-shadow: 0.25em 0 0 var(--color-foreground), 0.5em 0 0
+			var(--color-foreground);
 	}
 }
 

@@ -1,24 +1,37 @@
-import { smoothStream, tool, type UIMessageStreamWriter } from "ai";
-import { z } from "zod";
-import { generateId } from "ai";
-import { createArtifact } from "@/server/db/queries/artifacts";
 import { detectAndCreateAIModel } from "@/lib/ai-providers";
-import { streamText, type LanguageModel } from "ai";
+import type { ReactAppContent } from "@/lib/artifact-types";
+import { createArtifact } from "@/server/db/queries/artifacts";
 import type { StreamDelta } from "@/types/stream-delta";
+import { type UIMessageStreamWriter, smoothStream, tool } from "ai";
+import { generateId } from "ai";
+import { type LanguageModel, streamText } from "ai";
+import { z } from "zod";
 
 export const createArtifactInputSchema = z.object({
 	kind: z
-		.enum(["text", "code", "sheet", "image"])
+		.enum(["text", "code", "sheet", "image", "react-app"])
 		.describe(
-			"The artifact type. Use 'sheet' for any tabular/CSV/row-column data.",
+			"The artifact type. Use 'sheet' for any tabular/CSV/row-column data, 'react-app' for complete React applications.",
 		),
 	language: z
 		.enum(["html", "react", "javascript", "python", "css", "markdown"])
 		.default("markdown")
 		.describe(
-			"Language or format hint (e.g., html, react, javascript, python, css, markdown)",
+			"Language or format hint (e.g., html, react, javascript, python, css, markdown). Not used for react-app type.",
 		),
 	title: z.string().min(1).describe("Title for the artifact"),
+	// React App specific options
+	config: z
+		.object({
+			typescript: z
+				.boolean()
+				.default(true)
+				.describe("Use TypeScript for the React app"),
+			tailwind: z.boolean().default(false).describe("Include Tailwind CSS"),
+			router: z.boolean().default(false).describe("Include React Router"),
+		})
+		.optional()
+		.describe("Configuration for React app generation"),
 });
 
 interface CreateArtifactProps {
@@ -38,6 +51,7 @@ async function generateArtifactContent({
 	title,
 	dataStream,
 	modelConfig,
+	config,
 }: {
 	kind: string;
 	title: string;
@@ -47,6 +61,11 @@ async function generateArtifactContent({
 		modelName?: string;
 		baseUrl?: string;
 		providerType?: string;
+	};
+	config?: {
+		typescript?: boolean;
+		tailwind?: boolean;
+		router?: boolean;
 	};
 }) {
 	const { model: artifactModel } = detectAndCreateAIModel({
@@ -248,6 +267,31 @@ Analyze the request title "${title}" to determine what type of visual content to
 3. **NO MARKDOWN WRAPPING** - Output pure content only
 4. **VALID OUTPUT** - Ensure generated content is immediately usable
 5. **MATCH REQUEST** - Generated content must match the user's intent`,
+
+		"react-app": `You are a React development assistant. Help users create React applications using the available tools.
+
+**IMPORTANT: USE THE REACT APP GENERATION TOOL**
+Instead of generating the entire React app manually, use the "generateReactAppTool" to create React applications from predefined templates. This tool provides complete, production-ready React apps with proper structure and configuration.
+
+**AVAILABLE TEMPLATES:**
+- "base-react": Basic Vite React app with TypeScript
+- "tailwind-react": Vite React app with TypeScript and Tailwind CSS
+- "router-react": Vite React app with TypeScript and React Router
+
+**WORKFLOW FOR CREATING REACT APPS:**
+1. First, use generateReactAppTool to create the app structure from a template
+2. The tool will generate all necessary files (package.json, vite.config.ts, etc.)
+3. If needed, you can provide custom component code to replace the default App component
+4. After generation, the app can be previewed using the sandbox tools
+
+**WHEN TO USE THIS TOOL:**
+- User asks for a React app, React component, or React project
+- User wants to create a web application with React
+- User mentions Vite, TypeScript, Tailwind, or routing in React context
+- Any request that would benefit from a complete React application
+
+**DO NOT MANUALLY GENERATE REACT APP FILES**
+Let the generateReactAppTool handle the file generation. It already includes all necessary configurations and best practices.`,
 	}[kind];
 
 	const userPrompt = {
@@ -434,6 +478,81 @@ Analyze the title "${title}" to determine what type of visual content to generat
 **Visual Content Topic:** ${title}
 
 Generate ONLY the pure visual content (JSON for charts, SVG code for graphics) without any formatting or explanations.`,
+
+		"react-app": `Generate a complete Vite React application for: "${title}"
+
+**App Configuration:**
+- TypeScript: ${config?.typescript ?? true}
+- Tailwind CSS: ${config?.tailwind ?? false}
+- React Router: ${config?.router ?? false}
+
+**Requirements:**
+- Generate a complete React application with all necessary files
+- Use Vite as the build tool
+- Include proper project structure and configuration
+- Add sample components and features to demonstrate React capabilities
+- Ensure all files work together as a complete application
+- Include proper dependencies in package.json
+- Add basic styling and responsive design
+
+**Files to Generate:**
+1. package.json - with all necessary dependencies and scripts
+2. vite.config.ts (or vite.config.js) - Vite configuration
+3. tsconfig.json (if TypeScript enabled) - TypeScript configuration
+4. index.html - HTML entry point
+5. src/main.tsx (or src/main.jsx) - Application entry point
+6. src/App.tsx (or src/App.jsx) - Main application component
+7. Additional components as needed
+8. CSS files or Tailwind configuration
+9. Any other necessary configuration files
+
+**Features to Include:**
+- Modern React with functional components and hooks
+- Proper component structure and organization
+- State management with useState and useEffect
+- Conditional rendering and event handling
+- Basic routing if React Router is enabled
+- Sample data fetching or API integration example
+- Form handling with validation
+- Error boundaries and error handling
+- Responsive design with CSS or Tailwind
+- Loading states and user feedback
+
+**Technical Requirements:**
+- Use latest stable versions of React and Vite
+- Follow React best practices and patterns
+- Include proper TypeScript types if enabled
+- Add ESLint configuration for code quality
+- Include proper imports and exports
+- Add meaningful comments for complex logic
+- Ensure code is clean, maintainable, and well-organized
+
+**OUTPUT FORMAT:**
+- Generate a JSON object with the following structure:
+{
+  "type": "react-app",
+  "files": [
+    {
+      "path": "package.json",
+      "content": "{...}",
+      "language": "json"
+    },
+    {
+      "path": "src/App.tsx",
+      "content": "...",
+      "language": "tsx"
+    }
+    // ... other files
+  ]
+}
+- Ensure all file paths are correct and relative to project root
+- Include complete file contents with proper syntax
+- Make sure all imports and exports are correct
+- The generated app should be ready to run with "npm install && npm run dev"
+
+**Project Focus:** ${title}
+
+Generate ONLY the pure JSON object representing the complete React application without any formatting or explanations.`,
 	}[kind];
 
 	// 流式生成内容
@@ -506,7 +625,10 @@ export const createArtifactTool = ({
 		description:
 			"Create artifacts ONLY when user explicitly uses action verbs like 'create', 'generate', 'build', 'make', 'write' + content type (code/app/page/chart/document/table). Do NOT use for: questions, explanations, analysis, discussions, comparisons, or any Q&A conversation. User must clearly request content creation with specific verbs.",
 		inputSchema: createArtifactInputSchema,
-		execute: async ({ kind, language, title }, { experimental_context }) => {
+		execute: async (
+			{ kind, language, title, config },
+			{ experimental_context },
+		) => {
 			if (!session?.user?.id) {
 				throw new Error("Missing user session for artifact creation");
 			}
@@ -609,6 +731,7 @@ export const createArtifactTool = ({
 				title,
 				dataStream,
 				modelConfig,
+				config,
 			});
 
 			// 步骤 3: 保存到数据库

@@ -1,6 +1,30 @@
 import { detectAndCreateAIModel } from "@/lib/ai-providers";
 import { createArtifactTool } from "@/lib/ai/tools/create-artifact-tool";
+import {
+	previewReactAppTool,
+	runPreviewReactAppTool,
+} from "@/lib/ai/tools/preview-react-app-tool";
 import { updateArtifactTool } from "@/lib/ai/tools/update-artifact-tool";
+import {
+	createSandboxTool,
+	runCreateSandboxTool,
+} from "@/lib/ai/tools/create-sandbox-tool";
+import {
+	installDependenciesTool,
+	runInstallDependenciesTool,
+} from "@/lib/ai/tools/install-dependencies-tool";
+import {
+	startDevServerTool,
+	runStartDevServerTool,
+} from "@/lib/ai/tools/start-dev-server-tool";
+import {
+	writeFilesTool,
+	runWriteFilesTool,
+} from "@/lib/ai/tools/write-files-tool";
+import {
+	generateReactAppTool,
+	runGenerateReactAppTool,
+} from "@/lib/ai/tools/generate-react-app-tool";
 import { loadMCPTools } from "@/lib/mcp-utils";
 import { systemPrompt } from "@/lib/prompt";
 import { getChatMessageById } from "@/server/db/queries/chat";
@@ -183,6 +207,74 @@ export async function POST(req: Request) {
 							providerType,
 						},
 					}),
+					// React app development tools
+					createSandboxTool: {
+						...createSandboxTool,
+						execute: async (args) => {
+							const result = await runCreateSandboxTool({
+								artifactId: args.artifactId,
+								userId: args.userId,
+							});
+							return result;
+						},
+					},
+					writeFilesTool: {
+						...writeFilesTool,
+						execute: async (args) => {
+							const result = await runWriteFilesTool({
+								artifactId: args.artifactId,
+								userId: args.userId,
+								files: args.files,
+							});
+							return result;
+						},
+					},
+					installDependenciesTool: {
+						...installDependenciesTool,
+						execute: async (args) => {
+							const result = await runInstallDependenciesTool({
+								artifactId: args.artifactId,
+								userId: args.userId,
+							});
+							return result;
+						},
+					},
+					startDevServerTool: {
+						...startDevServerTool,
+						execute: async (args) => {
+							const result = await runStartDevServerTool({
+								artifactId: args.artifactId,
+								userId: args.userId,
+								port: args.port,
+							});
+							return result;
+						},
+					},
+					// React app generation tool
+					generateReactAppTool: {
+						...generateReactAppTool,
+						execute: async (args) => {
+							const result = await runGenerateReactAppTool({
+								template: args.template,
+								artifactId: args.artifactId,
+								userId: args.userId,
+								customComponent: args.customComponent,
+							});
+							return result;
+						},
+					},
+					// Legacy preview tool - hidden for now
+					// previewReactAppTool: {
+					// 	...previewReactAppTool,
+					// 	execute: async (args) => {
+					// 		const result = await runPreviewReactAppTool({
+					// 			artifactId: args.artifactId,
+					// 			userId: args.userId,
+					// 			port: args.port,
+					// 		});
+					// 		return result;
+					// 	},
+					// },
 				};
 				const isGLM = detectedProvider === "glm";
 				const baseOpts = {

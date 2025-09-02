@@ -1,6 +1,6 @@
-import { tool, type UIMessageStreamWriter } from "ai";
+import { getArtifactById, updateArtifact } from "@/server/db/queries/artifacts";
+import { type UIMessageStreamWriter, tool } from "ai";
 import { z } from "zod";
-import { updateArtifact, getArtifactById } from "@/server/db/queries/artifacts";
 
 export const updateDocumentInputSchema = z.object({
 	id: z.string().min(1).describe("The ID of the document to update"),
