@@ -9,6 +9,25 @@ import type { ReactAppContent, ReactAppFile } from "@/lib/artifact-types";
 // Active sandboxes storage
 const activeSandboxes = new Map<string, Sandbox>();
 
+/**
+ * Clean up existing sandbox for a chat
+ */
+export async function cleanupExistingSandbox(chatId: string): Promise<void> {
+	// Find and remove any existing sandbox for this chat
+	for (const [key, sandbox] of activeSandboxes.entries()) {
+		if (key.includes(chatId)) {
+			try {
+				console.log("Cleaning up existing sandbox:", key);
+				await sandbox.kill();
+				activeSandboxes.delete(key);
+				console.log("✓ Sandbox cleaned up:", key);
+			} catch (error) {
+				console.warn("Failed to cleanup sandbox:", key, error);
+			}
+		}
+	}
+}
+
 export interface ReactAppCreationOptions {
 	title: string;
 	userId: string;
@@ -257,6 +276,7 @@ export async function createReactAppArtifact(
 				tailwind: true,
 				router: true,
 			},
+			chatId,
 		};
 
 		await createArtifact({
@@ -460,8 +480,7 @@ export async function startDevServer(
 					checkError instanceof Error ? checkError.message : String(checkError);
 				console.log(`Waiting for server... attempt ${i + 1}/15`);
 			}
-
-					}
+		}
 
 		if (!serverStarted) {
 			// Get more diagnostic information
@@ -547,12 +566,8 @@ export async function createReactApp({
 		console.log("Step 2: Creating artifact...");
 
 		// Ensure chat exists before creating artifact
-		try {
-			await saveToChatsTable({ userId, chatId, title: `${title} - React App` });
-			console.log("✓ Chat ensured");
-		} catch (error) {
-			console.warn("Chat already exists or failed to create:", error);
-		}
+		await saveToChatsTable({ userId, chatId, title: `${title} - React App` });
+		console.log("✓ Chat ensured");
 
 		const { artifactId, error: createError } = await createReactAppArtifact(
 			title,
@@ -568,6 +583,10 @@ export async function createReactApp({
 
 		// Step 3: Create sandbox
 		console.log("Step 3: Creating sandbox...");
+
+		// Clean up any existing sandbox for this chat
+		await cleanupExistingSandbox(chatId);
+
 		const { sandboxId, error: sandboxError } = await createSandbox(
 			userId,
 			artifactId,
@@ -600,7 +619,7 @@ export async function createReactApp({
 		console.log("✓ Dependencies installed");
 
 		// Step 6: Start server (if requested)
-		let previewUrl;
+		let previewUrl: string | undefined = "";
 		if (autoStart) {
 			console.log("Step 6: Starting dev server...");
 			const { previewUrl: url, error: serverError } =
