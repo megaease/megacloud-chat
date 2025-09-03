@@ -515,11 +515,13 @@ export async function startDevServer(
 
 		// Get the public URL for port 5173
 		const previewUrl = sandbox.getHost(5173);
-		console.log("✓ Dev server started at:", previewUrl);
+		// Ensure the URL has the correct protocol
+		const fullPreviewUrl = previewUrl.startsWith('http') ? previewUrl : `https://${previewUrl}`;
+		console.log("✓ Dev server started at:", fullPreviewUrl);
 
 		return {
 			success: true,
-			previewUrl,
+			previewUrl: fullPreviewUrl,
 		};
 	} catch (error) {
 		console.error("Dev server start error:", error);
