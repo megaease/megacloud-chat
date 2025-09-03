@@ -5,6 +5,7 @@ import { createReactApp } from "@/lib/services/react-app-service";
 // Input schema for create react app tool
 export const createReactAppInputSchema = z.object({
 	title: z.string().describe("The title of the React application (e.g., 'Todo App', 'Weather Dashboard')"),
+	kind: z.literal("react-app").default("react-app").describe("The type of artifact to create - always 'react-app' for React applications"),
 	customComponent: z.string().optional().describe("Custom React component code to replace the default App component. Should be a complete React component with export default statement."),
 	autoStart: z.boolean().default(true).describe("Whether to automatically start the development server for preview"),
 });
@@ -19,6 +20,12 @@ export const createReactAppTool = {
 		title: {
 			type: "string",
 			description: "The title of the React application (e.g., 'Todo App', 'Weather Dashboard')",
+		},
+		kind: {
+			type: "string",
+			description: "The type of artifact to create - always 'react-app' for React applications",
+			enum: ["react-app"],
+			default: "react-app",
 		},
 		customComponent: {
 			type: "string",
