@@ -14,7 +14,7 @@ import { PreviewPluginProvider } from "./new-preview/PreviewPluginRegistry";
 import { TablePreview } from "./new-preview/TablePreview";
 
 export function ArtifactContent() {
-	const { artifact, setArtifact } = useArtifact();
+	const { artifact } = useArtifact();
 	const tArtifact = useTranslations("Artifact");
 
 	// 直接使用 artifact context 中的数据
@@ -227,42 +227,7 @@ export function ArtifactContent() {
 						animate={{ opacity: 1 }}
 						transition={{ duration: 0.3, ease: "easeInOut" }}
 					>
-						<ReactAppViewer
-							artifact={artifact}
-							onPreview={async (artifactId) => {
-								try {
-									const response = await fetch("/api/preview/react-app", {
-										method: "POST",
-										headers: {
-											"Content-Type": "application/json",
-										},
-										body: JSON.stringify({
-											artifactId,
-											userId: "user-id",
-										}),
-									});
-
-									const result = await response.json();
-
-									if (result.success) {
-										// Update the artifact with preview URL
-										setArtifact((prev) => ({
-											...prev,
-											content: JSON.stringify({
-												...JSON.parse(prev.content),
-												previewUrl: result.url,
-											}),
-										}));
-									} else {
-										console.error("Preview failed:", result.error);
-										alert("Failed to start preview: " + result.error);
-									}
-								} catch (error) {
-									console.error("Preview error:", error);
-									alert("Failed to start preview");
-								}
-							}}
-						/>
+						<ReactAppViewer artifact={artifact} />
 					</motion.div>
 				);
 

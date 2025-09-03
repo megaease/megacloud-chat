@@ -40,7 +40,7 @@ export function useDocumentToolAction() {
 
 				const result = dynamicTool.output as Record<string, unknown>;
 				const info = {
-					documentId: (result.documentId || result.id) as string | undefined,
+					documentId: (result.documentId || result.id || result.artifactId) as string | undefined,
 					title: result.title as string | undefined,
 					version: result.version as number | undefined,
 					kind: result.kind as string | undefined,
@@ -116,8 +116,27 @@ export function useDocumentToolAction() {
 			const documentId = resultInfo?.documentId || args?.documentId;
 			const kind = resultInfo?.kind || args?.kind;
 
+			// 添加详细的调试信息
+			if (process.env.NODE_ENV !== "production") {
+				console.log("handleDocumentClick debug info:", {
+					part,
+					args,
+					resultInfo,
+					documentId,
+					kind,
+					partType: part?.type,
+					partState: part && 'state' in part ? part.state : undefined,
+					partOutput: part && 'output' in part ? part.output : undefined,
+					partInput: part && 'input' in part ? part.input : undefined,
+				});
+			}
+
 			if (!documentId && !kind) {
-				console.warn("No documentId or kind found in tool result or args");
+				console.warn("No documentId or kind found in tool result or args", {
+					part,
+					args,
+					resultInfo,
+				});
 				return;
 			}
 

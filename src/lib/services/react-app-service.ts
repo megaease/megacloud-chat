@@ -41,6 +41,8 @@ export interface ReactAppResult {
 	artifactId?: string;
 	sandboxId?: string;
 	previewUrl?: string;
+	kind?: string;
+	title?: string;
 	error?: string;
 	message?: string;
 }
@@ -276,7 +278,6 @@ export async function createReactAppArtifact(
 				tailwind: true,
 				router: true,
 			},
-			chatId,
 		};
 
 		await createArtifact({
@@ -629,6 +630,31 @@ export async function createReactApp({
 			}
 			previewUrl = url;
 			console.log("✓ Dev server started at:", previewUrl);
+
+			// Persist previewUrl into artifact content so the UI can show it without extra API calls
+			try {
+				// Build updated content with previewUrl
+				const updatedContent: ReactAppContent = {
+					type: "react-app",
+					files,
+					config: {
+						typescript: true,
+						tailwind: true,
+						router: true,
+					},
+					previewUrl,
+				};
+
+				await updateArtifact({
+					artifactId,
+					userId,
+					content: JSON.stringify(updatedContent),
+					changeDescription: "Add previewUrl after dev server start",
+				});
+				console.log("✓ Artifact updated with previewUrl");
+			} catch (e) {
+				console.warn("Failed to update artifact with previewUrl:", e);
+			}
 		}
 
 		return {
@@ -636,6 +662,8 @@ export async function createReactApp({
 			artifactId,
 			sandboxId,
 			previewUrl,
+			kind: "react-app",
+			title,
 			message: `✅ React 应用 "${title}" 创建成功！${previewUrl ? ` 预览地址: ${previewUrl}` : ""}`,
 		};
 	} catch (error) {

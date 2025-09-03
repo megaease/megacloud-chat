@@ -119,7 +119,7 @@ export async function POST(req: Request) {
 			...(existingChatMessages || []),
 			message,
 		] as UIMessage[];
-		await saveMessages(chatId, [message]);
+		await saveMessages(chatId, [message], userId);
 
 		const coreMessages = convertToModelMessages(allMessages);
 
@@ -197,7 +197,7 @@ export async function POST(req: Request) {
 								customComponent: args.customComponent,
 								autoStart: args.autoStart ?? true,
 								session,
-								experimental_context: { userId, chatId },
+								experimental_context: { chatId },
 							});
 							return result;
 						},
@@ -268,7 +268,7 @@ export async function POST(req: Request) {
 					);
 
 				if (messagesToSave.length > 0) {
-					await saveMessages(chatId, messagesToSave);
+					await saveMessages(chatId, messagesToSave, userId);
 				}
 			},
 			onError: (error) => {

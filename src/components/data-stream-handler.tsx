@@ -44,7 +44,7 @@ export function DataStreamHandler() {
 					case "data-kind":
 						return {
 							...draftArtifact,
-							kind: delta.data as "text" | "code" | "sheet" | "image",
+							kind: delta.data as "text" | "code" | "sheet" | "image" | "react-app",
 							status: "streaming" as const,
 						};
 
@@ -80,7 +80,8 @@ export function DataStreamHandler() {
 							delta.type === "data-textDelta" ||
 							delta.type === "data-codeDelta" ||
 							delta.type === "data-sheetDelta" ||
-							delta.type === "data-imageDelta"
+							delta.type === "data-imageDelta" ||
+							delta.type === "data-reactAppDelta"
 						) {
 							const newContent = draftArtifact.content + (delta.data as string);
 							const isFirstContent = draftArtifact.content.length === 0;
@@ -102,6 +103,15 @@ export function DataStreamHandler() {
 								} else if (draftArtifact.kind === "image") {
 									// 图片类型：有内容就显示
 									shouldShow = newContent.length > 0;
+								} else if (draftArtifact.kind === "react-app") {
+									// React App 类型：当有完整的文件结构时显示
+									try {
+										const parsed = JSON.parse(newContent);
+										shouldShow = parsed.files && parsed.files.length > 0;
+									} catch {
+										// JSON 解析失败时保持隐藏
+										shouldShow = false;
+									}
 								}
 							}
 

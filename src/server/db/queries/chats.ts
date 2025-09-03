@@ -66,16 +66,25 @@ export async function saveToChatsTable({
 	title,
 }: { userId: string; chatId: string; title: string }) {
 	try {
-		return await db
+		// Idempotent insert: ignore if the chat already exists
+		await db
 			.insert(chats)
 			.values({
 				id: chatId,
 				userId: userId,
 				title,
 			})
-			.returning({ id: chats.id });
+			.onConflictDoNothing({ target: chats.id });
+
+		// No need to return anything specific to the caller
+		return { id: chatId };
 	} catch (error) {
 		console.error("Error saving to chats table:", error);
+		// As a safeguard, if this is a duplicate key error, treat as success
+		// Postgres duplicate key error code: 23505
+		if (typeof error === "object" && error && (error as any).code === "23505") {
+			return { id: chatId };
+		}
 		throw new Error("Failed to save chat");
 	}
 }

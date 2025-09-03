@@ -15,7 +15,6 @@ import {
 	FolderOpen,
 	Loader2,
 	Play,
-	Square,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 
@@ -118,19 +117,21 @@ export function ReactAppViewer({ artifact, onPreview }: ReactAppViewerProps) {
 					</div>
 				</div>
 				<div className="flex gap-2">
-					<Button onClick={handlePreview} disabled={isPreviewing} size="sm">
-						{isPreviewing ? (
-							<>
-								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-								Starting...
-							</>
-						) : (
-							<>
-								<Play className="h-4 w-4 mr-2" />
-								Preview
-							</>
-						)}
-					</Button>
+					{onPreview && (
+						<Button onClick={handlePreview} disabled={isPreviewing} size="sm">
+							{isPreviewing ? (
+								<>
+									<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+									Starting...
+								</>
+							) : (
+								<>
+									<Play className="h-4 w-4 mr-2" />
+									Preview
+								</>
+							)}
+						</Button>
+					)}
 					<Button onClick={handleDownload} variant="outline" size="sm">
 						<Download className="h-4 w-4 mr-2" />
 						Download

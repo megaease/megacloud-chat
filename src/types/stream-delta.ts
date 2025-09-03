@@ -8,13 +8,14 @@ export interface StreamDelta {
 export const StreamDeltaTypes = {
 	ID: "data-id", // 文档 ID
 	TITLE: "data-title", // 文档标题
-	KIND: "data-kind", // 文档类型 ('text' | 'code' | 'sheet' | 'image')
+	KIND: "data-kind", // 文档类型 ('text' | 'code' | 'sheet' | 'image' | 'react-app')
 	LANGUAGE: "data-language", // 语言类型
 	CLEAR: "data-clear", // 清空内容信号
 	TEXT_DELTA: "data-textDelta", // 文本内容增量
 	CODE_DELTA: "data-codeDelta", // 代码内容增量
 	SHEET_DELTA: "data-sheetDelta", // 表格内容增量
 	IMAGE_DELTA: "data-imageDelta", // 图片数据
+	REACT_APP_DELTA: "data-reactAppDelta", // React App 文件数据
 	FINISH: "data-finish", // 生成完成信号
 } as const;
 

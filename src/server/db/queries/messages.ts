@@ -3,7 +3,7 @@ import type { UIMessage } from "ai";
 import { desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "..";
-import { chatMessages, messageEditHistory } from "../schema";
+import { chatMessages, chats, messageEditHistory } from "../schema";
 
 function convertToDBMessages(messages: UIMessage[], chatId: string) {
 	return messages.map((message) => {
@@ -13,8 +13,8 @@ function convertToDBMessages(messages: UIMessage[], chatId: string) {
 		let content = "";
 		if ("parts" in message && Array.isArray(message.parts)) {
 			const textParts = message.parts
-				.filter((part: any) => part?.type === "text")
-				.map((part: any) => part.text)
+				.filter((part) => part?.type === "text")
+				.map((part) => part.text)
 				.filter(Boolean);
 			content = textParts.join("");
 		}
@@ -31,7 +31,12 @@ function convertToDBMessages(messages: UIMessage[], chatId: string) {
 	});
 }
 
-export async function saveMessages(chatId: string, messages: UIMessage[]) {
+export async function saveMessages(
+	chatId: string,
+	messages: UIMessage[],
+	userId?: string,
+	chatTitleIfCreate = "New Chat",
+) {
 	if (!messages || messages.length === 0) {
 		throw new Error("Messages are required");
 	}
@@ -41,6 +46,27 @@ export async function saveMessages(chatId: string, messages: UIMessage[]) {
 	}
 
 	const dbMessages = convertToDBMessages(messages, chatId);
+
+	// Ensure the parent chat exists to satisfy FK constraint
+	try {
+		const existing = await db
+			.select({ id: chats.id })
+			.from(chats)
+			.where(eq(chats.id, chatId))
+			.limit(1);
+		if (existing.length === 0 && userId) {
+			await db
+				.insert(chats)
+				.values({ id: chatId, userId, title: chatTitleIfCreate })
+				.onConflictDoNothing({ target: chats.id });
+		}
+	} catch (e) {
+		// Non-fatal; proceed to insert messages and let FK error surface if any
+		console.warn(
+			"Warning: failed to ensure chat existence before saving messages:",
+			e,
+		);
+	}
 
 	try {
 		return await db.insert(chatMessages).values(dbMessages).returning();

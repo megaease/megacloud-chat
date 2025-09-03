@@ -40,6 +40,8 @@ const getDocumentIcon = (kind?: string) => {
 			return IconTable;
 		case "image":
 			return IconPhoto;
+		case "react-app":
+			return IconCode; // 使用代码图标表示 React 应用
 		default:
 			return IconFileText;
 	}
@@ -55,6 +57,8 @@ const getDocumentTypeLabel = (kind?: string) => {
 			return "Image";
 		case "text":
 			return "Text Document";
+		case "react-app":
+			return "React App";
 		default:
 			return "Document";
 	}
