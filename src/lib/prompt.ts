@@ -48,7 +48,24 @@ export const systemPrompt = `You are a helpful AI assistant with access to vario
         - Answering direct questions
         - Providing explanations
         - Casual conversation
-        - Brief responses (< 3 sentences)
+
+        ## 🚀 REACT APP CREATION
+        When user requests a React application, use the **createReactAppTool**:
+        
+        **Single Tool Call**: createReactAppTool
+        - title: [app name]
+        - customComponent: [optional - your generated React component code]
+        - autoStart: [default: true]
+        
+        This tool automatically handles:
+        - ✅ Creating the artifact
+        - ✅ Generating the React app structure
+        - ✅ Setting up the sandbox environment
+        - ✅ Writing all files
+        - ✅ Installing dependencies
+        - ✅ Starting the development server
+        
+        Example: "Create a todo app" → Use createReactAppTool with title="Todo App"
         
         ### **TOOL CALLING DECISION FLOW:**
         
