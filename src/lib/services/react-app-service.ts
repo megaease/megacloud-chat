@@ -516,7 +516,9 @@ export async function startDevServer(
 		// Get the public URL for port 5173
 		const previewUrl = sandbox.getHost(5173);
 		// Ensure the URL has the correct protocol
-		const fullPreviewUrl = previewUrl.startsWith('http') ? previewUrl : `https://${previewUrl}`;
+		const fullPreviewUrl = previewUrl.startsWith("http")
+			? previewUrl
+			: `https://${previewUrl}`;
 		console.log("✓ Dev server started at:", fullPreviewUrl);
 
 		return {
@@ -630,7 +632,10 @@ export async function createReactApp({
 			if (serverError) {
 				throw new Error(`Failed to start dev server: ${serverError}`);
 			}
-			previewUrl = url;
+			previewUrl = url?.startsWith("http")
+				? url
+				: `https://${url}`;
+
 			console.log("✓ Dev server started at:", previewUrl);
 
 			// Persist previewUrl into artifact content so the UI can show it without extra API calls
