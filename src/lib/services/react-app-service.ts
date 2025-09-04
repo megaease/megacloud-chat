@@ -2,7 +2,7 @@
 import { Sandbox } from "@e2b/code-interpreter";
 import { generateId } from "ai";
 import { getTemplate } from "@/lib/react-scaffold/templates";
-import { createArtifact, updateArtifact } from "@/server/db/queries/artifacts";
+import { createArtifact } from "@/server/db/queries/artifacts";
 import { saveToChatsTable } from "@/server/db/queries/chats";
 import type { ReactAppContent, ReactAppFile } from "@/lib/artifact-types";
 
@@ -637,31 +637,6 @@ export async function createReactApp({
 				: `https://${url}`;
 
 			console.log("✓ Dev server started at:", previewUrl);
-
-			// Persist previewUrl into artifact content so the UI can show it without extra API calls
-			try {
-				// Build updated content with previewUrl
-				const updatedContent: ReactAppContent = {
-					type: "react-app",
-					files,
-					config: {
-						typescript: true,
-						tailwind: true,
-						router: true,
-					},
-					previewUrl,
-				};
-
-				await updateArtifact({
-					artifactId,
-					userId,
-					content: JSON.stringify(updatedContent),
-					changeDescription: "Add previewUrl after dev server start",
-				});
-				console.log("✓ Artifact updated with previewUrl");
-			} catch (e) {
-				console.warn("Failed to update artifact with previewUrl:", e);
-			}
 		}
 
 		return {
