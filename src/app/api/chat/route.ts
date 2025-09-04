@@ -194,6 +194,7 @@ export async function POST(req: Request) {
 							console.log("createReactAppTool args:", JSON.stringify(args, null, 2));
 							const result = await runCreateReactAppTool({
 								title: args.title,
+								kind: "react-app",
 								customComponent: args.customComponent,
 								autoStart: args.autoStart ?? true,
 								session,

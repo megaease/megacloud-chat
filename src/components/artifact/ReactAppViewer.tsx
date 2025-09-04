@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ReactAppContent, UIArtifact } from "@/lib/artifact-types";
 import { FileTree, buildFileTree } from "./FileTree";
-import { Loader2, ExternalLink, Download, Play, RotateCcw, Globe, Code, Eye } from "lucide-react";
+import { Loader2, ExternalLink, Download, Play, RotateCcw, Globe, Code, Eye, Square } from "lucide-react";
 
 interface ReactAppViewerProps {
   artifact: UIArtifact;
@@ -22,6 +22,9 @@ export function ReactAppViewer({ artifact, onPreview }: ReactAppViewerProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"code" | "preview">("code");
+  const [isCheckingSandbox, setIsCheckingSandbox] = useState(false);
+  const [showRetryButton, setShowRetryButton] = useState(false);
+  const [isSandboxRunning, setIsSandboxRunning] = useState(false);
 
   useEffect(() => {
     try {
@@ -49,6 +52,80 @@ export function ReactAppViewer({ artifact, onPreview }: ReactAppViewerProps) {
 
     checkPreviewUrl();
   }, []);
+
+  // 页面离开或组件卸载时清理sandbox
+  useEffect(() => {
+    return () => {
+      // 组件卸载时停止sandbox
+      cleanupSandbox();
+    };
+  }, []);
+
+  // 监听页面离开事件
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // 页面离开前停止sandbox
+      cleanupSandbox();
+    };
+
+    const handleVisibilityChange = () => {
+      // 页面隐藏时停止sandbox（可选）
+      if (document.hidden) {
+        // 可以选择在页面隐藏时停止，或者只是监听离开事件
+        // cleanupSandbox();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  const cleanupSandbox = async () => {
+    try {
+      const response = await fetch("/api/react-app/sandbox/server/stop", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: "user-id",
+          artifactId: artifact.documentId,
+        }),
+      });
+
+      if (response.ok) {
+        console.log("Sandbox cleaned up successfully");
+      }
+    } catch (error) {
+      console.error("Failed to cleanup sandbox:", error);
+    }
+  };
+
+  const checkSandboxStatus = async () => {
+    try {
+      const response = await fetch("/api/react-app/preview/status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: "user-id",
+          artifactId: artifact.documentId,
+        }),
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error checking sandbox status:", error);
+      return { success: false, sandboxExists: false };
+    }
+  };
 
   const fetchPreviewUrl = async () => {
     try {
@@ -86,6 +163,83 @@ export function ReactAppViewer({ artifact, onPreview }: ReactAppViewerProps) {
       console.error("Error calling preview API:", error);
       setStatusMessage("预览服务暂时不可用");
       return null;
+    }
+  };
+
+  const handleTabChange = async (tab: "code" | "preview") => {
+    if (tab === "preview") {
+      setIsCheckingSandbox(true);
+      setActiveTab(tab);
+      
+      try {
+        // 检查sandbox状态
+        const status = await checkSandboxStatus();
+        
+        if (status.success && status.sandboxExists && status.isRunning && status.previewUrl) {
+          // Sandbox正在运行，直接使用已有的previewUrl
+          setPreviewUrl(status.previewUrl);
+          setIsSandboxRunning(true);
+          setStatusMessage("预览就绪");
+          setTimeout(() => setStatusMessage(""), 2000);
+        } else {
+          // Sandbox已关闭或不存在，需要重新启动
+          setIsSandboxRunning(false);
+          setStatusMessage("正在重启预览环境...");
+          const url = await fetchPreviewUrl();
+          if (url) {
+            setIsSandboxRunning(true);
+            setStatusMessage("预览就绪");
+            setTimeout(() => setStatusMessage(""), 2000);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking sandbox:", error);
+        setStatusMessage("预览环境启动失败");
+        setShowRetryButton(true);
+      } finally {
+        setIsCheckingSandbox(false);
+      }
+    } else {
+      setActiveTab(tab);
+      setShowRetryButton(false); // 切换到code模式时重置重试状态
+    }
+  };
+
+  const handleRetry = async () => {
+    setShowRetryButton(false);
+    setIsCheckingSandbox(true);
+    setStatusMessage("正在重试启动预览环境...");
+    
+    try {
+      const url = await fetchPreviewUrl();
+      if (url) {
+        setIsSandboxRunning(true);
+        setStatusMessage("预览就绪");
+        setTimeout(() => setStatusMessage(""), 2000);
+      } else {
+        setStatusMessage("启动失败，请重试");
+        setShowRetryButton(true);
+      }
+    } catch (error) {
+      console.error("Retry failed:", error);
+      setStatusMessage("启动失败，请重试");
+      setShowRetryButton(true);
+    } finally {
+      setIsCheckingSandbox(false);
+    }
+  };
+
+  const handleStopSandbox = async () => {
+    try {
+      setStatusMessage("正在停止sandbox...");
+      await cleanupSandbox();
+      setIsSandboxRunning(false);
+      setPreviewUrl(null);
+      setStatusMessage("Sandbox已停止");
+      setTimeout(() => setStatusMessage(""), 2000);
+    } catch (error) {
+      console.error("Failed to stop sandbox:", error);
+      setStatusMessage("停止失败");
     }
   };
 
@@ -158,61 +312,80 @@ export function ReactAppViewer({ artifact, onPreview }: ReactAppViewerProps) {
 
   return (
     <div className="w-full h-full flex flex-col">
-      {/* Status Message */}
-      {statusMessage && (
-        <div className="text-sm text-muted-foreground animate-pulse px-4 py-2 border-b">
-          {statusMessage}
-        </div>
-      )}
-
-      {/* Combined Toolbar and Tabs */}
-      <div className="flex items-center justify-between px-3 py-2 border-b bg-background">
+      {/* Combined Toolbar and Status */}
+      <div className="flex items-center justify-between px-3 py-2 border-b bg-background relative">
+        {/* Status Message - Integrated into toolbar */}
+        {statusMessage && (
+          <div className="text-xs text-muted-foreground animate-pulse absolute left-4 top-1/2 -translate-y-1/2">
+            {statusMessage}
+          </div>
+        )}
         {/* Left Side - Code/Preview Tabs Only */}
-        <div className="flex items-center">
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "code" | "preview")} className="h-full">
+        <div className="flex items-center ml-20">
+          <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as "code" | "preview")} className="h-full">
             <TabsList className="grid w-16 grid-cols-2 h-7">
               <TabsTrigger value="code" className="p-0" title="Code">
                 <Code className="h-4 w-4" />
               </TabsTrigger>
-              {previewUrl && <TabsTrigger value="preview" className="p-0" title="Preview">
+              <TabsTrigger value="preview" className="p-0" title="Preview">
                 <Eye className="h-4 w-4" />
-              </TabsTrigger>}
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
 
         {/* Center URL Control Bar - Show only in preview mode */}
         <div className="flex-1 max-w-2xl mx-4">
-          {activeTab === "preview" && previewUrl ? (
-            <div className="flex items-center gap-2 bg-muted px-3 py-1 rounded-sm">
-              <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                value={previewUrl}
-                readOnly
-                className="flex-1 bg-transparent text-sm text-muted-foreground border-none outline-none cursor-text"
-                aria-label="Preview URL"
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0"
-                onClick={() => window.open(previewUrl, "_blank")}
-                title="Open in New Tab"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0"
-                onClick={handlePreview}
-                disabled={isPreviewing}
-                title="Refresh Preview"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+          {activeTab === "preview" ? (
+            isCheckingSandbox || !previewUrl ? (
+              <div className="flex items-center gap-2 bg-muted px-3 py-1 rounded-sm">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {statusMessage || "正在准备预览环境..."}
+                </span>
+                {showRetryButton && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0"
+                    onClick={handleRetry}
+                    title="重试"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-muted px-3 py-1 rounded-sm">
+                <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={previewUrl}
+                  readOnly
+                  className="flex-1 bg-transparent text-sm text-muted-foreground border-none outline-none cursor-text"
+                  aria-label="Preview URL"
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0"
+                  onClick={() => window.open(previewUrl, "_blank")}
+                  title="Open in New Tab"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0"
+                  onClick={handlePreview}
+                  disabled={isPreviewing}
+                  title="Refresh Preview"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )
           ) : activeTab === "code" ? (
             <div className="text-center">
               <span className="text-sm text-muted-foreground">Code Editor</span>
@@ -236,6 +409,17 @@ export function ReactAppViewer({ artifact, onPreview }: ReactAppViewerProps) {
               ) : (
                 <Play className="h-3.5 w-3.5" />
               )}
+            </Button>
+          )}
+          {isSandboxRunning && (
+            <Button
+              onClick={handleStopSandbox}
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0"
+              title="Stop Sandbox"
+            >
+              <Square className="h-3.5 w-3.5" />
             </Button>
           )}
           <Button 
