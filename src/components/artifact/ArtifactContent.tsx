@@ -16,6 +16,34 @@ import { TablePreview } from "./new-preview/TablePreview";
 export function ArtifactContent() {
 	const { artifact } = useArtifact();
 	const tArtifact = useTranslations("Artifact");
+	
+	// 临时使用固定用户ID，实际项目中应该从认证系统获取
+	const userId = "user-id";
+
+	const handlePreview = async (artifactId: string) => {
+		try {
+			const response = await fetch('/api/react-app/preview/url', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					userId,
+					artifactId,
+				}),
+			});
+
+			const data = await response.json();
+			if (data.success && data.previewUrl) {
+				// 在新窗口中打开预览
+				window.open(data.previewUrl, '_blank');
+			} else {
+				console.error('Failed to get preview URL:', data.error);
+			}
+		} catch (error) {
+			console.error('Error calling preview API:', error);
+		}
+	};
 
 	// 直接使用 artifact context 中的数据
 	const displayData = {
@@ -227,7 +255,10 @@ export function ArtifactContent() {
 						animate={{ opacity: 1 }}
 						transition={{ duration: 0.3, ease: "easeInOut" }}
 					>
-						<ReactAppViewer artifact={artifact} />
+						<ReactAppViewer 
+							artifact={artifact} 
+							onPreview={handlePreview}
+						/>
 					</motion.div>
 				);
 
