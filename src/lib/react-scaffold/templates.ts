@@ -2,7 +2,14 @@
 export interface ReactScaffoldFile {
 	path: string;
 	content: string;
-	language: "json" | "javascript" | "typescript" | "jsx" | "tsx" | "css" | "html";
+	language:
+		| "json"
+		| "javascript"
+		| "typescript"
+		| "jsx"
+		| "tsx"
+		| "css"
+		| "html";
 }
 
 export interface ReactScaffoldTemplate {
@@ -16,12 +23,9 @@ export interface ReactScaffoldTemplate {
 // Complete Vite React template with all features
 export const completeReactTemplate: ReactScaffoldTemplate = {
 	name: "complete-react",
-	description: "Complete Vite React app with TypeScript, React Router, and Tailwind CSS",
-	dependencies: [
-		"react",
-		"react-dom",
-		"react-router-dom",
-	],
+	description:
+		"Complete Vite React app with TypeScript, React Router, and Tailwind CSS",
+	dependencies: ["react", "react-dom", "react-router-dom"],
 	devDependencies: [
 		"@types/react",
 		"@types/react-dom",
@@ -36,39 +40,43 @@ export const completeReactTemplate: ReactScaffoldTemplate = {
 	files: [
 		{
 			path: "package.json",
-			content: JSON.stringify({
-				name: "react-app",
-				private: true,
-				version: "0.0.0",
-				type: "module",
-				scripts: {
-					dev: "vite",
-					build: "tsc && vite build",
-					lint: "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-					preview: "vite preview",
+			content: JSON.stringify(
+				{
+					name: "react-app",
+					private: true,
+					version: "0.0.0",
+					type: "module",
+					scripts: {
+						dev: "vite",
+						build: "tsc && vite build",
+						lint: "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+						preview: "vite preview",
+					},
+					dependencies: {
+						react: "^18.2.0",
+						"react-dom": "^18.2.0",
+						"react-router-dom": "^6.20.1",
+					},
+					devDependencies: {
+						"@types/react": "^18.2.43",
+						"@types/react-dom": "^18.2.17",
+						"@typescript-eslint/eslint-plugin": "^6.14.0",
+						"@typescript-eslint/parser": "^6.14.0",
+						"@vitejs/plugin-react": "^4.2.1",
+						"@tailwindcss/typography": "^0.5.10",
+						autoprefixer: "^10.4.16",
+						eslint: "^8.55.0",
+						"eslint-plugin-react-hooks": "^4.6.0",
+						"eslint-plugin-react-refresh": "^0.4.5",
+						postcss: "^8.4.32",
+						tailwindcss: "^3.3.6",
+						typescript: "^5.2.2",
+						vite: "^5.0.8",
+					},
 				},
-				dependencies: {
-					react: "^18.2.0",
-					"react-dom": "^18.2.0",
-					"react-router-dom": "^6.20.1",
-				},
-				devDependencies: {
-					"@types/react": "^18.2.43",
-					"@types/react-dom": "^18.2.17",
-					"@typescript-eslint/eslint-plugin": "^6.14.0",
-					"@typescript-eslint/parser": "^6.14.0",
-					"@vitejs/plugin-react": "^4.2.1",
-					"@tailwindcss/typography": "^0.5.10",
-					"autoprefixer": "^10.4.16",
-					"eslint": "^8.55.0",
-					"eslint-plugin-react-hooks": "^4.6.0",
-					"eslint-plugin-react-refresh": "^0.4.5",
-					"postcss": "^8.4.32",
-					"tailwindcss": "^3.3.6",
-					"typescript": "^5.2.2",
-					"vite": "^5.0.8",
-				},
-			}, null, 2),
+				null,
+				2,
+			),
 			language: "json",
 		},
 		{
@@ -133,44 +141,52 @@ export default defineConfig({
 		},
 		{
 			path: "tsconfig.json",
-			content: JSON.stringify({
-				compilerOptions: {
-					target: "ES2020",
-					useDefineForClassFields: true,
-					lib: ["ES2020", "DOM", "DOM.Iterable"],
-					module: "ESNext",
-					skipLibCheck: true,
-					moduleResolution: "bundler",
-					allowImportingTsExtensions: true,
-					resolveJsonModule: true,
-					isolatedModules: true,
-					noEmit: true,
-					jsx: "react-jsx",
-					strict: true,
-					noUnusedLocals: true,
-					noUnusedParameters: true,
-					noFallthroughCasesInSwitch: true,
+			content: JSON.stringify(
+				{
+					compilerOptions: {
+						target: "ES2020",
+						useDefineForClassFields: true,
+						lib: ["ES2020", "DOM", "DOM.Iterable"],
+						module: "ESNext",
+						skipLibCheck: true,
+						moduleResolution: "bundler",
+						allowImportingTsExtensions: true,
+						resolveJsonModule: true,
+						isolatedModules: true,
+						noEmit: true,
+						jsx: "react-jsx",
+						strict: true,
+						noUnusedLocals: true,
+						noUnusedParameters: true,
+						noFallthroughCasesInSwitch: true,
+					},
+					include: ["src"],
+					references: [{ path: "./tsconfig.node.json" }],
 				},
-				include: ["src"],
-				references: [{ path: "./tsconfig.node.json" }],
-			}, null, 2),
+				null,
+				2,
+			),
 			language: "json",
 		},
 		{
 			path: "tsconfig.node.json",
-			content: JSON.stringify({
-				compilerOptions: {
+			content: JSON.stringify(
+				{
 					compilerOptions: {
-						composite: true,
-						skipLibCheck: true,
-						module: "ESNext",
-						moduleResolution: "bundler",
-						allowSyntheticDefaultImports: true,
-						strict: true,
+						compilerOptions: {
+							composite: true,
+							skipLibCheck: true,
+							module: "ESNext",
+							moduleResolution: "bundler",
+							allowSyntheticDefaultImports: true,
+							strict: true,
+						},
+						include: ["vite.config.ts"],
 					},
-					include: ["vite.config.ts"],
 				},
-			}, null, 2),
+				null,
+				2,
+			),
 			language: "json",
 		},
 		{
